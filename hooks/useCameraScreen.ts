@@ -6,6 +6,11 @@ import { capturePictureFromCameraRef } from '@/lib/camera/capturePicture';
 
 export type CameraFacing = 'back' | 'front';
 
+export type UseCameraScreenOptions = {
+  /** When set, called with the photo URI instead of showing the default success alert. */
+  onPhotoCaptured?: (uri: string) => void;
+};
+
 export type UseCameraScreenResult = {
   cameraRef: RefObject<CameraView | null>;
   permission: ReturnType<typeof useCameraPermissions>[0];
@@ -20,10 +25,11 @@ export type UseCameraScreenResult = {
 };
 
 /**
- * Camera preview state: permissions, facing, ref, and capture with default success/error alerts.
- * Swap alerts for custom UI by forking this hook or adding optional callbacks later.
+ * Camera preview state: permissions, facing, ref, and capture.
+ * Pass `onPhotoCaptured` to navigate to a preview screen or upload without the default alert.
  */
-export function useCameraScreen(): UseCameraScreenResult {
+export function useCameraScreen(options?: UseCameraScreenOptions): UseCameraScreenResult {
+  const onPhotoCaptured = options?.onPhotoCaptured;
   const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
   const [facing, setFacing] = useState<CameraFacing>('back');
@@ -38,15 +44,20 @@ export function useCameraScreen(): UseCameraScreenResult {
     try {
       const photo = await capturePictureFromCameraRef(cameraRef);
       const uri = photo?.uri;
-      if (uri) {
-        Alert.alert('Photo captured', Platform.OS === 'web' ? 'Saved to preview (web).' : uri);
+      if (!uri) return;
+
+      if (onPhotoCaptured) {
+        onPhotoCaptured(uri);
+        return;
       }
+
+      Alert.alert('Photo captured', Platform.OS === 'web' ? 'Saved to preview (web).' : uri);
     } catch (e: unknown) {
       Alert.alert('Camera', e instanceof Error ? e.message : 'Could not take photo.');
     } finally {
       setCapturing(false);
     }
-  }, []);
+  }, [onPhotoCaptured]);
 
   const isPermissionPending = permission == null;
   const isPermissionGranted = permission?.granted ?? false;

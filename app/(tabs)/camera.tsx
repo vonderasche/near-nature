@@ -1,4 +1,6 @@
 import { CameraView } from 'expo-camera';
+import { router } from 'expo-router';
+import { useCallback } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -7,6 +9,10 @@ import { useCameraScreen } from '@/hooks/useCameraScreen';
 
 export default function CameraScreen() {
   const insets = useSafeAreaInsets();
+  const onPhotoCaptured = useCallback((uri: string) => {
+    router.push({ pathname: '/(tabs)/camera-preview', params: { uri } });
+  }, []);
+
   const {
     cameraRef,
     requestPermission,
@@ -16,7 +22,7 @@ export default function CameraScreen() {
     toggleFacing,
     takePicture,
     capturing,
-  } = useCameraScreen();
+  } = useCameraScreen({ onPhotoCaptured });
 
   if (isPermissionPending) {
     return (
