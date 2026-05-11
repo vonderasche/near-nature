@@ -18,6 +18,14 @@ export default function CameraPreviewScreen() {
     router.replace('/camera');
   }
 
+  function goToIdentification() {
+    if (!photoUri) return;
+    router.push({
+      pathname: '/(tabs)/identification-results',
+      params: { uri: photoUri },
+    });
+  }
+
   if (!photoUri) {
     return (
       <View style={[styles.centered, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
@@ -38,7 +46,7 @@ export default function CameraPreviewScreen() {
         <Pressable accessibilityRole="button" onPress={goBackToCamera} style={styles.secondary}>
           <Text style={styles.secondaryText}>Retake</Text>
         </Pressable>
-        <Pressable accessibilityRole="button" onPress={goBackToCamera} style={styles.primary}>
+        <Pressable accessibilityRole="button" onPress={goToIdentification} style={styles.primary}>
           <Text style={styles.primaryText}>Done</Text>
         </Pressable>
       </View>
