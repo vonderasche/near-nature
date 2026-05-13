@@ -12,6 +12,8 @@ All files are safe to re-run. Run in this order in the Supabase SQL Editor:
 8. `create_streaks.sql`      — streaks table, auto-update streak trigger
 9. `create_discoveries.sql`  — discoveries table, first discovery trigger + bonus points
 10. `create_leaderboard.sql` — points trigger, leaderboard function (all_time/month/ytd)
+11. `storage_bucket_detections` - storage bucket + policies
+
 
 ## Points System
 

@@ -1,55 +1,68 @@
 // React hook that orchestrates identification flow:
 // photo -> optional blur gate -> Claude -> result filters -> iNaturalist -> Species[]
 
-import { EncodingType, readAsStringAsync } from 'expo-file-system/legacy';
+import { deleteAsync, EncodingType, readAsStringAsync } from 'expo-file-system/legacy';
 import { useCallback, useState } from 'react';
 
 import { identifySpeciesInImage } from '@/api/claude';
 import { lookupNativeStatus } from '@/api/inaturalist';
+import { useResizeImageForUpload } from '@/hooks/useResizeImageForUpload';
 import { checkImageBlur } from '@/utils/blurDetections';
 import { filterClassifications, hasNoSpeciesFound } from '@/utils/imageFilters';
-import type { Species } from '@/types';
+import type { ClassificationResult, Species } from '@/types';
+
+export type IdentifySpeciesOutcome = {
+  species: Species[];
+  classifications: ClassificationResult[];
+};
 
 interface UseSpeciesIdentificationResult {
-  identify:  (photoUri: string, userState: string) => Promise<Species[]>;
+  identify: (photoUri: string, userState: string) => Promise<IdentifySpeciesOutcome>;
   isLoading: boolean;
-  error:     string | null;
+  error: string | null;
 }
 
 export function useSpeciesIdentification(): UseSpeciesIdentificationResult {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { resizeForUpload } = useResizeImageForUpload();
 
   const identify = useCallback(async (
     photoUri: string,
     userState: string,
-  ): Promise<Species[]> => {
+  ): Promise<IdentifySpeciesOutcome> => {
     setIsLoading(true);
     setError(null);
+
+    let resizedUri: string | null = null;
 
     try {
       // 1) Quick quality gate: skip API call if image is likely too blurry.
       const maybe = await checkImageBlur(photoUri);
       if (maybe.isBlurry) {
         setError('Photo appears blurry. Please retake a sharper image.');
-        return [];
+        return { species: [], classifications: [] };
       }
 
-      // 2) Convert captured file to base64 for the vision API.
-      const base64 = await readAsStringAsync(photoUri, {
+      // 2) Resize / compress so vision APIs stay under image size limits (e.g. Claude 5 MiB).
+      const resized = await resizeForUpload(photoUri);
+      resizedUri = resized.uri;
+
+      // 3) Convert prepared file to base64 for the vision API.
+      const base64 = await readAsStringAsync(resizedUri, {
         encoding: EncodingType.Base64,
       });
 
-      // 3) Ask Claude for species classifications.
+      // 4) Ask Claude for species classifications.
       const rawClassifications = await identifySpeciesInImage(base64, 'image/jpeg');
 
-      // 4) Apply confidence + dedupe filters.
+      // 5) Apply confidence + dedupe filters.
       const { results: classifications, summary } = filterClassifications(rawClassifications);
       if (__DEV__) console.log('[identify] filter summary', summary);
 
-      if (hasNoSpeciesFound(classifications)) return [];
+      if (hasNoSpeciesFound(classifications)) return { species: [], classifications: [] };
 
-      // 5) Enrich with native/invasive status in parallel.
+      // 6) Enrich with native/invasive status in parallel.
       const speciesResults = await Promise.all(
         classifications.map(async (classification, index): Promise<Species> => {
           const nativeResult = await lookupNativeStatus(
@@ -68,16 +81,19 @@ export function useSpeciesIdentification(): UseSpeciesIdentificationResult {
         }),
       );
 
-      return speciesResults;
+      return { species: speciesResults, classifications };
 
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Identification failed';
       setError(message);
-      return [];
+      return { species: [], classifications: [] };
     } finally {
+      if (resizedUri && resizedUri !== photoUri) {
+        await deleteAsync(resizedUri, { idempotent: true }).catch(() => {});
+      }
       setIsLoading(false);
     }
-  }, []);
+  }, [resizeForUpload]);
 
   return { identify, isLoading, error };
 }

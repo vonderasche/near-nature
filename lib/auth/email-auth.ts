@@ -1,3 +1,4 @@
+import { mapSupabaseAuthErrorMessage } from '@/lib/auth/mapSupabaseAuthError';
 import { supabase } from '@/lib/supabase';
 
 export type EmailAuthResult =
@@ -10,6 +11,9 @@ function validateEmailShape(email: string): boolean {
 }
 
 function mapAuthMessage(message: string): string {
+  const mapped = mapSupabaseAuthErrorMessage(message);
+  if (mapped !== message) return mapped;
+
   const m = message.toLowerCase();
   if (m.includes('invalid login credentials') || m.includes('invalid_credentials')) {
     return 'Invalid email or password.';

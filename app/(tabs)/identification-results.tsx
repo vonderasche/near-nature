@@ -1,12 +1,13 @@
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { SpeciesWikiData } from '@/api/wikipedia';
 import { fetchSpeciesWikiData } from '@/api/wikipedia';
 import { AuthButton } from '@/components/auth/auth-button';
+import { UploadToDatabaseButton } from '@/components/identification/upload-to-database-button';
 import { SpeciesResultCard } from '@/components/identification/species-result-card';
 import { InlineFormError } from '@/components/screen/inline-form-error';
 import { LoadingHintRow } from '@/components/screen/loading-hint-row';
@@ -16,8 +17,9 @@ import { SectionLabel } from '@/components/screen/section-label';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import { useAuthContext } from '@/context/AuthContext';
 import { useIdentifications } from '@/hooks/useIdentifications';
+import { useSaveDetection } from '@/hooks/useSaveDetection';
 import { useSpeciesIdentification } from '@/hooks/useSpeciesIdentification';
-import type { Species } from '@/types';
+import type { ClassificationResult, Species } from '@/types';
 
 const DEFAULT_USER_STATE = process.env.EXPO_PUBLIC_USER_STATE ?? 'FL';
 
@@ -53,8 +55,10 @@ export default function IdentificationResultsScreen() {
     error: historyError,
     refetch,
   } = useIdentifications({ userId: userId ?? undefined });
+  const { save, saving, saveError, clearSaveError } = useSaveDetection();
 
   const [species, setSpecies] = useState<Species[]>([]);
+  const [classifications, setClassifications] = useState<ClassificationResult[]>([]);
   const [wikiByLatinName, setWikiByLatinName] = useState<Record<string, SpeciesWikiData | null>>({});
   const [wikiError, setWikiError] = useState<string | null>(null);
 
@@ -64,7 +68,8 @@ export default function IdentificationResultsScreen() {
     (async () => {
       const results = await identify(photoUri, userState);
       if (!cancelled) {
-        setSpecies(results);
+        setSpecies(results.species);
+        setClassifications(results.classifications);
         refetch();
       }
     })();
@@ -118,6 +123,35 @@ export default function IdentificationResultsScreen() {
     router.replace('/camera');
   }, []);
 
+  const handleSaveIdentification = useCallback(async () => {
+    if (!photoUri || !userId || species.length === 0 || classifications.length === 0) return;
+    clearSaveError();
+    const primary = species[0];
+    const wiki = wikiByLatinName[primary.latinName];
+    const result = await save({
+      localImageUri: photoUri,
+      userId,
+      species: primary,
+      classification: classifications[0],
+      stateCode: userState,
+      description: wiki?.description ?? null,
+    });
+    if (result.ok) {
+      Alert.alert('Saved', 'This identification was saved to your history.');
+      refetch();
+    }
+  }, [
+    photoUri,
+    userId,
+    species,
+    classifications,
+    wikiByLatinName,
+    userState,
+    save,
+    clearSaveError,
+    refetch,
+  ]);
+
   if (!photoUri) {
     return (
       <View style={[styles.fill, padInsets(insets)]}>
@@ -142,6 +176,7 @@ export default function IdentificationResultsScreen() {
 
       {identifyError ? <InlineFormError>{identifyError}</InlineFormError> : null}
       {historyError ? <InlineFormError>{historyError}</InlineFormError> : null}
+      {saveError ? <InlineFormError>{saveError}</InlineFormError> : null}
       {wikiError ? <InlineFormError>{wikiError}</InlineFormError> : null}
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
@@ -153,6 +188,19 @@ export default function IdentificationResultsScreen() {
             contentFit="contain"
           />
         </View>
+
+        {species.length > 0 && !identifying ? (
+          <View style={styles.saveRow}>
+            <UploadToDatabaseButton
+              onPress={handleSaveIdentification}
+              disabled={!userId || saving}
+              loading={saving}
+            />
+            {!userId ? (
+              <Text style={styles.saveHint}>Sign in to upload identifications to your account.</Text>
+            ) : null}
+          </View>
+        ) : null}
 
         {!identifying && species.length === 0 && !identifyError ? (
           <Text style={styles.muted}>No species returned.</Text>
@@ -191,7 +239,7 @@ export default function IdentificationResultsScreen() {
         {historyLoading ? (
           <ActivityIndicator color={authColors.textMuted} />
         ) : identifications.length === 0 ? (
-          <Text style={styles.muted}>No saved history yet (hook is stubbed).</Text>
+          <Text style={styles.muted}>No saved identifications yet.</Text>
         ) : (
           identifications.map((row) => (
             <SpeciesResultCard
@@ -230,6 +278,15 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: authSpacing.xl,
   },
+  saveRow: {
+    marginBottom: authSpacing.md,
+    gap: authSpacing.sm,
+  },
+  saveHint: {
+    ...authTypography.subtitle,
+    color: authColors.textMuted,
+    textAlign: 'center',
+  },
   photoFrame: {
     width: '100%',
     aspectRatio: 4 / 3,
@@ -264,5 +321,6 @@ const styles = StyleSheet.create({
     paddingTop: authSpacing.md,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: authColors.border,
+    gap: authSpacing.sm,
   },
 });

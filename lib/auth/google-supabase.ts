@@ -1,5 +1,6 @@
 import type { AuthSessionResult } from 'expo-auth-session';
 
+import { mapSupabaseAuthErrorMessage } from '@/lib/auth/mapSupabaseAuthError';
 import { supabase } from '@/lib/supabase';
 
 export type GoogleSupabaseResult = { ok: true } | { ok: false; message: string };
@@ -33,7 +34,7 @@ export async function signInWithGoogleAuthResult(
   });
 
   if (error) {
-    return { ok: false, message: error.message };
+    return { ok: false, message: mapSupabaseAuthErrorMessage(error.message) };
   }
   return { ok: true };
 }
