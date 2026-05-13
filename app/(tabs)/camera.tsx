@@ -50,7 +50,13 @@ export default function CameraScreen() {
 
   return (
     <View style={styles.root}>
-      <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing={facing} />
+      <CameraView
+        ref={cameraRef}
+        style={StyleSheet.absoluteFill}
+        facing={facing}
+        ratio="4:3"
+        mute
+      />
       <View style={[styles.toolbar, { paddingBottom: Math.max(insets.bottom, authSpacing.md) }]}>
         <Pressable accessibilityRole="button" onPress={toggleFacing} style={styles.toolBtn}>
           <Text style={styles.toolBtnText}>Flip</Text>
