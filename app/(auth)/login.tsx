@@ -1,14 +1,17 @@
 import type { AuthSessionResult } from 'expo-auth-session';
-import { Link, router } from 'expo-router';
+import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert } from 'react-native';
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { AuthDivider } from '@/components/auth/auth-divider';
 import { AuthField } from '@/components/auth/auth-field';
+import { AuthLinkRow } from '@/components/auth/auth-link-row';
 import { AuthScreen } from '@/components/auth/auth-screen';
+import { AuthScreenHeader } from '@/components/auth/auth-screen-header';
+import { AuthTextLink } from '@/components/auth/auth-text-link';
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { authSpacing } from '@/constants/auth-theme';
 import { signInWithEmail } from '@/lib/auth/email-auth';
 import { signInWithGoogleAuthResult } from '@/lib/auth/google-supabase';
 
@@ -54,10 +57,7 @@ export default function LoginScreen() {
 
   return (
     <AuthScreen>
-      <View style={styles.header}>
-        <Text style={styles.title}>Log in</Text>
-        <Text style={styles.subtitle}>Use your email or Google.</Text>
-      </View>
+      <AuthScreenHeader title="Log in" subtitle="Use your email or Google." />
 
       <AuthField
         label="Email"
@@ -80,63 +80,15 @@ export default function LoginScreen() {
 
       <AuthButton title="Sign in" onPress={onSubmit} loading={busy} disabled={busy} />
 
-      <Link href="/forgot-password" asChild>
-        <Pressable accessibilityRole="link" style={styles.forgotWrap}>
-          <Text style={styles.forgotLink}>Forgot password?</Text>
-        </Pressable>
-      </Link>
+      <AuthTextLink href="/forgot-password" variant="muted" style={{ marginTop: authSpacing.sm }}>
+        Forgot password?
+      </AuthTextLink>
 
       <AuthDivider />
 
       <GoogleSignInButton onSuccess={onGoogleSuccess} />
 
-      <View style={styles.footer}>
-        <Text style={styles.footerPrompt}>No account?</Text>
-        <Link href="/signup" asChild>
-          <Pressable accessibilityRole="link">
-            <Text style={styles.link}>Create one</Text>
-          </Pressable>
-        </Link>
-      </View>
+      <AuthLinkRow prompt="No account?" href="/signup" linkText="Create one" />
     </AuthScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    gap: authSpacing.xs,
-    marginBottom: authSpacing.sm,
-  },
-  title: {
-    ...authTypography.title,
-    color: authColors.text,
-  },
-  subtitle: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
-  },
-  forgotWrap: {
-    alignSelf: 'flex-start',
-    marginTop: authSpacing.sm,
-  },
-  forgotLink: {
-    ...authTypography.link,
-    color: authColors.textMuted,
-    textDecorationLine: 'underline',
-  },
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: authSpacing.xs,
-    marginTop: authSpacing.md,
-  },
-  footerPrompt: {
-    ...authTypography.body,
-    color: authColors.textMuted,
-  },
-  link: {
-    ...authTypography.link,
-    color: authColors.text,
-    textDecorationLine: 'underline',
-  },
-});

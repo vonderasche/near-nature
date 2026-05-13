@@ -1,18 +1,18 @@
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { SpeciesWikiData } from '@/api/wikipedia';
 import { fetchSpeciesWikiData } from '@/api/wikipedia';
+import { AuthButton } from '@/components/auth/auth-button';
+import { SpeciesResultCard } from '@/components/identification/species-result-card';
+import { InlineFormError } from '@/components/screen/inline-form-error';
+import { LoadingHintRow } from '@/components/screen/loading-hint-row';
+import { MessageWithAction } from '@/components/screen/message-with-action';
+import { ScreenHeading } from '@/components/screen/screen-heading';
+import { SectionLabel } from '@/components/screen/section-label';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import { useAuthContext } from '@/context/AuthContext';
 import { useIdentifications } from '@/hooks/useIdentifications';
@@ -55,9 +55,7 @@ export default function IdentificationResultsScreen() {
   } = useIdentifications({ userId: userId ?? undefined });
 
   const [species, setSpecies] = useState<Species[]>([]);
-  const [wikiByLatinName, setWikiByLatinName] = useState<Record<string, SpeciesWikiData | null>>(
-    {}
-  );
+  const [wikiByLatinName, setWikiByLatinName] = useState<Record<string, SpeciesWikiData | null>>({});
   const [wikiError, setWikiError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -81,7 +79,6 @@ export default function IdentificationResultsScreen() {
 
     (async () => {
       if (__DEV__) console.log('[results] wiki fetch begin', species.map((s) => s.latinName));
-      // Keep it basic: fetch wiki for top few results only.
       const toFetch = species
         .slice(0, 3)
         .map((s) => ({ latinName: s.latinName, commonName: s.commonName }))
@@ -89,8 +86,9 @@ export default function IdentificationResultsScreen() {
       const entries = await Promise.all(
         toFetch.map(async ({ latinName, commonName }) => {
           try {
-            // Try latin name first, then fall back to common name.
-            const data = (await fetchSpeciesWikiData(latinName)) ?? (commonName ? await fetchSpeciesWikiData(commonName) : null);
+            const data =
+              (await fetchSpeciesWikiData(latinName)) ??
+              (commonName ? await fetchSpeciesWikiData(commonName) : null);
             if (__DEV__)
               console.log('[results] wiki item', { latinName, commonName, hasData: Boolean(data) });
             return [latinName, data] as const;
@@ -122,33 +120,32 @@ export default function IdentificationResultsScreen() {
 
   if (!photoUri) {
     return (
-      <View style={[styles.centered, padInsets(insets)]}>
-        <Text style={styles.body}>Missing photo. Go back and capture again.</Text>
-        <Pressable accessibilityRole="button" onPress={goToCamera} style={styles.btn}>
-          <Text style={styles.btnText}>Back to camera</Text>
-        </Pressable>
+      <View style={[styles.fill, padInsets(insets)]}>
+        <MessageWithAction
+          message="Missing photo. Go back and capture again."
+          actionLabel="Back to camera"
+          onAction={goToCamera}
+        />
       </View>
     );
   }
 
   return (
     <View style={[styles.root, padInsets(insets)]}>
-      <Text style={styles.title}>Identification</Text>
-      <Text style={styles.subtitle}>Results are not saved to your photo library.</Text>
+      <ScreenHeading
+        title="Identification"
+        subtitle="Results are not saved to your photo library."
+        marginBottom={authSpacing.md}
+      />
 
-      {identifying && (
-        <View style={styles.row}>
-          <ActivityIndicator color={authColors.text} />
-          <Text style={styles.body}>Calling identification APIs…</Text>
-        </View>
-      )}
+      {identifying ? <LoadingHintRow label="Calling identification APIs…" /> : null}
 
-      {identifyError ? <Text style={styles.error}>{identifyError}</Text> : null}
-      {historyError ? <Text style={styles.error}>{historyError}</Text> : null}
-      {wikiError ? <Text style={styles.error}>{wikiError}</Text> : null}
+      {identifyError ? <InlineFormError>{identifyError}</InlineFormError> : null}
+      {historyError ? <InlineFormError>{historyError}</InlineFormError> : null}
+      {wikiError ? <InlineFormError>{wikiError}</InlineFormError> : null}
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.section}>This photo</Text>
+        <SectionLabel label="This photo" />
         <View style={styles.photoFrame}>
           <Image
             source={{ uri: photoUri }}
@@ -160,13 +157,13 @@ export default function IdentificationResultsScreen() {
         {!identifying && species.length === 0 && !identifyError ? (
           <Text style={styles.muted}>No species returned.</Text>
         ) : null}
+
         {species.map((s) => (
-          <View key={s.id} style={styles.card}>
-            <Text style={styles.common}>{s.commonName}</Text>
-            <Text style={styles.latin}>{s.latinName}</Text>
-            <Text style={styles.meta}>
-              {s.taxonGroup} · {s.status}
-            </Text>
+          <SpeciesResultCard
+            key={s.id}
+            commonName={s.commonName}
+            latinName={s.latinName}
+            meta={`${s.taxonGroup} · ${s.status}`}>
             {Object.prototype.hasOwnProperty.call(wikiByLatinName, s.latinName) ? (
               wikiByLatinName[s.latinName] ? (
                 <View style={styles.wikiWrap}>
@@ -187,28 +184,29 @@ export default function IdentificationResultsScreen() {
                 </View>
               )
             ) : null}
-          </View>
+          </SpeciesResultCard>
         ))}
 
-        <Text style={[styles.section, styles.sectionSpaced]}>Your identifications</Text>
+        <SectionLabel label="Your identifications" spaced />
         {historyLoading ? (
           <ActivityIndicator color={authColors.textMuted} />
         ) : identifications.length === 0 ? (
           <Text style={styles.muted}>No saved history yet (hook is stubbed).</Text>
         ) : (
           identifications.map((row) => (
-            <View key={row.id} style={styles.card}>
-              <Text style={styles.common}>{row.species.commonName}</Text>
-              <Text style={styles.latin}>{row.species.latinName}</Text>
-              <Text style={styles.meta}>{new Date(row.timestamp).toLocaleString()}</Text>
-            </View>
+            <SpeciesResultCard
+              key={row.id}
+              commonName={row.species.commonName}
+              latinName={row.species.latinName}
+              meta={new Date(row.timestamp).toLocaleString()}
+            />
           ))
         )}
       </ScrollView>
 
-      <Pressable accessibilityRole="button" onPress={goToCamera} style={styles.footerBtn}>
-        <Text style={styles.footerBtnText}>Back to camera</Text>
-      </Pressable>
+      <View style={styles.footer}>
+        <AuthButton variant="outline" title="Back to camera" onPress={goToCamera} />
+      </View>
     </View>
   );
 }
@@ -218,54 +216,19 @@ function padInsets(insets: { top: number; bottom: number }) {
 }
 
 const styles = StyleSheet.create({
+  fill: {
+    flex: 1,
+  },
   root: {
     flex: 1,
     backgroundColor: authColors.background,
     paddingHorizontal: authSpacing.lg,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: authColors.background,
-    paddingHorizontal: authSpacing.lg,
-  },
-  title: {
-    ...authTypography.title,
-    color: authColors.text,
-    marginBottom: authSpacing.xs,
-  },
-  subtitle: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
-    marginBottom: authSpacing.md,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: authSpacing.sm,
-    marginBottom: authSpacing.sm,
-  },
-  body: {
-    ...authTypography.body,
-    color: authColors.text,
-    textAlign: 'center',
-  },
-  error: {
-    ...authTypography.body,
-    color: authColors.text,
-    marginBottom: authSpacing.sm,
   },
   scroll: {
     flex: 1,
   },
   scrollContent: {
     paddingBottom: authSpacing.xl,
-  },
-  section: {
-    ...authTypography.label,
-    color: authColors.text,
-    marginBottom: authSpacing.sm,
   },
   photoFrame: {
     width: '100%',
@@ -276,18 +239,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
     overflow: 'hidden',
   },
-  sectionSpaced: {
-    marginTop: authSpacing.lg,
-  },
   muted: {
     ...authTypography.subtitle,
     color: authColors.textMuted,
-    marginBottom: authSpacing.sm,
-  },
-  card: {
-    borderWidth: 1,
-    borderColor: authColors.border,
-    padding: authSpacing.md,
     marginBottom: authSpacing.sm,
   },
   wikiWrap: {
@@ -305,43 +259,10 @@ const styles = StyleSheet.create({
     ...authTypography.subtitle,
     color: authColors.textMuted,
   },
-  common: {
-    ...authTypography.body,
-    fontWeight: '600',
-    color: authColors.text,
-  },
-  latin: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
-    fontStyle: 'italic',
-  },
-  meta: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
-    marginTop: authSpacing.xs,
-  },
-  btn: {
-    marginTop: authSpacing.md,
-    borderWidth: 1,
-    borderColor: authColors.border,
-    paddingVertical: authSpacing.sm,
-    paddingHorizontal: authSpacing.lg,
-  },
-  btnText: {
-    ...authTypography.body,
-    fontWeight: '600',
-    color: authColors.text,
-  },
-  footerBtn: {
+  footer: {
     marginTop: authSpacing.sm,
-    paddingVertical: authSpacing.md,
-    alignItems: 'center',
+    paddingTop: authSpacing.md,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: authColors.border,
-  },
-  footerBtnText: {
-    ...authTypography.link,
-    color: authColors.text,
-    fontWeight: '600',
   },
 });

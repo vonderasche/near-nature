@@ -1,11 +1,12 @@
-import { Link } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert } from 'react-native';
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { AuthField } from '@/components/auth/auth-field';
+import { AuthLinkRow } from '@/components/auth/auth-link-row';
 import { AuthScreen } from '@/components/auth/auth-screen';
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { AuthScreenHeader } from '@/components/auth/auth-screen-header';
+import { InlineFormError } from '@/components/screen/inline-form-error';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function ForgotPasswordScreen() {
@@ -36,10 +37,7 @@ export default function ForgotPasswordScreen() {
 
   return (
     <AuthScreen>
-      <View style={styles.header}>
-        <Text style={styles.title}>Forgot password</Text>
-        <Text style={styles.subtitle}>We will email you a reset link.</Text>
-      </View>
+      <AuthScreenHeader title="Forgot password" subtitle="We will email you a reset link." />
 
       <AuthField
         label="Email"
@@ -53,43 +51,9 @@ export default function ForgotPasswordScreen() {
 
       <AuthButton title="Send reset link" onPress={onSubmit} loading={busy} disabled={busy} />
 
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {error ? <InlineFormError>{error}</InlineFormError> : null}
 
-      <View style={styles.footer}>
-        <Link href="/login" asChild>
-          <Pressable accessibilityRole="link">
-            <Text style={styles.link}>Back to log in</Text>
-          </Pressable>
-        </Link>
-      </View>
+      <AuthLinkRow href="/login" linkText="Back to log in" />
     </AuthScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    gap: authSpacing.xs,
-    marginBottom: authSpacing.sm,
-  },
-  title: {
-    ...authTypography.title,
-    color: authColors.text,
-  },
-  subtitle: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
-  },
-  footer: {
-    marginTop: authSpacing.md,
-  },
-  link: {
-    ...authTypography.link,
-    color: authColors.text,
-    textDecorationLine: 'underline',
-  },
-  error: {
-    ...authTypography.body,
-    color: authColors.text,
-    marginTop: authSpacing.sm,
-  },
-});

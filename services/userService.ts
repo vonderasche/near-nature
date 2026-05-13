@@ -1,4 +1,26 @@
+import { FunctionsHttpError } from '@supabase/supabase-js';
+
 import { supabase } from '@/lib/supabase';
+
+async function readEdgeFunctionErrorMessage(error: unknown): Promise<string | null> {
+  if (error instanceof FunctionsHttpError) {
+    const res = error.context as Response | undefined;
+    if (res) {
+      try {
+        const body = (await res.clone().json()) as { error?: string };
+        if (body?.error) return body.error;
+      } catch {
+        try {
+          const text = await res.clone().text();
+          return text || null;
+        } catch {
+          return null;
+        }
+      }
+    }
+  }
+  return null;
+}
 
 /** Row shape for `public.users` (see `sql/create_user.sql`). */
 export type User = {
@@ -34,12 +56,20 @@ export async function updateUser(userId: string, payload: UpdateUserPayload): Pr
   return data as User;
 }
 
-// Delete the current user's account (cascades via DB)
-export async function deleteUser(userId: string): Promise<void> {
-  const { error } = await supabase
-    .from('users')
-    .delete()
-    .eq('id', userId);
+/**
+ * Permanently deletes the authenticated user via the `delete-account` Edge Function
+ * (service role). `public.users` is removed by FK cascade when `auth.users` is deleted.
+ */
+export async function deleteAccount(): Promise<void> {
+  const { data, error } = await supabase.functions.invoke<{ ok?: boolean; error?: string }>('delete-account', {
+    body: {},
+  });
 
-  if (error) throw error;
+  if (error) {
+    const detail = await readEdgeFunctionErrorMessage(error);
+    throw new Error(detail ?? error.message);
+  }
+  if (data && typeof data === 'object' && 'error' in data && data.error) {
+    throw new Error(String(data.error));
+  }
 }

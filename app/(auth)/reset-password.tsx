@@ -1,11 +1,12 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { Alert } from 'react-native';
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { AuthField } from '@/components/auth/auth-field';
 import { AuthScreen } from '@/components/auth/auth-screen';
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { AuthScreenHeader } from '@/components/auth/auth-screen-header';
+import { InlineFormError } from '@/components/screen/inline-form-error';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function ResetPasswordScreen() {
@@ -40,10 +41,7 @@ export default function ResetPasswordScreen() {
 
   return (
     <AuthScreen>
-      <View style={styles.header}>
-        <Text style={styles.title}>Set new password</Text>
-        <Text style={styles.subtitle}>Choose a password for your account.</Text>
-      </View>
+      <AuthScreenHeader title="Set new password" subtitle="Choose a password for your account." />
 
       <AuthField
         label="New password"
@@ -66,27 +64,7 @@ export default function ResetPasswordScreen() {
 
       <AuthButton title="Update password" onPress={onSubmit} loading={busy} disabled={busy} />
 
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {error ? <InlineFormError>{error}</InlineFormError> : null}
     </AuthScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    gap: authSpacing.xs,
-    marginBottom: authSpacing.sm,
-  },
-  title: {
-    ...authTypography.title,
-    color: authColors.text,
-  },
-  subtitle: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
-  },
-  error: {
-    ...authTypography.body,
-    color: authColors.text,
-    marginTop: authSpacing.sm,
-  },
-});

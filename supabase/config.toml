@@ -1,0 +1,8 @@
+# Supabase CLI: https://supabase.com/docs/guides/cli
+# Link this folder to your project: `supabase link --project-ref <ref>`
+# Deploy function: `supabase functions deploy delete-account`
+
+project_id = "near_nature"
+
+[functions.delete-account]
+verify_jwt = true

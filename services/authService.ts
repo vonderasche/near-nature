@@ -28,6 +28,15 @@ export async function signOut() {
   if (error) throw error;
 }
 
+/**
+ * Clears the local session without revoking refresh tokens on the server.
+ * Use after the auth user was removed server-side (e.g. delete-account Edge Function),
+ * where a global sign-out can fail with "session missing".
+ */
+export async function signOutLocalOnly(): Promise<void> {
+  await supabase.auth.signOut({ scope: 'local' });
+}
+
 export async function sendPasswordReset(email: string) {
   const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
     redirectTo: getPasswordRecoveryRedirectUrl(),

@@ -1,14 +1,15 @@
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Link, router } from 'expo-router';
+import { Alert } from 'react-native';
+import { router } from 'expo-router';
 import type { AuthSessionResult } from 'expo-auth-session';
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { AuthDivider } from '@/components/auth/auth-divider';
 import { AuthField } from '@/components/auth/auth-field';
+import { AuthLinkRow } from '@/components/auth/auth-link-row';
 import { AuthScreen } from '@/components/auth/auth-screen';
+import { AuthScreenHeader } from '@/components/auth/auth-screen-header';
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import { signUpWithEmail } from '@/lib/auth/email-auth';
 import { signInWithGoogleAuthResult } from '@/lib/auth/google-supabase';
 
@@ -74,10 +75,7 @@ export default function SignUpScreen() {
 
   return (
     <AuthScreen>
-      <View style={styles.header}>
-        <Text style={styles.title}>Create account</Text>
-        <Text style={styles.subtitle}>Email and password, or Google.</Text>
-      </View>
+      <AuthScreenHeader title="Create account" subtitle="Email and password, or Google." />
 
       <AuthField
         label="Email"
@@ -136,45 +134,7 @@ export default function SignUpScreen() {
 
       <GoogleSignInButton onSuccess={onGoogleSuccess} />
 
-      <View style={styles.footer}>
-        <Text style={styles.footerPrompt}>Already have an account?</Text>
-        <Link href="/login" asChild>
-          <Pressable accessibilityRole="link">
-            <Text style={styles.link}>Log in</Text>
-          </Pressable>
-        </Link>
-      </View>
+      <AuthLinkRow prompt="Already have an account?" href="/login" linkText="Log in" />
     </AuthScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    gap: authSpacing.xs,
-    marginBottom: authSpacing.sm,
-  },
-  title: {
-    ...authTypography.title,
-    color: authColors.text,
-  },
-  subtitle: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
-  },
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: authSpacing.xs,
-    marginTop: authSpacing.md,
-  },
-  footerPrompt: {
-    ...authTypography.body,
-    color: authColors.textMuted,
-  },
-  link: {
-    ...authTypography.link,
-    color: authColors.text,
-    textDecorationLine: 'underline',
-  },
-});

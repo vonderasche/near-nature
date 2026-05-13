@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuthContext } from '@/context/AuthContext';
-import { signOut } from '@/services/authService';
-import { deleteUser, getUser, updateUser, type UpdateUserPayload, type User } from '@/services/userService';
+import { signOutLocalOnly } from '@/services/authService';
+import { deleteAccount, getUser, updateUser, type UpdateUserPayload, type User } from '@/services/userService';
+
+export type RemoveUserResult = { ok: true } | { ok: false; message: string };
 
 type UseUserReturn = {
   user: User | null;
   loading: boolean;
+  deleting: boolean;
   error: string | null;
   update: (payload: UpdateUserPayload) => Promise<void>;
-  remove: () => Promise<void>;
+  remove: () => Promise<RemoveUserResult>;
   refresh: () => Promise<void>;
 };
 
@@ -16,6 +19,7 @@ export function useUser(): UseUserReturn {
   const { userId } = useAuthContext();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchUser = useCallback(async () => {
@@ -57,17 +61,25 @@ export function useUser(): UseUserReturn {
     }
   }, [user]);
 
-  const remove = useCallback(async () => {
-    if (!user) return;
+  const remove = useCallback(async (): Promise<RemoveUserResult> => {
+    if (!user) {
+      return { ok: false, message: 'No profile loaded.' };
+    }
+    setDeleting(true);
     setError(null);
     try {
-      await deleteUser(user.id);
-      await signOut();
+      await deleteAccount();
       setUser(null);
+      await signOutLocalOnly();
+      return { ok: true };
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to delete user');
+      const message = err instanceof Error ? err.message : 'Failed to delete user';
+      setError(message);
+      return { ok: false, message };
+    } finally {
+      setDeleting(false);
     }
   }, [user]);
 
-  return { user, loading, error, update, remove, refresh: fetchUser };
+  return { user, loading, deleting, error, update, remove, refresh: fetchUser };
 }

@@ -4,6 +4,8 @@ import { useCallback } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { MessageWithAction } from '@/components/screen/message-with-action';
+import { ScreenCenter } from '@/components/screen/screen-center';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import { useCameraScreen } from '@/hooks/useCameraScreen';
 
@@ -26,22 +28,22 @@ export default function CameraScreen() {
 
   if (isPermissionPending) {
     return (
-      <View style={[styles.centered, { paddingBottom: insets.bottom }]}>
-        <ActivityIndicator size="large" />
+      <View style={[styles.fill, { paddingBottom: insets.bottom }]}>
+        <ScreenCenter>
+          <ActivityIndicator size="large" color={authColors.text} />
+        </ScreenCenter>
       </View>
     );
   }
 
   if (!isPermissionGranted) {
     return (
-      <View style={[styles.centered, styles.pad, { paddingBottom: insets.bottom }]}>
-        <Text style={styles.message}>Camera access is needed to use this screen.</Text>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => requestPermission()}
-          style={styles.permissionBtn}>
-          <Text style={styles.permissionBtnText}>Allow camera</Text>
-        </Pressable>
+      <View style={[styles.fill, { paddingBottom: insets.bottom }]}>
+        <MessageWithAction
+          message="Camera access is needed to use this screen."
+          actionLabel="Allow camera"
+          onAction={() => requestPermission()}
+        />
       </View>
     );
   }
@@ -67,35 +69,12 @@ export default function CameraScreen() {
 }
 
 const styles = StyleSheet.create({
+  fill: {
+    flex: 1,
+  },
   root: {
     flex: 1,
     backgroundColor: '#000',
-  },
-  centered: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: authColors.background,
-  },
-  pad: {
-    paddingHorizontal: authSpacing.lg,
-  },
-  message: {
-    ...authTypography.body,
-    color: authColors.text,
-    textAlign: 'center',
-    marginBottom: authSpacing.md,
-  },
-  permissionBtn: {
-    borderWidth: 1,
-    borderColor: authColors.border,
-    paddingVertical: authSpacing.sm,
-    paddingHorizontal: authSpacing.lg,
-  },
-  permissionBtnText: {
-    ...authTypography.body,
-    fontWeight: '600',
-    color: authColors.text,
   },
   toolbar: {
     position: 'absolute',
