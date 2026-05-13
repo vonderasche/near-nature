@@ -6,7 +6,7 @@ import { useCallback, useState } from 'react';
 
 import { identifySpeciesInImage } from '@/api/claude';
 import { lookupNativeStatus } from '@/api/inaturalist';
-import * as BlueDetection from '@/utils/blueDetection';
+import { checkImageBlur } from '@/utils/blurDetections';
 import { filterClassifications, hasNoSpeciesFound } from '@/utils/imageFilters';
 import type { Species } from '@/types';
 
@@ -29,8 +29,7 @@ export function useSpeciesIdentification(): UseSpeciesIdentificationResult {
 
     try {
       // 1) Quick quality gate: skip API call if image is likely too blurry.
-      const blurResult = (BlueDetection as { checkImageBlur?: (uri: string) => Promise<{ isBlurry: boolean }> });
-      const maybe = blurResult.checkImageBlur ? await blurResult.checkImageBlur(photoUri) : { isBlurry: false };
+      const maybe = await checkImageBlur(photoUri);
       if (maybe.isBlurry) {
         setError('Photo appears blurry. Please retake a sharper image.');
         return [];

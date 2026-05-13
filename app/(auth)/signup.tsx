@@ -14,6 +14,9 @@ import { signInWithGoogleAuthResult } from '@/lib/auth/google-supabase';
 
 export default function SignUpScreen() {
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [busy, setBusy] = useState(false);
@@ -29,7 +32,11 @@ export default function SignUpScreen() {
     }
     setBusy(true);
     try {
-      const result = await signUpWithEmail(email, password);
+      const result = await signUpWithEmail(email, password, {
+        username,
+        first_name: firstName,
+        last_name: lastName,
+      });
       if (!result.ok) {
         Alert.alert('Sign up', result.message);
         return;
@@ -80,6 +87,29 @@ export default function SignUpScreen() {
         keyboardType="email-address"
         autoComplete="email"
         textContentType="emailAddress"
+      />
+      <AuthField
+        label="Username"
+        value={username}
+        onChangeText={setUsername}
+        placeholder="Unique handle"
+        autoComplete="off"
+      />
+      <AuthField
+        label="First name"
+        value={firstName}
+        onChangeText={setFirstName}
+        placeholder="Given name"
+        autoCapitalize="words"
+        autoComplete="off"
+      />
+      <AuthField
+        label="Last name"
+        value={lastName}
+        onChangeText={setLastName}
+        placeholder="Family name"
+        autoCapitalize="words"
+        autoComplete="off"
       />
       <AuthField
         label="Password"

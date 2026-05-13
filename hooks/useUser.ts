@@ -21,6 +21,7 @@ export function useUser(): UseUserReturn {
   const fetchUser = useCallback(async () => {
     if (!userId) {
       setUser(null);
+      setError(null);
       setLoading(false);
       return;
     }
@@ -29,7 +30,11 @@ export function useUser(): UseUserReturn {
     try {
       const profile = await getUser(userId);
       setUser(profile);
+      if (!profile) {
+        setError('No profile row found. Try signing out and back in, or check your database trigger.');
+      }
     } catch (err: unknown) {
+      setUser(null);
       setError(err instanceof Error ? err.message : 'Failed to fetch user');
     } finally {
       setLoading(false);

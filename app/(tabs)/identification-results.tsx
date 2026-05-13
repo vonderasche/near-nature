@@ -19,7 +19,7 @@ import { useIdentifications } from '@/hooks/useIdentifications';
 import { useSpeciesIdentification } from '@/hooks/useSpeciesIdentification';
 import type { Species } from '@/types';
 
-const DEFAULT_USER_STATE = process.env.EXPO_PUBLIC_USER_STATE ?? 'CA';
+const DEFAULT_USER_STATE = process.env.EXPO_PUBLIC_USER_STATE ?? 'FL';
 
 function paramToString(v: string | string[] | undefined): string | undefined {
   if (typeof v === 'string') return v;

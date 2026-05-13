@@ -39,7 +39,17 @@ export async function signInWithEmail(email: string, password: string): Promise<
   return { ok: true };
 }
 
-export async function signUpWithEmail(email: string, password: string): Promise<EmailAuthResult> {
+export type SignUpProfile = {
+  username: string;
+  first_name: string;
+  last_name: string;
+};
+
+export async function signUpWithEmail(
+  email: string,
+  password: string,
+  profile: SignUpProfile
+): Promise<EmailAuthResult> {
   const e = email.trim();
   if (!e || !password) {
     return { ok: false, message: 'Email and password are required.' };
@@ -51,7 +61,27 @@ export async function signUpWithEmail(email: string, password: string): Promise<
     return { ok: false, message: 'Password must be at least 8 characters.' };
   }
 
-  const { data, error } = await supabase.auth.signUp({ email: e, password });
+  const username = profile.username.trim();
+  const first_name = profile.first_name.trim();
+  const last_name = profile.last_name.trim();
+  if (!username) {
+    return { ok: false, message: 'Username is required.' };
+  }
+  if (!first_name || !last_name) {
+    return { ok: false, message: 'First and last name are required.' };
+  }
+
+  const { data, error } = await supabase.auth.signUp({
+    email: e,
+    password,
+    options: {
+      data: {
+        username,
+        first_name,
+        last_name,
+      },
+    },
+  });
   if (error) {
     return { ok: false, message: mapAuthMessage(error.message) };
   }
