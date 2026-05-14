@@ -1,7 +1,7 @@
 // React hook that orchestrates identification flow:
 // photo -> optional blur gate -> Claude -> result filters -> iNaturalist -> Species[]
 
-import { deleteAsync, EncodingType, readAsStringAsync } from 'expo-file-system/legacy';
+import { deleteAsync, readLocalFileAsBase64 } from '@/lib/fs/legacyFileSystem';
 import { useCallback, useState } from 'react';
 
 import { identifySpeciesInImage } from '@/api/claude';
@@ -50,9 +50,7 @@ export function useSpeciesIdentification(): UseSpeciesIdentificationResult {
       resizedUri = resized.uri;
 
       // 3) Convert prepared file to base64 for the vision API.
-      const base64 = await readAsStringAsync(resizedUri, {
-        encoding: EncodingType.Base64,
-      });
+      const base64 = await readLocalFileAsBase64(resizedUri);
 
       // 4) Ask Claude for species classifications.
       const rawClassifications = await identifySpeciesInImage(base64, 'image/jpeg');

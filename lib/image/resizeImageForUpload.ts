@@ -1,4 +1,4 @@
-import { deleteAsync, getInfoAsync } from 'expo-file-system/legacy';
+import { deleteAsync, getInfoAsync } from '@/lib/fs/legacyFileSystem';
 import { manipulateAsync, SaveFormat, type ImageResult } from 'expo-image-manipulator';
 
 export type ResizeImageForUploadOptions = {

@@ -18,10 +18,10 @@
 //   fine anyway.
 //
 // DEPENDENCIES:
-//   npx expo install expo-file-system expo-image-manipulator
+//   Local file access via `@/lib/fs/legacyFileSystem`; `expo-image-manipulator`
 // ─────────────────────────────────────────────────────────────
 
-import * as FileSystem from 'expo-file-system/legacy';
+import { getInfoAsync } from '@/lib/fs/legacyFileSystem';
 import * as ImageManipulator from 'expo-image-manipulator';
 
 // ── Config ────────────────────────────────────────────────────
@@ -59,7 +59,7 @@ export interface BlurCheckResult {
 export async function checkImageBlur(photoUri: string): Promise<BlurCheckResult> {
 
   // ── Step 1: Get file size ─────────────────────────────────
-  const fileInfo = await FileSystem.getInfoAsync(photoUri);
+  const fileInfo = await getInfoAsync(photoUri);
 
   if (!fileInfo.exists) {
     throw new Error(`Image file not found: ${photoUri}`);

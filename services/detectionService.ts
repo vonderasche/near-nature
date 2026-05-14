@@ -1,6 +1,6 @@
 import { decode } from 'base64-arraybuffer';
 import { randomUUID } from 'expo-crypto';
-import { EncodingType, readAsStringAsync } from 'expo-file-system/legacy';
+import { readLocalFileAsBase64 } from '@/lib/fs/legacyFileSystem';
 
 import { lookupNativeStatus } from '@/api/inaturalist';
 import { classificationToSpeciesCategory } from '@/lib/detections/mapSpeciesCategory';
@@ -45,7 +45,7 @@ export async function saveDetection(input: SaveDetectionInput): Promise<void> {
   const objectPath = `${userId}/${randomUUID()}.${ext}`;
 
   // Do not use `fetch(localUri)` for camera files — on Android it often throws "Network request failed".
-  const base64 = await readAsStringAsync(localImageUri, { encoding: EncodingType.Base64 });
+  const base64 = await readLocalFileAsBase64(localImageUri);
   const bytes = decode(base64);
 
   const { error: uploadError } = await supabase.storage.from(BUCKET).upload(objectPath, bytes, {

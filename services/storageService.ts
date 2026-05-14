@@ -1,5 +1,5 @@
 import { decode } from 'base64-arraybuffer';
-import { EncodingType, readAsStringAsync } from 'expo-file-system/legacy';
+import { readLocalFileAsBase64 } from '@/lib/fs/legacyFileSystem';
 import { supabase } from '../lib/supabase';
 
 // Upload a photo to Supabase Storage, returns the public URL
@@ -8,9 +8,7 @@ export async function uploadDetectionImage(
   photoUri: string
 ): Promise<string> {
   // Read the file as base64
-  const base64 = await readAsStringAsync(photoUri, {
-    encoding: EncodingType.Base64,
-  });
+  const base64 = await readLocalFileAsBase64(photoUri);
 
   const filename  = `${Date.now()}.jpg`;
   const filepath  = `${userId}/${filename}`;
