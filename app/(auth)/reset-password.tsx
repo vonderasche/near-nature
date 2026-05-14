@@ -8,6 +8,7 @@ import { AuthScreen } from '@/components/auth/auth-screen';
 import { AuthScreenHeader } from '@/components/auth/auth-screen-header';
 import { InlineFormError } from '@/components/screen/inline-form-error';
 import { useAuth } from '@/hooks/useAuth';
+import { routes } from '@/lib/routing/routes';
 
 export default function ResetPasswordScreen() {
   const [password, setPassword] = useState('');
@@ -30,7 +31,7 @@ export default function ResetPasswordScreen() {
       await resetPassword(password);
       clearPasswordRecovery();
       Alert.alert('Password updated', 'You can continue using the app.', [
-        { text: 'OK', onPress: () => router.replace('/(tabs)') },
+        { text: 'OK', onPress: () => router.replace(routes.tabs) },
       ]);
     } catch (err: unknown) {
       Alert.alert('Reset password', err instanceof Error ? err.message : 'Something went wrong.');

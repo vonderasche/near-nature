@@ -19,6 +19,7 @@ import { useIdentificationResultsState } from '@/hooks/useIdentificationResultsS
 import { useIdentifications } from '@/hooks/useIdentifications';
 import { useSaveDetection } from '@/hooks/useSaveDetection';
 import { useSpeciesIdentification } from '@/hooks/useSpeciesIdentification';
+import { routes } from '@/lib/routing/routes';
 
 export default function IdentificationResultsScreen() {
   const insets = useSafeAreaInsets();
@@ -38,7 +39,7 @@ export default function IdentificationResultsScreen() {
     useIdentificationResultsState(photoUri, userState, identify, refetch);
 
   const goToCamera = useCallback(() => {
-    router.replace('/camera');
+    router.replace(routes.camera);
   }, []);
 
   const handleSaveIdentification = useCallback(async () => {

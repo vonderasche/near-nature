@@ -14,6 +14,7 @@ import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
 import { authSpacing } from '@/constants/auth-theme';
 import { signInWithEmail } from '@/lib/auth/email-auth';
 import { signInWithGoogleAuthResult } from '@/lib/auth/google-supabase';
+import { routes } from '@/lib/routing/routes';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -21,7 +22,7 @@ export default function LoginScreen() {
   const [busy, setBusy] = useState(false);
 
   const goToApp = useCallback(() => {
-    router.replace('/(tabs)');
+    router.replace(routes.tabs);
   }, []);
 
   async function onSubmit() {
@@ -80,7 +81,7 @@ export default function LoginScreen() {
 
       <AuthButton title="Sign in" onPress={onSubmit} loading={busy} disabled={busy} />
 
-      <AuthTextLink href="/forgot-password" variant="muted" style={{ marginTop: authSpacing.sm }}>
+      <AuthTextLink href={routes.forgotPassword} variant="muted" style={{ marginTop: authSpacing.sm }}>
         Forgot password?
       </AuthTextLink>
 
@@ -88,7 +89,7 @@ export default function LoginScreen() {
 
       <GoogleSignInButton onSuccess={onGoogleSuccess} />
 
-      <AuthLinkRow prompt="No account?" href="/signup" linkText="Create one" />
+      <AuthLinkRow prompt="No account?" href={routes.signup} linkText="Create one" />
     </AuthScreen>
   );
 }

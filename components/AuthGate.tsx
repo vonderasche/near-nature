@@ -3,6 +3,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useRouter, useSegments } from 'expo-router';
 
 import { useAuthContext } from '@/context/AuthContext';
+import { routes } from '@/lib/routing/routes';
 
 /**
  * Redirects based on auth: signed-out users cannot access (tabs); signed-in users
@@ -22,19 +23,19 @@ export function AuthGate({ children }: { children: ReactNode }) {
     const onResetPassword = segs.includes('reset-password');
 
     if (isPasswordRecovery && isAuthenticated && !onResetPassword) {
-      router.replace('/reset-password');
+      router.replace(routes.resetPassword);
       return;
     }
 
     if (!isAuthenticated) {
       if (inTabs) {
-        router.replace('/login');
+        router.replace(routes.login);
       }
       return;
     }
 
     if (isAuthenticated && inAuth && !onResetPassword) {
-      router.replace('/(tabs)');
+      router.replace(routes.tabs);
     }
   }, [isAuthenticated, isLoading, isPasswordRecovery, segments, router]);
 

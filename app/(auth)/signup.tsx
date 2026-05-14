@@ -12,6 +12,7 @@ import { AuthScreenHeader } from '@/components/auth/auth-screen-header';
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
 import { signUpWithEmail } from '@/lib/auth/email-auth';
 import { signInWithGoogleAuthResult } from '@/lib/auth/google-supabase';
+import { routes } from '@/lib/routing/routes';
 
 export default function SignUpScreen() {
   const [email, setEmail] = useState('');
@@ -23,7 +24,7 @@ export default function SignUpScreen() {
   const [busy, setBusy] = useState(false);
 
   const goToApp = useCallback(() => {
-    router.replace('/(tabs)');
+    router.replace(routes.tabs);
   }, []);
 
   async function onSubmit() {
@@ -46,7 +47,7 @@ export default function SignUpScreen() {
         Alert.alert(
           'Check your email',
           'We sent you a confirmation link. After you confirm, you can log in.',
-          [{ text: 'OK', onPress: () => router.replace('/login') }]
+          [{ text: 'OK', onPress: () => router.replace(routes.login) }]
         );
         return;
       }
@@ -134,7 +135,7 @@ export default function SignUpScreen() {
 
       <GoogleSignInButton onSuccess={onGoogleSuccess} />
 
-      <AuthLinkRow prompt="Already have an account?" href="/login" linkText="Log in" />
+      <AuthLinkRow prompt="Already have an account?" href={routes.login} linkText="Log in" />
     </AuthScreen>
   );
 }

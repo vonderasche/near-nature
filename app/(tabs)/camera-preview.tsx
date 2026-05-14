@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PhotoReviewActions } from '@/components/camera/photo-review-actions';
 import { MessageWithAction } from '@/components/screen/message-with-action';
 import { authSpacing } from '@/constants/auth-theme';
+import { identificationResultsWithPhoto, routes } from '@/lib/routing/routes';
 import { normalizePhotoUri, paramToString } from '@/lib/routing/searchParams';
 
 export default function CameraPreviewScreen() {
@@ -18,15 +19,12 @@ export default function CameraPreviewScreen() {
       router.back();
       return;
     }
-    router.replace('/camera');
+    router.replace(routes.camera);
   }
 
   function goToIdentification() {
     if (!photoUri) return;
-    router.push({
-      pathname: '/(tabs)/identification-results',
-      params: { uri: photoUri },
-    });
+    router.push(identificationResultsWithPhoto(photoUri));
   }
 
   if (!photoUri) {

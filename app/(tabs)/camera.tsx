@@ -8,11 +8,12 @@ import { MessageWithAction } from '@/components/screen/message-with-action';
 import { ScreenCenter } from '@/components/screen/screen-center';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import { useCameraScreen } from '@/hooks/useCameraScreen';
+import { cameraPreviewWithPhoto } from '@/lib/routing/routes';
 
 export default function CameraScreen() {
   const insets = useSafeAreaInsets();
   const onPhotoCaptured = useCallback((uri: string) => {
-    router.push({ pathname: '/(tabs)/camera-preview', params: { uri } });
+    router.push(cameraPreviewWithPhoto(uri));
   }, []);
 
   const {

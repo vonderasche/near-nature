@@ -8,6 +8,7 @@ import { AuthScreen } from '@/components/auth/auth-screen';
 import { AuthScreenHeader } from '@/components/auth/auth-screen-header';
 import { InlineFormError } from '@/components/screen/inline-form-error';
 import { useAuth } from '@/hooks/useAuth';
+import { routes } from '@/lib/routing/routes';
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
@@ -53,7 +54,7 @@ export default function ForgotPasswordScreen() {
 
       {error ? <InlineFormError>{error}</InlineFormError> : null}
 
-      <AuthLinkRow href="/login" linkText="Back to log in" />
+      <AuthLinkRow href={routes.login} linkText="Back to log in" />
     </AuthScreen>
   );
 }
