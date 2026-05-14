@@ -1,7 +1,7 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Image } from 'expo-image';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { ThemedConfirmModal, ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
@@ -44,6 +44,7 @@ export function DetectionGalleryDetailModal({
   onRequestDelete,
   deleteBusy = false,
 }: DetectionGalleryDetailModalProps) {
+  const { height: windowHeight } = useWindowDimensions();
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
@@ -81,22 +82,26 @@ export function DetectionGalleryDetailModal({
     setDeleteConfirmOpen(true);
   }
 
+  /** Numeric cap so ScrollView gets a real max height (percent-only layouts clip text on Android). */
+  const sheetMaxHeight = Math.round(windowHeight * 0.92);
+  const scrollMaxHeight = Math.max(280, sheetMaxHeight - authSpacing.md * 2);
+
   return (
     <>
       {showMain && galleryItem ? (
         <Modal animationType="fade" transparent visible={visible} onRequestClose={onClose}>
           <View style={styles.root} pointerEvents="box-none">
             <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Dismiss" />
-            <View style={styles.sheet} accessibilityViewIsModal>
+            <View style={[styles.sheet, { maxHeight: sheetMaxHeight }]} accessibilityViewIsModal>
               <ScrollView
-                style={styles.scroll}
+                style={[styles.scroll, { maxHeight: scrollMaxHeight }]}
                 contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
+                showsVerticalScrollIndicator
                 keyboardShouldPersistTaps="handled">
                 <View style={styles.imageFrame}>
                   <Image
                     source={{ uri: galleryItem.displayUrl }}
-                    style={StyleSheet.absoluteFillObject}
+                    style={styles.imageFill}
                     contentFit="contain"
                     transition={200}
                     accessibilityLabel={`Photo of ${galleryItem.commonName}`}
@@ -105,30 +110,30 @@ export function DetectionGalleryDetailModal({
 
                 <Text style={styles.commonName}>{galleryItem.commonName}</Text>
                 <Text style={styles.latinName}>{galleryItem.latinName}</Text>
-                <Text style={styles.meta}>Saved {formatDetectedAt(galleryItem.detectedAt)}</Text>
-              </ScrollView>
+                <Text style={styles.meta}>{`Saved ${formatDetectedAt(galleryItem.detectedAt)}`}</Text>
 
-              <View style={styles.actions}>
-                {deletable && onRequestDelete ? (
-                  <Pressable
-                    onPress={handleDeletePress}
-                    disabled={deleteBusy || deleteConfirmOpen}
-                    style={({ pressed }) => [
-                      styles.deleteRow,
-                      (deleteBusy || deleteConfirmOpen || pressed) && styles.deleteRowPressed,
-                    ]}
-                    accessibilityRole="button"
-                    accessibilityLabel="Delete photo from gallery">
-                    {deleteBusy ? (
-                      <ActivityIndicator color={authColors.text} />
-                    ) : (
-                      <MaterialIcons name="delete-outline" size={22} color={authColors.text} />
-                    )}
-                    <Text style={styles.deleteLabel}>Delete from gallery</Text>
-                  </Pressable>
-                ) : null}
-                <AuthButton title="Close" variant="outline" onPress={onClose} disabled={deleteBusy} />
-              </View>
+                <View style={styles.actions}>
+                  {deletable && onRequestDelete ? (
+                    <Pressable
+                      onPress={handleDeletePress}
+                      disabled={deleteBusy || deleteConfirmOpen}
+                      style={({ pressed }) => [
+                        styles.deleteRow,
+                        (deleteBusy || deleteConfirmOpen || pressed) && styles.deleteRowPressed,
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityLabel="Delete photo from gallery">
+                      {deleteBusy ? (
+                        <ActivityIndicator color={authColors.text} />
+                      ) : (
+                        <MaterialIcons name="delete-outline" size={22} color={authColors.text} />
+                      )}
+                      <Text style={styles.deleteLabel}>Delete from gallery</Text>
+                    </Pressable>
+                  ) : null}
+                  <AuthButton title="Close" variant="outline" onPress={onClose} disabled={deleteBusy} />
+                </View>
+              </ScrollView>
             </View>
           </View>
         </Modal>
@@ -180,11 +185,11 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   scroll: {
-    maxHeight: '72%',
+    flexGrow: 0,
   },
   scrollContent: {
-    gap: authSpacing.sm,
-    paddingBottom: authSpacing.xs,
+    gap: authSpacing.md,
+    paddingBottom: authSpacing.md,
   },
   imageFrame: {
     width: '100%',
@@ -195,19 +200,29 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: authColors.border,
   },
+  imageFill: {
+    width: '100%',
+    height: '100%',
+  },
   commonName: {
     ...authTypography.title,
     fontSize: 22,
+    lineHeight: 30,
     color: authColors.text,
+    textAlign: 'center',
   },
   latinName: {
     ...authTypography.subtitle,
+    lineHeight: 22,
     color: authColors.textMuted,
     fontStyle: 'italic',
+    textAlign: 'center',
   },
   meta: {
     ...authTypography.subtitle,
+    lineHeight: 22,
     color: authColors.textMuted,
+    textAlign: 'center',
   },
   actions: {
     gap: authSpacing.sm,
