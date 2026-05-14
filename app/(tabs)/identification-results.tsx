@@ -1,38 +1,28 @@
-import { Image } from 'expo-image';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
+import { useCallback } from 'react';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import type { SpeciesWikiData } from '@/api/wikipedia';
-import { fetchSpeciesWikiData } from '@/api/wikipedia';
 import { AuthButton } from '@/components/auth/auth-button';
+import { IdentificationHistorySection } from '@/components/identification/identification-history-section';
+import { IdentificationPhotoSection } from '@/components/identification/identification-photo-section';
+import { IdentificationSpeciesResultsList } from '@/components/identification/identification-species-results-list';
 import { UploadToDatabaseButton } from '@/components/identification/upload-to-database-button';
-import { SpeciesResultCard } from '@/components/identification/species-result-card';
 import { InlineFormError } from '@/components/screen/inline-form-error';
 import { LoadingHintRow } from '@/components/screen/loading-hint-row';
 import { MessageWithAction } from '@/components/screen/message-with-action';
 import { ScreenHeading } from '@/components/screen/screen-heading';
-import { SectionLabel } from '@/components/screen/section-label';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import { useAuthContext } from '@/context/AuthContext';
+import { useIdentificationRouteParams } from '@/hooks/useIdentificationRouteParams';
+import { useIdentificationResultsState } from '@/hooks/useIdentificationResultsState';
 import { useIdentifications } from '@/hooks/useIdentifications';
 import { useSaveDetection } from '@/hooks/useSaveDetection';
 import { useSpeciesIdentification } from '@/hooks/useSpeciesIdentification';
-import { devLog } from '@/lib/devLog';
-import { normalizePhotoUri, paramToString } from '@/lib/routing/searchParams';
-import type { ClassificationResult, Species } from '@/types';
-
-const DEFAULT_USER_STATE = process.env.EXPO_PUBLIC_USER_STATE ?? 'FL';
 
 export default function IdentificationResultsScreen() {
   const insets = useSafeAreaInsets();
-  const { uri, userState: userStateParam } = useLocalSearchParams<{
-    uri?: string | string[];
-    userState?: string | string[];
-  }>();
-  const photoUri = normalizePhotoUri(paramToString(uri));
-  const userState = paramToString(userStateParam) ?? DEFAULT_USER_STATE;
+  const { photoUri, userState } = useIdentificationRouteParams();
 
   const { userId } = useAuthContext();
   const { identify, isLoading: identifying, error: identifyError } = useSpeciesIdentification();
@@ -44,70 +34,8 @@ export default function IdentificationResultsScreen() {
   } = useIdentifications({ userId: userId ?? undefined });
   const { save, saving, saveError, clearSaveError } = useSaveDetection();
 
-  /** Latest history refetch without listing it on the identify effect (avoids re-running vision when `userId` loads). */
-  const refetchIdentificationsRef = useRef(refetch);
-  refetchIdentificationsRef.current = refetch;
-
-  const [species, setSpecies] = useState<Species[]>([]);
-  const [classifications, setClassifications] = useState<ClassificationResult[]>([]);
-  const [wikiByLatinName, setWikiByLatinName] = useState<Record<string, SpeciesWikiData | null>>({});
-  const [wikiError, setWikiError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!photoUri) return;
-    let cancelled = false;
-    (async () => {
-      const results = await identify(photoUri, userState);
-      if (!cancelled) {
-        setSpecies(results.species);
-        setClassifications(results.classifications);
-        refetchIdentificationsRef.current();
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [photoUri, userState, identify]);
-
-  useEffect(() => {
-    if (species.length === 0) return;
-    let cancelled = false;
-
-    (async () => {
-      devLog('[results] wiki fetch begin', species.map((s) => s.latinName));
-      const toFetch = species
-        .slice(0, 3)
-        .map((s) => ({ latinName: s.latinName, commonName: s.commonName }))
-        .filter((s) => Boolean(s.latinName));
-      const entries = await Promise.all(
-        toFetch.map(async ({ latinName, commonName }) => {
-          try {
-            const data =
-              (await fetchSpeciesWikiData(latinName)) ??
-              (commonName ? await fetchSpeciesWikiData(commonName) : null);
-            devLog('[results] wiki item', { latinName, commonName, hasData: Boolean(data) });
-            return [latinName, data] as const;
-          } catch (e: unknown) {
-            devLog('[results] wiki item error', { latinName, error: e });
-            setWikiError(e instanceof Error ? e.message : 'Wikipedia request failed.');
-            return [latinName, null] as const;
-          }
-        })
-      );
-
-      if (cancelled) return;
-      setWikiError(null);
-      setWikiByLatinName((prev) => {
-        const next = { ...prev };
-        for (const [latinName, data] of entries) next[latinName] = data;
-        return next;
-      });
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [species]);
+  const { species, classifications, wikiByLatinName, wikiError, refreshHistory } =
+    useIdentificationResultsState(photoUri, userState, identify, refetch);
 
   const goToCamera = useCallback(() => {
     router.replace('/camera');
@@ -128,7 +56,7 @@ export default function IdentificationResultsScreen() {
     });
     if (result.ok) {
       Alert.alert('Saved', 'This identification was saved to your history.');
-      refetchIdentificationsRef.current();
+      refreshHistory();
     }
   }, [
     photoUri,
@@ -139,6 +67,7 @@ export default function IdentificationResultsScreen() {
     userState,
     save,
     clearSaveError,
+    refreshHistory,
   ]);
 
   if (!photoUri) {
@@ -169,14 +98,7 @@ export default function IdentificationResultsScreen() {
       {wikiError ? <InlineFormError>{wikiError}</InlineFormError> : null}
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-        <SectionLabel label="This photo" />
-        <View style={styles.photoFrame}>
-          <Image
-            source={{ uri: photoUri }}
-            style={StyleSheet.absoluteFillObject}
-            contentFit="contain"
-          />
-        </View>
+        <IdentificationPhotoSection photoUri={photoUri} />
 
         {species.length > 0 && !identifying ? (
           <View style={styles.saveRow}>
@@ -191,54 +113,14 @@ export default function IdentificationResultsScreen() {
           </View>
         ) : null}
 
-        {!identifying && species.length === 0 && !identifyError ? (
-          <Text style={styles.muted}>No species returned.</Text>
-        ) : null}
+        <IdentificationSpeciesResultsList
+          species={species}
+          identifying={identifying}
+          identifyError={identifyError}
+          wikiByLatinName={wikiByLatinName}
+        />
 
-        {species.map((s) => (
-          <SpeciesResultCard
-            key={s.id}
-            commonName={s.commonName}
-            latinName={s.latinName}
-            meta={`${s.taxonGroup} · ${s.status}`}>
-            {Object.prototype.hasOwnProperty.call(wikiByLatinName, s.latinName) ? (
-              wikiByLatinName[s.latinName] ? (
-                <View style={styles.wikiWrap}>
-                  <Text style={styles.wikiDesc}>{wikiByLatinName[s.latinName]?.description}</Text>
-                  {wikiByLatinName[s.latinName]?.funFacts?.length ? (
-                    <View style={styles.facts}>
-                      {wikiByLatinName[s.latinName]!.funFacts.map((fact) => (
-                        <Text key={fact} style={styles.fact}>
-                          - {fact}
-                        </Text>
-                      ))}
-                    </View>
-                  ) : null}
-                </View>
-              ) : (
-                <View style={styles.wikiWrap}>
-                  <Text style={styles.wikiDesc}>No Wikipedia article found.</Text>
-                </View>
-              )
-            ) : null}
-          </SpeciesResultCard>
-        ))}
-
-        <SectionLabel label="Your identifications" spaced />
-        {historyLoading ? (
-          <ActivityIndicator color={authColors.textMuted} />
-        ) : identifications.length === 0 ? (
-          <Text style={styles.muted}>No saved identifications yet.</Text>
-        ) : (
-          identifications.map((row) => (
-            <SpeciesResultCard
-              key={row.id}
-              commonName={row.species.commonName}
-              latinName={row.species.latinName}
-              meta={new Date(row.timestamp).toLocaleString()}
-            />
-          ))
-        )}
+        <IdentificationHistorySection historyLoading={historyLoading} identifications={identifications} />
       </ScrollView>
 
       <View style={styles.footer}>
@@ -275,35 +157,6 @@ const styles = StyleSheet.create({
     ...authTypography.subtitle,
     color: authColors.textMuted,
     textAlign: 'center',
-  },
-  photoFrame: {
-    width: '100%',
-    aspectRatio: 4 / 3,
-    marginBottom: authSpacing.md,
-    borderWidth: 1,
-    borderColor: authColors.border,
-    backgroundColor: '#f5f5f5',
-    overflow: 'hidden',
-  },
-  muted: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
-    marginBottom: authSpacing.sm,
-  },
-  wikiWrap: {
-    marginTop: authSpacing.sm,
-    gap: authSpacing.xs,
-  },
-  wikiDesc: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
-  },
-  facts: {
-    gap: authSpacing.xs,
-  },
-  fact: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
   },
   footer: {
     marginTop: authSpacing.sm,
