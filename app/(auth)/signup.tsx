@@ -19,6 +19,7 @@ export default function SignUpScreen() {
   const [username, setUsername] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [motto, setMotto] = useState('I like nature.');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [busy, setBusy] = useState(false);
@@ -38,6 +39,7 @@ export default function SignUpScreen() {
         username,
         first_name: firstName,
         last_name: lastName,
+        motto,
       });
       if (!result.ok) {
         Alert.alert('Sign up', result.message);
@@ -108,6 +110,14 @@ export default function SignUpScreen() {
         onChangeText={setLastName}
         placeholder="Family name"
         autoCapitalize="words"
+        autoComplete="off"
+      />
+      <AuthField
+        label="Motto"
+        value={motto}
+        onChangeText={setMotto}
+        placeholder="A short line about you and nature"
+        autoCapitalize="sentences"
         autoComplete="off"
       />
       <AuthField

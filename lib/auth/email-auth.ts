@@ -47,6 +47,7 @@ export type SignUpProfile = {
   username: string;
   first_name: string;
   last_name: string;
+  motto: string;
 };
 
 export async function signUpWithEmail(
@@ -68,6 +69,7 @@ export async function signUpWithEmail(
   const username = profile.username.trim();
   const first_name = profile.first_name.trim();
   const last_name = profile.last_name.trim();
+  const motto = profile.motto.trim();
   if (!username) {
     return { ok: false, message: 'Username is required.' };
   }
@@ -83,6 +85,7 @@ export async function signUpWithEmail(
         username,
         first_name,
         last_name,
+        motto,
       },
     },
   });
