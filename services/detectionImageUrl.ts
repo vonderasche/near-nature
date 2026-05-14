@@ -1,6 +1,6 @@
 import { DETECTIONS_BUCKET } from '@/lib/detections/detectionsBucket';
+import { createDetectionsSignedUrl } from '@/lib/detections/detectionsStorage';
 import { devWarn } from '@/lib/devLog';
-import { supabase } from '@/lib/supabase';
 
 const SIGNED_URL_EXPIRY_SEC = 60 * 60 * 24; // 24h — refreshed on gallery refetch
 
@@ -27,14 +27,11 @@ export async function getDetectionImageDisplayUrl(storedUrl: string): Promise<st
   const path = extractDetectionsObjectPathFromStoredUrl(storedUrl);
   if (!path) return storedUrl;
 
-  const { data, error } = await supabase.storage
-    .from(DETECTIONS_BUCKET)
-    .createSignedUrl(path, SIGNED_URL_EXPIRY_SEC);
-
-  if (error || !data?.signedUrl) {
-    devWarn('[detectionImageUrl] createSignedUrl failed', error?.message ?? 'no signedUrl');
+  const res = await createDetectionsSignedUrl(path, SIGNED_URL_EXPIRY_SEC);
+  if (!res.ok) {
+    devWarn('[detectionImageUrl] createSignedUrl failed', res.message);
     return storedUrl;
   }
 
-  return data.signedUrl;
+  return res.signedUrl;
 }

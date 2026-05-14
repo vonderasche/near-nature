@@ -1,10 +1,13 @@
 import { decode } from 'base64-arraybuffer';
 import * as ImageManipulator from 'expo-image-manipulator';
 
-import { DETECTIONS_BUCKET } from '@/lib/detections/detectionsBucket';
+import {
+  getDetectionsObjectPublicUrl,
+  removeDetectionsObjects,
+  uploadDetectionsObject,
+} from '@/lib/detections/detectionsStorage';
 import { devLog } from '@/lib/devLog';
 import { readLocalFileAsBase64 } from '@/lib/fs/legacyFileSystem';
-import { supabase } from '@/lib/supabase';
 
 /** Stored under the user’s folder in `detections` (same bucket as saved identifications). */
 const PROFILE_AVATAR_OBJECT_NAME = 'profile-avatar.jpg';
@@ -24,25 +27,15 @@ export async function uploadProfileAvatarFromLibrary(userId: string, localUri: s
   const bytes = decode(base64);
   const objectPath = `${userId}/${PROFILE_AVATAR_OBJECT_NAME}`;
 
-  await supabase.storage.from(DETECTIONS_BUCKET).remove([objectPath]).catch(() => {});
+  await removeDetectionsObjects([objectPath]);
 
-  const { error: uploadError } = await supabase.storage.from(DETECTIONS_BUCKET).upload(objectPath, bytes, {
-    contentType: 'image/jpeg',
-    upsert: false,
-  });
-
-  if (uploadError) {
-    devLog('[uploadProfileAvatarFromLibrary] upload failed', uploadError.message);
-    throw new Error(
-      uploadError.message.includes('Bucket not found')
-        ? 'Storage bucket "detections" is missing. Run sql/storage_bucket_detections.sql in Supabase.'
-        : uploadError.message,
-    );
+  try {
+    await uploadDetectionsObject(objectPath, bytes, { contentType: 'image/jpeg', upsert: false });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    devLog('[uploadProfileAvatarFromLibrary] upload failed', msg);
+    throw e instanceof Error ? e : new Error(msg);
   }
 
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from(DETECTIONS_BUCKET).getPublicUrl(objectPath);
-
-  return publicUrl;
+  return getDetectionsObjectPublicUrl(objectPath);
 }

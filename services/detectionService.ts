@@ -4,6 +4,11 @@ import { readLocalFileAsBase64 } from '@/lib/fs/legacyFileSystem';
 
 import { lookupNativeStatus } from '@/api/inaturalist';
 import { DETECTIONS_BUCKET } from '@/lib/detections/detectionsBucket';
+import {
+  getDetectionsObjectPublicUrl,
+  removeDetectionsObjects,
+  uploadDetectionsObject,
+} from '@/lib/detections/detectionsStorage';
 import { classificationToSpeciesCategory } from '@/lib/detections/mapSpeciesCategory';
 import { speciesStatusToNativeColumn } from '@/lib/detections/mapNativeStatusDb';
 import { devLog } from '@/lib/devLog';
@@ -52,29 +57,21 @@ export async function saveDetection(input: SaveDetectionInput): Promise<void> {
   const base64 = await readLocalFileAsBase64(localImageUri);
   const bytes = decode(base64);
 
-  const { error: uploadError } = await supabase.storage.from(DETECTIONS_BUCKET).upload(objectPath, bytes, {
-    contentType,
-    upsert: false,
-  });
-
-  if (uploadError) {
+  try {
+    await uploadDetectionsObject(objectPath, bytes, { contentType, upsert: false });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
     devLog('[saveDetection] Image not uploaded', {
       bucket: DETECTIONS_BUCKET,
       path: objectPath,
-      error: uploadError.message,
+      error: msg,
     });
-    throw new Error(
-      uploadError.message.includes('Bucket not found')
-        ? 'Storage bucket "detections" is missing. Run sql/storage_bucket_detections.sql in Supabase.'
-        : uploadError.message
-    );
+    throw e instanceof Error ? e : new Error(msg);
   }
 
   devLog('[saveDetection] Image uploaded', { bucket: DETECTIONS_BUCKET, path: objectPath });
 
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from(DETECTIONS_BUCKET).getPublicUrl(objectPath);
+  const publicUrl = getDetectionsObjectPublicUrl(objectPath);
 
   const category = classificationToSpeciesCategory(classification);
   const nativeStatus = speciesStatusToNativeColumn(species.status as SpeciesStatus);
@@ -101,7 +98,7 @@ export async function saveDetection(input: SaveDetectionInput): Promise<void> {
   });
 
   if (insertError) {
-    await supabase.storage.from(DETECTIONS_BUCKET).remove([objectPath]).catch(() => {});
+    await removeDetectionsObjects([objectPath]);
     if (isDuplicateSpeciesTodayError(insertError.message)) {
       throw new Error(
         'You already saved this species today. Try again tomorrow or save a different identification.'
@@ -134,6 +131,6 @@ export async function deleteSavedDetection(detectionId: string): Promise<void> {
   if (deleteError) throw deleteError;
 
   if (storagePath) {
-    await supabase.storage.from(DETECTIONS_BUCKET).remove([storagePath]).catch(() => {});
+    await removeDetectionsObjects([storagePath]);
   }
 }
