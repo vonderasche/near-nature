@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -44,6 +44,10 @@ export default function IdentificationResultsScreen() {
   } = useIdentifications({ userId: userId ?? undefined });
   const { save, saving, saveError, clearSaveError } = useSaveDetection();
 
+  /** Latest history refetch without listing it on the identify effect (avoids re-running vision when `userId` loads). */
+  const refetchIdentificationsRef = useRef(refetch);
+  refetchIdentificationsRef.current = refetch;
+
   const [species, setSpecies] = useState<Species[]>([]);
   const [classifications, setClassifications] = useState<ClassificationResult[]>([]);
   const [wikiByLatinName, setWikiByLatinName] = useState<Record<string, SpeciesWikiData | null>>({});
@@ -57,13 +61,13 @@ export default function IdentificationResultsScreen() {
       if (!cancelled) {
         setSpecies(results.species);
         setClassifications(results.classifications);
-        refetch();
+        refetchIdentificationsRef.current();
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [photoUri, userState, identify, refetch]);
+  }, [photoUri, userState, identify]);
 
   useEffect(() => {
     if (species.length === 0) return;
@@ -124,7 +128,7 @@ export default function IdentificationResultsScreen() {
     });
     if (result.ok) {
       Alert.alert('Saved', 'This identification was saved to your history.');
-      refetch();
+      refetchIdentificationsRef.current();
     }
   }, [
     photoUri,
@@ -135,7 +139,6 @@ export default function IdentificationResultsScreen() {
     userState,
     save,
     clearSaveError,
-    refetch,
   ]);
 
   if (!photoUri) {
