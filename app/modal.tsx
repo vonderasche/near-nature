@@ -1,30 +1,36 @@
 import { Link } from 'expo-router';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ScreenHeading } from '@/components/screen/screen-heading';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { authColors, authSpacing } from '@/constants/auth-theme';
+import { contentInsetsPadding } from '@/lib/screen/contentInsets';
 import { routes } from '@/lib/routing/routes';
 
 export default function ModalScreen() {
+  const insets = useSafeAreaInsets();
+  const edge = contentInsetsPadding(insets);
+
   return (
-    <ThemedView style={styles.container}>
-      <ThemedText type="title">This is a modal</ThemedText>
+    <View style={[styles.root, edge, { paddingHorizontal: authSpacing.lg }]}>
+      <ScreenHeading title="This is a modal" marginBottom={authSpacing.md} />
       <Link href={routes.tabs} dismissTo style={styles.link}>
         <ThemedText type="link">Go to home screen</ThemedText>
       </Link>
-    </ThemedView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
+    backgroundColor: authColors.background,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    gap: authSpacing.md,
   },
   link: {
-    marginTop: 15,
-    paddingVertical: 15,
+    paddingVertical: authSpacing.sm,
   },
 });

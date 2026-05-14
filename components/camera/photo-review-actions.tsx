@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { authSpacing, authTypography } from '@/constants/auth-theme';
+import { screenColors } from '@/constants/screen-theme';
 
 type PhotoReviewActionsProps = {
   secondaryLabel: string;
@@ -41,24 +42,24 @@ const styles = StyleSheet.create({
   secondary: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#fff',
+    borderColor: screenColors.onDark,
     paddingVertical: authSpacing.sm,
     alignItems: 'center',
   },
   secondaryText: {
     ...authTypography.body,
     fontWeight: '600',
-    color: '#fff',
+    color: screenColors.onDark,
   },
   primary: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: screenColors.onDark,
     paddingVertical: authSpacing.sm,
     alignItems: 'center',
   },
   primaryText: {
     ...authTypography.body,
     fontWeight: '600',
-    color: '#000',
+    color: screenColors.darkBackground,
   },
 });

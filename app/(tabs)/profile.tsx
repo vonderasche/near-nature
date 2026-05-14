@@ -1,8 +1,7 @@
 import { useCallback, useState } from 'react';
-import { Alert, RefreshControl, StyleSheet, View } from 'react-native';
+import { Alert, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import { TabScreenWithLogout } from '@/components/TabScreenWithLogout';
-import { ThemedText } from '@/components/themed-text';
 import { CenteredActivityIndicator } from '@/components/profile/centered-activity-indicator';
 import { DangerActionBlock } from '@/components/profile/danger-action-block';
 import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
@@ -11,7 +10,7 @@ import { ScreenSection } from '@/components/profile/screen-section';
 import { UserAvatar } from '@/components/profile/user-avatar';
 import { UserProfileSummary } from '@/components/profile/user-profile-summary';
 import { Colors } from '@/constants/theme';
-import { authSpacing } from '@/constants/auth-theme';
+import { authSpacing, authTypography } from '@/constants/auth-theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useUserDetectionGallery } from '@/hooks/useUserDetectionGallery';
 import { useUser } from '@/hooks/useUser';
@@ -126,7 +125,7 @@ export default function ProfileScreen() {
           />
         </>
       ) : !loading && !error ? (
-        <ThemedText style={[styles.emptyHint, { color: muted }]}>Sign in to load your profile.</ThemedText>
+        <Text style={[styles.emptyHint, { color: muted }]}>Sign in to load your profile.</Text>
       ) : null}
     </TabScreenWithLogout>
   );
@@ -137,7 +136,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyHint: {
-    fontSize: 15,
+    ...authTypography.subtitle,
     textAlign: 'center',
     paddingVertical: authSpacing.sm,
   },

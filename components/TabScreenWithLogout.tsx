@@ -1,12 +1,12 @@
 import type { ComponentProps, ReactNode } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AuthButton } from '@/components/auth/auth-button';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { authSpacing } from '@/constants/auth-theme';
+import { ScreenHeading } from '@/components/screen/screen-heading';
+import { authColors, authSpacing } from '@/constants/auth-theme';
 import { useLogout } from '@/hooks/useLogout';
+import { contentInsetsPadding } from '@/lib/screen/contentInsets';
 
 type TabScreenWithLogoutProps = {
   title: string;
@@ -17,23 +17,24 @@ type TabScreenWithLogoutProps = {
 export function TabScreenWithLogout({ title, children, refreshControl }: TabScreenWithLogoutProps) {
   const { logout, busy } = useLogout();
   const insets = useSafeAreaInsets();
+  const edge = contentInsetsPadding(insets);
 
   if (children) {
     return (
-      <ThemedView style={styles.fill}>
+      <View style={styles.fill}>
         <ScrollView
           style={styles.fill}
           contentContainerStyle={[
             styles.scrollContent,
             {
-              paddingTop: insets.top + authSpacing.md,
-              paddingBottom: insets.bottom + authSpacing.lg,
-              paddingHorizontal: authSpacing.md,
+              paddingTop: edge.paddingTop,
+              paddingBottom: edge.paddingBottom + authSpacing.xl,
+              paddingHorizontal: authSpacing.lg,
             },
           ]}
           keyboardShouldPersistTaps="handled"
           refreshControl={refreshControl}>
-          <ThemedText type="title">{title}</ThemedText>
+          <ScreenHeading title={title} marginBottom={authSpacing.md} />
           {children}
           <AuthButton
             title="Log out"
@@ -43,13 +44,13 @@ export function TabScreenWithLogout({ title, children, refreshControl }: TabScre
             disabled={busy}
           />
         </ScrollView>
-      </ThemedView>
+      </View>
     );
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <ThemedText type="title">{title}</ThemedText>
+    <View style={[styles.fill, styles.centeredShell, edge, { paddingHorizontal: authSpacing.lg }]}>
+      <ScreenHeading title={title} marginBottom={authSpacing.md} />
       <AuthButton
         title="Log out"
         variant="outline"
@@ -57,19 +58,19 @@ export function TabScreenWithLogout({ title, children, refreshControl }: TabScre
         loading={busy}
         disabled={busy}
       />
-    </ThemedView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   fill: {
     flex: 1,
+    backgroundColor: authColors.background,
   },
   scrollContent: {
     gap: authSpacing.lg,
   },
-  container: {
-    flex: 1,
+  centeredShell: {
     alignItems: 'center',
     justifyContent: 'center',
     gap: authSpacing.lg,

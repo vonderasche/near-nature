@@ -5,7 +5,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PhotoReviewActions } from '@/components/camera/photo-review-actions';
 import { MessageWithAction } from '@/components/screen/message-with-action';
-import { authSpacing } from '@/constants/auth-theme';
+import { authColors, authSpacing } from '@/constants/auth-theme';
+import { screenColors } from '@/constants/screen-theme';
+import { contentInsetsPadding } from '@/lib/screen/contentInsets';
 import { identificationResultsWithPhoto, routes } from '@/lib/routing/routes';
 import { normalizePhotoUri, paramToString } from '@/lib/routing/searchParams';
 
@@ -29,7 +31,7 @@ export default function CameraPreviewScreen() {
 
   if (!photoUri) {
     return (
-      <View style={[styles.fill, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      <View style={[styles.fill, styles.shellLight, contentInsetsPadding(insets)]}>
         <MessageWithAction
           message="No photo to preview."
           actionLabel="Back to camera"
@@ -40,7 +42,7 @@ export default function CameraPreviewScreen() {
   }
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <View style={[styles.root, contentInsetsPadding(insets)]}>
       <View style={styles.imageWrap}>
         <Image source={{ uri: photoUri }} style={styles.image} contentFit="contain" />
       </View>
@@ -58,9 +60,12 @@ const styles = StyleSheet.create({
   fill: {
     flex: 1,
   },
+  shellLight: {
+    backgroundColor: authColors.background,
+  },
   root: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: screenColors.darkBackground,
   },
   imageWrap: {
     flex: 1,

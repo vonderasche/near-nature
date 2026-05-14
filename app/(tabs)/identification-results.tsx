@@ -20,6 +20,7 @@ import { useIdentifications } from '@/hooks/useIdentifications';
 import { useSaveDetection } from '@/hooks/useSaveDetection';
 import { useSpeciesIdentification } from '@/hooks/useSpeciesIdentification';
 import { routes } from '@/lib/routing/routes';
+import { contentInsetsPadding } from '@/lib/screen/contentInsets';
 
 export default function IdentificationResultsScreen() {
   const insets = useSafeAreaInsets();
@@ -73,7 +74,7 @@ export default function IdentificationResultsScreen() {
 
   if (!photoUri) {
     return (
-      <View style={[styles.fill, padInsets(insets)]}>
+      <View style={[styles.fill, contentInsetsPadding(insets)]}>
         <MessageWithAction
           message="Missing photo. Go back and capture again."
           actionLabel="Back to camera"
@@ -84,7 +85,7 @@ export default function IdentificationResultsScreen() {
   }
 
   return (
-    <View style={[styles.root, padInsets(insets)]}>
+    <View style={[styles.root, contentInsetsPadding(insets)]}>
       <ScreenHeading
         title="Identification"
         subtitle="Results are not saved to your photo library."
@@ -129,10 +130,6 @@ export default function IdentificationResultsScreen() {
       </View>
     </View>
   );
-}
-
-function padInsets(insets: { top: number; bottom: number }) {
-  return { paddingTop: insets.top + authSpacing.sm, paddingBottom: insets.bottom + authSpacing.sm };
 }
 
 const styles = StyleSheet.create({

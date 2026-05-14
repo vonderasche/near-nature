@@ -44,6 +44,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: authSpacing.lg,
     paddingVertical: authSpacing.xl,
-    gap: authSpacing.md,
+    gap: authSpacing.lg,
   },
 });
