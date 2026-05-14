@@ -16,7 +16,7 @@ export default function ModalScreen() {
     <View style={[styles.root, edge, { paddingHorizontal: authSpacing.lg }]}>
       <ScreenHeading title="This is a modal" marginBottom={authSpacing.md} />
       <Link href={routes.tabs} dismissTo style={styles.link}>
-        <ThemedText type="link">Go to home screen</ThemedText>
+        <ThemedText type="link">Go to app</ThemedText>
       </Link>
     </View>
   );

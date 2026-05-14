@@ -10,11 +10,12 @@ import { contentInsetsPadding } from '@/lib/screen/contentInsets';
 
 type TabScreenWithLogoutProps = {
   title: string;
+  subtitle?: string;
   children?: ReactNode;
   refreshControl?: ComponentProps<typeof ScrollView>['refreshControl'];
 };
 
-export function TabScreenWithLogout({ title, children, refreshControl }: TabScreenWithLogoutProps) {
+export function TabScreenWithLogout({ title, subtitle, children, refreshControl }: TabScreenWithLogoutProps) {
   const { logout, busy } = useLogout();
   const insets = useSafeAreaInsets();
   const edge = contentInsetsPadding(insets);
@@ -34,7 +35,7 @@ export function TabScreenWithLogout({ title, children, refreshControl }: TabScre
           ]}
           keyboardShouldPersistTaps="handled"
           refreshControl={refreshControl}>
-          <ScreenHeading title={title} marginBottom={authSpacing.md} />
+          <ScreenHeading title={title} subtitle={subtitle} marginBottom={authSpacing.md} />
           {children}
           <AuthButton
             title="Log out"
@@ -50,7 +51,7 @@ export function TabScreenWithLogout({ title, children, refreshControl }: TabScre
 
   return (
     <View style={[styles.fill, styles.centeredShell, edge, { paddingHorizontal: authSpacing.lg }]}>
-      <ScreenHeading title={title} marginBottom={authSpacing.md} />
+      <ScreenHeading title={title} subtitle={subtitle} marginBottom={authSpacing.md} />
       <AuthButton
         title="Log out"
         variant="outline"
