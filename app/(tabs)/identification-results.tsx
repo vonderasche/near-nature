@@ -88,18 +88,22 @@ export default function IdentificationResultsScreen() {
     <View style={[styles.root, contentInsetsPadding(insets)]}>
       <ScreenHeading
         title="Identification"
-        subtitle="Results are not saved to your photo library."
+        subtitle="We analyze your photo here. Nothing is saved to your camera roll unless you choose Save."
         marginBottom={authSpacing.md}
       />
 
-      {identifying ? <LoadingHintRow label="Calling identification APIs…" /> : null}
+      {identifying ? <LoadingHintRow label="Identifying species…" /> : null}
 
       {identifyError ? <InlineFormError>{identifyError}</InlineFormError> : null}
       {historyError ? <InlineFormError>{historyError}</InlineFormError> : null}
       {saveError ? <InlineFormError>{saveError}</InlineFormError> : null}
       {wikiError ? <InlineFormError>{wikiError}</InlineFormError> : null}
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}>
         <IdentificationPhotoSection photoUri={photoUri} />
 
         {species.length > 0 && !identifying ? (

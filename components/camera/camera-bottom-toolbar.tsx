@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { authSpacing, authTypography } from '@/constants/auth-theme';
 import { screenColors } from '@/constants/screen-theme';
@@ -19,14 +19,25 @@ type Props = {
 export function CameraBottomToolbar({ insets, onFlip, onCapture, capturing }: Props) {
   return (
     <View style={[styles.toolbar, bottomToolbarPadding(insets)]}>
-      <Pressable accessibilityRole="button" onPress={onFlip} style={styles.toolBtn}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Flip camera"
+        onPress={onFlip}
+        android_ripple={{ color: 'rgba(255,255,255,0.2)' }}
+        style={({ pressed }) => [styles.toolBtn, pressed && styles.toolBtnPressed]}>
         <Text style={styles.toolBtnText}>Flip</Text>
       </Pressable>
       <Pressable
         accessibilityRole="button"
+        accessibilityLabel={capturing ? 'Taking photo' : 'Take photo'}
         onPress={onCapture}
         disabled={capturing}
-        style={[styles.capture, capturing && styles.captureDisabled]}>
+        android_ripple={{ color: 'rgba(255,255,255,0.25)', borderless: true }}
+        style={({ pressed }) => [
+          styles.capture,
+          capturing && styles.captureDisabled,
+          pressed && !capturing && styles.capturePressed,
+        ]}>
         <View style={styles.captureInner} />
       </Pressable>
       <View style={styles.toolSpacer} />
@@ -50,6 +61,10 @@ const styles = StyleSheet.create({
   toolBtn: {
     minWidth: 64,
     paddingVertical: authSpacing.sm,
+    borderRadius: 8,
+  },
+  toolBtnPressed: {
+    opacity: Platform.OS === 'ios' ? 0.85 : 1,
   },
   toolBtnText: {
     ...authTypography.body,
@@ -70,6 +85,9 @@ const styles = StyleSheet.create({
   },
   captureDisabled: {
     opacity: 0.5,
+  },
+  capturePressed: {
+    opacity: 0.92,
   },
   captureInner: {
     width: 56,

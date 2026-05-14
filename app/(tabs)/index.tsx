@@ -25,7 +25,8 @@ export default function LeaderboardScreen() {
   return (
     <TabScreenWithLogout
       title="Leaderboard"
-      subtitle="Users ranked by how many identifications they have saved."
+      subtitle="Tap a member to see their public profile and photo gallery."
+      hideLogout
       refreshControl={
         <RefreshControl
           refreshing={refreshing}

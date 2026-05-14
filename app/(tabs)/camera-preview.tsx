@@ -1,11 +1,11 @@
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PhotoReviewActions } from '@/components/camera/photo-review-actions';
 import { MessageWithAction } from '@/components/screen/message-with-action';
-import { authColors, authSpacing } from '@/constants/auth-theme';
+import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import { screenColors } from '@/constants/screen-theme';
 import { contentInsetsPadding } from '@/lib/screen/contentInsets';
 import { identificationResultsWithPhoto, routes } from '@/lib/routing/routes';
@@ -52,6 +52,9 @@ export default function CameraPreviewScreen() {
           />
         </View>
       </View>
+      <Text style={styles.hint} accessibilityRole="text">
+        Tap Done to identify this photo, or Retake to try again.
+      </Text>
       <PhotoReviewActions
         secondaryLabel="Retake"
         onSecondary={goBackToCamera}
@@ -88,5 +91,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
     borderWidth: 1,
     borderColor: authColors.border,
+  },
+  hint: {
+    ...authTypography.subtitle,
+    color: 'rgba(255,255,255,0.72)',
+    textAlign: 'center',
+    marginBottom: authSpacing.sm,
+    paddingHorizontal: authSpacing.md,
   },
 });

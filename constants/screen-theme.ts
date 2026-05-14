@@ -8,3 +8,8 @@ export const screenColors = {
   darkToolbar: 'rgba(0,0,0,0.45)',
   onDark: '#ffffff',
 } as const;
+
+/** Corners for overlays on dark surfaces (preview actions, etc.). */
+export const screenRadii = {
+  button: 12,
+} as const;

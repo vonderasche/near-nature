@@ -24,6 +24,7 @@ const styles = StyleSheet.create({
     width: '100%',
     aspectRatio: 1,
     marginBottom: authSpacing.md,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: authColors.border,
     backgroundColor: '#f5f5f5',

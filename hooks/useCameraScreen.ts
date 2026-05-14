@@ -1,4 +1,5 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as Haptics from 'expo-haptics';
 import { useCallback, useRef, useState, type RefObject } from 'react';
 import { Alert, Platform } from 'react-native';
 
@@ -36,6 +37,11 @@ export function useCameraScreen(options?: UseCameraScreenOptions): UseCameraScre
   const [capturing, setCapturing] = useState(false);
 
   const toggleFacing = useCallback(() => {
+    try {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {
+      /* haptics unavailable */
+    }
     setFacing((f) => (f === 'back' ? 'front' : 'back'));
   }, []);
 
@@ -45,6 +51,12 @@ export function useCameraScreen(options?: UseCameraScreenOptions): UseCameraScre
       const photo = await capturePictureFromCameraRef(cameraRef);
       const uri = photo?.uri;
       if (!uri) return;
+
+      try {
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      } catch {
+        /* haptics unavailable */
+      }
 
       if (onPhotoCaptured) {
         onPhotoCaptured(uri);

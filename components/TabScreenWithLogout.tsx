@@ -56,6 +56,7 @@ export function TabScreenWithLogout({
             },
           ]}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
           refreshControl={refreshControl}>
           {headingBlock}
           {children}

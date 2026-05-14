@@ -47,6 +47,7 @@ export function DetectionCountLeaderboard({ rows, loading, error }: Props) {
           key={row.userId}
           onPress={() => router.push(routePublicUserProfile(row.userId))}
           style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+          android_ripple={{ color: 'rgba(0,0,0,0.06)' }}
           accessibilityRole="button"
           accessibilityHint="Opens this member's public profile"
           accessibilityLabel={`${row.rank}. ${row.username}, ${detectionLabel(row.detectionCount)}, ${
@@ -82,17 +83,20 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: authSpacing.md,
     paddingVertical: authSpacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: authColors.border,
+    paddingHorizontal: authSpacing.md,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: authColors.border,
+    backgroundColor: authColors.fieldBackground,
   },
   rowPressed: {
-    opacity: 0.85,
+    opacity: 0.92,
   },
   avatarPlaceholder: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: authColors.fieldBackground,
+    backgroundColor: authColors.background,
     borderWidth: 1,
     borderColor: authColors.border,
     marginTop: 2,

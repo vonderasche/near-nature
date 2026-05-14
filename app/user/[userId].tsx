@@ -76,6 +76,7 @@ export default function PublicUserProfileScreen() {
             },
           ]}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
