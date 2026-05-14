@@ -1,7 +1,8 @@
 import { Image } from 'expo-image';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   StyleSheet,
   useWindowDimensions,
@@ -15,6 +16,8 @@ import type { DetectionGalleryItem } from '@/types';
 
 const NUM_COLUMNS = 3;
 
+export type GalleryDeleteResult = { ok: true } | { ok: false; message?: string };
+
 type DetectionGalleryGridProps = {
   items: DetectionGalleryItem[];
   loading: boolean;
@@ -25,6 +28,12 @@ type DetectionGalleryGridProps = {
   activityColor: string;
   /** Shown when there are no items (default: own-profile copy). */
   emptyMessage?: string;
+  /** Own profile: long-press tile or use modal delete to remove a saved photo. */
+  deletable?: boolean;
+  /** Called after user confirms delete (long-press or modal). */
+  onDeleteItem?: (item: DetectionGalleryItem) => Promise<GalleryDeleteResult>;
+  /** When set, matches `item.id` while that row is deleting (disables modal delete). */
+  deletingId?: string | null;
 };
 
 /**
@@ -41,9 +50,48 @@ export function DetectionGalleryGrid({
   mutedColor,
   activityColor,
   emptyMessage = 'No saved photos yet. Save an identification from the camera flow.',
+  deletable = false,
+  onDeleteItem,
+  deletingId = null,
 }: DetectionGalleryGridProps) {
   const { width: windowWidth } = useWindowDimensions();
   const [selected, setSelected] = useState<DetectionGalleryItem | null>(null);
+
+  const requestDelete = useCallback(
+    async (it: DetectionGalleryItem): Promise<GalleryDeleteResult> => {
+      if (!onDeleteItem) return { ok: false, message: 'Delete is not available.' };
+      const r = await onDeleteItem(it);
+      if (r.ok) setSelected(null);
+      return r;
+    },
+    [onDeleteItem],
+  );
+
+  const confirmAndDelete = useCallback(
+    (it: DetectionGalleryItem) => {
+      if (!onDeleteItem) return;
+      Alert.alert(
+        'Delete this photo?',
+        'It will be removed from your gallery. This cannot be undone.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: () => {
+              void (async () => {
+                const res = await requestDelete(it);
+                if (!res.ok && res.message) {
+                  Alert.alert('Could not delete', res.message);
+                }
+              })();
+            },
+          },
+        ]
+      );
+    },
+    [onDeleteItem, requestDelete],
+  );
 
   const tileSize = useMemo(() => {
     const horizontalPadding = authSpacing.lg * 2;
@@ -91,9 +139,11 @@ export function DetectionGalleryGrid({
           <Pressable
             key={item.id}
             accessibilityRole="button"
-            accessibilityHint="Opens details"
+            accessibilityHint={deletable && onDeleteItem ? 'Opens details. Long press to delete.' : 'Opens details'}
             accessibilityLabel={`${item.commonName}, ${item.latinName}`}
             onPress={() => setSelected(item)}
+            onLongPress={deletable && onDeleteItem ? () => confirmAndDelete(item) : undefined}
+            delayLongPress={450}
             style={({ pressed }) => [
               styles.tile,
               {
@@ -117,6 +167,9 @@ export function DetectionGalleryGrid({
         visible={selected !== null}
         item={selected}
         onClose={() => setSelected(null)}
+        deletable={Boolean(deletable && onDeleteItem)}
+        onRequestDelete={deletable && onDeleteItem ? requestDelete : undefined}
+        deleteBusy={Boolean(selected && deletingId === selected.id)}
       />
     </>
   );

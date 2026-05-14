@@ -8,6 +8,7 @@ import { classificationToSpeciesCategory } from '@/lib/detections/mapSpeciesCate
 import { speciesStatusToNativeColumn } from '@/lib/detections/mapNativeStatusDb';
 import { devLog } from '@/lib/devLog';
 import { supabase } from '@/lib/supabase';
+import { extractDetectionsObjectPathFromStoredUrl } from './detectionImageUrl';
 import type { ClassificationResult, Species, SpeciesStatus } from '@/types';
 
 export type SaveDetectionInput = {
@@ -103,5 +104,32 @@ export async function saveDetection(input: SaveDetectionInput): Promise<void> {
       );
     }
     throw insertError;
+  }
+}
+
+/**
+ * Deletes the current user's detection row (RLS) and best-effort removes the image from Storage.
+ */
+export async function deleteSavedDetection(detectionId: string): Promise<void> {
+  const { data: row, error: selectError } = await supabase
+    .from('detections')
+    .select('image_url')
+    .eq('id', detectionId)
+    .maybeSingle();
+
+  if (selectError) throw selectError;
+  if (!row) {
+    throw new Error('Photo not found or you cannot delete it.');
+  }
+
+  const storagePath = row.image_url
+    ? extractDetectionsObjectPathFromStoredUrl(String(row.image_url))
+    : null;
+
+  const { error: deleteError } = await supabase.from('detections').delete().eq('id', detectionId);
+  if (deleteError) throw deleteError;
+
+  if (storagePath) {
+    await supabase.storage.from(DETECTIONS_BUCKET).remove([storagePath]).catch(() => {});
   }
 }

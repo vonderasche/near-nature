@@ -9,11 +9,13 @@ import { DetectionGalleryGrid } from '@/components/profile/detection-gallery-gri
 import { ScreenSection } from '@/components/profile/screen-section';
 import { UserAvatar } from '@/components/profile/user-avatar';
 import { UserProfileSummary } from '@/components/profile/user-profile-summary';
-import { Colors } from '@/constants/theme';
 import { authSpacing, authTypography } from '@/constants/auth-theme';
+import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useDeleteDetection } from '@/hooks/useDeleteDetection';
 import { useUserDetectionGallery } from '@/hooks/useUserDetectionGallery';
 import { useUser } from '@/hooks/useUser';
+import type { DetectionGalleryItem } from '@/types';
 
 export default function ProfileScreen() {
   const colorScheme = useColorScheme() ?? 'light';
@@ -21,7 +23,8 @@ export default function ProfileScreen() {
   const border = Colors[colorScheme].tabIconDefault;
   const tint = Colors[colorScheme].tint;
 
-  const { user, loading, deleting, error, refresh, remove } = useUser();
+  const { user, loading, deleting, error, refresh, remove: deleteAccount } = useUser();
+  const { deleteById, deletingId } = useDeleteDetection();
   const {
     items: galleryItems,
     isLoading: galleryLoading,
@@ -39,6 +42,15 @@ export default function ProfileScreen() {
     }
   }, [refresh, refetchGallery]);
 
+  const handleGalleryDelete = useCallback(
+    async (item: DetectionGalleryItem) => {
+      const r = await deleteById(item.id);
+      if (r.ok) await refetchGallery();
+      return r;
+    },
+    [deleteById, refetchGallery],
+  );
+
   const confirmDeleteProfile = useCallback(() => {
     Alert.alert(
       'Delete profile',
@@ -50,7 +62,7 @@ export default function ProfileScreen() {
           style: 'destructive',
           onPress: () => {
             void (async () => {
-              const result = await remove();
+              const result = await deleteAccount();
               if (!result.ok) {
                 Alert.alert('Could not delete profile', result.message);
               }
@@ -59,7 +71,7 @@ export default function ProfileScreen() {
         },
       ]
     );
-  }, [remove]);
+  }, [deleteAccount]);
 
   return (
     <TabScreenWithLogout
@@ -108,7 +120,7 @@ export default function ProfileScreen() {
 
           <ScreenSection
             title="Gallery"
-            hint="Photos from identifications you saved to your account."
+            hint="Photos from identifications you saved to your account. Long-press a tile to delete."
             hintColor={muted}>
             <DetectionGalleryGrid
               items={galleryItems}
@@ -118,6 +130,9 @@ export default function ProfileScreen() {
               borderColor={border}
               mutedColor={muted}
               activityColor={tint}
+              deletable
+              onDeleteItem={handleGalleryDelete}
+              deletingId={deletingId}
             />
           </ScreenSection>
         </>

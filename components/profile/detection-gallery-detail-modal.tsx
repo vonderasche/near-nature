@@ -1,5 +1,6 @@
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Image } from 'expo-image';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
@@ -10,6 +11,10 @@ export type DetectionGalleryDetailModalProps = {
   /** Row to show; when `null`, the modal renders nothing (keep `visible` false). */
   item: DetectionGalleryItem | null;
   onClose: () => void;
+  /** Own profile: show delete control (calls `onRequestDelete` after confirm). */
+  deletable?: boolean;
+  onRequestDelete?: (item: DetectionGalleryItem) => Promise<{ ok: boolean; message?: string }>;
+  deleteBusy?: boolean;
 };
 
 function formatDetectedAt(iso: string): string {
@@ -29,9 +34,43 @@ function formatDetectedAt(iso: string): string {
  * Full-screen overlay with a larger preview and metadata for a saved detection.
  * Reusable anywhere you have a {@link DetectionGalleryItem}.
  */
-export function DetectionGalleryDetailModal({ visible, item, onClose }: DetectionGalleryDetailModalProps) {
+export function DetectionGalleryDetailModal({
+  visible,
+  item,
+  onClose,
+  deletable = false,
+  onRequestDelete,
+  deleteBusy = false,
+}: DetectionGalleryDetailModalProps) {
   if (!visible || !item) {
     return null;
+  }
+
+  const galleryItem = item;
+
+  function handleDeletePress() {
+    if (!onRequestDelete) return;
+    Alert.alert(
+      'Delete this photo?',
+      'It will be removed from your gallery. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            void (async () => {
+              const res = await onRequestDelete(galleryItem);
+              if (!res.ok && res.message) {
+                Alert.alert('Could not delete', res.message);
+                return;
+              }
+              if (res.ok) onClose();
+            })();
+          },
+        },
+      ]
+    );
   }
 
   return (
@@ -46,20 +85,40 @@ export function DetectionGalleryDetailModal({ visible, item, onClose }: Detectio
             keyboardShouldPersistTaps="handled">
             <View style={styles.imageFrame}>
               <Image
-                source={{ uri: item.displayUrl }}
+                source={{ uri: galleryItem.displayUrl }}
                 style={StyleSheet.absoluteFillObject}
                 contentFit="contain"
                 transition={200}
-                accessibilityLabel={`Photo of ${item.commonName}`}
+                accessibilityLabel={`Photo of ${galleryItem.commonName}`}
               />
             </View>
 
-            <Text style={styles.commonName}>{item.commonName}</Text>
-            <Text style={styles.latinName}>{item.latinName}</Text>
-            <Text style={styles.meta}>Saved {formatDetectedAt(item.detectedAt)}</Text>
+            <Text style={styles.commonName}>{galleryItem.commonName}</Text>
+            <Text style={styles.latinName}>{galleryItem.latinName}</Text>
+            <Text style={styles.meta}>Saved {formatDetectedAt(galleryItem.detectedAt)}</Text>
           </ScrollView>
 
-          <AuthButton title="Close" variant="outline" onPress={onClose} />
+          <View style={styles.actions}>
+            {deletable && onRequestDelete ? (
+              <Pressable
+                onPress={handleDeletePress}
+                disabled={deleteBusy}
+                style={({ pressed }) => [
+                  styles.deleteRow,
+                  (deleteBusy || pressed) && styles.deleteRowPressed,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="Delete photo from gallery">
+                {deleteBusy ? (
+                  <ActivityIndicator color={authColors.danger} />
+                ) : (
+                  <MaterialIcons name="delete-outline" size={22} color={authColors.danger} />
+                )}
+                <Text style={styles.deleteLabel}>Delete from gallery</Text>
+              </Pressable>
+            ) : null}
+            <AuthButton title="Close" variant="outline" onPress={onClose} disabled={deleteBusy} />
+          </View>
         </View>
       </View>
     </Modal>
@@ -121,5 +180,26 @@ const styles = StyleSheet.create({
   meta: {
     ...authTypography.subtitle,
     color: authColors.textMuted,
+  },
+  actions: {
+    gap: authSpacing.sm,
+  },
+  deleteRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: authSpacing.sm,
+    paddingVertical: authSpacing.sm,
+    borderRadius: authSpacing.xs,
+    borderWidth: 1,
+    borderColor: authColors.danger,
+  },
+  deleteRowPressed: {
+    opacity: 0.85,
+  },
+  deleteLabel: {
+    ...authTypography.body,
+    fontWeight: '600',
+    color: authColors.danger,
   },
 });
