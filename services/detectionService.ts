@@ -21,6 +21,10 @@ export type SaveDetectionInput = {
   description?: string | null;
 };
 
+/**
+ * Maps Postgres unique violations for `one_species_per_day` (when that index exists).
+ * While repeats are allowed, run `sql/disable_one_species_per_day_temp.sql` so inserts are not blocked.
+ */
 function isDuplicateSpeciesTodayError(message: string): boolean {
   const m = message.toLowerCase();
   return (

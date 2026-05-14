@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
     borderRadius: authRadii.field,
     paddingHorizontal: authSpacing.sm,
     paddingVertical: authSpacing.sm,
-    backgroundColor: authColors.fieldBackground,
+    backgroundColor: authColors.background,
     minHeight: 100,
     textAlignVertical: 'top',
   },

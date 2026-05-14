@@ -57,9 +57,11 @@ create table public.detections (
   created_at      timestamptz default now() not null
 );
 
--- Prevent farming: one detection per species per user per day (UTC anchored)
-create unique index one_species_per_day
-  on public.detections(user_id, latin_name, ((detected_at at time zone 'UTC')::date));
+-- TEMPORARY (duplicate species same day allowed): unique index disabled.
+-- Re-enable for production: sql/enable_one_species_per_day_temp.sql
+-- Existing DBs: sql/disable_one_species_per_day_temp.sql drops the index if it was already created.
+-- create unique index one_species_per_day
+--   on public.detections(user_id, latin_name, ((detected_at at time zone 'UTC')::date));
 
 -- Indexes
 create index detections_user_id_idx     on public.detections(user_id);
