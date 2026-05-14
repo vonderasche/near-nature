@@ -120,9 +120,9 @@ export function DetectionGalleryDetailModal({
                     accessibilityRole="button"
                     accessibilityLabel="Delete photo from gallery">
                     {deleteBusy ? (
-                      <ActivityIndicator color={authColors.danger} />
+                      <ActivityIndicator color={authColors.text} />
                     ) : (
-                      <MaterialIcons name="delete-outline" size={22} color={authColors.danger} />
+                      <MaterialIcons name="delete-outline" size={22} color={authColors.text} />
                     )}
                     <Text style={styles.deleteLabel}>Delete from gallery</Text>
                   </Pressable>
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     borderRadius: 8,
     overflow: 'hidden',
-    backgroundColor: authColors.fieldBackground,
+    backgroundColor: authColors.background,
     borderWidth: 1,
     borderColor: authColors.border,
   },
@@ -220,7 +220,8 @@ const styles = StyleSheet.create({
     paddingVertical: authSpacing.sm,
     borderRadius: authSpacing.xs,
     borderWidth: 1,
-    borderColor: authColors.danger,
+    borderColor: authColors.border,
+    backgroundColor: authColors.background,
   },
   deleteRowPressed: {
     opacity: 0.85,
@@ -228,6 +229,6 @@ const styles = StyleSheet.create({
   deleteLabel: {
     ...authTypography.body,
     fontWeight: '600',
-    color: authColors.danger,
+    color: authColors.text,
   },
 });
