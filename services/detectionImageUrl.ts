@@ -1,7 +1,6 @@
+import { DETECTIONS_BUCKET } from '@/lib/detections/detectionsBucket';
 import { devWarn } from '@/lib/devLog';
 import { supabase } from '@/lib/supabase';
-
-export const DETECTIONS_BUCKET = 'detections';
 
 const SIGNED_URL_EXPIRY_SEC = 60 * 60 * 24; // 24h — refreshed on gallery refetch
 
