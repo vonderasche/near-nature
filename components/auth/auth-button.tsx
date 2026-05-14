@@ -11,6 +11,8 @@ type AuthButtonProps = {
   loading?: boolean;
   variant?: Variant;
   testID?: string;
+  /** Span parent width (e.g. equal columns inside a `flex: 1` wrapper). */
+  fillParent?: boolean;
 };
 
 export function AuthButton({
@@ -20,6 +22,7 @@ export function AuthButton({
   loading,
   variant = 'primary',
   testID,
+  fillParent = false,
 }: AuthButtonProps) {
   const isOutline = variant === 'outline';
   return (
@@ -30,6 +33,7 @@ export function AuthButton({
       disabled={disabled || loading}
       style={({ pressed }) => [
         styles.base,
+        fillParent && styles.fillParent,
         isOutline ? styles.outline : styles.primary,
         (disabled || loading) && styles.disabled,
         pressed && !disabled && !loading && styles.pressed,
@@ -52,6 +56,10 @@ const styles = StyleSheet.create({
     borderRadius: authRadii.button,
     borderWidth: 1,
     borderColor: authColors.border,
+  },
+  fillParent: {
+    alignSelf: 'stretch',
+    width: '100%',
   },
   primary: {
     backgroundColor: authColors.primaryFill,
