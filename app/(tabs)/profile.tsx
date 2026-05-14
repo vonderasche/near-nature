@@ -5,7 +5,7 @@ import { TabScreenWithLogout } from '@/components/TabScreenWithLogout';
 import { CenteredActivityIndicator } from '@/components/profile/centered-activity-indicator';
 import { ProfileOverflowMenu } from '@/components/profile/profile-overflow-menu';
 import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
-import { DetectionGalleryRow } from '@/components/profile/detection-gallery-row';
+import { DetectionGalleryGrid } from '@/components/profile/detection-gallery-grid';
 import { ScreenSection } from '@/components/profile/screen-section';
 import { UserAvatar } from '@/components/profile/user-avatar';
 import { UserProfileSummary } from '@/components/profile/user-profile-summary';
@@ -110,7 +110,7 @@ export default function ProfileScreen() {
             title="Gallery"
             hint="Photos from identifications you saved to your account."
             hintColor={muted}>
-            <DetectionGalleryRow
+            <DetectionGalleryGrid
               items={galleryItems}
               loading={galleryLoading}
               error={galleryError}

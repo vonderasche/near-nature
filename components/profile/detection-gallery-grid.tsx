@@ -1,17 +1,20 @@
 import { Image } from 'expo-image';
+import { useMemo } from 'react';
 import {
   ActivityIndicator,
   Pressable,
-  ScrollView,
   StyleSheet,
+  useWindowDimensions,
   View,
 } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { authSpacing } from '@/constants/auth-theme';
+import { authColors, authSpacing } from '@/constants/auth-theme';
 import type { DetectionGalleryItem } from '@/types';
 
-type DetectionGalleryRowProps = {
+const NUM_COLUMNS = 3;
+
+type DetectionGalleryGridProps = {
   items: DetectionGalleryItem[];
   loading: boolean;
   error: string | null;
@@ -21,7 +24,11 @@ type DetectionGalleryRowProps = {
   activityColor: string;
 };
 
-export function DetectionGalleryRow({
+/**
+ * Saved detection thumbnails in a multi-column grid. Scrolls with the parent screen
+ * (profile `ScrollView`); uses `useWindowDimensions` so tiles stay square at ~⅓ width.
+ */
+export function DetectionGalleryGrid({
   items,
   loading,
   error,
@@ -29,7 +36,16 @@ export function DetectionGalleryRow({
   borderColor,
   mutedColor,
   activityColor,
-}: DetectionGalleryRowProps) {
+}: DetectionGalleryGridProps) {
+  const { width: windowWidth } = useWindowDimensions();
+
+  const tileSize = useMemo(() => {
+    const horizontalPadding = authSpacing.lg * 2;
+    const gap = authSpacing.sm;
+    const inner = Math.max(0, windowWidth - horizontalPadding);
+    return Math.max(72, Math.floor((inner - gap * (NUM_COLUMNS - 1)) / NUM_COLUMNS));
+  }, [windowWidth]);
+
   if (error) {
     return (
       <View style={styles.messageBlock}>
@@ -63,15 +79,20 @@ export function DetectionGalleryRow({
   }
 
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.row}
+    <View
+      style={[styles.grid, { gap: authSpacing.sm }]}
       accessibilityLabel="Saved identification photos">
       {items.map((item) => (
         <View
           key={item.id}
-          style={[styles.tile, { borderColor }]}
+          style={[
+            styles.tile,
+            {
+              width: tileSize,
+              height: tileSize,
+              borderColor,
+            },
+          ]}
           accessibilityLabel={`${item.commonName}, ${item.latinName}`}
           accessibilityRole="image">
           <Image
@@ -82,22 +103,21 @@ export function DetectionGalleryRow({
           />
         </View>
       ))}
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: {
-    gap: authSpacing.sm,
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     paddingVertical: authSpacing.xs,
   },
   tile: {
-    width: 104,
-    height: 104,
     borderRadius: 8,
     borderWidth: 1,
     overflow: 'hidden',
-    backgroundColor: '#f0f0f0',
+    backgroundColor: authColors.fieldBackground,
   },
   loaderWrap: {
     paddingVertical: authSpacing.lg,
