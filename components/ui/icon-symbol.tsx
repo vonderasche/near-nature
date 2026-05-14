@@ -21,6 +21,7 @@ const MAPPING = {
   'camera.fill': 'photo-camera',
   'person.fill': 'person',
   'trophy.fill': 'leaderboard',
+  'line.3.horizontal': 'menu',
 } as IconMapping;
 
 /**

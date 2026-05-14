@@ -3,7 +3,7 @@ import { Alert, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import { TabScreenWithLogout } from '@/components/TabScreenWithLogout';
 import { CenteredActivityIndicator } from '@/components/profile/centered-activity-indicator';
-import { DangerActionBlock } from '@/components/profile/danger-action-block';
+import { ProfileOverflowMenu } from '@/components/profile/profile-overflow-menu';
 import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
 import { DetectionGalleryRow } from '@/components/profile/detection-gallery-row';
 import { ScreenSection } from '@/components/profile/screen-section';
@@ -64,6 +64,12 @@ export default function ProfileScreen() {
   return (
     <TabScreenWithLogout
       title="Profile"
+      hideLogout={Boolean(user)}
+      titleAccessory={
+        user ? (
+          <ProfileOverflowMenu onDeleteProfile={confirmDeleteProfile} deleteBusy={deleting} />
+        ) : undefined
+      }
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -114,15 +120,6 @@ export default function ProfileScreen() {
               activityColor={tint}
             />
           </ScreenSection>
-
-          <DangerActionBlock
-            title="Delete profile"
-            onPress={confirmDeleteProfile}
-            loading={deleting}
-            disabled={deleting}
-            hintColor={muted}
-            hint="Calls the delete-account Edge Function: removes your auth user and, via the database, your public.users row."
-          />
         </>
       ) : !loading && !error ? (
         <Text style={[styles.emptyHint, { color: muted }]}>Sign in to load your profile.</Text>

@@ -13,12 +13,34 @@ type TabScreenWithLogoutProps = {
   subtitle?: string;
   children?: ReactNode;
   refreshControl?: ComponentProps<typeof ScrollView>['refreshControl'];
+  /** When true, the default “Log out” button is omitted (e.g. profile uses an overflow menu). */
+  hideLogout?: boolean;
+  /** Rendered on the title row (e.g. profile hamburger menu). */
+  titleAccessory?: ReactNode;
 };
 
-export function TabScreenWithLogout({ title, subtitle, children, refreshControl }: TabScreenWithLogoutProps) {
+export function TabScreenWithLogout({
+  title,
+  subtitle,
+  children,
+  refreshControl,
+  hideLogout = false,
+  titleAccessory,
+}: TabScreenWithLogoutProps) {
   const { logout, busy } = useLogout();
   const insets = useSafeAreaInsets();
   const edge = contentInsetsPadding(insets);
+
+  const headingBlock = titleAccessory ? (
+    <View style={styles.titleRow}>
+      <View style={styles.titleText}>
+        <ScreenHeading title={title} subtitle={subtitle} marginBottom={0} />
+      </View>
+      {titleAccessory}
+    </View>
+  ) : (
+    <ScreenHeading title={title} subtitle={subtitle} marginBottom={authSpacing.md} />
+  );
 
   if (children) {
     return (
@@ -35,15 +57,17 @@ export function TabScreenWithLogout({ title, subtitle, children, refreshControl 
           ]}
           keyboardShouldPersistTaps="handled"
           refreshControl={refreshControl}>
-          <ScreenHeading title={title} subtitle={subtitle} marginBottom={authSpacing.md} />
+          {headingBlock}
           {children}
-          <AuthButton
-            title="Log out"
-            variant="outline"
-            onPress={logout}
-            loading={busy}
-            disabled={busy}
-          />
+          {!hideLogout ? (
+            <AuthButton
+              title="Log out"
+              variant="outline"
+              onPress={logout}
+              loading={busy}
+              disabled={busy}
+            />
+          ) : null}
         </ScrollView>
       </View>
     );
@@ -51,14 +75,25 @@ export function TabScreenWithLogout({ title, subtitle, children, refreshControl 
 
   return (
     <View style={[styles.fill, styles.centeredShell, edge, { paddingHorizontal: authSpacing.lg }]}>
-      <ScreenHeading title={title} subtitle={subtitle} marginBottom={authSpacing.md} />
-      <AuthButton
-        title="Log out"
-        variant="outline"
-        onPress={logout}
-        loading={busy}
-        disabled={busy}
-      />
+      {titleAccessory ? (
+        <View style={[styles.titleRow, { width: '100%' }]}>
+          <View style={styles.titleText}>
+            <ScreenHeading title={title} subtitle={subtitle} marginBottom={0} />
+          </View>
+          {titleAccessory}
+        </View>
+      ) : (
+        <ScreenHeading title={title} subtitle={subtitle} marginBottom={authSpacing.md} />
+      )}
+      {!hideLogout ? (
+        <AuthButton
+          title="Log out"
+          variant="outline"
+          onPress={logout}
+          loading={busy}
+          disabled={busy}
+        />
+      ) : null}
     </View>
   );
 }
@@ -70,6 +105,17 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     gap: authSpacing.lg,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: authSpacing.sm,
+    marginBottom: authSpacing.md,
+  },
+  titleText: {
+    flex: 1,
+    minWidth: 0,
   },
   centeredShell: {
     alignItems: 'center',
