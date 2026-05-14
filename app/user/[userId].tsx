@@ -1,5 +1,5 @@
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { Stack, useLocalSearchParams } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { CenteredActivityIndicator } from '@/components/profile/centered-activity-indicator';
@@ -10,18 +10,14 @@ import { ScreenSection } from '@/components/profile/screen-section';
 import { UserAvatar } from '@/components/profile/user-avatar';
 import { Colors } from '@/constants/theme';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
-import { useAuthContext } from '@/context/AuthContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { usePublicUserProfile } from '@/hooks/usePublicUserProfile';
 import { useUserDetectionGallery } from '@/hooks/useUserDetectionGallery';
-import { routes } from '@/lib/routing/routes';
 import { paramToString } from '@/lib/routing/searchParams';
 import { contentInsetsPadding } from '@/lib/screen/contentInsets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function PublicUserProfileScreen() {
-  const router = useRouter();
-  const { userId: sessionUserId } = useAuthContext();
   const raw = useLocalSearchParams<{ userId?: string | string[] }>().userId;
   const userId = paramToString(raw);
 
@@ -42,13 +38,6 @@ export default function PublicUserProfileScreen() {
   } = useUserDetectionGallery({ userId, limit: 24, publicOnly: true });
 
   const [refreshing, setRefreshing] = useState(false);
-
-  useEffect(() => {
-    if (!sessionUserId || !userId) return;
-    if (sessionUserId === userId) {
-      router.replace(routes.profileTab);
-    }
-  }, [sessionUserId, userId, router]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

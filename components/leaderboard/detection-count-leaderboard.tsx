@@ -17,7 +17,7 @@ function detectionLabel(n: number): string {
 }
 
 /**
- * Ordered list by detection count (RPC). Avatar placeholder, username, count, and motto block.
+ * Ordered list by detection count (RPC). Avatar placeholder, username, count, and motto text.
  */
 export function DetectionCountLeaderboard({ rows, loading, error }: Props) {
   const router = useRouter();
@@ -48,8 +48,10 @@ export function DetectionCountLeaderboard({ rows, loading, error }: Props) {
           onPress={() => router.push(routePublicUserProfile(row.userId))}
           style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
           accessibilityRole="button"
-          accessibilityHint="Opens their public profile"
-          accessibilityLabel={`${row.rank}. ${row.username}, ${detectionLabel(row.detectionCount)}`}>
+          accessibilityHint="Opens this member's public profile"
+          accessibilityLabel={`${row.rank}. ${row.username}, ${detectionLabel(row.detectionCount)}, ${
+            row.motto?.trim() ? row.motto.trim() : 'No motto set'
+          }`}>
           <View style={styles.avatarPlaceholder} accessibilityRole="image" accessibilityLabel="Avatar placeholder" />
           <View style={styles.main}>
             <View style={styles.topLine}>
@@ -60,7 +62,6 @@ export function DetectionCountLeaderboard({ rows, loading, error }: Props) {
             </View>
 
             <View style={styles.mottoSection}>
-              <Text style={styles.mottoHeading}>Motto</Text>
               <Text style={styles.mottoBody}>
                 {row.motto ?? 'No motto set.'}
               </Text>
@@ -120,14 +121,9 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   mottoSection: {
-    gap: authSpacing.xs,
     paddingTop: authSpacing.xs,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: authColors.border,
-  },
-  mottoHeading: {
-    ...authTypography.label,
-    color: authColors.text,
   },
   mottoBody: {
     ...authTypography.subtitle,

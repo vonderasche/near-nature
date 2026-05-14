@@ -1,5 +1,5 @@
 // React hook that orchestrates identification flow:
-// photo -> optional blur gate -> Claude -> result filters -> iNaturalist -> Species[]
+// photo -> Claude -> result filters -> iNaturalist -> Species[]
 
 import { deleteAsync, readLocalFileAsBase64 } from '@/lib/fs/legacyFileSystem';
 import { useCallback, useState } from 'react';
@@ -8,7 +8,6 @@ import { identifySpeciesInImage } from '@/api/claude';
 import { lookupNativeStatus } from '@/api/inaturalist';
 import { useResizeImageForUpload } from '@/hooks/useResizeImageForUpload';
 import { devLog } from '@/lib/devLog';
-import { checkImageBlur } from '@/utils/blurDetections';
 import { filterClassifications, hasNoSpeciesFound } from '@/utils/imageFilters';
 import type { ClassificationResult, Species } from '@/types';
 
@@ -38,30 +37,23 @@ export function useSpeciesIdentification(): UseSpeciesIdentificationResult {
     let resizedUri: string | null = null;
 
     try {
-      // 1) Quick quality gate: skip API call if image is likely too blurry.
-      const maybe = await checkImageBlur(photoUri);
-      if (maybe.isBlurry) {
-        setError('Photo appears blurry. Please retake a sharper image.');
-        return { species: [], classifications: [] };
-      }
-
-      // 2) Resize / compress so vision APIs stay under image size limits (e.g. Claude 5 MiB).
+      // 1) Resize / compress so vision APIs stay under image size limits (e.g. Claude 5 MiB).
       const resized = await resizeForUpload(photoUri);
       resizedUri = resized.uri;
 
-      // 3) Convert prepared file to base64 for the vision API.
+      // 2) Convert prepared file to base64 for the vision API.
       const base64 = await readLocalFileAsBase64(resizedUri);
 
-      // 4) Ask Claude for species classifications.
+      // 3) Ask Claude for species classifications.
       const rawClassifications = await identifySpeciesInImage(base64, 'image/jpeg');
 
-      // 5) Apply confidence + dedupe filters.
+      // 4) Apply confidence + dedupe filters.
       const { results: classifications, summary } = filterClassifications(rawClassifications);
       devLog('[identify] filter summary', summary);
 
       if (hasNoSpeciesFound(classifications)) return { species: [], classifications: [] };
 
-      // 6) Enrich with native/invasive status in parallel.
+      // 5) Enrich with native/invasive status in parallel.
       const speciesResults = await Promise.all(
         classifications.map(async (classification, index): Promise<Species> => {
           const nativeResult = await lookupNativeStatus(
