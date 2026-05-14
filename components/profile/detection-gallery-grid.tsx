@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 
+import { DetectionGalleryDetailModal } from '@/components/profile/detection-gallery-detail-modal';
 import { ThemedText } from '@/components/themed-text';
 import { authColors, authSpacing } from '@/constants/auth-theme';
 import type { DetectionGalleryItem } from '@/types';
@@ -27,6 +28,7 @@ type DetectionGalleryGridProps = {
 /**
  * Saved detection thumbnails in a multi-column grid. Scrolls with the parent screen
  * (profile `ScrollView`); uses `useWindowDimensions` so tiles stay square at ~⅓ width.
+ * Tapping a tile opens {@link DetectionGalleryDetailModal}.
  */
 export function DetectionGalleryGrid({
   items,
@@ -38,6 +40,7 @@ export function DetectionGalleryGrid({
   activityColor,
 }: DetectionGalleryGridProps) {
   const { width: windowWidth } = useWindowDimensions();
+  const [selected, setSelected] = useState<DetectionGalleryItem | null>(null);
 
   const tileSize = useMemo(() => {
     const horizontalPadding = authSpacing.lg * 2;
@@ -79,31 +82,42 @@ export function DetectionGalleryGrid({
   }
 
   return (
-    <View
-      style={[styles.grid, { gap: authSpacing.sm }]}
-      accessibilityLabel="Saved identification photos">
-      {items.map((item) => (
-        <View
-          key={item.id}
-          style={[
-            styles.tile,
-            {
-              width: tileSize,
-              height: tileSize,
-              borderColor,
-            },
-          ]}
-          accessibilityLabel={`${item.commonName}, ${item.latinName}`}
-          accessibilityRole="image">
-          <Image
-            source={{ uri: item.displayUrl }}
-            style={StyleSheet.absoluteFillObject}
-            contentFit="cover"
-            transition={200}
-          />
-        </View>
-      ))}
-    </View>
+    <>
+      <View
+        style={[styles.grid, { gap: authSpacing.sm }]}
+        accessibilityLabel="Saved identification photos">
+        {items.map((item) => (
+          <Pressable
+            key={item.id}
+            accessibilityRole="button"
+            accessibilityHint="Opens details"
+            accessibilityLabel={`${item.commonName}, ${item.latinName}`}
+            onPress={() => setSelected(item)}
+            style={({ pressed }) => [
+              styles.tile,
+              {
+                width: tileSize,
+                height: tileSize,
+                borderColor,
+                opacity: pressed ? 0.92 : 1,
+              },
+            ]}>
+            <Image
+              source={{ uri: item.displayUrl }}
+              style={StyleSheet.absoluteFillObject}
+              contentFit="cover"
+              transition={200}
+            />
+          </Pressable>
+        ))}
+      </View>
+
+      <DetectionGalleryDetailModal
+        visible={selected !== null}
+        item={selected}
+        onClose={() => setSelected(null)}
+      />
+    </>
   );
 }
 
