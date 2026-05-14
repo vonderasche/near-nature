@@ -23,6 +23,8 @@ type DetectionGalleryGridProps = {
   borderColor: string;
   mutedColor: string;
   activityColor: string;
+  /** Shown when there are no items (default: own-profile copy). */
+  emptyMessage?: string;
 };
 
 /**
@@ -38,6 +40,7 @@ export function DetectionGalleryGrid({
   borderColor,
   mutedColor,
   activityColor,
+  emptyMessage = 'No saved photos yet. Save an identification from the camera flow.',
 }: DetectionGalleryGridProps) {
   const { width: windowWidth } = useWindowDimensions();
   const [selected, setSelected] = useState<DetectionGalleryItem | null>(null);
@@ -75,9 +78,7 @@ export function DetectionGalleryGrid({
 
   if (items.length === 0) {
     return (
-      <ThemedText style={[styles.empty, { color: mutedColor }]}>
-        No saved photos yet. Save an identification from the camera flow.
-      </ThemedText>
+      <ThemedText style={[styles.empty, { color: mutedColor }]}>{emptyMessage}</ThemedText>
     );
   }
 

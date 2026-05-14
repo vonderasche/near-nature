@@ -7,6 +7,8 @@ import type { DetectionGalleryItem } from '@/types';
 type UseUserDetectionGalleryOptions = {
   userId?: string;
   limit?: number;
+  /** When true, only non-sensitive rows (public gallery / other users). */
+  publicOnly?: boolean;
 };
 
 type UseUserDetectionGalleryResult = {
@@ -19,6 +21,7 @@ type UseUserDetectionGalleryResult = {
 export function useUserDetectionGallery({
   userId,
   limit = 24,
+  publicOnly = false,
 }: UseUserDetectionGalleryOptions = {}): UseUserDetectionGalleryResult {
   const [items, setItems] = useState<DetectionGalleryItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -36,12 +39,16 @@ export function useUserDetectionGallery({
     setError(null);
 
     try {
-      const { data, error: queryError } = await supabase
+      let q = supabase
         .from('detections')
         .select('id, image_url, detected_at, common_name, latin_name')
         .eq('user_id', userId)
         .order('detected_at', { ascending: false })
         .limit(limit);
+      if (publicOnly) {
+        q = q.eq('is_sensitive', false);
+      }
+      const { data, error: queryError } = await q;
 
       if (queryError) throw queryError;
 
@@ -68,7 +75,7 @@ export function useUserDetectionGallery({
     } finally {
       setIsLoading(false);
     }
-  }, [userId, limit]);
+  }, [userId, limit, publicOnly]);
 
   useEffect(() => {
     void fetchItems();

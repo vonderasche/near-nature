@@ -3,6 +3,8 @@
  */
 export const routes = {
   tabs: '/(tabs)',
+  /** Own profile tab (see `app/(tabs)/profile.tsx`). */
+  profileTab: '/(tabs)/profile',
   modal: '/modal',
   login: '/login',
   signup: '/signup',
@@ -22,4 +24,9 @@ export function cameraPreviewWithPhoto(uri: string) {
 
 export function identificationResultsWithPhoto(uri: string) {
   return { pathname: routes.identificationResults, params: { uri } } as const;
+}
+
+/** Another member’s public profile (`app/user/[userId].tsx`). */
+export function routePublicUserProfile(userId: string) {
+  return { pathname: '/user/[userId]' as const, params: { userId } };
 }

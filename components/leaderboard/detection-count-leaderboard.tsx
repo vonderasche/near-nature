@@ -1,8 +1,10 @@
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { InlineFormError } from '@/components/screen/inline-form-error';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import type { DetectionLeaderboardRow } from '@/hooks/useDetectionLeaderboard';
+import { routePublicUserProfile } from '@/lib/routing/routes';
 
 type Props = {
   rows: DetectionLeaderboardRow[];
@@ -18,6 +20,8 @@ function detectionLabel(n: number): string {
  * Ordered list by detection count (RPC). Avatar placeholder, username, count, and motto block.
  */
 export function DetectionCountLeaderboard({ rows, loading, error }: Props) {
+  const router = useRouter();
+
   if (error) {
     return <InlineFormError>{error}</InlineFormError>;
   }
@@ -39,9 +43,12 @@ export function DetectionCountLeaderboard({ rows, loading, error }: Props) {
   return (
     <View style={styles.list} accessibilityLabel="Leaderboard by detections">
       {rows.map((row) => (
-        <View
+        <Pressable
           key={row.userId}
-          style={styles.row}
+          onPress={() => router.push(routePublicUserProfile(row.userId))}
+          style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+          accessibilityRole="button"
+          accessibilityHint="Opens their public profile"
           accessibilityLabel={`${row.rank}. ${row.username}, ${detectionLabel(row.detectionCount)}`}>
           <View style={styles.avatarPlaceholder} accessibilityRole="image" accessibilityLabel="Avatar placeholder" />
           <View style={styles.main}>
@@ -59,7 +66,7 @@ export function DetectionCountLeaderboard({ rows, loading, error }: Props) {
               </Text>
             </View>
           </View>
-        </View>
+        </Pressable>
       ))}
     </View>
   );
@@ -76,6 +83,9 @@ const styles = StyleSheet.create({
     paddingVertical: authSpacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: authColors.border,
+  },
+  rowPressed: {
+    opacity: 0.85,
   },
   avatarPlaceholder: {
     width: 44,

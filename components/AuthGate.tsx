@@ -19,6 +19,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     if (isLoading || segs.length === 0) return;
 
     const inTabs = segs[0] === '(tabs)';
+    const inUserProfile = segs[0] === 'user';
     const inAuth = segs[0] === '(auth)';
     const onResetPassword = segs.includes('reset-password');
 
@@ -28,7 +29,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     }
 
     if (!isAuthenticated) {
-      if (inTabs) {
+      if (inTabs || inUserProfile) {
         router.replace(routes.login);
       }
       return;

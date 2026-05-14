@@ -40,6 +40,38 @@ export type UpdateUserPayload = Partial<
   Pick<User, 'username' | 'first_name' | 'last_name' | 'motto' | 'avatar_url' | 'state'>
 >;
 
+/** Safe fields for viewing another member (RPC `get_public_user_profile`). */
+export type PublicUserProfile = {
+  id: string;
+  username: string;
+  motto: string | null;
+  avatar_url: string | null;
+};
+
+type PublicProfileRpcRow = {
+  user_id: string;
+  username: string;
+  motto: string | null;
+  avatar_url: string | null;
+};
+
+export async function getPublicUserProfile(userId: string): Promise<PublicUserProfile | null> {
+  const { data, error } = await supabase.rpc('get_public_user_profile', { p_user_id: userId });
+  if (error) throw error;
+  const rows = (data ?? []) as PublicProfileRpcRow[];
+  const row = rows[0];
+  if (!row) return null;
+  const motto = typeof row.motto === 'string' && row.motto.trim().length > 0 ? row.motto.trim() : null;
+  const avatar_url =
+    typeof row.avatar_url === 'string' && row.avatar_url.trim().length > 0 ? row.avatar_url.trim() : null;
+  return {
+    id: row.user_id,
+    username: row.username,
+    motto,
+    avatar_url,
+  };
+}
+
 // Fetch the current user's profile
 export async function getUser(userId: string): Promise<User | null> {
   const { data, error } = await supabase.from('users').select('*').eq('id', userId).maybeSingle();
