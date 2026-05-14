@@ -11,12 +11,10 @@
 //   3. Extract fun facts from structured sections
 // ─────────────────────────────────────────────────────────────
 
+import { devLog } from '@/lib/devLog';
+
 const WIKIPEDIA_REST = 'https://en.wikipedia.org/api/rest_v1';
 const WIKIPEDIA_API  = 'https://en.wikipedia.org/w/api.php';
-
-function devLog(...args: unknown[]) {
-  if (__DEV__) console.log(...args);
-}
 
 const DEFAULT_USER_AGENT =
   process.env.EXPO_PUBLIC_WIKI_USER_AGENT ??

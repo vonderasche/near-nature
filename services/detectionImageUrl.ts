@@ -1,3 +1,4 @@
+import { devWarn } from '@/lib/devLog';
 import { supabase } from '@/lib/supabase';
 
 export const DETECTIONS_BUCKET = 'detections';
@@ -32,9 +33,7 @@ export async function getDetectionImageDisplayUrl(storedUrl: string): Promise<st
     .createSignedUrl(path, SIGNED_URL_EXPIRY_SEC);
 
   if (error || !data?.signedUrl) {
-    if (__DEV__) {
-      console.warn('[detectionImageUrl] createSignedUrl failed', error?.message ?? 'no signedUrl');
-    }
+    devWarn('[detectionImageUrl] createSignedUrl failed', error?.message ?? 'no signedUrl');
     return storedUrl;
   }
 

@@ -19,6 +19,7 @@ import { useAuthContext } from '@/context/AuthContext';
 import { useIdentifications } from '@/hooks/useIdentifications';
 import { useSaveDetection } from '@/hooks/useSaveDetection';
 import { useSpeciesIdentification } from '@/hooks/useSpeciesIdentification';
+import { devLog } from '@/lib/devLog';
 import { normalizePhotoUri, paramToString } from '@/lib/routing/searchParams';
 import type { ClassificationResult, Species } from '@/types';
 
@@ -69,7 +70,7 @@ export default function IdentificationResultsScreen() {
     let cancelled = false;
 
     (async () => {
-      if (__DEV__) console.log('[results] wiki fetch begin', species.map((s) => s.latinName));
+      devLog('[results] wiki fetch begin', species.map((s) => s.latinName));
       const toFetch = species
         .slice(0, 3)
         .map((s) => ({ latinName: s.latinName, commonName: s.commonName }))
@@ -80,11 +81,10 @@ export default function IdentificationResultsScreen() {
             const data =
               (await fetchSpeciesWikiData(latinName)) ??
               (commonName ? await fetchSpeciesWikiData(commonName) : null);
-            if (__DEV__)
-              console.log('[results] wiki item', { latinName, commonName, hasData: Boolean(data) });
+            devLog('[results] wiki item', { latinName, commonName, hasData: Boolean(data) });
             return [latinName, data] as const;
           } catch (e: unknown) {
-            if (__DEV__) console.log('[results] wiki item error', { latinName, error: e });
+            devLog('[results] wiki item error', { latinName, error: e });
             setWikiError(e instanceof Error ? e.message : 'Wikipedia request failed.');
             return [latinName, null] as const;
           }

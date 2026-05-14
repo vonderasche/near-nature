@@ -13,13 +13,10 @@
 //   4. Map the result to our SpeciesStatus type
 // ─────────────────────────────────────────────────────────────
 
+import { devLog } from '@/lib/devLog';
 import { SpeciesStatus } from '@/types';
 
 const INATURALIST_API = 'https://api.inaturalist.org/v1';
-
-function devLog(...args: unknown[]) {
-  if (__DEV__) console.log(...args);
-}
 
 // Cache place IDs so we don't re-fetch the same state repeatedly
 const placeIdCache = new Map<string, number>();

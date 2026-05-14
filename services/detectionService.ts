@@ -2,9 +2,10 @@ import { decode } from 'base64-arraybuffer';
 import { randomUUID } from 'expo-crypto';
 import { EncodingType, readAsStringAsync } from 'expo-file-system/legacy';
 
+import { lookupNativeStatus } from '@/api/inaturalist';
 import { classificationToSpeciesCategory } from '@/lib/detections/mapSpeciesCategory';
 import { speciesStatusToNativeColumn } from '@/lib/detections/mapNativeStatusDb';
-import { lookupNativeStatus } from '@/api/inaturalist';
+import { devLog } from '@/lib/devLog';
 import { supabase } from '@/lib/supabase';
 import type { ClassificationResult, Species, SpeciesStatus } from '@/types';
 
@@ -53,13 +54,11 @@ export async function saveDetection(input: SaveDetectionInput): Promise<void> {
   });
 
   if (uploadError) {
-    if (__DEV__) {
-      console.log('[saveDetection] Image not uploaded', {
-        bucket: BUCKET,
-        path: objectPath,
-        error: uploadError.message,
-      });
-    }
+    devLog('[saveDetection] Image not uploaded', {
+      bucket: BUCKET,
+      path: objectPath,
+      error: uploadError.message,
+    });
     throw new Error(
       uploadError.message.includes('Bucket not found')
         ? 'Storage bucket "detections" is missing. Run sql/storage_bucket_detections.sql in Supabase.'
@@ -67,9 +66,7 @@ export async function saveDetection(input: SaveDetectionInput): Promise<void> {
     );
   }
 
-  if (__DEV__) {
-    console.log('[saveDetection] Image uploaded', { bucket: BUCKET, path: objectPath });
-  }
+  devLog('[saveDetection] Image uploaded', { bucket: BUCKET, path: objectPath });
 
   const {
     data: { publicUrl },

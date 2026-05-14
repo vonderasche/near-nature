@@ -7,6 +7,7 @@ import { useCallback, useState } from 'react';
 import { identifySpeciesInImage } from '@/api/claude';
 import { lookupNativeStatus } from '@/api/inaturalist';
 import { useResizeImageForUpload } from '@/hooks/useResizeImageForUpload';
+import { devLog } from '@/lib/devLog';
 import { checkImageBlur } from '@/utils/blurDetections';
 import { filterClassifications, hasNoSpeciesFound } from '@/utils/imageFilters';
 import type { ClassificationResult, Species } from '@/types';
@@ -58,7 +59,7 @@ export function useSpeciesIdentification(): UseSpeciesIdentificationResult {
 
       // 5) Apply confidence + dedupe filters.
       const { results: classifications, summary } = filterClassifications(rawClassifications);
-      if (__DEV__) console.log('[identify] filter summary', summary);
+      devLog('[identify] filter summary', summary);
 
       if (hasNoSpeciesFound(classifications)) return { species: [], classifications: [] };
 

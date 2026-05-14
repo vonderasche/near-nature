@@ -16,6 +16,7 @@
 //   Cloud Function) so the key stays server-side.
 // ─────────────────────────────────────────────────────────────
 
+import { devLog } from '@/lib/devLog';
 import type { ClassificationResult, VisionTaxonGroup } from '@/types';
 
 const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
@@ -25,10 +26,6 @@ const MODEL          = process.env.EXPO_PUBLIC_ANTHROPIC_MODEL ?? 'claude-sonnet
 const API_KEY        = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY ?? '';
 
 type ImageMediaType = 'image/jpeg' | 'image/png' | 'image/webp';
-
-function devLog(...args: unknown[]) {
-  if (__DEV__) console.log(...args);
-}
 
 // ── Main export ───────────────────────────────────────────────
 
