@@ -7,10 +7,9 @@ import { ThemedConfirmModal, ThemedMessageModal } from '@/components/ui/themed-s
 import { ThemedText } from '@/components/themed-text';
 import { authColors, authSpacing } from '@/constants/auth-theme';
 import type { DetectionGalleryItem } from '@/types';
+import { userFacingErr, type UserFacingResult } from '@/types/user-facing-result';
 
 const NUM_COLUMNS = 3;
-
-export type GalleryDeleteResult = { ok: true } | { ok: false; message?: string };
 
 type DetectionGalleryGridProps = {
   items: DetectionGalleryItem[];
@@ -25,7 +24,7 @@ type DetectionGalleryGridProps = {
   /** Own profile: long-press tile or use modal delete to remove a saved photo. */
   deletable?: boolean;
   /** Called after user confirms delete (long-press or modal). */
-  onDeleteItem?: (item: DetectionGalleryItem) => Promise<GalleryDeleteResult>;
+  onDeleteItem?: (item: DetectionGalleryItem) => Promise<UserFacingResult>;
   /** When set, matches `item.id` while that row is deleting (disables modal delete). */
   deletingId?: string | null;
 };
@@ -63,8 +62,8 @@ export function DetectionGalleryGrid({
   }, [deletable, onDeleteItem]);
 
   const requestDelete = useCallback(
-    async (it: DetectionGalleryItem): Promise<GalleryDeleteResult> => {
-      if (!onDeleteItem) return { ok: false, message: 'Delete is not available.' };
+    async (it: DetectionGalleryItem): Promise<UserFacingResult> => {
+      if (!onDeleteItem) return userFacingErr('Delete is not available.');
       const r = await onDeleteItem(it);
       if (r.ok) setSelected(null);
       return r;
@@ -78,7 +77,7 @@ export function DetectionGalleryGrid({
     try {
       const res = await requestDelete(pendingDelete);
       if (!res.ok) {
-        setDeleteError(res.message?.trim() || 'Something went wrong.');
+        setDeleteError(res.message);
       }
       setPendingDelete(null);
     } finally {

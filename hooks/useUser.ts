@@ -2,9 +2,15 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAuthContext } from '@/context/AuthContext';
 import { signOutLocalOnly } from '@/services/authService';
 import { deleteAccount, getUser, updateUser, type UpdateUserPayload, type User } from '@/services/userService';
+import {
+  userFacingErr,
+  userFacingFromUnknown,
+  userFacingOk,
+  type UserFacingResult,
+} from '@/types/user-facing-result';
 
-export type RemoveUserResult = { ok: true } | { ok: false; message: string };
-export type UpdateUserResult = { ok: true } | { ok: false; message: string };
+export type RemoveUserResult = UserFacingResult;
+export type UpdateUserResult = UserFacingResult;
 
 type UseUserReturn = {
   user: User | null;
@@ -40,7 +46,7 @@ export function useUser(): UseUserReturn {
       }
     } catch (err: unknown) {
       setUser(null);
-      setError(err instanceof Error ? err.message : 'Failed to fetch user');
+      setError(userFacingFromUnknown(err, 'Failed to fetch user').message);
     } finally {
       setLoading(false);
     }
@@ -53,23 +59,23 @@ export function useUser(): UseUserReturn {
 
   const update = useCallback(async (payload: UpdateUserPayload): Promise<UpdateUserResult> => {
     if (!user) {
-      return { ok: false, message: 'Not signed in.' };
+      return userFacingErr('Not signed in.');
     }
     setError(null);
     try {
       const updated = await updateUser(user.id, payload);
       setUser(updated);
-      return { ok: true };
+      return userFacingOk();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to update user';
-      setError(message);
-      return { ok: false, message };
+      const failure = userFacingFromUnknown(err, 'Failed to update user');
+      setError(failure.message);
+      return failure;
     }
   }, [user]);
 
   const remove = useCallback(async (): Promise<RemoveUserResult> => {
     if (!user) {
-      return { ok: false, message: 'No profile loaded.' };
+      return userFacingErr('No profile loaded.');
     }
     setDeleting(true);
     setError(null);
@@ -77,11 +83,11 @@ export function useUser(): UseUserReturn {
       await deleteAccount();
       setUser(null);
       await signOutLocalOnly();
-      return { ok: true };
+      return userFacingOk();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to delete user';
-      setError(message);
-      return { ok: false, message };
+      const failure = userFacingFromUnknown(err, 'Failed to delete user');
+      setError(failure.message);
+      return failure;
     } finally {
       setDeleting(false);
     }

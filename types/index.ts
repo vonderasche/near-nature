@@ -49,3 +49,6 @@ export type ClassificationResult = {
   taxonGroup: VisionTaxonGroup;
   boundingBox?: { x: number; y: number; width: number; height: number };
 };
+
+export type { UserFacingErr, UserFacingOk, UserFacingResult } from './user-facing-result';
+export { userFacingErr, userFacingFromUnknown, userFacingOk } from './user-facing-result';

@@ -8,6 +8,7 @@ import { SheetModalShell } from '@/components/ui/sheet-modal-shell';
 import { ThemedConfirmModal, ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import type { DetectionGalleryItem } from '@/types';
+import type { UserFacingResult } from '@/types/user-facing-result';
 
 export type DetectionGalleryDetailModalProps = {
   visible: boolean;
@@ -16,7 +17,7 @@ export type DetectionGalleryDetailModalProps = {
   onClose: () => void;
   /** Own profile: show delete control (calls `onRequestDelete` after confirm). */
   deletable?: boolean;
-  onRequestDelete?: (item: DetectionGalleryItem) => Promise<{ ok: boolean; message?: string }>;
+  onRequestDelete?: (item: DetectionGalleryItem) => Promise<UserFacingResult>;
   deleteBusy?: boolean;
 };
 
@@ -64,7 +65,7 @@ export function DetectionGalleryDetailModal({
     try {
       const res = await onRequestDelete(item);
       if (!res.ok) {
-        setDeleteError(res.message?.trim() || 'Something went wrong.');
+        setDeleteError(res.message);
         setDeleteConfirmOpen(false);
         return;
       }

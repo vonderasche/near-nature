@@ -1,8 +1,9 @@
 import { useCallback, useState } from 'react';
 
 import { deleteSavedDetection } from '@/services/detectionService';
+import { userFacingFromUnknown, userFacingOk, type UserFacingResult } from '@/types/user-facing-result';
 
-export type DeleteDetectionResult = { ok: true } | { ok: false; message: string };
+export type DeleteDetectionResult = UserFacingResult;
 
 /**
  * Deletes a saved detection for the signed-in user (RLS + storage cleanup in {@link deleteSavedDetection}).
@@ -17,10 +18,9 @@ export function useDeleteDetection(): {
     setDeletingId(detectionId);
     try {
       await deleteSavedDetection(detectionId);
-      return { ok: true };
+      return userFacingOk();
     } catch (e) {
-      const message = e instanceof Error ? e.message : 'Could not delete photo.';
-      return { ok: false, message };
+      return userFacingFromUnknown(e, 'Could not delete photo.');
     } finally {
       setDeletingId(null);
     }

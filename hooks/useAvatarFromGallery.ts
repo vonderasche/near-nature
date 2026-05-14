@@ -5,13 +5,11 @@ import * as ImagePicker from 'expo-image-picker';
 import type { UpdateUserResult } from '@/hooks/useUser';
 import type { UpdateUserPayload } from '@/services/userService';
 import { uploadProfileAvatarFromLibrary } from '@/services/avatarService';
+import { userFacingErr, userFacingFromUnknown, type UserFacingResult } from '@/types/user-facing-result';
 
 type UpdateFn = (payload: UpdateUserPayload) => Promise<UpdateUserResult>;
 
-export type PickAvatarResult =
-  | { ok: true }
-  | { ok: false; message: string }
-  | { ok: false; canceled: true };
+export type PickAvatarResult = UserFacingResult | { ok: false; canceled: true };
 
 /**
  * Opens the device photo library, uploads a square-cropped JPEG to storage, and updates `avatar_url` via `update`.
@@ -21,12 +19,12 @@ export function useAvatarFromGallery(userId: string | undefined, update: UpdateF
 
   const pickAndSetAvatar = useCallback(async (): Promise<PickAvatarResult> => {
     if (!userId) {
-      return { ok: false, message: 'Not signed in.' };
+      return userFacingErr('Not signed in.');
     }
 
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      return { ok: false, message: 'Allow photo library access to choose a profile picture.' };
+      return userFacingErr('Allow photo library access to choose a profile picture.');
     }
 
     let result: ImagePicker.ImagePickerResult;
@@ -40,8 +38,7 @@ export function useAvatarFromGallery(userId: string | undefined, update: UpdateF
         ...(Platform.OS === 'android' ? { legacy: true as const } : {}),
       });
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : 'Could not open photo library.';
-      return { ok: false, message };
+      return userFacingFromUnknown(e, 'Could not open photo library.');
     }
 
     if (result.canceled) {
@@ -50,17 +47,16 @@ export function useAvatarFromGallery(userId: string | undefined, update: UpdateF
 
     const uri = result.assets[0]?.uri;
     if (!uri) {
-      return { ok: false, message: 'No image selected.' };
+      return userFacingErr('No image selected.');
     }
 
     setBusy(true);
     try {
       const publicUrl = await uploadProfileAvatarFromLibrary(userId, uri);
       const r = await update({ avatar_url: publicUrl });
-      return r.ok ? { ok: true } : { ok: false, message: r.message };
+      return r;
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : 'Could not update profile photo.';
-      return { ok: false, message };
+      return userFacingFromUnknown(e, 'Could not update profile photo.');
     } finally {
       setBusy(false);
     }
