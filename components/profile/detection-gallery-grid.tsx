@@ -1,15 +1,9 @@
 import { Image } from 'expo-image';
-import { useCallback, useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Pressable,
-  StyleSheet,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { DetectionGalleryDetailModal } from '@/components/profile/detection-gallery-detail-modal';
+import { ThemedConfirmModal, ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { ThemedText } from '@/components/themed-text';
 import { authColors, authSpacing } from '@/constants/auth-theme';
 import type { DetectionGalleryItem } from '@/types';
@@ -56,6 +50,17 @@ export function DetectionGalleryGrid({
 }: DetectionGalleryGridProps) {
   const { width: windowWidth } = useWindowDimensions();
   const [selected, setSelected] = useState<DetectionGalleryItem | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<DetectionGalleryItem | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  useEffect(() => {
+    if (!deletable || !onDeleteItem) {
+      setPendingDelete(null);
+      setDeleteError(null);
+      setDeleteLoading(false);
+    }
+  }, [deletable, onDeleteItem]);
 
   const requestDelete = useCallback(
     async (it: DetectionGalleryItem): Promise<GalleryDeleteResult> => {
@@ -67,30 +72,26 @@ export function DetectionGalleryGrid({
     [onDeleteItem],
   );
 
+  const confirmDeleteFromSheet = useCallback(async () => {
+    if (!pendingDelete) return;
+    setDeleteLoading(true);
+    try {
+      const res = await requestDelete(pendingDelete);
+      if (!res.ok) {
+        setDeleteError(res.message?.trim() || 'Something went wrong.');
+      }
+      setPendingDelete(null);
+    } finally {
+      setDeleteLoading(false);
+    }
+  }, [pendingDelete, requestDelete]);
+
   const confirmAndDelete = useCallback(
     (it: DetectionGalleryItem) => {
       if (!onDeleteItem) return;
-      Alert.alert(
-        'Delete this photo?',
-        'It will be removed from your gallery. This cannot be undone.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Delete',
-            style: 'destructive',
-            onPress: () => {
-              void (async () => {
-                const res = await requestDelete(it);
-                if (!res.ok && res.message) {
-                  Alert.alert('Could not delete', res.message);
-                }
-              })();
-            },
-          },
-        ]
-      );
+      setPendingDelete(it);
     },
-    [onDeleteItem, requestDelete],
+    [onDeleteItem],
   );
 
   const tileSize = useMemo(() => {
@@ -170,6 +171,22 @@ export function DetectionGalleryGrid({
         deletable={Boolean(deletable && onDeleteItem)}
         onRequestDelete={deletable && onDeleteItem ? requestDelete : undefined}
         deleteBusy={Boolean(selected && deletingId === selected.id)}
+      />
+
+      <ThemedConfirmModal
+        visible={pendingDelete !== null}
+        title="Delete this photo?"
+        message="It will be removed from your gallery. This cannot be undone."
+        confirmLabel="Delete"
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={confirmDeleteFromSheet}
+        confirmLoading={deleteLoading || Boolean(pendingDelete && deletingId === pendingDelete.id)}
+      />
+      <ThemedMessageModal
+        visible={deleteError !== null}
+        title="Could not delete"
+        message={deleteError ?? ''}
+        onDismiss={() => setDeleteError(null)}
       />
     </>
   );

@@ -1,7 +1,6 @@
 import type { AuthSessionResult } from 'expo-auth-session';
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert } from 'react-native';
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { AuthDivider } from '@/components/auth/auth-divider';
@@ -11,15 +10,19 @@ import { AuthScreen } from '@/components/auth/auth-screen';
 import { AuthScreenHeader } from '@/components/auth/auth-screen-header';
 import { AuthTextLink } from '@/components/auth/auth-text-link';
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
+import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { authSpacing } from '@/constants/auth-theme';
 import { signInWithEmail } from '@/lib/auth/email-auth';
 import { signInWithGoogleAuthResult } from '@/lib/auth/google-supabase';
 import { routes } from '@/lib/routing/routes';
 
+type InfoDialog = { title: string; message: string } | null;
+
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
+  const [info, setInfo] = useState<InfoDialog>(null);
 
   const goToApp = useCallback(() => {
     router.replace(routes.tabs);
@@ -30,7 +33,7 @@ export default function LoginScreen() {
     try {
       const result = await signInWithEmail(email, password);
       if (!result.ok) {
-        Alert.alert('Sign in', result.message);
+        setInfo({ title: 'Sign in', message: result.message });
         return;
       }
       goToApp();
@@ -45,7 +48,7 @@ export default function LoginScreen() {
       try {
         const linked = await signInWithGoogleAuthResult(sessionResult);
         if (!linked.ok) {
-          Alert.alert('Google sign-in', linked.message);
+          setInfo({ title: 'Google sign-in', message: linked.message });
           return;
         }
         goToApp();
@@ -90,6 +93,13 @@ export default function LoginScreen() {
       <GoogleSignInButton onSuccess={onGoogleSuccess} />
 
       <AuthLinkRow prompt="No account?" href={routes.signup} linkText="Create one" />
+
+      <ThemedMessageModal
+        visible={info !== null}
+        title={info?.title ?? ''}
+        message={info?.message ?? ''}
+        onDismiss={() => setInfo(null)}
+      />
     </AuthScreen>
   );
 }

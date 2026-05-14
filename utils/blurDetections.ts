@@ -52,7 +52,7 @@ export interface BlurCheckResult {
  * @example
  * const result = await checkImageBlur(photoUri);
  * if (result.isBlurry) {
- *   Alert.alert('Try again', 'Photo is too blurry. Hold the camera still.');
+ *   // e.g. show your app’s themed message dialog
  *   return;
  * }
  */

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Alert } from 'react-native';
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { AuthField } from '@/components/auth/auth-field';
@@ -7,30 +6,37 @@ import { AuthLinkRow } from '@/components/auth/auth-link-row';
 import { AuthScreen } from '@/components/auth/auth-screen';
 import { AuthScreenHeader } from '@/components/auth/auth-screen-header';
 import { InlineFormError } from '@/components/screen/inline-form-error';
+import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { routes } from '@/lib/routing/routes';
+
+type InfoDialog = { title: string; message: string } | null;
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
+  const [info, setInfo] = useState<InfoDialog>(null);
   const { forgotPassword, error, clearError } = useAuth();
 
   async function onSubmit() {
     clearError();
     const e = email.trim();
     if (!e) {
-      Alert.alert('Reset password', 'Enter your email.');
+      setInfo({ title: 'Reset password', message: 'Enter your email.' });
       return;
     }
     setBusy(true);
     try {
       await forgotPassword(e);
-      Alert.alert(
-        'Check your email',
-        'If an account exists for that address, we sent a link to reset your password.'
-      );
+      setInfo({
+        title: 'Check your email',
+        message: 'If an account exists for that address, we sent a link to reset your password.',
+      });
     } catch (err: unknown) {
-      Alert.alert('Reset password', err instanceof Error ? err.message : 'Something went wrong.');
+      setInfo({
+        title: 'Reset password',
+        message: err instanceof Error ? err.message : 'Something went wrong.',
+      });
     } finally {
       setBusy(false);
     }
@@ -55,6 +61,13 @@ export default function ForgotPasswordScreen() {
       {error ? <InlineFormError>{error}</InlineFormError> : null}
 
       <AuthLinkRow href={routes.login} linkText="Back to log in" />
+
+      <ThemedMessageModal
+        visible={info !== null}
+        title={info?.title ?? ''}
+        message={info?.message ?? ''}
+        onDismiss={() => setInfo(null)}
+      />
     </AuthScreen>
   );
 }

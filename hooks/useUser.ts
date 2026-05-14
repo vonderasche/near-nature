@@ -4,13 +4,14 @@ import { signOutLocalOnly } from '@/services/authService';
 import { deleteAccount, getUser, updateUser, type UpdateUserPayload, type User } from '@/services/userService';
 
 export type RemoveUserResult = { ok: true } | { ok: false; message: string };
+export type UpdateUserResult = { ok: true } | { ok: false; message: string };
 
 type UseUserReturn = {
   user: User | null;
   loading: boolean;
   deleting: boolean;
   error: string | null;
-  update: (payload: UpdateUserPayload) => Promise<void>;
+  update: (payload: UpdateUserPayload) => Promise<UpdateUserResult>;
   remove: () => Promise<RemoveUserResult>;
   refresh: () => Promise<void>;
 };
@@ -50,14 +51,19 @@ export function useUser(): UseUserReturn {
     fetchUser();
   }, [fetchUser]);
 
-  const update = useCallback(async (payload: UpdateUserPayload) => {
-    if (!user) return;
+  const update = useCallback(async (payload: UpdateUserPayload): Promise<UpdateUserResult> => {
+    if (!user) {
+      return { ok: false, message: 'Not signed in.' };
+    }
     setError(null);
     try {
       const updated = await updateUser(user.id, payload);
       setUser(updated);
+      return { ok: true };
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to update user');
+      const message = err instanceof Error ? err.message : 'Failed to update user';
+      setError(message);
+      return { ok: false, message };
     }
   }, [user]);
 

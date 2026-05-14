@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
-import { useCallback } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AuthButton } from '@/components/auth/auth-button';
@@ -12,6 +12,7 @@ import { InlineFormError } from '@/components/screen/inline-form-error';
 import { LoadingHintRow } from '@/components/screen/loading-hint-row';
 import { MessageWithAction } from '@/components/screen/message-with-action';
 import { ScreenHeading } from '@/components/screen/screen-heading';
+import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import { useAuthContext } from '@/context/AuthContext';
 import { useIdentificationRouteParams } from '@/hooks/useIdentificationRouteParams';
@@ -25,6 +26,7 @@ import { contentInsetsPadding } from '@/lib/screen/contentInsets';
 export default function IdentificationResultsScreen() {
   const insets = useSafeAreaInsets();
   const { photoUri, userState } = useIdentificationRouteParams();
+  const [saveNotice, setSaveNotice] = useState<string | null>(null);
 
   const { userId } = useAuthContext();
   const { identify, isLoading: identifying, error: identifyError } = useSpeciesIdentification();
@@ -57,7 +59,7 @@ export default function IdentificationResultsScreen() {
       description: wiki?.description ?? null,
     });
     if (result.ok) {
-      Alert.alert('Saved', 'This identification was saved to your history.');
+      setSaveNotice('This identification was saved to your history.');
       refreshHistory();
     }
   }, [
@@ -85,54 +87,62 @@ export default function IdentificationResultsScreen() {
   }
 
   return (
-    <View style={[styles.root, contentInsetsPadding(insets)]}>
-      <ScreenHeading
-        title="Identification"
-        subtitle="We analyze your photo here. Nothing is saved to your camera roll unless you choose Save."
-        marginBottom={authSpacing.md}
-      />
-
-      {identifying ? <LoadingHintRow label="Identifying species…" /> : null}
-
-      {identifyError ? <InlineFormError>{identifyError}</InlineFormError> : null}
-      {historyError ? <InlineFormError>{historyError}</InlineFormError> : null}
-      {saveError ? <InlineFormError>{saveError}</InlineFormError> : null}
-      {wikiError ? <InlineFormError>{wikiError}</InlineFormError> : null}
-
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}>
-        <IdentificationPhotoSection photoUri={photoUri} />
-
-        {species.length > 0 && !identifying ? (
-          <View style={styles.saveRow}>
-            <UploadToDatabaseButton
-              onPress={handleSaveIdentification}
-              disabled={!userId || saving}
-              loading={saving}
-            />
-            {!userId ? (
-              <Text style={styles.saveHint}>Sign in to upload identifications to your account.</Text>
-            ) : null}
-          </View>
-        ) : null}
-
-        <IdentificationSpeciesResultsList
-          species={species}
-          identifying={identifying}
-          identifyError={identifyError}
-          wikiByLatinName={wikiByLatinName}
+    <>
+      <View style={[styles.root, contentInsetsPadding(insets)]}>
+        <ScreenHeading
+          title="Identification"
+          subtitle="We analyze your photo here. Nothing is saved to your camera roll unless you choose Save."
+          marginBottom={authSpacing.md}
         />
 
-        <IdentificationHistorySection historyLoading={historyLoading} identifications={identifications} />
-      </ScrollView>
+        {identifying ? <LoadingHintRow label="Identifying species…" /> : null}
 
-      <View style={styles.footer}>
-        <AuthButton variant="outline" title="Back to camera" onPress={goToCamera} />
+        {identifyError ? <InlineFormError>{identifyError}</InlineFormError> : null}
+        {historyError ? <InlineFormError>{historyError}</InlineFormError> : null}
+        {saveError ? <InlineFormError>{saveError}</InlineFormError> : null}
+        {wikiError ? <InlineFormError>{wikiError}</InlineFormError> : null}
+
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}>
+          <IdentificationPhotoSection photoUri={photoUri} />
+
+          {species.length > 0 && !identifying ? (
+            <View style={styles.saveRow}>
+              <UploadToDatabaseButton
+                onPress={handleSaveIdentification}
+                disabled={!userId || saving}
+                loading={saving}
+              />
+              {!userId ? (
+                <Text style={styles.saveHint}>Sign in to upload identifications to your account.</Text>
+              ) : null}
+            </View>
+          ) : null}
+
+          <IdentificationSpeciesResultsList
+            species={species}
+            identifying={identifying}
+            identifyError={identifyError}
+            wikiByLatinName={wikiByLatinName}
+          />
+
+          <IdentificationHistorySection historyLoading={historyLoading} identifications={identifications} />
+        </ScrollView>
+
+        <View style={styles.footer}>
+          <AuthButton variant="outline" title="Back to camera" onPress={goToCamera} />
+        </View>
       </View>
-    </View>
+      <ThemedMessageModal
+        visible={saveNotice !== null}
+        title="Saved"
+        message={saveNotice ?? ''}
+        onDismiss={() => setSaveNotice(null)}
+      />
+    </>
   );
 }
 

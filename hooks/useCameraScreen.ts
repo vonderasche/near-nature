@@ -1,16 +1,18 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { useCallback, useRef, useState, type RefObject } from 'react';
-import { Alert, Platform } from 'react-native';
+import { Platform } from 'react-native';
 
 import { capturePictureFromCameraRef } from '@/lib/camera/capturePicture';
 
 export type CameraFacing = 'back' | 'front';
 
 export type UseCameraScreenOptions = {
-  /** When set, called with the photo URI instead of showing the default success alert. */
+  /** When set, called with the photo URI instead of surfacing a success message via {@link UseCameraScreenResult.cameraMessage}. */
   onPhotoCaptured?: (uri: string) => void;
 };
+
+export type CameraScreenMessage = { title: string; message: string };
 
 export type UseCameraScreenResult = {
   cameraRef: RefObject<CameraView | null>;
@@ -23,11 +25,14 @@ export type UseCameraScreenResult = {
   toggleFacing: () => void;
   takePicture: () => Promise<void>;
   capturing: boolean;
+  /** Non-null when capture failed or succeeded without `onPhotoCaptured` — show a themed message dialog from the screen. */
+  cameraMessage: CameraScreenMessage | null;
+  clearCameraMessage: () => void;
 };
 
 /**
  * Camera preview state: permissions, facing, ref, and capture.
- * Pass `onPhotoCaptured` to navigate to a preview screen or upload without the default alert.
+ * Pass `onPhotoCaptured` to navigate to a preview screen or upload without a success dialog.
  */
 export function useCameraScreen(options?: UseCameraScreenOptions): UseCameraScreenResult {
   const onPhotoCaptured = options?.onPhotoCaptured;
@@ -35,6 +40,11 @@ export function useCameraScreen(options?: UseCameraScreenOptions): UseCameraScre
   const [permission, requestPermission] = useCameraPermissions();
   const [facing, setFacing] = useState<CameraFacing>('back');
   const [capturing, setCapturing] = useState(false);
+  const [cameraMessage, setCameraMessage] = useState<CameraScreenMessage | null>(null);
+
+  const clearCameraMessage = useCallback(() => {
+    setCameraMessage(null);
+  }, []);
 
   const toggleFacing = useCallback(() => {
     try {
@@ -63,9 +73,15 @@ export function useCameraScreen(options?: UseCameraScreenOptions): UseCameraScre
         return;
       }
 
-      Alert.alert('Photo captured', Platform.OS === 'web' ? 'Saved to preview (web).' : uri);
+      setCameraMessage({
+        title: 'Photo captured',
+        message: Platform.OS === 'web' ? 'Saved to preview (web).' : uri,
+      });
     } catch (e: unknown) {
-      Alert.alert('Camera', e instanceof Error ? e.message : 'Could not take photo.');
+      setCameraMessage({
+        title: 'Camera',
+        message: e instanceof Error ? e.message : 'Could not take photo.',
+      });
     } finally {
       setCapturing(false);
     }
@@ -84,5 +100,7 @@ export function useCameraScreen(options?: UseCameraScreenOptions): UseCameraScre
     toggleFacing,
     takePicture,
     capturing,
+    cameraMessage,
+    clearCameraMessage,
   };
 }

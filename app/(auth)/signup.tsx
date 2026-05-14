@@ -1,7 +1,6 @@
-import { useCallback, useState } from 'react';
-import { Alert } from 'react-native';
-import { router } from 'expo-router';
 import type { AuthSessionResult } from 'expo-auth-session';
+import { router } from 'expo-router';
+import { useCallback, useState } from 'react';
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { AuthDivider } from '@/components/auth/auth-divider';
@@ -10,9 +9,12 @@ import { AuthLinkRow } from '@/components/auth/auth-link-row';
 import { AuthScreen } from '@/components/auth/auth-screen';
 import { AuthScreenHeader } from '@/components/auth/auth-screen-header';
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
+import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { signUpWithEmail } from '@/lib/auth/email-auth';
 import { signInWithGoogleAuthResult } from '@/lib/auth/google-supabase';
 import { routes } from '@/lib/routing/routes';
+
+type InfoDialog = { title: string; message: string; goToLoginOnDismiss?: boolean } | null;
 
 export default function SignUpScreen() {
   const [email, setEmail] = useState('');
@@ -23,14 +25,23 @@ export default function SignUpScreen() {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [busy, setBusy] = useState(false);
+  const [info, setInfo] = useState<InfoDialog>(null);
 
   const goToApp = useCallback(() => {
     router.replace(routes.tabs);
   }, []);
 
+  function dismissInfo() {
+    const goLogin = info?.goToLoginOnDismiss;
+    setInfo(null);
+    if (goLogin) {
+      router.replace(routes.login);
+    }
+  }
+
   async function onSubmit() {
     if (password !== confirm) {
-      Alert.alert('Sign up', 'Passwords do not match.');
+      setInfo({ title: 'Sign up', message: 'Passwords do not match.' });
       return;
     }
     setBusy(true);
@@ -42,15 +53,15 @@ export default function SignUpScreen() {
         motto,
       });
       if (!result.ok) {
-        Alert.alert('Sign up', result.message);
+        setInfo({ title: 'Sign up', message: result.message });
         return;
       }
       if (result.needsEmailConfirmation) {
-        Alert.alert(
-          'Check your email',
-          'We sent you a confirmation link. After you confirm, you can log in.',
-          [{ text: 'OK', onPress: () => router.replace(routes.login) }]
-        );
+        setInfo({
+          title: 'Check your email',
+          message: 'We sent you a confirmation link. After you confirm, you can log in.',
+          goToLoginOnDismiss: true,
+        });
         return;
       }
       goToApp();
@@ -65,7 +76,7 @@ export default function SignUpScreen() {
       try {
         const linked = await signInWithGoogleAuthResult(sessionResult);
         if (!linked.ok) {
-          Alert.alert('Google sign-in', linked.message);
+          setInfo({ title: 'Google sign-in', message: linked.message });
           return;
         }
         goToApp();
@@ -146,6 +157,13 @@ export default function SignUpScreen() {
       <GoogleSignInButton onSuccess={onGoogleSuccess} />
 
       <AuthLinkRow prompt="Already have an account?" href={routes.login} linkText="Log in" />
+
+      <ThemedMessageModal
+        visible={info !== null}
+        title={info?.title ?? ''}
+        message={info?.message ?? ''}
+        onDismiss={dismissInfo}
+      />
     </AuthScreen>
   );
 }

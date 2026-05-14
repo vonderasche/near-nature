@@ -1,18 +1,21 @@
 import { useCallback, useState } from 'react';
-import { Alert, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import { TabScreenWithLogout } from '@/components/TabScreenWithLogout';
 import { CenteredActivityIndicator } from '@/components/profile/centered-activity-indicator';
 import { ProfileOverflowMenu } from '@/components/profile/profile-overflow-menu';
 import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
 import { DetectionGalleryGrid } from '@/components/profile/detection-gallery-grid';
+import { MottoEditModal } from '@/components/profile/motto-edit-modal';
 import { ScreenSection } from '@/components/profile/screen-section';
 import { UserAvatar } from '@/components/profile/user-avatar';
 import { UserProfileSummary } from '@/components/profile/user-profile-summary';
+import { ThemedConfirmModal, ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { authSpacing, authTypography } from '@/constants/auth-theme';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useDeleteDetection } from '@/hooks/useDeleteDetection';
+import { useMottoSave } from '@/hooks/useMottoSave';
 import { useUserDetectionGallery } from '@/hooks/useUserDetectionGallery';
 import { useUser } from '@/hooks/useUser';
 import type { DetectionGalleryItem } from '@/types';
@@ -23,7 +26,8 @@ export default function ProfileScreen() {
   const border = Colors[colorScheme].tabIconDefault;
   const tint = Colors[colorScheme].tint;
 
-  const { user, loading, deleting, error, refresh, remove: deleteAccount } = useUser();
+  const { user, loading, deleting, error, refresh, update, remove: deleteAccount } = useUser();
+  const { saveMotto, saving: mottoSaving } = useMottoSave(update);
   const { deleteById, deletingId } = useDeleteDetection();
   const {
     items: galleryItems,
@@ -32,6 +36,9 @@ export default function ProfileScreen() {
     refetch: refetchGallery,
   } = useUserDetectionGallery({ userId: user?.id, limit: 24 });
   const [refreshing, setRefreshing] = useState(false);
+  const [mottoModalVisible, setMottoModalVisible] = useState(false);
+  const [deleteProfileOpen, setDeleteProfileOpen] = useState(false);
+  const [deleteProfileError, setDeleteProfileError] = useState<string | null>(null);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -52,25 +59,15 @@ export default function ProfileScreen() {
   );
 
   const confirmDeleteProfile = useCallback(() => {
-    Alert.alert(
-      'Delete profile',
-      'This permanently deletes your account and profile data. You cannot undo this.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete profile',
-          style: 'destructive',
-          onPress: () => {
-            void (async () => {
-              const result = await deleteAccount();
-              if (!result.ok) {
-                Alert.alert('Could not delete profile', result.message);
-              }
-            })();
-          },
-        },
-      ]
-    );
+    setDeleteProfileOpen(true);
+  }, []);
+
+  const runDeleteProfile = useCallback(async () => {
+    const result = await deleteAccount();
+    setDeleteProfileOpen(false);
+    if (!result.ok) {
+      setDeleteProfileError(result.message);
+    }
   }, [deleteAccount]);
 
   return (
@@ -115,6 +112,14 @@ export default function ProfileScreen() {
               username={user.username}
               motto={user.motto}
               mutedColor={muted}
+              onMottoPress={() => setMottoModalVisible(true)}
+            />
+            <MottoEditModal
+              visible={mottoModalVisible}
+              initialMotto={user.motto}
+              onClose={() => setMottoModalVisible(false)}
+              onSave={saveMotto}
+              saving={mottoSaving}
             />
           </View>
 
@@ -139,6 +144,21 @@ export default function ProfileScreen() {
       ) : !loading && !error ? (
         <Text style={[styles.emptyHint, { color: muted }]}>Sign in to load your profile.</Text>
       ) : null}
+      <ThemedConfirmModal
+        visible={deleteProfileOpen}
+        title="Delete profile"
+        message="This permanently deletes your account and profile data. You cannot undo this."
+        confirmLabel="Delete profile"
+        onCancel={() => setDeleteProfileOpen(false)}
+        onConfirm={runDeleteProfile}
+        confirmLoading={deleting}
+      />
+      <ThemedMessageModal
+        visible={deleteProfileError !== null}
+        title="Could not delete profile"
+        message={deleteProfileError ?? ''}
+        onDismiss={() => setDeleteProfileError(null)}
+      />
     </TabScreenWithLogout>
   );
 }

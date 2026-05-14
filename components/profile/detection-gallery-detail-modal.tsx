@@ -1,8 +1,10 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Image } from 'expo-image';
-import { Alert, ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AuthButton } from '@/components/auth/auth-button';
+import { ThemedConfirmModal, ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import type { DetectionGalleryItem } from '@/types';
 
@@ -42,86 +44,112 @@ export function DetectionGalleryDetailModal({
   onRequestDelete,
   deleteBusy = false,
 }: DetectionGalleryDetailModalProps) {
-  if (!visible || !item) {
-    return null;
-  }
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
+  useEffect(() => {
+    if (!visible || !item) {
+      setDeleteConfirmOpen(false);
+      setDeleteError(null);
+      setConfirmLoading(false);
+    }
+  }, [visible, item]);
+
+  const runDelete = useCallback(async () => {
+    if (!onRequestDelete || !item) return;
+    setConfirmLoading(true);
+    try {
+      const res = await onRequestDelete(item);
+      if (!res.ok) {
+        setDeleteError(res.message?.trim() || 'Something went wrong.');
+        setDeleteConfirmOpen(false);
+        return;
+      }
+      setDeleteConfirmOpen(false);
+      onClose();
+    } finally {
+      setConfirmLoading(false);
+    }
+  }, [item, onClose, onRequestDelete]);
+
+  const showMain = Boolean(visible && item);
   const galleryItem = item;
 
   function handleDeletePress() {
     if (!onRequestDelete) return;
-    Alert.alert(
-      'Delete this photo?',
-      'It will be removed from your gallery. This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            void (async () => {
-              const res = await onRequestDelete(galleryItem);
-              if (!res.ok && res.message) {
-                Alert.alert('Could not delete', res.message);
-                return;
-              }
-              if (res.ok) onClose();
-            })();
-          },
-        },
-      ]
-    );
+    setDeleteConfirmOpen(true);
   }
 
   return (
-    <Modal animationType="fade" transparent visible={visible} onRequestClose={onClose}>
-      <View style={styles.root} pointerEvents="box-none">
-        <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Dismiss" />
-        <View style={styles.sheet} accessibilityViewIsModal>
-          <ScrollView
-            style={styles.scroll}
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled">
-            <View style={styles.imageFrame}>
-              <Image
-                source={{ uri: galleryItem.displayUrl }}
-                style={StyleSheet.absoluteFillObject}
-                contentFit="contain"
-                transition={200}
-                accessibilityLabel={`Photo of ${galleryItem.commonName}`}
-              />
+    <>
+      {showMain && galleryItem ? (
+        <Modal animationType="fade" transparent visible={visible} onRequestClose={onClose}>
+          <View style={styles.root} pointerEvents="box-none">
+            <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Dismiss" />
+            <View style={styles.sheet} accessibilityViewIsModal>
+              <ScrollView
+                style={styles.scroll}
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled">
+                <View style={styles.imageFrame}>
+                  <Image
+                    source={{ uri: galleryItem.displayUrl }}
+                    style={StyleSheet.absoluteFillObject}
+                    contentFit="contain"
+                    transition={200}
+                    accessibilityLabel={`Photo of ${galleryItem.commonName}`}
+                  />
+                </View>
+
+                <Text style={styles.commonName}>{galleryItem.commonName}</Text>
+                <Text style={styles.latinName}>{galleryItem.latinName}</Text>
+                <Text style={styles.meta}>Saved {formatDetectedAt(galleryItem.detectedAt)}</Text>
+              </ScrollView>
+
+              <View style={styles.actions}>
+                {deletable && onRequestDelete ? (
+                  <Pressable
+                    onPress={handleDeletePress}
+                    disabled={deleteBusy || deleteConfirmOpen}
+                    style={({ pressed }) => [
+                      styles.deleteRow,
+                      (deleteBusy || deleteConfirmOpen || pressed) && styles.deleteRowPressed,
+                    ]}
+                    accessibilityRole="button"
+                    accessibilityLabel="Delete photo from gallery">
+                    {deleteBusy ? (
+                      <ActivityIndicator color={authColors.danger} />
+                    ) : (
+                      <MaterialIcons name="delete-outline" size={22} color={authColors.danger} />
+                    )}
+                    <Text style={styles.deleteLabel}>Delete from gallery</Text>
+                  </Pressable>
+                ) : null}
+                <AuthButton title="Close" variant="outline" onPress={onClose} disabled={deleteBusy} />
+              </View>
             </View>
-
-            <Text style={styles.commonName}>{galleryItem.commonName}</Text>
-            <Text style={styles.latinName}>{galleryItem.latinName}</Text>
-            <Text style={styles.meta}>Saved {formatDetectedAt(galleryItem.detectedAt)}</Text>
-          </ScrollView>
-
-          <View style={styles.actions}>
-            {deletable && onRequestDelete ? (
-              <Pressable
-                onPress={handleDeletePress}
-                disabled={deleteBusy}
-                style={({ pressed }) => [
-                  styles.deleteRow,
-                  (deleteBusy || pressed) && styles.deleteRowPressed,
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel="Delete photo from gallery">
-                {deleteBusy ? (
-                  <ActivityIndicator color={authColors.danger} />
-                ) : (
-                  <MaterialIcons name="delete-outline" size={22} color={authColors.danger} />
-                )}
-                <Text style={styles.deleteLabel}>Delete from gallery</Text>
-              </Pressable>
-            ) : null}
-            <AuthButton title="Close" variant="outline" onPress={onClose} disabled={deleteBusy} />
           </View>
-        </View>
-      </View>
-    </Modal>
+        </Modal>
+      ) : null}
+
+      <ThemedConfirmModal
+        visible={deleteConfirmOpen && Boolean(galleryItem)}
+        title="Delete this photo?"
+        message="It will be removed from your gallery. This cannot be undone."
+        confirmLabel="Delete"
+        onCancel={() => setDeleteConfirmOpen(false)}
+        onConfirm={runDelete}
+        confirmLoading={confirmLoading || deleteBusy}
+      />
+      <ThemedMessageModal
+        visible={deleteError !== null}
+        title="Could not delete"
+        message={deleteError ?? ''}
+        onDismiss={() => setDeleteError(null)}
+      />
+    </>
   );
 }
 

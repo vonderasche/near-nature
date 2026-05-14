@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { ScreenHeading } from '@/components/screen/screen-heading';
+import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { authColors, authSpacing } from '@/constants/auth-theme';
 import { useLogout } from '@/hooks/useLogout';
 import { contentInsetsPadding } from '@/lib/screen/contentInsets';
@@ -28,7 +29,7 @@ export function TabScreenWithLogout({
   hideLogout = false,
   titleAccessory,
 }: TabScreenWithLogoutProps) {
-  const { logout, busy } = useLogout();
+  const { logout, busy, logoutError, clearLogoutError } = useLogout();
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const edge = contentInsetsPadding(insets);
@@ -42,6 +43,15 @@ export function TabScreenWithLogout({
     </View>
   ) : (
     <ScreenHeading title={title} subtitle={subtitle} marginBottom={authSpacing.md} />
+  );
+
+  const logoutErrorModal = (
+    <ThemedMessageModal
+      visible={logoutError !== null}
+      title="Log out"
+      message={logoutError ?? ''}
+      onDismiss={clearLogoutError}
+    />
   );
 
   if (children) {
@@ -72,6 +82,7 @@ export function TabScreenWithLogout({
             />
           ) : null}
         </ScrollView>
+        {logoutErrorModal}
       </View>
     );
   }
@@ -106,6 +117,7 @@ export function TabScreenWithLogout({
           disabled={busy}
         />
       ) : null}
+      {logoutErrorModal}
     </View>
   );
 }
