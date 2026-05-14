@@ -6,7 +6,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PhotoReviewActions } from '@/components/camera/photo-review-actions';
 import { MessageWithAction } from '@/components/screen/message-with-action';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
-import { screenColors } from '@/constants/screen-theme';
 import { contentInsetsPadding } from '@/lib/screen/contentInsets';
 import { identificationResultsWithPhoto, routes } from '@/lib/routing/routes';
 import { normalizePhotoUri, paramToString } from '@/lib/routing/searchParams';
@@ -74,7 +73,7 @@ const styles = StyleSheet.create({
   },
   root: {
     flex: 1,
-    backgroundColor: screenColors.darkBackground,
+    backgroundColor: authColors.background,
   },
   imageColumn: {
     flex: 1,

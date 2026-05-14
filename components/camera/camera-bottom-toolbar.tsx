@@ -1,7 +1,6 @@
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { authSpacing, authTypography } from '@/constants/auth-theme';
-import { screenColors } from '@/constants/screen-theme';
+import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import { bottomToolbarPadding } from '@/lib/screen/contentInsets';
 
 type Insets = { bottom: number };
@@ -56,7 +55,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: authSpacing.lg,
     paddingTop: authSpacing.md,
-    backgroundColor: screenColors.darkToolbar,
+    backgroundColor: authColors.overlayScrim,
   },
   toolBtn: {
     minWidth: 64,
@@ -68,7 +67,7 @@ const styles = StyleSheet.create({
   },
   toolBtnText: {
     ...authTypography.body,
-    color: screenColors.onDark,
+    color: authColors.text,
     fontWeight: '600',
   },
   toolSpacer: {
@@ -79,7 +78,7 @@ const styles = StyleSheet.create({
     height: 72,
     borderRadius: 36,
     borderWidth: 4,
-    borderColor: screenColors.onDark,
+    borderColor: authColors.text,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -93,6 +92,6 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: screenColors.onDark,
+    backgroundColor: authColors.text,
   },
 });

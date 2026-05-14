@@ -9,7 +9,6 @@ import { MessageWithAction } from '@/components/screen/message-with-action';
 import { ScreenCenter } from '@/components/screen/screen-center';
 import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { authColors } from '@/constants/auth-theme';
-import { screenColors } from '@/constants/screen-theme';
 import { useCameraScreen } from '@/hooks/useCameraScreen';
 import { contentInsetsPadding } from '@/lib/screen/contentInsets';
 import { cameraPreviewWithPhoto } from '@/lib/routing/routes';
@@ -105,6 +104,6 @@ const styles = StyleSheet.create({
   },
   root: {
     flex: 1,
-    backgroundColor: screenColors.darkBackground,
+    backgroundColor: authColors.background,
   },
 });
