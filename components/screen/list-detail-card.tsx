@@ -10,6 +10,8 @@ export type ListDetailCardProps = {
   subtitle?: string | null;
   /** Tertiary line, muted (e.g. timestamp or detection count). */
   meta?: string | null;
+  /** Renders to the left of the text block (e.g. leaderboard avatar). */
+  leading?: ReactNode;
   children?: ReactNode;
 };
 
@@ -17,15 +19,28 @@ export type ListDetailCardProps = {
  * Bordered list row used by identification results and other stacked summaries
  * (same look as the original {@link SpeciesResultCard}).
  */
-export function ListDetailCard({ title, subtitle, meta, children }: ListDetailCardProps) {
+export function ListDetailCard({ title, subtitle, meta, leading, children }: ListDetailCardProps) {
   const subtitleTrimmed = subtitle?.trim();
   const metaTrimmed = meta?.trim();
-  return (
-    <View style={styles.card}>
+  const body = (
+    <>
       <Text style={styles.title}>{title}</Text>
       {subtitleTrimmed ? <Text style={styles.subtitle}>{subtitleTrimmed}</Text> : null}
       {metaTrimmed ? <Text style={styles.meta}>{metaTrimmed}</Text> : null}
       {children}
+    </>
+  );
+
+  return (
+    <View style={styles.card}>
+      {leading ? (
+        <View style={styles.leaderRow}>
+          <View style={styles.leadingWrap}>{leading}</View>
+          <View style={styles.bodyFlex}>{body}</View>
+        </View>
+      ) : (
+        body
+      )}
     </View>
   );
 }
@@ -50,6 +65,18 @@ const styles = StyleSheet.create({
     borderColor: authColors.border,
     padding: authSpacing.md,
     marginBottom: authSpacing.sm,
+  },
+  leaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: authSpacing.md,
+  },
+  leadingWrap: {
+    flexShrink: 0,
+  },
+  bodyFlex: {
+    flex: 1,
+    minWidth: 0,
   },
   title: {
     ...authTypography.body,

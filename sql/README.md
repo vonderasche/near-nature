@@ -12,7 +12,9 @@ All files are safe to re-run. Run in this order in the Supabase SQL Editor:
 8. `create_streaks.sql`      — streaks table, auto-update streak trigger
 9. `create_discoveries.sql`  — discoveries table, first discovery trigger + bonus points
 10. `create_leaderboard.sql` — points trigger, leaderboard function (all_time/month/ytd)
-11. `storage_bucket_detections` - storage bucket + policies
+11. `storage_bucket_detections.sql` — storage bucket + policies
+12. `get_detection_count_leaderboard.sql` — detection-count leaderboard RPC (includes `motto` from `public.users`)
+13. `get_public_user_profile.sql` — safe public profile RPC for other users’ profiles
 
 
 ## Points System

@@ -1,4 +1,5 @@
 -- Leaderboard by number of saved (non-sensitive) detections.
+-- Includes each user's motto from public.users (re-run this script after schema changes).
 -- SECURITY DEFINER so all authenticated users can see aggregate rankings without
 -- reading other users' individual detection rows under RLS.
 -- Safe to re-run.

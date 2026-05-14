@@ -1,11 +1,12 @@
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { LeaderboardMemberAvatar } from '@/components/leaderboard/leaderboard-member-avatar';
 import { InlineFormError } from '@/components/screen/inline-form-error';
 import { ListDetailCard, listSectionSupportingStyles } from '@/components/screen/list-detail-card';
 import { authColors } from '@/constants/auth-theme';
-import type { DetectionLeaderboardRow } from '@/hooks/useDetectionLeaderboard';
 import { routePublicUserProfile } from '@/lib/routing/routes';
+import type { DetectionLeaderboardRow } from '@/services/leaderboardService';
 
 type Props = {
   rows: DetectionLeaderboardRow[];
@@ -55,6 +56,13 @@ export function DetectionCountLeaderboard({ rows, loading, error }: Props) {
             row.motto?.trim() ? row.motto.trim() : 'No motto set'
           }`}>
           <ListDetailCard
+            leading={
+              <LeaderboardMemberAvatar
+                storedUrl={row.avatarUrl}
+                borderColor={authColors.border}
+                mutedColor={authColors.textMuted}
+              />
+            }
             title={row.username}
             subtitle={row.motto?.trim() ? row.motto.trim() : 'No motto set.'}
             meta={detectionLabel(row.detectionCount)}
