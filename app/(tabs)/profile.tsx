@@ -6,16 +6,15 @@ import { ThemedText } from '@/components/themed-text';
 import { CenteredActivityIndicator } from '@/components/profile/centered-activity-indicator';
 import { DangerActionBlock } from '@/components/profile/danger-action-block';
 import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
-import { PlaceholderTileRow } from '@/components/profile/placeholder-tile-row';
+import { DetectionGalleryRow } from '@/components/profile/detection-gallery-row';
 import { ScreenSection } from '@/components/profile/screen-section';
 import { UserAvatar } from '@/components/profile/user-avatar';
 import { UserProfileSummary } from '@/components/profile/user-profile-summary';
 import { Colors } from '@/constants/theme';
 import { authSpacing } from '@/constants/auth-theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useUserDetectionGallery } from '@/hooks/useUserDetectionGallery';
 import { useUser } from '@/hooks/useUser';
-
-const GALLERY_PLACEHOLDER_COUNT = 6;
 
 export default function ProfileScreen() {
   const colorScheme = useColorScheme() ?? 'light';
@@ -24,16 +23,22 @@ export default function ProfileScreen() {
   const tint = Colors[colorScheme].tint;
 
   const { user, loading, deleting, error, refresh, remove } = useUser();
+  const {
+    items: galleryItems,
+    isLoading: galleryLoading,
+    error: galleryError,
+    refetch: refetchGallery,
+  } = useUserDetectionGallery({ userId: user?.id, limit: 24 });
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      await refresh();
+      await Promise.all([refresh(), refetchGallery()]);
     } finally {
       setRefreshing(false);
     }
-  }, [refresh]);
+  }, [refresh, refetchGallery]);
 
   const confirmDeleteProfile = useCallback(() => {
     Alert.alert(
@@ -98,9 +103,17 @@ export default function ProfileScreen() {
 
           <ScreenSection
             title="Gallery"
-            hint="Your nature photos will appear here."
+            hint="Photos from identifications you saved to your account."
             hintColor={muted}>
-            <PlaceholderTileRow count={GALLERY_PLACEHOLDER_COUNT} borderColor={border} iconColor={muted} />
+            <DetectionGalleryRow
+              items={galleryItems}
+              loading={galleryLoading}
+              error={galleryError}
+              onRetry={() => void refetchGallery()}
+              borderColor={border}
+              mutedColor={muted}
+              activityColor={tint}
+            />
           </ScreenSection>
 
           <DangerActionBlock

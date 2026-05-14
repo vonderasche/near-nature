@@ -21,6 +21,18 @@ export type Identification = {
   species: Species;
 };
 
+/** Saved detection row for profile gallery (`detections.image_url`). */
+export type DetectionGalleryItem = {
+  id: string;
+  /** Value persisted in `detections.image_url` (often a non-fetchable public URL when the bucket is private). */
+  imageUrl: string;
+  /** Signed or otherwise usable URL for `<Image />`. */
+  displayUrl: string;
+  detectedAt: string;
+  commonName: string;
+  latinName: string;
+};
+
 export type SpeciesClassification = {
   latinName: string;
   commonName: string;

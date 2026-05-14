@@ -6,11 +6,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PhotoReviewActions } from '@/components/camera/photo-review-actions';
 import { MessageWithAction } from '@/components/screen/message-with-action';
 import { authSpacing } from '@/constants/auth-theme';
+import { normalizePhotoUri, paramToString } from '@/lib/routing/searchParams';
 
 export default function CameraPreviewScreen() {
   const insets = useSafeAreaInsets();
-  const { uri } = useLocalSearchParams<{ uri?: string }>();
-  const photoUri = typeof uri === 'string' ? uri : Array.isArray(uri) ? uri[0] : undefined;
+  const { uri } = useLocalSearchParams<{ uri?: string | string[] }>();
+  const photoUri = normalizePhotoUri(paramToString(uri));
 
   function goBackToCamera() {
     if (router.canGoBack()) {

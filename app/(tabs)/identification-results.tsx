@@ -19,24 +19,10 @@ import { useAuthContext } from '@/context/AuthContext';
 import { useIdentifications } from '@/hooks/useIdentifications';
 import { useSaveDetection } from '@/hooks/useSaveDetection';
 import { useSpeciesIdentification } from '@/hooks/useSpeciesIdentification';
+import { normalizePhotoUri, paramToString } from '@/lib/routing/searchParams';
 import type { ClassificationResult, Species } from '@/types';
 
 const DEFAULT_USER_STATE = process.env.EXPO_PUBLIC_USER_STATE ?? 'FL';
-
-function paramToString(v: string | string[] | undefined): string | undefined {
-  if (typeof v === 'string') return v;
-  if (Array.isArray(v)) return v[0];
-  return undefined;
-}
-
-function normalizePhotoUri(raw: string | undefined): string | undefined {
-  if (!raw) return undefined;
-  try {
-    return decodeURIComponent(raw);
-  } catch {
-    return raw;
-  }
-}
 
 export default function IdentificationResultsScreen() {
   const insets = useSafeAreaInsets();
