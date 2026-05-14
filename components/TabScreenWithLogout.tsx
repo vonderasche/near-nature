@@ -1,5 +1,6 @@
 import type { ComponentProps, ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AuthButton } from '@/components/auth/auth-button';
@@ -29,6 +30,7 @@ export function TabScreenWithLogout({
 }: TabScreenWithLogoutProps) {
   const { logout, busy } = useLogout();
   const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
   const edge = contentInsetsPadding(insets);
 
   const headingBlock = titleAccessory ? (
@@ -51,7 +53,7 @@ export function TabScreenWithLogout({
             styles.scrollContent,
             {
               paddingTop: edge.paddingTop,
-              paddingBottom: edge.paddingBottom + authSpacing.xl,
+              paddingBottom: edge.paddingBottom + authSpacing.xl + tabBarHeight,
               paddingHorizontal: authSpacing.lg,
             },
           ]}
@@ -75,7 +77,16 @@ export function TabScreenWithLogout({
   }
 
   return (
-    <View style={[styles.fill, styles.centeredShell, edge, { paddingHorizontal: authSpacing.lg }]}>
+    <View
+      style={[
+        styles.fill,
+        styles.centeredShell,
+        {
+          paddingTop: edge.paddingTop,
+          paddingBottom: edge.paddingBottom + tabBarHeight,
+          paddingHorizontal: authSpacing.lg,
+        },
+      ]}>
       {titleAccessory ? (
         <View style={[styles.titleRow, { width: '100%' }]}>
           <View style={styles.titleText}>

@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     borderRadius: 8,
     overflow: 'hidden',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: authColors.fieldBackground,
     borderWidth: 1,
     borderColor: authColors.border,
   },

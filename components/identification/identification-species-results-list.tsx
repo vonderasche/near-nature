@@ -1,8 +1,8 @@
-import { StyleSheet, Text } from 'react-native';
+import { Text } from 'react-native';
 
 import type { SpeciesWikiData } from '@/api/wikipedia';
 import { SpeciesResultCard } from '@/components/identification/species-result-card';
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { listSectionSupportingStyles } from '@/components/screen/list-detail-card';
 import type { Species } from '@/types';
 
 import { IdentificationSpeciesWikiBody } from './identification-species-wiki-body';
@@ -23,7 +23,7 @@ export function IdentificationSpeciesResultsList({
   return (
     <>
       {!identifying && species.length === 0 && !identifyError ? (
-        <Text style={styles.muted}>No species returned.</Text>
+        <Text style={listSectionSupportingStyles.muted}>No species returned.</Text>
       ) : null}
 
       {species.map((s) => (
@@ -39,10 +39,3 @@ export function IdentificationSpeciesResultsList({
   );
 }
 
-const styles = StyleSheet.create({
-  muted: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
-    marginBottom: authSpacing.sm,
-  },
-});

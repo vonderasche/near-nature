@@ -2,7 +2,8 @@ import { useRouter } from 'expo-router';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { InlineFormError } from '@/components/screen/inline-form-error';
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { ListDetailCard, listSectionSupportingStyles } from '@/components/screen/list-detail-card';
+import { authColors } from '@/constants/auth-theme';
 import type { DetectionLeaderboardRow } from '@/hooks/useDetectionLeaderboard';
 import { routePublicUserProfile } from '@/lib/routing/routes';
 
@@ -17,7 +18,7 @@ function detectionLabel(n: number): string {
 }
 
 /**
- * Ordered list by detection count (RPC). Avatar placeholder, username, count, and motto text.
+ * Ordered list by detection count (RPC). Same card styling as “Your identifications”.
  */
 export function DetectionCountLeaderboard({ rows, loading, error }: Props) {
   const router = useRouter();
@@ -28,46 +29,36 @@ export function DetectionCountLeaderboard({ rows, loading, error }: Props) {
 
   if (loading) {
     return (
-      <View style={styles.centered} accessibilityLabel="Loading leaderboard">
-        <ActivityIndicator color={authColors.text} />
+      <View style={listSectionSupportingStyles.centered} accessibilityLabel="Loading leaderboard">
+        <ActivityIndicator color={authColors.textMuted} />
       </View>
     );
   }
 
   if (rows.length === 0) {
     return (
-      <Text style={styles.empty}>No rankings yet. Save identifications to appear here.</Text>
+      <Text style={listSectionSupportingStyles.muted}>No rankings yet. Save identifications to appear here.</Text>
     );
   }
 
   return (
-    <View style={styles.list} accessibilityLabel="Leaderboard by detections">
+    <View accessibilityLabel="Leaderboard by detections">
       {rows.map((row) => (
         <Pressable
           key={row.userId}
           onPress={() => router.push(routePublicUserProfile(row.userId))}
-          style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
-          android_ripple={{ color: 'rgba(0,0,0,0.06)' }}
+          style={({ pressed }) => pressed && styles.rowPressed}
+          android_ripple={{ color: 'rgba(255,255,255,0.08)' }}
           accessibilityRole="button"
           accessibilityHint="Opens this member's public profile"
           accessibilityLabel={`${row.rank}. ${row.username}, ${detectionLabel(row.detectionCount)}, ${
             row.motto?.trim() ? row.motto.trim() : 'No motto set'
           }`}>
-          <View style={styles.avatarPlaceholder} accessibilityRole="image" accessibilityLabel="Avatar placeholder" />
-          <View style={styles.main}>
-            <View style={styles.topLine}>
-              <Text style={styles.username} numberOfLines={1}>
-                {row.username}
-              </Text>
-              <Text style={styles.count}>{detectionLabel(row.detectionCount)}</Text>
-            </View>
-
-            <View style={styles.mottoSection}>
-              <Text style={styles.mottoBody}>
-                {row.motto ?? 'No motto set.'}
-              </Text>
-            </View>
-          </View>
+          <ListDetailCard
+            title={row.username}
+            subtitle={row.motto?.trim() ? row.motto.trim() : 'No motto set.'}
+            meta={detectionLabel(row.detectionCount)}
+          />
         </Pressable>
       ))}
     </View>
@@ -75,73 +66,7 @@ export function DetectionCountLeaderboard({ rows, loading, error }: Props) {
 }
 
 const styles = StyleSheet.create({
-  list: {
-    gap: authSpacing.md,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: authSpacing.md,
-    paddingVertical: authSpacing.md,
-    paddingHorizontal: authSpacing.md,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: authColors.border,
-    backgroundColor: authColors.fieldBackground,
-  },
   rowPressed: {
     opacity: 0.92,
-  },
-  avatarPlaceholder: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: authColors.background,
-    borderWidth: 1,
-    borderColor: authColors.border,
-    marginTop: 2,
-  },
-  main: {
-    flex: 1,
-    minWidth: 0,
-    gap: authSpacing.sm,
-  },
-  topLine: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: authSpacing.sm,
-  },
-  username: {
-    ...authTypography.body,
-    flex: 1,
-    color: authColors.text,
-    fontWeight: '600',
-    minWidth: 0,
-  },
-  count: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
-    flexShrink: 0,
-  },
-  mottoSection: {
-    paddingTop: authSpacing.xs,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: authColors.border,
-  },
-  mottoBody: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
-  },
-  empty: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
-    textAlign: 'center',
-    paddingVertical: authSpacing.md,
-  },
-  centered: {
-    paddingVertical: authSpacing.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

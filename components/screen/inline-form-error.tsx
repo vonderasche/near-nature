@@ -13,7 +13,7 @@ export function InlineFormError({ children }: InlineFormErrorProps) {
 const styles = StyleSheet.create({
   error: {
     ...authTypography.body,
-    color: authColors.text,
+    color: authColors.danger,
     marginTop: authSpacing.sm,
     marginBottom: authSpacing.sm,
   },

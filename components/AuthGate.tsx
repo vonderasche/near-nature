@@ -2,6 +2,7 @@ import { type ReactNode, useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useRouter, useSegments } from 'expo-router';
 
+import { authColors } from '@/constants/auth-theme';
 import { useAuthContext } from '@/context/AuthContext';
 import { routes } from '@/lib/routing/routes';
 
@@ -43,7 +44,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   if (isLoading) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color={authColors.text} />
       </View>
     );
   }
@@ -56,5 +57,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: authColors.background,
   },
 });

@@ -1,16 +1,16 @@
 /**
- * Auth-only design tokens. Screens and auth components read from here so the
- * palette and spacing can be swapped without touching layout logic.
+ * App-wide design tokens. Dark surface: black background, light text, subtle borders.
+ * Screens and auth components read from here so the palette can be swapped in one place.
  */
 export const authColors = {
-  background: '#ffffff',
-  text: '#000000',
-  textMuted: '#404040',
-  border: '#000000',
-  fieldBackground: '#ffffff',
-  primaryFill: '#000000',
-  primaryOnFill: '#ffffff',
-  danger: '#000000',
+  background: '#000000',
+  text: '#ffffff',
+  textMuted: '#a8a8a8',
+  border: '#3d3d3d',
+  fieldBackground: '#1a1a1a',
+  primaryFill: '#ffffff',
+  primaryOnFill: '#000000',
+  danger: '#ff453a',
 } as const;
 
 export const authSpacing = {

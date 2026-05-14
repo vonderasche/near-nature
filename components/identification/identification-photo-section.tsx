@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: authColors.border,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: authColors.fieldBackground,
     overflow: 'hidden',
   },
 });

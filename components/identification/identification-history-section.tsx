@@ -1,8 +1,9 @@
-import { ActivityIndicator, StyleSheet, Text } from 'react-native';
+import { ActivityIndicator, Text } from 'react-native';
 
 import { SpeciesResultCard } from '@/components/identification/species-result-card';
 import { SectionLabel } from '@/components/screen/section-label';
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { listSectionSupportingStyles } from '@/components/screen/list-detail-card';
+import { authColors } from '@/constants/auth-theme';
 import type { Identification } from '@/types';
 
 type Props = {
@@ -17,7 +18,7 @@ export function IdentificationHistorySection({ historyLoading, identifications }
       {historyLoading ? (
         <ActivityIndicator color={authColors.textMuted} />
       ) : identifications.length === 0 ? (
-        <Text style={styles.muted}>No saved identifications yet.</Text>
+        <Text style={listSectionSupportingStyles.muted}>No saved identifications yet.</Text>
       ) : (
         identifications.map((row) => (
           <SpeciesResultCard
@@ -32,10 +33,3 @@ export function IdentificationHistorySection({ historyLoading, identifications }
   );
 }
 
-const styles = StyleSheet.create({
-  muted: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
-    marginBottom: authSpacing.sm,
-  },
-});
