@@ -58,7 +58,7 @@ export default function CameraScreen() {
         ref={cameraRef}
         style={StyleSheet.absoluteFill}
         facing={facing}
-        ratio="4:3"
+        ratio="1:1"
         mute
       />
       <CameraBottomToolbar

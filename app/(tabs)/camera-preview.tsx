@@ -43,8 +43,14 @@ export default function CameraPreviewScreen() {
 
   return (
     <View style={[styles.root, contentInsetsPadding(insets)]}>
-      <View style={styles.imageWrap}>
-        <Image source={{ uri: photoUri }} style={styles.image} contentFit="contain" />
+      <View style={styles.imageColumn}>
+        <View style={styles.squareFrame}>
+          <Image
+            source={{ uri: photoUri }}
+            style={StyleSheet.absoluteFillObject}
+            contentFit="contain"
+          />
+        </View>
       </View>
       <PhotoReviewActions
         secondaryLabel="Retake"
@@ -67,13 +73,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: screenColors.darkBackground,
   },
-  imageWrap: {
+  imageColumn: {
     flex: 1,
+    justifyContent: 'center',
+    alignSelf: 'stretch',
     marginHorizontal: authSpacing.sm,
     marginVertical: authSpacing.sm,
   },
-  image: {
-    flex: 1,
+  squareFrame: {
     width: '100%',
+    aspectRatio: 1,
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: '#f5f5f5',
+    borderWidth: 1,
+    borderColor: authColors.border,
   },
 });

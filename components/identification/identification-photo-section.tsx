@@ -22,7 +22,7 @@ export function IdentificationPhotoSection({ photoUri }: Props) {
 const styles = StyleSheet.create({
   photoFrame: {
     width: '100%',
-    aspectRatio: 4 / 3,
+    aspectRatio: 1,
     marginBottom: authSpacing.md,
     borderWidth: 1,
     borderColor: authColors.border,

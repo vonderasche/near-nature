@@ -1,13 +1,5 @@
 import { Image } from 'expo-image';
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
@@ -38,9 +30,6 @@ function formatDetectedAt(iso: string): string {
  * Reusable anywhere you have a {@link DetectionGalleryItem}.
  */
 export function DetectionGalleryDetailModal({ visible, item, onClose }: DetectionGalleryDetailModalProps) {
-  const { height } = useWindowDimensions();
-  const imageMaxHeight = Math.round(height * 0.42);
-
   if (!visible || !item) {
     return null;
   }
@@ -55,7 +44,7 @@ export function DetectionGalleryDetailModal({ visible, item, onClose }: Detectio
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled">
-            <View style={[styles.imageFrame, { maxHeight: imageMaxHeight }]}>
+            <View style={styles.imageFrame}>
               <Image
                 source={{ uri: item.displayUrl }}
                 style={StyleSheet.absoluteFillObject}
@@ -112,7 +101,7 @@ const styles = StyleSheet.create({
   },
   imageFrame: {
     width: '100%',
-    minHeight: 160,
+    aspectRatio: 1,
     borderRadius: 8,
     overflow: 'hidden',
     backgroundColor: authColors.fieldBackground,
