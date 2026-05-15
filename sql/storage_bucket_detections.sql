@@ -7,6 +7,7 @@ on conflict (id) do nothing;
 drop policy if exists "Users can upload their own detection images" on storage.objects;
 drop policy if exists "Users can view their own detection images"  on storage.objects;
 drop policy if exists "Users can delete their own detection images" on storage.objects;
+drop policy if exists "Authenticated can read non-sensitive owners detection images" on storage.objects;
 
 -- Allow users to upload their own images
 create policy "Users can upload their own detection images"
@@ -22,6 +23,23 @@ create policy "Users can view their own detection images"
   using (
     bucket_id = 'detections' and
     auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+-- Signed URLs / gallery: any signed-in user may read an object only when a
+-- non-sensitive detection owned by that object path's user references this object.
+-- (Requires user_id in path to match row owner so image_url cannot be forged for another prefix.)
+create policy "Authenticated can read non-sensitive owners detection images"
+  on storage.objects for select
+  to authenticated
+  using (
+    bucket_id = 'detections'
+    and exists (
+      select 1
+      from public.detections d
+      where d.is_sensitive = false
+        and d.user_id = ((storage.foldername(name))[1])::uuid
+        and position(name in d.image_url) > 0
+    )
   );
 
 -- Allow users to delete their own images

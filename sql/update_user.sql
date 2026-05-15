@@ -14,6 +14,10 @@ returns public.users as $$
 declare
   updated_user public.users;
 begin
+  if auth.uid() is null or auth.uid() != user_id then
+    raise exception 'Not authorized';
+  end if;
+
   -- Check username is not already taken by someone else
   if p_username is not null then
     if exists (
@@ -40,4 +44,5 @@ begin
 
   return updated_user;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer
+set search_path = public;

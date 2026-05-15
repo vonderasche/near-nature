@@ -20,9 +20,7 @@ create policy "Users can view their own streak"
   on public.streaks for select
   using (auth.uid() = user_id);
 
-create policy "Users can update their own streak"
-  on public.streaks for update
-  using (auth.uid() = user_id);
+-- Inserts/updates are done only by trigger `update_streak` (security definer), not by clients.
 
 -- Auto-update streak when a detection is inserted
 create or replace function update_streak()
@@ -66,7 +64,8 @@ begin
 
   return new;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer
+set search_path = public;
 
 create trigger on_detection_update_streak
   after insert on public.detections

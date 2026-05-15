@@ -28,4 +28,5 @@ begin
 
   return updated_detection;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer
+set search_path = public;

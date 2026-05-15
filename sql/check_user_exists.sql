@@ -10,7 +10,8 @@ begin
     select 1 from auth.users where email = p_email
   );
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer
+set search_path = public, auth;
 
 -- Check if username exists (case-insensitive)
 create or replace function check_username_exists(p_username text)
@@ -20,4 +21,5 @@ begin
     select 1 from public.users where lower(username) = lower(p_username)
   );
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer
+set search_path = public;

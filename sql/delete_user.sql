@@ -16,4 +16,5 @@ begin
   -- Delete from Supabase auth (requires service role in production)
   delete from auth.users where id = user_id;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer
+set search_path = public, pg_catalog;

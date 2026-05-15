@@ -77,4 +77,8 @@ begin
   where (p_state is null or u.state = p_state)
   group by u.id, u.username, u.avatar_url, u.state, s.current_streak;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer
+set search_path = public;
+
+revoke all on function public.get_leaderboard(text, text) from public;
+grant execute on function public.get_leaderboard(text, text) to authenticated;

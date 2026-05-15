@@ -15,7 +15,8 @@ begin
 
   delete from public.detections where id = p_detection_id;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer
+set search_path = public;
 
 -- Delete all detections for the current user
 create or replace function delete_all_detections()
@@ -23,4 +24,5 @@ returns void as $$
 begin
   delete from public.detections where user_id = auth.uid();
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer
+set search_path = public;

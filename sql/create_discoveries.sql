@@ -54,7 +54,8 @@ begin
 
   return new;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer
+set search_path = public;
 
 create trigger on_detection_check_discovery
   after insert on public.detections
