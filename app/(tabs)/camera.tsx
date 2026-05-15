@@ -21,6 +21,10 @@ export default function CameraScreen() {
   const insets = useSafeAreaInsets();
   const [capturedPhotoUri, setCapturedPhotoUri] = useState<string | null>(null);
   const [pickerNotice, setPickerNotice] = useState<{ title: string; message: string } | null>(null);
+  const [backgroundSaveError, setBackgroundSaveError] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
 
   const onPhotoCaptured = useCallback((uri: string) => {
     setCapturedPhotoUri(uri);
@@ -84,11 +88,29 @@ export default function CameraScreen() {
         message={pickerNotice?.message ?? ''}
         onDismiss={() => setPickerNotice(null)}
       />
+      <ThemedMessageModal
+        visible={backgroundSaveError !== null}
+        title={backgroundSaveError?.title ?? ''}
+        message={backgroundSaveError?.message ?? ''}
+        onDismiss={() => setBackgroundSaveError(null)}
+      />
     </>
   );
 
   if (capturedPhotoUri) {
-    return <CameraIdentificationPanel key={capturedPhotoUri} photoUri={capturedPhotoUri} onRetake={retake} />;
+    return (
+      <CameraIdentificationPanel
+        key={capturedPhotoUri}
+        photoUri={capturedPhotoUri}
+        onRetake={retake}
+        onBackgroundSaveError={(message) =>
+          setBackgroundSaveError({
+            title: 'Save failed',
+            message,
+          })
+        }
+      />
+    );
   }
 
   if (isPermissionPending) {

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -10,7 +10,6 @@ import { UploadToDatabaseButton } from '@/components/identification/upload-to-da
 import { InlineFormError } from '@/components/screen/inline-form-error';
 import { LoadingHintRow } from '@/components/screen/loading-hint-row';
 import { ScreenHeading } from '@/components/screen/screen-heading';
-import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import { useAuthContext } from '@/context/AuthContext';
 import { DEFAULT_USER_STATE } from '@/hooks/useIdentificationRouteParams';
@@ -22,13 +21,15 @@ import { contentInsetsPadding } from '@/lib/screen/contentInsets';
 
 type Props = {
   photoUri: string;
+  /** Return to the live camera (retake flow). */
   onRetake: () => void;
+  /** Shown on the camera screen if a background save fails after leaving this view. */
+  onBackgroundSaveError?: (message: string) => void;
 };
 
-export function CameraIdentificationPanel({ photoUri, onRetake }: Props) {
+export function CameraIdentificationPanel({ photoUri, onRetake, onBackgroundSaveError }: Props) {
   const insets = useSafeAreaInsets();
   const userState = DEFAULT_USER_STATE;
-  const [saveNotice, setSaveNotice] = useState<string | null>(null);
 
   const { userId } = useAuthContext();
   const { identify, isLoading: identifying, error: identifyError } = useSpeciesIdentification();
@@ -38,28 +39,36 @@ export function CameraIdentificationPanel({ photoUri, onRetake }: Props) {
     error: historyError,
     refetch,
   } = useIdentifications({ userId: userId ?? undefined });
-  const { save, saving, saveError, clearSaveError } = useSaveDetection();
+  const { saveInBackground } = useSaveDetection();
 
-  const { species, classifications, wikiByLatinName, wikiError, refreshHistory } =
-    useIdentificationResultsState(photoUri, userState, identify, refetch);
+  const { species, classifications, wikiByLatinName, wikiError } = useIdentificationResultsState(
+    photoUri,
+    userState,
+    identify,
+    refetch,
+  );
 
-  const handleSaveIdentification = useCallback(async () => {
+  const handleSaveIdentification = useCallback(() => {
     if (!userId || species.length === 0 || classifications.length === 0) return;
-    clearSaveError();
+
     const primary = species[0];
     const wiki = wikiByLatinName[primary.latinName];
-    const result = await save({
+    const input = {
       localImageUri: photoUri,
       userId,
       species: primary,
       classification: classifications[0],
       stateCode: userState,
       description: wiki?.description ?? null,
+    };
+
+    onRetake();
+
+    saveInBackground(input, (result) => {
+      if (!result.ok) {
+        onBackgroundSaveError?.(result.message);
+      }
     });
-    if (result.ok) {
-      setSaveNotice('This identification was saved to your history.');
-      refreshHistory();
-    }
   }, [
     photoUri,
     userId,
@@ -67,9 +76,9 @@ export function CameraIdentificationPanel({ photoUri, onRetake }: Props) {
     classifications,
     wikiByLatinName,
     userState,
-    save,
-    clearSaveError,
-    refreshHistory,
+    onRetake,
+    saveInBackground,
+    onBackgroundSaveError,
   ]);
 
   return (
@@ -77,7 +86,7 @@ export function CameraIdentificationPanel({ photoUri, onRetake }: Props) {
       <View style={[styles.root, contentInsetsPadding(insets)]}>
         <ScreenHeading
           title="Identification"
-          subtitle="We analyze your photo here. Nothing is saved unless you choose Save."
+          subtitle="Tap Save to keep this sighting—you'll return to the camera while it uploads."
           marginBottom={authSpacing.md}
         />
 
@@ -85,7 +94,6 @@ export function CameraIdentificationPanel({ photoUri, onRetake }: Props) {
 
         {identifyError ? <InlineFormError>{identifyError}</InlineFormError> : null}
         {historyError ? <InlineFormError>{historyError}</InlineFormError> : null}
-        {saveError ? <InlineFormError>{saveError}</InlineFormError> : null}
         {wikiError ? <InlineFormError>{wikiError}</InlineFormError> : null}
 
         <ScrollView
@@ -115,8 +123,7 @@ export function CameraIdentificationPanel({ photoUri, onRetake }: Props) {
                 <UploadToDatabaseButton
                   fillParent
                   onPress={handleSaveIdentification}
-                  disabled={!userId || saving}
-                  loading={saving}
+                  disabled={!userId}
                 />
               </View>
             </View>
@@ -128,12 +135,6 @@ export function CameraIdentificationPanel({ photoUri, onRetake }: Props) {
           ) : null}
         </View>
       </View>
-      <ThemedMessageModal
-        visible={saveNotice !== null}
-        title="Saved"
-        message={saveNotice ?? ''}
-        onDismiss={() => setSaveNotice(null)}
-      />
     </>
   );
 }

@@ -24,7 +24,26 @@ export function useSaveDetection() {
 
   const clearSaveError = useCallback(() => setSaveError(null), []);
 
-  return { save, saving, saveError, clearSaveError };
+  /** Fire-and-forget upload; does not toggle {@link saving} or block the UI. */
+  const saveInBackground = useCallback(
+    (
+      input: SaveDetectionInput,
+      onComplete?: (result: { ok: true } | { ok: false; message: string }) => void,
+    ) => {
+      void (async () => {
+        try {
+          await saveDetection(input);
+          onComplete?.({ ok: true });
+        } catch (e) {
+          const message = e instanceof Error ? e.message : 'Could not save identification.';
+          onComplete?.({ ok: false, message });
+        }
+      })();
+    },
+    [],
+  );
+
+  return { save, saveInBackground, saving, saveError, clearSaveError };
 }
 
 /** Same hook — uploads image + detection row to the database. */
