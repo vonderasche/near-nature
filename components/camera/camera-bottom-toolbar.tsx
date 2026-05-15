@@ -1,4 +1,5 @@
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import { bottomToolbarPadding } from '@/lib/screen/contentInsets';
@@ -10,18 +11,30 @@ type Props = {
   onFlip: () => void;
   onCapture: () => void;
   capturing: boolean;
+  onPickGallery: () => void;
+  pickingGallery: boolean;
 };
 
 /**
- * Bottom controls for the live camera: flip, shutter, balanced spacer.
+ * Bottom controls for the live camera: flip, shutter, gallery.
  */
-export function CameraBottomToolbar({ insets, onFlip, onCapture, capturing }: Props) {
+export function CameraBottomToolbar({
+  insets,
+  onFlip,
+  onCapture,
+  capturing,
+  onPickGallery,
+  pickingGallery,
+}: Props) {
+  const galleryBusy = pickingGallery || capturing;
+
   return (
     <View style={[styles.toolbar, bottomToolbarPadding(insets)]}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Flip camera"
         onPress={onFlip}
+        disabled={galleryBusy}
         android_ripple={{ color: 'rgba(255,255,255,0.2)' }}
         style={({ pressed }) => [styles.toolBtn, pressed && styles.toolBtnPressed]}>
         <Text style={styles.toolBtnText}>Flip</Text>
@@ -30,7 +43,7 @@ export function CameraBottomToolbar({ insets, onFlip, onCapture, capturing }: Pr
         accessibilityRole="button"
         accessibilityLabel={capturing ? 'Taking photo' : 'Take photo'}
         onPress={onCapture}
-        disabled={capturing}
+        disabled={galleryBusy}
         android_ripple={{ color: 'rgba(255,255,255,0.25)', borderless: true }}
         style={({ pressed }) => [
           styles.capture,
@@ -39,7 +52,22 @@ export function CameraBottomToolbar({ insets, onFlip, onCapture, capturing }: Pr
         ]}>
         <View style={styles.captureInner} />
       </Pressable>
-      <View style={styles.toolSpacer} />
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Choose photo from gallery"
+        onPress={onPickGallery}
+        disabled={galleryBusy}
+        android_ripple={{ color: 'rgba(255,255,255,0.2)' }}
+        style={({ pressed }) => [styles.toolBtn, styles.galleryBtn, pressed && styles.toolBtnPressed]}>
+        {pickingGallery ? (
+          <ActivityIndicator color={authColors.text} size="small" />
+        ) : (
+          <>
+            <MaterialIcons name="photo-library" size={22} color={authColors.text} />
+            <Text style={styles.galleryLabel}>Gallery</Text>
+          </>
+        )}
+      </Pressable>
     </View>
   );
 }
@@ -70,8 +98,16 @@ const styles = StyleSheet.create({
     color: authColors.text,
     fontWeight: '600',
   },
-  toolSpacer: {
+  galleryBtn: {
     minWidth: 64,
+    alignItems: 'center',
+    gap: 2,
+  },
+  galleryLabel: {
+    ...authTypography.subtitle,
+    color: authColors.text,
+    fontSize: 11,
+    fontWeight: '600',
   },
   capture: {
     width: 72,

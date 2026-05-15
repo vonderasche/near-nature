@@ -35,7 +35,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos to set your profile picture."
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos to identify species and set your profile picture."
         }
       ],
       [
