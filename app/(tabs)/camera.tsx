@@ -1,22 +1,27 @@
-import { router } from 'expo-router';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Camera } from 'react-native-vision-camera';
 
 import { CameraBottomToolbar } from '@/components/camera/camera-bottom-toolbar';
+import { CameraIdentificationPanel } from '@/components/camera/camera-identification-panel';
 import { MessageWithAction } from '@/components/screen/message-with-action';
 import { ScreenCenter } from '@/components/screen/screen-center';
 import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { authColors } from '@/constants/auth-theme';
 import { useCameraScreen } from '@/hooks/useCameraScreen';
 import { contentInsetsPadding } from '@/lib/screen/contentInsets';
-import { cameraPreviewWithPhoto } from '@/lib/routing/routes';
 
 export default function CameraScreen() {
   const insets = useSafeAreaInsets();
+  const [capturedPhotoUri, setCapturedPhotoUri] = useState<string | null>(null);
+
   const onPhotoCaptured = useCallback((uri: string) => {
-    router.push(cameraPreviewWithPhoto(uri));
+    setCapturedPhotoUri(uri);
+  }, []);
+
+  const retake = useCallback(() => {
+    setCapturedPhotoUri(null);
   }, []);
 
   const {
@@ -41,6 +46,10 @@ export default function CameraScreen() {
       onDismiss={clearCameraMessage}
     />
   );
+
+  if (capturedPhotoUri) {
+    return <CameraIdentificationPanel key={capturedPhotoUri} photoUri={capturedPhotoUri} onRetake={retake} />;
+  }
 
   if (isPermissionPending) {
     return (

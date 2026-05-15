@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,22 +9,25 @@ import { IdentificationSpeciesResultsList } from '@/components/identification/id
 import { UploadToDatabaseButton } from '@/components/identification/upload-to-database-button';
 import { InlineFormError } from '@/components/screen/inline-form-error';
 import { LoadingHintRow } from '@/components/screen/loading-hint-row';
-import { MessageWithAction } from '@/components/screen/message-with-action';
 import { ScreenHeading } from '@/components/screen/screen-heading';
 import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import { useAuthContext } from '@/context/AuthContext';
-import { useIdentificationRouteParams } from '@/hooks/useIdentificationRouteParams';
+import { DEFAULT_USER_STATE } from '@/hooks/useIdentificationRouteParams';
 import { useIdentificationResultsState } from '@/hooks/useIdentificationResultsState';
 import { useIdentifications } from '@/hooks/useIdentifications';
 import { useSaveDetection } from '@/hooks/useSaveDetection';
 import { useSpeciesIdentification } from '@/hooks/useSpeciesIdentification';
-import { routes } from '@/lib/routing/routes';
 import { contentInsetsPadding } from '@/lib/screen/contentInsets';
 
-export default function IdentificationResultsScreen() {
+type Props = {
+  photoUri: string;
+  onRetake: () => void;
+};
+
+export function CameraIdentificationPanel({ photoUri, onRetake }: Props) {
   const insets = useSafeAreaInsets();
-  const { photoUri, userState } = useIdentificationRouteParams();
+  const userState = DEFAULT_USER_STATE;
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
 
   const { userId } = useAuthContext();
@@ -41,12 +43,8 @@ export default function IdentificationResultsScreen() {
   const { species, classifications, wikiByLatinName, wikiError, refreshHistory } =
     useIdentificationResultsState(photoUri, userState, identify, refetch);
 
-  const goToCamera = useCallback(() => {
-    router.replace(routes.camera);
-  }, []);
-
   const handleSaveIdentification = useCallback(async () => {
-    if (!photoUri || !userId || species.length === 0 || classifications.length === 0) return;
+    if (!userId || species.length === 0 || classifications.length === 0) return;
     clearSaveError();
     const primary = species[0];
     const wiki = wikiByLatinName[primary.latinName];
@@ -74,24 +72,12 @@ export default function IdentificationResultsScreen() {
     refreshHistory,
   ]);
 
-  if (!photoUri) {
-    return (
-      <View style={[styles.fill, contentInsetsPadding(insets)]}>
-        <MessageWithAction
-          message="Missing photo. Go back and capture again."
-          actionLabel="Back to camera"
-          onAction={goToCamera}
-        />
-      </View>
-    );
-  }
-
   return (
     <>
       <View style={[styles.root, contentInsetsPadding(insets)]}>
         <ScreenHeading
           title="Identification"
-          subtitle="We analyze your photo here. Nothing is saved to your camera roll unless you choose Save."
+          subtitle="We analyze your photo here. Nothing is saved unless you choose Save."
           marginBottom={authSpacing.md}
         />
 
@@ -133,7 +119,7 @@ export default function IdentificationResultsScreen() {
         </ScrollView>
 
         <View style={styles.footer}>
-          <AuthButton variant="outline" title="Back to camera" onPress={goToCamera} />
+          <AuthButton variant="outline" title="Retake" onPress={onRetake} />
         </View>
       </View>
       <ThemedMessageModal
@@ -147,9 +133,6 @@ export default function IdentificationResultsScreen() {
 }
 
 const styles = StyleSheet.create({
-  fill: {
-    flex: 1,
-  },
   root: {
     flex: 1,
     backgroundColor: authColors.background,

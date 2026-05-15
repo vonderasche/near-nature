@@ -13,20 +13,9 @@ export const routes = {
   forgotPassword: '/forgot-password',
   resetPassword: '/reset-password',
   camera: '/camera',
-  /** Hidden tab (see `app/(tabs)/_layout.tsx` `href: null`) */
-  cameraPreview: '/(tabs)/camera-preview',
-  identificationResults: '/(tabs)/identification-results',
 } as const;
 
 export type AppRoute = (typeof routes)[keyof typeof routes];
-
-export function cameraPreviewWithPhoto(uri: string) {
-  return { pathname: routes.cameraPreview, params: { uri } } as const;
-}
-
-export function identificationResultsWithPhoto(uri: string) {
-  return { pathname: routes.identificationResults, params: { uri } } as const;
-}
 
 /** Another member’s public profile (`app/user/[userId].tsx`). */
 export function routePublicUserProfile(userId: string) {

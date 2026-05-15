@@ -1,12 +1,13 @@
 // React hook that orchestrates identification flow:
-// photo -> Claude -> result filters -> iNaturalist -> Species[]
+// photo -> Claude -> filters -> parallel iNaturalist + Wikipedia enrich
 
 import { deleteAsync, readLocalFileAsBase64 } from '@/lib/fs/legacyFileSystem';
 import { useCallback, useState } from 'react';
 
 import { identifySpeciesInImage } from '@/api/claude';
-import { lookupNativeStatus } from '@/api/inaturalist';
+import type { SpeciesWikiData } from '@/api/wikipedia';
 import { useResizeImageForUpload } from '@/hooks/useResizeImageForUpload';
+import { enrichSpeciesFromApis } from '@/lib/identification/enrichSpeciesFromApis';
 import { devLog } from '@/lib/devLog';
 import { filterClassifications, hasNoSpeciesFound } from '@/utils/imageFilters';
 import type { ClassificationResult, Species } from '@/types';
@@ -14,6 +15,8 @@ import type { ClassificationResult, Species } from '@/types';
 export type IdentifySpeciesOutcome = {
   species: Species[];
   classifications: ClassificationResult[];
+  wikiByLatinName: Record<string, SpeciesWikiData | null>;
+  wikiError: string | null;
 };
 
 interface UseSpeciesIdentificationResult {
@@ -51,33 +54,22 @@ export function useSpeciesIdentification(): UseSpeciesIdentificationResult {
       const { results: classifications, summary } = filterClassifications(rawClassifications);
       devLog('[identify] filter summary', summary);
 
-      if (hasNoSpeciesFound(classifications)) return { species: [], classifications: [] };
+      if (hasNoSpeciesFound(classifications)) {
+        return { species: [], classifications: [], wikiByLatinName: {}, wikiError: null };
+      }
 
-      // 5) Enrich with native/invasive status in parallel.
-      const speciesResults = await Promise.all(
-        classifications.map(async (classification, index): Promise<Species> => {
-          const nativeResult = await lookupNativeStatus(
-            classification.latinName,
-            userState,
-          );
-
-          return {
-            id: `${Date.now()}-${index}`,
-            latinName: classification.latinName,
-            commonName: classification.commonName,
-            taxonGroup: classification.taxonGroup,
-            status: nativeResult?.status ?? 'non-native',
-            // imageUri and description fetched separately in SpeciesDetailScreen
-          };
-        }),
+      // 5) iNaturalist + Wikipedia in parallel (per species and across species).
+      const { species, wikiByLatinName, wikiError } = await enrichSpeciesFromApis(
+        classifications,
+        userState,
       );
 
-      return { species: speciesResults, classifications };
+      return { species, classifications, wikiByLatinName, wikiError };
 
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Identification failed';
       setError(message);
-      return { species: [], classifications: [] };
+      return { species: [], classifications: [], wikiByLatinName: {}, wikiError: null };
     } finally {
       if (resizedUri && resizedUri !== photoUri) {
         await deleteAsync(resizedUri, { idempotent: true }).catch(() => {});

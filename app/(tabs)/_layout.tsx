@@ -43,20 +43,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="camera-preview"
-        options={{
-          href: null,
-          title: 'Preview',
-        }}
-      />
-      <Tabs.Screen
-        name="identification-results"
-        options={{
-          href: null,
-          title: 'Results',
-        }}
-      />
-      <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
