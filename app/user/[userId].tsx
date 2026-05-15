@@ -6,6 +6,8 @@ import { CenteredActivityIndicator } from '@/components/profile/centered-activit
 import { DetectionGalleryGrid } from '@/components/profile/detection-gallery-grid';
 import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
 import { PublicUserProfileSummary } from '@/components/profile/public-user-profile-summary';
+import { ProfileStatStrip } from '@/components/profile/profile-stat-strip';
+import { profileStatStripPropsFromPublicProfile } from '@/components/profile/profile-stats-from-public-profile';
 import { ScreenSection } from '@/components/profile/screen-section';
 import { UserAvatar } from '@/components/profile/user-avatar';
 import { Colors } from '@/constants/theme';
@@ -102,6 +104,7 @@ export default function PublicUserProfileScreen() {
             <>
               <View style={styles.profileHero}>
                 <UserAvatar imageUri={profile.avatar_url} mutedIconColor={muted} borderColor={border} />
+                <ProfileStatStrip {...profileStatStripPropsFromPublicProfile(profile, muted, tint)} />
                 <PublicUserProfileSummary
                   username={profile.username}
                   motto={profile.motto}

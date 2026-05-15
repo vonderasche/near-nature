@@ -7,6 +7,8 @@ import { ProfileOverflowMenu } from '@/components/profile/profile-overflow-menu'
 import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
 import { DetectionGalleryGrid } from '@/components/profile/detection-gallery-grid';
 import { MottoEditModal } from '@/components/profile/motto-edit-modal';
+import { ProfileStatStrip } from '@/components/profile/profile-stat-strip';
+import { profileStatStripPropsFromPublicProfile } from '@/components/profile/profile-stats-from-public-profile';
 import { ScreenSection } from '@/components/profile/screen-section';
 import { UserAvatar } from '@/components/profile/user-avatar';
 import { UserProfileSummary } from '@/components/profile/user-profile-summary';
@@ -20,6 +22,7 @@ import { useMottoSave } from '@/hooks/useMottoSave';
 import { useUserDetectionGallery } from '@/hooks/useUserDetectionGallery';
 import { useUser } from '@/hooks/useUser';
 import { getDetectionImageDisplayUrl } from '@/services/detectionImageUrl';
+import { getPublicUserProfile, type PublicUserProfile } from '@/services/userService';
 import type { DetectionGalleryItem } from '@/types';
 
 export default function ProfileScreen() {
@@ -43,8 +46,23 @@ export default function ProfileScreen() {
   const [avatarPickError, setAvatarPickError] = useState<string | null>(null);
   const [deleteProfileOpen, setDeleteProfileOpen] = useState(false);
   const [deleteProfileError, setDeleteProfileError] = useState<string | null>(null);
+  const [statsProfile, setStatsProfile] = useState<PublicUserProfile | null>(null);
 
   const { pickAndSetAvatar, busy: avatarBusy } = useAvatarFromGallery(user?.id, update);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setStatsProfile(null);
+      return;
+    }
+    let cancelled = false;
+    void getPublicUserProfile(user.id).then((row) => {
+      if (!cancelled) setStatsProfile(row);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
 
   useEffect(() => {
     const raw = user?.avatar_url?.trim();
@@ -75,19 +93,27 @@ export default function ProfileScreen() {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      await Promise.all([refresh(), refetchGallery()]);
+      const statsPromise = user?.id ? getPublicUserProfile(user.id) : Promise.resolve(null);
+      const [, , stats] = await Promise.all([refresh(), refetchGallery(), statsPromise]);
+      setStatsProfile(stats);
     } finally {
       setRefreshing(false);
     }
-  }, [refresh, refetchGallery]);
+  }, [refresh, refetchGallery, user?.id]);
 
   const handleGalleryDelete = useCallback(
     async (item: DetectionGalleryItem) => {
       const r = await deleteById(item.id);
-      if (r.ok) await refetchGallery();
+      if (r.ok) {
+        await refetchGallery();
+        if (user?.id) {
+          const row = await getPublicUserProfile(user.id);
+          setStatsProfile(row);
+        }
+      }
       return r;
     },
-    [deleteById, refetchGallery],
+    [deleteById, refetchGallery, user?.id],
   );
 
   const confirmDeleteProfile = useCallback(() => {
@@ -142,6 +168,10 @@ export default function ProfileScreen() {
               onPress={onAvatarPress}
               busy={avatarBusy}
             />
+
+            {statsProfile ? (
+              <ProfileStatStrip {...profileStatStripPropsFromPublicProfile(statsProfile, muted, tint)} />
+            ) : null}
 
             <UserProfileSummary
               firstName={user.first_name}

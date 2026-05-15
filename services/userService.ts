@@ -40,12 +40,22 @@ export type UpdateUserPayload = Partial<
   Pick<User, 'username' | 'first_name' | 'last_name' | 'motto' | 'avatar_url' | 'state'>
 >;
 
-/** Safe fields for viewing another member (RPC `get_public_user_profile`). */
+/** Safe fields + stats for another member (or yourself via RPC `get_public_user_profile`). */
 export type PublicUserProfile = {
   id: string;
   username: string;
   motto: string | null;
   avatar_url: string | null;
+  currentStreak: number;
+  longestStreak: number;
+  /** Non-sensitive identifications (matches public gallery). */
+  publicDetectionCount: number;
+  /** Distinct species on non-sensitive identifications. */
+  publicSpeciesCount: number;
+  /** All identifications (includes sensitive); only set when the viewer is this user. */
+  ownerDetectionCount: number | null;
+  /** Distinct species across all identifications; only set when the viewer is this user. */
+  ownerSpeciesCount: number | null;
 };
 
 type PublicProfileRpcRow = {
@@ -53,7 +63,25 @@ type PublicProfileRpcRow = {
   username: string;
   motto: string | null;
   avatar_url: string | null;
+  current_streak: number | string | null;
+  longest_streak: number | string | null;
+  public_detection_count: number | string | null;
+  public_species_count: number | string | null;
+  owner_detection_count: number | string | null;
+  owner_species_count: number | string | null;
 };
+
+function num(v: number | string | null | undefined, fallback = 0): number {
+  if (v == null) return fallback;
+  const n = typeof v === 'string' ? Number(v) : v;
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function numOrNull(v: number | string | null | undefined): number | null {
+  if (v == null) return null;
+  const n = typeof v === 'string' ? Number(v) : v;
+  return Number.isFinite(n) ? n : null;
+}
 
 export async function getPublicUserProfile(userId: string): Promise<PublicUserProfile | null> {
   const { data, error } = await supabase.rpc('get_public_user_profile', { p_user_id: userId });
@@ -69,6 +97,12 @@ export async function getPublicUserProfile(userId: string): Promise<PublicUserPr
     username: row.username,
     motto,
     avatar_url,
+    currentStreak: num(row.current_streak, 0),
+    longestStreak: num(row.longest_streak, 0),
+    publicDetectionCount: num(row.public_detection_count, 0),
+    publicSpeciesCount: num(row.public_species_count, 0),
+    ownerDetectionCount: numOrNull(row.owner_detection_count),
+    ownerSpeciesCount: numOrNull(row.owner_species_count),
   };
 }
 

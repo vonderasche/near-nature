@@ -15,7 +15,7 @@ All files are safe to re-run. Run in this order in the Supabase SQL Editor:
 11. `create_leaderboard.sql` — points trigger, leaderboard function (all_time/month/ytd)
 12. `storage_bucket_detections.sql` — storage bucket + policies
 13. `get_detection_count_leaderboard.sql` — detection-count leaderboard RPC (includes `motto` from `public.users`)
-14. `get_public_user_profile.sql` — safe public profile RPC for other users’ profiles
+14. `get_public_user_profile.sql` — public member profile RPC + **streak & detection/species stats** (re-run after changing this function)
 
 
 ## Points System

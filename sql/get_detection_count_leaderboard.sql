@@ -25,7 +25,7 @@ as $$
     u.id                                           as user_id,
     u.username                                     as username,
     coalesce(u.avatar_url, '')                     as avatar_url,
-    coalesce(u.motto, '')                          as motto,
+    nullif(trim(u.motto), '')                      as motto,
     count(d.id)::bigint                            as detection_count
   from public.users u
   inner join public.detections d
