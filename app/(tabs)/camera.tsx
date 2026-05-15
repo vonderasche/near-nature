@@ -1,8 +1,8 @@
-import { CameraView } from 'expo-camera';
 import { router } from 'expo-router';
 import { useCallback } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Camera } from 'react-native-vision-camera';
 
 import { CameraBottomToolbar } from '@/components/camera/camera-bottom-toolbar';
 import { MessageWithAction } from '@/components/screen/message-with-action';
@@ -30,6 +30,7 @@ export default function CameraScreen() {
     capturing,
     cameraMessage,
     clearCameraMessage,
+    device,
   } = useCameraScreen({ onPhotoCaptured });
 
   const messageModal = (
@@ -72,13 +73,21 @@ export default function CameraScreen() {
   return (
     <>
       <View style={styles.root}>
-        <CameraView
-          ref={cameraRef}
-          style={StyleSheet.absoluteFill}
-          facing={facing}
-          ratio="1:1"
-          mute
-        />
+        {device ? (
+          <Camera
+            ref={cameraRef}
+            style={StyleSheet.absoluteFill}
+            device={device}
+            isActive
+            photo
+          />
+        ) : (
+          <View style={StyleSheet.absoluteFill}>
+            <ScreenCenter style={styles.transparentCenter} paddingHorizontal={0}>
+              <ActivityIndicator size="large" color={authColors.text} />
+            </ScreenCenter>
+          </View>
+        )}
         <CameraBottomToolbar
           insets={insets}
           onFlip={toggleFacing}

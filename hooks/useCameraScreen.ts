@@ -1,44 +1,44 @@
-import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
-import { useCallback, useRef, useState, type RefObject } from 'react';
+import { useCallback, useMemo, useRef, useState, type RefObject } from 'react';
 import { Platform } from 'react-native';
+import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
 
-import { capturePictureFromCameraRef } from '@/lib/camera/capturePicture';
+import { captureSquarePhotoFromCameraRef } from '@/lib/camera/capturePicture';
 
 export type CameraFacing = 'back' | 'front';
 
+export type CameraScreenMessage = { title: string; message: string };
+
 export type UseCameraScreenOptions = {
-  /** When set, called with the photo URI instead of surfacing a success message via {@link UseCameraScreenResult.cameraMessage}. */
+  /** When set, called with the photo URI instead of surfacing a success message. */
   onPhotoCaptured?: (uri: string) => void;
 };
 
-export type CameraScreenMessage = { title: string; message: string };
-
 export type UseCameraScreenResult = {
-  cameraRef: RefObject<CameraView | null>;
-  permission: ReturnType<typeof useCameraPermissions>[0];
+  cameraRef: RefObject<Camera | null>;
   requestPermission: () => Promise<unknown>;
-  /** `true` while Expo has not resolved the permission hook yet */
+  /** `true` while we are waiting for the first permission state. */
   isPermissionPending: boolean;
   isPermissionGranted: boolean;
   facing: CameraFacing;
   toggleFacing: () => void;
   takePicture: () => Promise<void>;
   capturing: boolean;
-  /** Non-null when capture failed or succeeded without `onPhotoCaptured` — show a themed message dialog from the screen. */
   cameraMessage: CameraScreenMessage | null;
   clearCameraMessage: () => void;
+  /** Selected VisionCamera device, derived from {@link facing}. */
+  device: ReturnType<typeof useCameraDevice>;
 };
 
-/**
- * Camera preview state: permissions, facing, ref, and capture.
- * Pass `onPhotoCaptured` to navigate to a preview screen or upload without a success dialog.
- */
 export function useCameraScreen(options?: UseCameraScreenOptions): UseCameraScreenResult {
   const onPhotoCaptured = options?.onPhotoCaptured;
-  const cameraRef = useRef<CameraView>(null);
-  const [permission, requestPermission] = useCameraPermissions();
+
+  const cameraRef = useRef<Camera>(null);
+  const { hasPermission, requestPermission } = useCameraPermission();
+
   const [facing, setFacing] = useState<CameraFacing>('back');
+  const device = useCameraDevice(facing);
+
   const [capturing, setCapturing] = useState(false);
   const [cameraMessage, setCameraMessage] = useState<CameraScreenMessage | null>(null);
 
@@ -56,9 +56,10 @@ export function useCameraScreen(options?: UseCameraScreenOptions): UseCameraScre
   }, []);
 
   const takePicture = useCallback(async () => {
+    if (capturing) return;
     setCapturing(true);
     try {
-      const photo = await capturePictureFromCameraRef(cameraRef);
+      const photo = await captureSquarePhotoFromCameraRef(cameraRef);
       const uri = photo?.uri;
       if (!uri) return;
 
@@ -85,14 +86,13 @@ export function useCameraScreen(options?: UseCameraScreenOptions): UseCameraScre
     } finally {
       setCapturing(false);
     }
-  }, [onPhotoCaptured]);
+  }, [capturing, onPhotoCaptured]);
 
-  const isPermissionPending = permission == null;
-  const isPermissionGranted = permission?.granted ?? false;
+  const isPermissionPending = useMemo(() => hasPermission == null, [hasPermission]);
+  const isPermissionGranted = Boolean(hasPermission);
 
   return {
     cameraRef,
-    permission,
     requestPermission,
     isPermissionPending,
     isPermissionGranted,
@@ -102,5 +102,7 @@ export function useCameraScreen(options?: UseCameraScreenOptions): UseCameraScre
     capturing,
     cameraMessage,
     clearCameraMessage,
+    device,
   };
 }
+
