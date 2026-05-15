@@ -45,6 +45,7 @@ export type PublicUserProfile = {
   id: string;
   username: string;
   motto: string | null;
+  state: string | null;
   avatar_url: string | null;
   currentStreak: number;
   longestStreak: number;
@@ -62,6 +63,7 @@ type PublicProfileRpcRow = {
   user_id: string;
   username: string;
   motto: string | null;
+  state: string | null;
   avatar_url: string | null;
   current_streak: number | string | null;
   longest_streak: number | string | null;
@@ -90,12 +92,15 @@ export async function getPublicUserProfile(userId: string): Promise<PublicUserPr
   const row = rows[0];
   if (!row) return null;
   const motto = typeof row.motto === 'string' && row.motto.trim().length > 0 ? row.motto.trim() : null;
+  const state =
+    typeof row.state === 'string' && row.state.trim().length === 2 ? row.state.trim().toUpperCase() : null;
   const avatar_url =
     typeof row.avatar_url === 'string' && row.avatar_url.trim().length > 0 ? row.avatar_url.trim() : null;
   return {
     id: row.user_id,
     username: row.username,
     motto,
+    state,
     avatar_url,
     currentStreak: num(row.current_streak, 0),
     longestStreak: num(row.longest_streak, 0),

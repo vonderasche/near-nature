@@ -12,7 +12,7 @@ import { LoadingHintRow } from '@/components/screen/loading-hint-row';
 import { ScreenHeading } from '@/components/screen/screen-heading';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import { useAuthContext } from '@/context/AuthContext';
-import { DEFAULT_USER_STATE } from '@/hooks/useIdentificationRouteParams';
+import { useUserHomeState } from '@/hooks/useUserHomeState';
 import { useIdentificationResultsState } from '@/hooks/useIdentificationResultsState';
 import { useIdentifications } from '@/hooks/useIdentifications';
 import { useSaveDetection } from '@/hooks/useSaveDetection';
@@ -29,7 +29,7 @@ type Props = {
 
 export function CameraIdentificationPanel({ photoUri, onRetake, onBackgroundSaveError }: Props) {
   const insets = useSafeAreaInsets();
-  const userState = DEFAULT_USER_STATE;
+  const userState = useUserHomeState();
 
   const { userId } = useAuthContext();
   const { identify, isLoading: identifying, error: identifyError } = useSpeciesIdentification();

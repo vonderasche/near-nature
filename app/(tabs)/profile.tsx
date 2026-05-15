@@ -7,6 +7,7 @@ import { ProfileOverflowMenu } from '@/components/profile/profile-overflow-menu'
 import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
 import { DetectionGalleryGrid } from '@/components/profile/detection-gallery-grid';
 import { MottoEditModal } from '@/components/profile/motto-edit-modal';
+import { StateEditModal } from '@/components/profile/state-edit-modal';
 import { ProfileStatStrip } from '@/components/profile/profile-stat-strip';
 import { profileStatStripPropsFromPublicProfile } from '@/components/profile/profile-stats-from-public-profile';
 import { ScreenSection } from '@/components/profile/screen-section';
@@ -19,6 +20,7 @@ import { useAvatarFromGallery } from '@/hooks/useAvatarFromGallery';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useDeleteDetection } from '@/hooks/useDeleteDetection';
 import { useMottoSave } from '@/hooks/useMottoSave';
+import { useStateSave } from '@/hooks/useStateSave';
 import { useUserDetectionGallery } from '@/hooks/useUserDetectionGallery';
 import { useUser } from '@/hooks/useUser';
 import { getDetectionImageDisplayUrl } from '@/services/detectionImageUrl';
@@ -33,6 +35,7 @@ export default function ProfileScreen() {
 
   const { user, loading, deleting, error, refresh, update, remove: deleteAccount } = useUser();
   const { saveMotto, saving: mottoSaving } = useMottoSave(update);
+  const { saveState, saving: stateSaving } = useStateSave(update);
   const { deleteById, deletingId } = useDeleteDetection();
   const {
     items: galleryItems,
@@ -42,6 +45,7 @@ export default function ProfileScreen() {
   } = useUserDetectionGallery({ userId: user?.id, limit: 24 });
   const [refreshing, setRefreshing] = useState(false);
   const [mottoModalVisible, setMottoModalVisible] = useState(false);
+  const [stateModalVisible, setStateModalVisible] = useState(false);
   const [avatarDisplayUri, setAvatarDisplayUri] = useState<string | null>(null);
   const [avatarPickError, setAvatarPickError] = useState<string | null>(null);
   const [deleteProfileOpen, setDeleteProfileOpen] = useState(false);
@@ -179,8 +183,10 @@ export default function ProfileScreen() {
               email={user.email}
               username={user.username}
               motto={user.motto}
+              state={user.state}
               mutedColor={muted}
               onMottoPress={() => setMottoModalVisible(true)}
+              onStatePress={() => setStateModalVisible(true)}
             />
             <MottoEditModal
               visible={mottoModalVisible}
@@ -188,6 +194,13 @@ export default function ProfileScreen() {
               onClose={() => setMottoModalVisible(false)}
               onSave={saveMotto}
               saving={mottoSaving}
+            />
+            <StateEditModal
+              visible={stateModalVisible}
+              initialState={user.state}
+              onClose={() => setStateModalVisible(false)}
+              onSave={saveState}
+              saving={stateSaving}
             />
           </View>
 

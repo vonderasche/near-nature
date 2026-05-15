@@ -9,6 +9,9 @@ import { AuthLinkRow } from '@/components/auth/auth-link-row';
 import { AuthScreen } from '@/components/auth/auth-screen';
 import { AuthScreenHeader } from '@/components/auth/auth-screen-header';
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
+import { UsStatePicker } from '@/components/auth/us-state-picker';
+import { normalizeUsStateCode, type UsStateCode } from '@/constants/us-states';
+import { patchUserStateForCurrentUser } from '@/lib/auth/patchUserState';
 import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { signUpWithEmail } from '@/lib/auth/email-auth';
 import { signInWithGoogleAuthResult } from '@/lib/auth/google-supabase';
@@ -22,6 +25,7 @@ export default function SignUpScreen() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [motto, setMotto] = useState('I like nature.');
+  const [stateCode, setStateCode] = useState<UsStateCode | ''>('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [busy, setBusy] = useState(false);
@@ -40,6 +44,11 @@ export default function SignUpScreen() {
       setInfo({ title: 'Sign up', message: 'Passwords do not match.' });
       return;
     }
+    const state = normalizeUsStateCode(stateCode);
+    if (!state) {
+      setInfo({ title: 'Sign up', message: 'Select your US home state.' });
+      return;
+    }
     setBusy(true);
     try {
       const result = await signUpWithEmail(email, password, {
@@ -47,6 +56,7 @@ export default function SignUpScreen() {
         first_name: firstName,
         last_name: lastName,
         motto,
+        state,
       });
       if (!result.ok) {
         setInfo({ title: 'Sign up', message: result.message });
@@ -72,6 +82,11 @@ export default function SignUpScreen() {
 
   const onGoogleSuccess = useCallback(
     async (sessionResult: AuthSessionResult) => {
+      const state = normalizeUsStateCode(stateCode);
+      if (!state) {
+        setInfo({ title: 'Sign up', message: 'Select your US home state before continuing with Google.' });
+        return;
+      }
       setBusy(true);
       try {
         const linked = await signInWithGoogleAuthResult(sessionResult);
@@ -79,11 +94,12 @@ export default function SignUpScreen() {
           setInfo({ title: 'Google sign-in', message: linked.message });
           return;
         }
+        await patchUserStateForCurrentUser(state);
       } finally {
         setBusy(false);
       }
     },
-    []
+    [stateCode],
   );
 
   return (
@@ -130,6 +146,7 @@ export default function SignUpScreen() {
         autoCapitalize="sentences"
         autoComplete="off"
       />
+      <UsStatePicker value={stateCode} onChange={setStateCode} disabled={busy} />
       <AuthField
         label="Password"
         value={password}

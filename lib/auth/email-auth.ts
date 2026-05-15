@@ -76,6 +76,8 @@ export type SignUpProfile = {
   first_name: string;
   last_name: string;
   motto: string;
+  /** Two-letter US state code (e.g. `VA`). */
+  state: string;
 };
 
 export async function signUpWithEmail(
@@ -98,11 +100,15 @@ export async function signUpWithEmail(
   const first_name = profile.first_name.trim();
   const last_name = profile.last_name.trim();
   const motto = profile.motto.trim();
+  const state = profile.state.trim().toUpperCase();
   if (!username) {
     return { ok: false, message: 'Username is required.' };
   }
   if (!first_name || !last_name) {
     return { ok: false, message: 'First and last name are required.' };
+  }
+  if (!state || state.length !== 2) {
+    return { ok: false, message: 'Select your US home state.' };
   }
 
   const { data, error } = await supabase.auth.signUp({
@@ -114,6 +120,7 @@ export async function signUpWithEmail(
         first_name,
         last_name,
         motto,
+        state,
       },
     },
   });

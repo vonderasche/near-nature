@@ -108,6 +108,7 @@ export default function PublicUserProfileScreen() {
                 <PublicUserProfileSummary
                   username={profile.username}
                   motto={profile.motto}
+                  state={profile.state}
                   mutedColor={muted}
                 />
               </View>
