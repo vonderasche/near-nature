@@ -1,9 +1,10 @@
 import * as Haptics from 'expo-haptics';
-import { useCallback, useMemo, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { Platform } from 'react-native';
 import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
 
 import { captureSquarePhotoFromCameraRef } from '@/lib/camera/capturePicture';
+import { cyclePhotoFlashMode, type PhotoFlashMode } from '@/lib/camera/photoFlashMode';
 
 export type CameraFacing = 'back' | 'front';
 
@@ -28,6 +29,13 @@ export type UseCameraScreenResult = {
   clearCameraMessage: () => void;
   /** Selected VisionCamera device, derived from {@link facing}. */
   device: ReturnType<typeof useCameraDevice>;
+  flashMode: PhotoFlashMode;
+  toggleFlashMode: () => void;
+  hasFlash: boolean;
+  torchOn: boolean;
+  toggleTorch: () => void;
+  hasTorch: boolean;
+  focusAt: (point: { x: number; y: number }) => Promise<void>;
 };
 
 export function useCameraScreen(options?: UseCameraScreenOptions): UseCameraScreenResult {
@@ -41,9 +49,54 @@ export function useCameraScreen(options?: UseCameraScreenOptions): UseCameraScre
 
   const [capturing, setCapturing] = useState(false);
   const [cameraMessage, setCameraMessage] = useState<CameraScreenMessage | null>(null);
+  const [flashMode, setFlashMode] = useState<PhotoFlashMode>('off');
+  const [torchOn, setTorchOn] = useState(false);
+
+  const hasFlash = Boolean(device?.hasFlash);
+  const hasTorch = Boolean(device?.hasTorch) && facing === 'back';
+
+  useEffect(() => {
+    setFlashMode('off');
+    setTorchOn(false);
+  }, [facing]);
 
   const clearCameraMessage = useCallback(() => {
     setCameraMessage(null);
+  }, []);
+
+  const toggleFlashMode = useCallback(() => {
+    if (!hasFlash) return;
+    try {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {
+      /* haptics unavailable */
+    }
+    setFlashMode((mode) => cyclePhotoFlashMode(mode));
+  }, [hasFlash]);
+
+  const toggleTorch = useCallback(() => {
+    if (!hasTorch) return;
+    try {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {
+      /* haptics unavailable */
+    }
+    setTorchOn((on) => !on);
+  }, [hasTorch]);
+
+  const focusAt = useCallback(async (point: { x: number; y: number }) => {
+    const cam = cameraRef.current;
+    if (!cam) return;
+    try {
+      await cam.focus(point);
+      try {
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      } catch {
+        /* haptics unavailable */
+      }
+    } catch {
+      /* focus unsupported on this device / lens */
+    }
   }, []);
 
   const toggleFacing = useCallback(() => {
@@ -59,7 +112,10 @@ export function useCameraScreen(options?: UseCameraScreenOptions): UseCameraScre
     if (capturing) return;
     setCapturing(true);
     try {
-      const photo = await captureSquarePhotoFromCameraRef(cameraRef);
+      const photo = await captureSquarePhotoFromCameraRef(cameraRef, {
+        flash: flashMode,
+        enableShutterSound: false,
+      });
       const uri = photo?.uri;
       if (!uri) return;
 
@@ -86,7 +142,7 @@ export function useCameraScreen(options?: UseCameraScreenOptions): UseCameraScre
     } finally {
       setCapturing(false);
     }
-  }, [capturing, onPhotoCaptured]);
+  }, [capturing, flashMode, onPhotoCaptured]);
 
   const isPermissionPending = useMemo(() => hasPermission == null, [hasPermission]);
   const isPermissionGranted = Boolean(hasPermission);
@@ -103,6 +159,13 @@ export function useCameraScreen(options?: UseCameraScreenOptions): UseCameraScre
     cameraMessage,
     clearCameraMessage,
     device,
+    flashMode,
+    toggleFlashMode,
+    hasFlash,
+    torchOn,
+    toggleTorch,
+    hasTorch,
+    focusAt,
   };
 }
 

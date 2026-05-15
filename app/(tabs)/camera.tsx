@@ -1,9 +1,10 @@
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Camera } from 'react-native-vision-camera';
 
 import { CameraBottomToolbar } from '@/components/camera/camera-bottom-toolbar';
+import { CameraLivePreview } from '@/components/camera/camera-live-preview';
+import { CameraTopControls } from '@/components/camera/camera-top-controls';
 import { CameraIdentificationPanel } from '@/components/camera/camera-identification-panel';
 import { MessageWithAction } from '@/components/screen/message-with-action';
 import { ScreenCenter } from '@/components/screen/screen-center';
@@ -36,6 +37,13 @@ export default function CameraScreen() {
     cameraMessage,
     clearCameraMessage,
     device,
+    flashMode,
+    toggleFlashMode,
+    hasFlash,
+    torchOn,
+    toggleTorch,
+    hasTorch,
+    focusAt,
   } = useCameraScreen({ onPhotoCaptured });
 
   const messageModal = (
@@ -83,13 +91,23 @@ export default function CameraScreen() {
     <>
       <View style={styles.root}>
         {device ? (
-          <Camera
-            ref={cameraRef}
-            style={StyleSheet.absoluteFill}
-            device={device}
-            isActive
-            photo
-          />
+          <>
+            <CameraLivePreview
+              cameraRef={cameraRef}
+              device={device}
+              torch={torchOn ? 'on' : 'off'}
+              onFocusPoint={focusAt}
+            />
+            <CameraTopControls
+              insets={insets}
+              flashMode={flashMode}
+              onFlashPress={toggleFlashMode}
+              hasFlash={hasFlash}
+              torchOn={torchOn}
+              onTorchPress={toggleTorch}
+              hasTorch={hasTorch}
+            />
+          </>
         ) : (
           <View style={StyleSheet.absoluteFill}>
             <ScreenCenter style={styles.transparentCenter} paddingHorizontal={0}>
