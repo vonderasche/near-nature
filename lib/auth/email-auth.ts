@@ -18,8 +18,14 @@ function mapAuthMessage(message: string): string {
   if (m.includes('invalid login credentials') || m.includes('invalid_credentials')) {
     return 'Invalid email or password.';
   }
-  if (m.includes('user already registered') || m.includes('already been registered')) {
-    return 'An account with this email already exists.';
+  if (
+    m.includes('user already registered') ||
+    m.includes('already been registered') ||
+    m.includes('already registered') ||
+    m.includes('email address is already') ||
+    m.includes('user already exists')
+  ) {
+    return 'An account with this email already exists. Use Log in, or delete the user under Supabase → Authentication → Users if you are resetting a dev project.';
   }
   if (m.includes('email not confirmed')) {
     return 'Please confirm your email before signing in.';
@@ -91,6 +97,26 @@ export async function signUpWithEmail(
   });
   if (error) {
     return { ok: false, message: mapAuthMessage(error.message) };
+  }
+
+  // Duplicate email / blocked sign-up: GoTrue often returns no error but no user (anti-enumeration),
+  // or a user with no identities and no session — do not treat as "check your email".
+  const user = data.user;
+  if (!user) {
+    return {
+      ok: false,
+      message:
+        'No new account was created. This email is probably already registered in Supabase Auth (Dashboard → Authentication → Users), even if public.users is empty. Try Log in, or delete that auth user first.',
+    };
+  }
+
+  const identities = user.identities ?? [];
+  if (!data.session && identities.length === 0) {
+    return {
+      ok: false,
+      message:
+        'Sign-up did not complete (no session). This often means the email is already registered. Use Log in, or remove the user under Authentication → Users to test a fresh sign-up.',
+    };
   }
 
   // If confirmations are enabled in Supabase, session is null until the user verifies email.

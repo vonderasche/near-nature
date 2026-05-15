@@ -72,6 +72,13 @@ export async function getPublicUserProfile(userId: string): Promise<PublicUserPr
   };
 }
 
+/** Lightweight check for `public.users` row (AuthGate / session bootstrap). */
+export async function userProfileExists(userId: string): Promise<boolean> {
+  const { data, error } = await supabase.from('users').select('id').eq('id', userId).maybeSingle();
+  if (error) throw error;
+  return !!data;
+}
+
 // Fetch the current user's profile
 export async function getUser(userId: string): Promise<User | null> {
   const { data, error } = await supabase.from('users').select('*').eq('id', userId).maybeSingle();

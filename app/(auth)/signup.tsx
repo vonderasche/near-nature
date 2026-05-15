@@ -27,10 +27,6 @@ export default function SignUpScreen() {
   const [busy, setBusy] = useState(false);
   const [info, setInfo] = useState<InfoDialog>(null);
 
-  const goToApp = useCallback(() => {
-    router.replace(routes.tabs);
-  }, []);
-
   function dismissInfo() {
     const goLogin = info?.goToLoginOnDismiss;
     setInfo(null);
@@ -59,12 +55,16 @@ export default function SignUpScreen() {
       if (result.needsEmailConfirmation) {
         setInfo({
           title: 'Check your email',
-          message: 'We sent you a confirmation link. After you confirm, you can log in.',
+          message:
+            'If email confirmation is enabled in Supabase, you should receive a confirmation link. ' +
+            'If nothing arrives after a few minutes, check spam, and in the Supabase dashboard under ' +
+            'Authentication → Providers → Email confirm that SMTP / rate limits are OK. ' +
+            'If confirmations are disabled, you can log in immediately after this screen.',
           goToLoginOnDismiss: true,
         });
         return;
       }
-      goToApp();
+      // Session + profile: AuthGate routes to (tabs) or needs-profile.
     } finally {
       setBusy(false);
     }
@@ -79,12 +79,11 @@ export default function SignUpScreen() {
           setInfo({ title: 'Google sign-in', message: linked.message });
           return;
         }
-        goToApp();
       } finally {
         setBusy(false);
       }
     },
-    [goToApp]
+    []
   );
 
   return (

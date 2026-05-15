@@ -4,6 +4,7 @@ import { createContext, type ReactNode, useCallback, useContext, useEffect, useM
 
 import { parseSupabaseAuthParamsFromUrl } from '@/lib/auth/parseAuthCallbackUrl';
 import { supabase } from '@/lib/supabase';
+import { userProfileExists } from '@/services/userService';
 
 type AuthContextType = {
   session: Session | null;
@@ -12,6 +13,12 @@ type AuthContextType = {
   isLoading: boolean;
   isPasswordRecovery: boolean;
   clearPasswordRecovery: () => void;
+  /** True once we are not waiting on a `public.users` existence check for this session. */
+  profileGateResolved: boolean;
+  /** Whether `public.users` has a row for `userId`. Meaningless when not authenticated (false). */
+  hasProfile: boolean;
+  /** Re-query `public.users` after backfill / trigger fixes (e.g. from needs-profile screen). */
+  refreshProfile: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -21,16 +28,46 @@ const AuthContext = createContext<AuthContextType>({
   isLoading: true,
   isPasswordRecovery: false,
   clearPasswordRecovery: () => {},
+  profileGateResolved: true,
+  hasProfile: false,
+  refreshProfile: async () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
+  const [profileGateResolved, setProfileGateResolved] = useState(true);
+  const [hasProfile, setHasProfile] = useState(false);
 
   const clearPasswordRecovery = useCallback(() => {
     setIsPasswordRecovery(false);
   }, []);
+
+  const refreshProfile = useCallback(async () => {
+    const {
+      data: { session: current },
+    } = await supabase.auth.getSession();
+    const uid = current?.user?.id;
+    if (!uid) {
+      setProfileGateResolved(true);
+      setHasProfile(false);
+      return;
+    }
+    if (isPasswordRecovery) {
+      setProfileGateResolved(true);
+      setHasProfile(true);
+      return;
+    }
+    setProfileGateResolved(false);
+    try {
+      setHasProfile(await userProfileExists(uid));
+    } catch {
+      setHasProfile(false);
+    } finally {
+      setProfileGateResolved(true);
+    }
+  }, [isPasswordRecovery]);
 
   useEffect(() => {
     let mounted = true;
@@ -87,6 +124,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (!session?.user?.id) {
+      setProfileGateResolved(true);
+      setHasProfile(false);
+      return;
+    }
+    if (isPasswordRecovery) {
+      setProfileGateResolved(true);
+      setHasProfile(true);
+      return;
+    }
+
+    let cancelled = false;
+    setProfileGateResolved(false);
+    void (async () => {
+      try {
+        const ok = await userProfileExists(session.user.id);
+        if (!cancelled) {
+          setHasProfile(ok);
+          setProfileGateResolved(true);
+        }
+      } catch {
+        if (!cancelled) {
+          setHasProfile(false);
+          setProfileGateResolved(true);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.user?.id, isPasswordRecovery]);
+
   const value = useMemo(
     () => ({
       session,
@@ -95,8 +166,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isLoading,
       isPasswordRecovery,
       clearPasswordRecovery,
+      profileGateResolved,
+      hasProfile,
+      refreshProfile,
     }),
-    [session, isLoading, isPasswordRecovery, clearPasswordRecovery]
+    [
+      session,
+      isLoading,
+      isPasswordRecovery,
+      clearPasswordRecovery,
+      profileGateResolved,
+      hasProfile,
+      refreshProfile,
+    ]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

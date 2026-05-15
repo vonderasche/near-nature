@@ -1,5 +1,4 @@
 import type { AuthSessionResult } from 'expo-auth-session';
-import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 
 import { AuthButton } from '@/components/auth/auth-button';
@@ -24,10 +23,6 @@ export default function LoginScreen() {
   const [busy, setBusy] = useState(false);
   const [info, setInfo] = useState<InfoDialog>(null);
 
-  const goToApp = useCallback(() => {
-    router.replace(routes.tabs);
-  }, []);
-
   async function onSubmit() {
     setBusy(true);
     try {
@@ -36,7 +31,7 @@ export default function LoginScreen() {
         setInfo({ title: 'Sign in', message: result.message });
         return;
       }
-      goToApp();
+      // Navigation: AuthGate sends you to (tabs) or needs-profile once session + profile are resolved.
     } finally {
       setBusy(false);
     }
@@ -51,12 +46,11 @@ export default function LoginScreen() {
           setInfo({ title: 'Google sign-in', message: linked.message });
           return;
         }
-        goToApp();
       } finally {
         setBusy(false);
       }
     },
-    [goToApp]
+    []
   );
 
   return (

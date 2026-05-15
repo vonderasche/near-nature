@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useState } from 'react';
 
 import { AuthButton } from '@/components/auth/auth-button';
@@ -8,9 +7,8 @@ import { AuthScreenHeader } from '@/components/auth/auth-screen-header';
 import { InlineFormError } from '@/components/screen/inline-form-error';
 import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { useAuth } from '@/hooks/useAuth';
-import { routes } from '@/lib/routing/routes';
 
-type InfoDialog = { title: string; message: string; goToAppOnDismiss?: boolean } | null;
+type InfoDialog = { title: string; message: string } | null;
 
 export default function ResetPasswordScreen() {
   const [password, setPassword] = useState('');
@@ -20,11 +18,7 @@ export default function ResetPasswordScreen() {
   const { resetPassword, clearPasswordRecovery, error, clearError } = useAuth();
 
   function dismissInfo() {
-    const go = info?.goToAppOnDismiss;
     setInfo(null);
-    if (go) {
-      router.replace(routes.tabs);
-    }
   }
 
   async function onSubmit() {
@@ -44,7 +38,6 @@ export default function ResetPasswordScreen() {
       setInfo({
         title: 'Password updated',
         message: 'You can continue using the app.',
-        goToAppOnDismiss: true,
       });
     } catch (err: unknown) {
       setInfo({

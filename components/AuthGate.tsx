@@ -7,11 +7,17 @@ import { useAuthContext } from '@/context/AuthContext';
 import { routes } from '@/lib/routing/routes';
 
 /**
- * Redirects based on auth: signed-out users cannot access (tabs); signed-in users
- * leave the auth stack except the password reset screen (recovery session).
+ * Redirects: signed-out users stay on (auth); signed-in users need a `public.users` row
+ * before (tabs) or member routes; password recovery can use reset-password without a profile.
  */
 export function AuthGate({ children }: { children: ReactNode }) {
-  const { isAuthenticated, isLoading, isPasswordRecovery } = useAuthContext();
+  const {
+    isAuthenticated,
+    isLoading,
+    isPasswordRecovery,
+    profileGateResolved,
+    hasProfile,
+  } = useAuthContext();
   const segments = useSegments();
   const router = useRouter();
 
@@ -23,6 +29,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     const inUserProfile = segs[0] === 'user';
     const inAuth = segs[0] === '(auth)';
     const onResetPassword = segs.includes('reset-password');
+    const onNeedsProfile = segs.includes('needs-profile');
 
     if (isPasswordRecovery && isAuthenticated && !onResetPassword) {
       router.replace(routes.resetPassword);
@@ -30,18 +37,37 @@ export function AuthGate({ children }: { children: ReactNode }) {
     }
 
     if (!isAuthenticated) {
-      if (inTabs || inUserProfile) {
+      if (inTabs || inUserProfile || onNeedsProfile) {
         router.replace(routes.login);
       }
       return;
     }
 
-    if (isAuthenticated && inAuth && !onResetPassword) {
+    if (isAuthenticated && !isPasswordRecovery) {
+      if (!profileGateResolved) return;
+      if (!hasProfile) {
+        if (!onNeedsProfile) {
+          router.replace(routes.needsProfile);
+        }
+        return;
+      }
+    }
+
+    if (isAuthenticated && hasProfile && inAuth && !onResetPassword) {
       router.replace(routes.tabs);
     }
-  }, [isAuthenticated, isLoading, isPasswordRecovery, segments, router]);
+  }, [
+    isAuthenticated,
+    isLoading,
+    isPasswordRecovery,
+    profileGateResolved,
+    hasProfile,
+    segments,
+    router,
+  ]);
 
-  if (isLoading) {
+  const profileGateLoading = isAuthenticated && !isPasswordRecovery && !profileGateResolved;
+  if (isLoading || profileGateLoading) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color={authColors.text} />

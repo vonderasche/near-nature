@@ -8,6 +8,8 @@ export const routes = {
   modal: '/modal',
   login: '/login',
   signup: '/signup',
+  /** Session exists but `public.users` has no row — sign out or fix DB (e.g. backfill). */
+  needsProfile: '/needs-profile',
   forgotPassword: '/forgot-password',
   resetPassword: '/reset-password',
   camera: '/camera',

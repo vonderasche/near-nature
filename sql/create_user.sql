@@ -47,7 +47,7 @@ create policy "Users can delete their own profile"
   on public.users for delete
   using (auth.uid() = id);
 
--- Auto-create profile on sign up
+-- Auto-create profile on sign up (metadata fallbacks for OAuth / partial signup data)
 create or replace function handle_new_user()
 returns trigger as $$
 begin
@@ -64,12 +64,50 @@ begin
   values (
     new.id,
     new.email,
-    new.raw_user_meta_data->>'username',
-    new.raw_user_meta_data->>'first_name',
-    new.raw_user_meta_data->>'last_name',
-    new.raw_user_meta_data->>'motto',
-    new.raw_user_meta_data->>'avatar_url',
-    nullif(trim(new.raw_user_meta_data->>'state'), '')
+    coalesce(
+      nullif(trim(coalesce(new.raw_user_meta_data, '{}'::jsonb)->>'username'), ''),
+      regexp_replace(split_part(lower(new.email::text), '@', 1), '[^a-zA-Z0-9_]', '_', 'g')
+        || '_' || left(replace(new.id::text, '-', ''), 8)
+    ),
+    coalesce(
+      nullif(trim(coalesce(new.raw_user_meta_data, '{}'::jsonb)->>'first_name'), ''),
+      nullif(
+        split_part(
+          trim(
+            coalesce(
+              coalesce(new.raw_user_meta_data, '{}'::jsonb)->>'full_name',
+              coalesce(new.raw_user_meta_data, '{}'::jsonb)->>'name',
+              ''
+            )
+          ),
+          ' ',
+          1
+        ),
+        ''
+      ),
+      'User'
+    ),
+    coalesce(
+      nullif(trim(coalesce(new.raw_user_meta_data, '{}'::jsonb)->>'last_name'), ''),
+      nullif(
+        regexp_replace(
+          trim(
+            coalesce(
+              coalesce(new.raw_user_meta_data, '{}'::jsonb)->>'full_name',
+              coalesce(new.raw_user_meta_data, '{}'::jsonb)->>'name',
+              ''
+            )
+          ),
+          '^\S+\s*',
+          ''
+        ),
+        ''
+      ),
+      'Member'
+    ),
+    nullif(trim(coalesce(new.raw_user_meta_data, '{}'::jsonb)->>'motto'), ''),
+    nullif(trim(coalesce(new.raw_user_meta_data, '{}'::jsonb)->>'avatar_url'), ''),
+    nullif(trim(coalesce(new.raw_user_meta_data, '{}'::jsonb)->>'state'), '')
   );
   return new;
 end;
