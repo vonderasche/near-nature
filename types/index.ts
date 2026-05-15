@@ -1,6 +1,9 @@
 /** Filter for identification history lists */
 export type TaxonGroup = 'all' | 'plant' | 'animal' | 'fungus' | 'other';
 
+/** Binary grouping for profile gallery sections. */
+export type GalleryNativeCategory = 'native' | 'non-native';
+
 export type NativeStatus = 'native' | 'non-native' | 'unknown';
 
 /** Native / introduced signal (includes invasive from iNaturalist-style lookups). */
@@ -33,6 +36,10 @@ export type DetectionGalleryItem = {
   latinName: string;
   /** Wikipedia summary (or other note) stored at save time; may be null for older rows. */
   description: string | null;
+  /** iNaturalist-derived status at save time. */
+  nativeStatus: SpeciesStatus;
+  /** Native vs non-native section in the gallery. */
+  nativeCategory: GalleryNativeCategory;
 };
 
 export type SpeciesClassification = {

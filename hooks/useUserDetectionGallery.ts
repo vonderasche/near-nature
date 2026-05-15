@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
+import { mapRowNativeStatus } from '@/lib/detections/galleryNativeCategory';
 import { getDetectionImageDisplayUrl } from '@/services/detectionImageUrl';
 import { supabase } from '@/lib/supabase';
 import type { DetectionGalleryItem } from '@/types';
@@ -41,7 +42,7 @@ export function useUserDetectionGallery({
     try {
       let q = supabase
         .from('detections')
-        .select('id, image_url, detected_at, common_name, latin_name, description')
+        .select('id, image_url, detected_at, common_name, latin_name, description, native_status')
         .eq('user_id', userId)
         .order('detected_at', { ascending: false })
         .limit(limit);
@@ -62,6 +63,10 @@ export function useUserDetectionGallery({
               ? row.description.trim()
               : null;
 
+          const { nativeStatus, nativeCategory } = mapRowNativeStatus(
+            row.native_status as string | null | undefined,
+          );
+
           return {
             id: row.id,
             imageUrl,
@@ -70,6 +75,8 @@ export function useUserDetectionGallery({
             commonName: row.common_name,
             latinName: row.latin_name,
             description,
+            nativeStatus,
+            nativeCategory,
           };
         }),
       );

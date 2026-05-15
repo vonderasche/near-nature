@@ -4,9 +4,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { AuthButton } from '@/components/auth/auth-button';
+import { NativeStatusBadge } from '@/components/profile/native-status-badge';
 import { SheetModalShell } from '@/components/ui/sheet-modal-shell';
 import { ThemedConfirmModal, ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { formatGalleryNativeDetailHint } from '@/lib/detections/galleryNativeCategory';
 import type { DetectionGalleryItem } from '@/types';
 import type { UserFacingResult } from '@/types/user-facing-result';
 
@@ -78,6 +80,7 @@ export function DetectionGalleryDetailModal({
 
   const showMain = Boolean(visible && item);
   const galleryItem = item;
+  const nativeHint = galleryItem ? formatGalleryNativeDetailHint(galleryItem.nativeStatus) : null;
 
   function handleDeletePress() {
     if (!onRequestDelete) return;
@@ -110,8 +113,10 @@ export function DetectionGalleryDetailModal({
               />
             </View>
 
+            <NativeStatusBadge category={galleryItem.nativeCategory} />
             <Text style={styles.commonName}>{galleryItem.commonName}</Text>
             <Text style={styles.latinName}>{galleryItem.latinName}</Text>
+            {nativeHint ? <Text style={styles.nativeHint}>{nativeHint}</Text> : null}
             {galleryItem.description ? (
               <Text style={styles.description} accessibilityRole="text">
                 {galleryItem.description}
@@ -197,6 +202,13 @@ const styles = StyleSheet.create({
     color: authColors.textMuted,
     fontStyle: 'italic',
     textAlign: 'center',
+  },
+  nativeHint: {
+    ...authTypography.subtitle,
+    lineHeight: 20,
+    color: authColors.textMuted,
+    textAlign: 'center',
+    fontSize: 13,
   },
   description: {
     ...authTypography.body,

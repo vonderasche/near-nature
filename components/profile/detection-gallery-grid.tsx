@@ -6,7 +6,11 @@ import { DetectionGalleryDetailModal } from '@/components/profile/detection-gall
 import { ThemedConfirmModal, ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { ThemedText } from '@/components/themed-text';
 import { authColors, authSpacing } from '@/constants/auth-theme';
-import type { DetectionGalleryItem } from '@/types';
+import {
+  formatGalleryNativeCategoryLabel,
+  splitGalleryByNativeCategory,
+} from '@/lib/detections/galleryNativeCategory';
+import type { DetectionGalleryItem, GalleryNativeCategory } from '@/types';
 import { userFacingErr, type UserFacingResult } from '@/types/user-facing-result';
 
 const NUM_COLUMNS = 3;
@@ -100,6 +104,11 @@ export function DetectionGalleryGrid({
     return Math.max(72, Math.floor((inner - gap * (NUM_COLUMNS - 1)) / NUM_COLUMNS));
   }, [windowWidth]);
 
+  const { native: nativeItems, nonNative: nonNativeItems } = useMemo(
+    () => splitGalleryByNativeCategory(items),
+    [items],
+  );
+
   if (error) {
     return (
       <View style={styles.messageBlock}>
@@ -130,37 +139,52 @@ export function DetectionGalleryGrid({
     );
   }
 
+  const renderSection = (sectionItems: DetectionGalleryItem[], category: GalleryNativeCategory) => {
+    if (sectionItems.length === 0) return null;
+    return (
+      <View style={styles.section}>
+        <ThemedText type="defaultSemiBold" style={[styles.sectionTitle, { color: mutedColor }]}>
+          {formatGalleryNativeCategoryLabel(category)}
+        </ThemedText>
+        <View style={[styles.grid, { gap: authSpacing.sm }]}>
+          {sectionItems.map((item) => (
+            <Pressable
+              key={item.id}
+              accessibilityRole="button"
+              accessibilityHint={
+                deletable && onDeleteItem ? 'Opens details. Long press to delete.' : 'Opens details'
+              }
+              accessibilityLabel={`${item.commonName}, ${item.latinName}, ${formatGalleryNativeCategoryLabel(category)}`}
+              onPress={() => setSelected(item)}
+              onLongPress={deletable && onDeleteItem ? () => confirmAndDelete(item) : undefined}
+              delayLongPress={450}
+              style={({ pressed }) => [
+                styles.tile,
+                {
+                  width: tileSize,
+                  height: tileSize,
+                  borderColor,
+                  opacity: pressed ? 0.92 : 1,
+                },
+              ]}>
+              <Image
+                source={{ uri: item.displayUrl }}
+                style={StyleSheet.absoluteFillObject}
+                contentFit="cover"
+                transition={200}
+              />
+            </Pressable>
+          ))}
+        </View>
+      </View>
+    );
+  };
+
   return (
     <>
-      <View
-        style={[styles.grid, { gap: authSpacing.sm }]}
-        accessibilityLabel="Saved identification photos">
-        {items.map((item) => (
-          <Pressable
-            key={item.id}
-            accessibilityRole="button"
-            accessibilityHint={deletable && onDeleteItem ? 'Opens details. Long press to delete.' : 'Opens details'}
-            accessibilityLabel={`${item.commonName}, ${item.latinName}`}
-            onPress={() => setSelected(item)}
-            onLongPress={deletable && onDeleteItem ? () => confirmAndDelete(item) : undefined}
-            delayLongPress={450}
-            style={({ pressed }) => [
-              styles.tile,
-              {
-                width: tileSize,
-                height: tileSize,
-                borderColor,
-                opacity: pressed ? 0.92 : 1,
-              },
-            ]}>
-            <Image
-              source={{ uri: item.displayUrl }}
-              style={StyleSheet.absoluteFillObject}
-              contentFit="cover"
-              transition={200}
-            />
-          </Pressable>
-        ))}
+      <View accessibilityLabel="Saved identification photos">
+        {renderSection(nativeItems, 'native')}
+        {renderSection(nonNativeItems, 'non-native')}
       </View>
 
       <DetectionGalleryDetailModal
@@ -192,6 +216,13 @@ export function DetectionGalleryGrid({
 }
 
 const styles = StyleSheet.create({
+  section: {
+    marginBottom: authSpacing.md,
+  },
+  sectionTitle: {
+    fontSize: 15,
+    marginBottom: authSpacing.sm,
+  },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
