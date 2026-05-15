@@ -31,6 +31,8 @@ export type DetectionGalleryItem = {
   detectedAt: string;
   commonName: string;
   latinName: string;
+  /** Wikipedia summary (or other note) stored at save time; may be null for older rows. */
+  description: string | null;
 };
 
 export type SpeciesClassification = {

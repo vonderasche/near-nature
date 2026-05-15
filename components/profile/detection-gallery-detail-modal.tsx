@@ -112,6 +112,11 @@ export function DetectionGalleryDetailModal({
 
             <Text style={styles.commonName}>{galleryItem.commonName}</Text>
             <Text style={styles.latinName}>{galleryItem.latinName}</Text>
+            {galleryItem.description ? (
+              <Text style={styles.description} accessibilityRole="text">
+                {galleryItem.description}
+              </Text>
+            ) : null}
             <Text style={styles.meta}>{`Saved ${formatDetectedAt(galleryItem.detectedAt)}`}</Text>
 
             <View style={styles.actions}>
@@ -192,6 +197,12 @@ const styles = StyleSheet.create({
     color: authColors.textMuted,
     fontStyle: 'italic',
     textAlign: 'center',
+  },
+  description: {
+    ...authTypography.body,
+    lineHeight: 22,
+    color: authColors.text,
+    textAlign: 'left',
   },
   meta: {
     ...authTypography.subtitle,
