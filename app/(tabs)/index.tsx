@@ -25,7 +25,7 @@ export default function LeaderboardScreen() {
   return (
     <TabScreenWithLogout
       title="Leaderboard"
-      subtitle="Ranked by saved identifications. Each member's motto appears on their row."
+      subtitle="Ranked by distinct native species discovered. Each row shows native and non-native species counts."
       hideLogout
       refreshControl={
         <RefreshControl

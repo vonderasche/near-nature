@@ -4,7 +4,10 @@ export type DetectionLeaderboardRow = {
   username: string;
   avatarUrl: string | null;
   motto: string | null;
-  detectionCount: number;
+  /** Distinct latin names with native_status = native. */
+  nativeSpeciesCount: number;
+  /** Distinct latin names with native_status invasive or unknown. */
+  nonNativeSpeciesCount: number;
 };
 
 function readNonEmptyString(record: Record<string, unknown>, keys: string[]): string | null {
@@ -17,6 +20,14 @@ function readNonEmptyString(record: Record<string, unknown>, keys: string[]): st
   return null;
 }
 
+function readCount(record: Record<string, unknown>, keys: string[]): number {
+  for (const key of keys) {
+    const n = Number(record[key]);
+    if (Number.isFinite(n) && n >= 0) return n;
+  }
+  return 0;
+}
+
 /** Maps one RPC row from `get_detection_count_leaderboard` (snake_case; tolerate missing keys). */
 export function mapDetectionLeaderboardRpcRow(raw: unknown): DetectionLeaderboardRow {
   const r =
@@ -25,10 +36,22 @@ export function mapDetectionLeaderboardRpcRow(raw: unknown): DetectionLeaderboar
   const rank = Number(r.leaderboard_rank ?? r.leaderboardRank ?? 0);
   const userId = String(r.user_id ?? r.userId ?? '').trim();
   const username = typeof r.username === 'string' ? r.username.trim() : String(r.username ?? '').trim();
-  const detectionCount = Number(r.detection_count ?? r.detectionCount ?? 0);
 
   const avatarUrl = readNonEmptyString(r, ['avatar_url', 'avatarUrl']);
   const motto = readNonEmptyString(r, ['motto', 'Motto']);
+
+  const nativeSpeciesCount = readCount(r, [
+    'native_species_count',
+    'nativeSpeciesCount',
+    'detection_count',
+    'detectionCount',
+  ]);
+  const nonNativeSpeciesCount = readCount(r, [
+    'non_native_species_count',
+    'nonNativeSpeciesCount',
+    'non_native_count',
+    'nonNativeCount',
+  ]);
 
   return {
     rank: Number.isFinite(rank) ? rank : 0,
@@ -36,6 +59,7 @@ export function mapDetectionLeaderboardRpcRow(raw: unknown): DetectionLeaderboar
     username,
     avatarUrl,
     motto,
-    detectionCount: Number.isFinite(detectionCount) ? detectionCount : 0,
+    nativeSpeciesCount,
+    nonNativeSpeciesCount,
   };
 }

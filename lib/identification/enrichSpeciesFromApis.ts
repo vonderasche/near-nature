@@ -80,7 +80,7 @@ export async function enrichSpeciesFromApis(
         latinName: classification.latinName,
         commonName: classification.commonName,
         taxonGroup: classification.taxonGroup,
-        status: nativeResult?.status ?? 'non-native',
+        status: nativeResult?.status ?? 'unknown',
       };
     }),
   );

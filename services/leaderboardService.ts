@@ -8,7 +8,7 @@ export type { DetectionLeaderboardRow };
 export { mapDetectionLeaderboardRpcRow };
 
 /**
- * Leaderboard by saved (non-sensitive) detection count.
+ * Leaderboard by distinct native species (non-sensitive saves), with non-native species count.
  * Requires `get_detection_count_leaderboard` in Supabase (`sql/get_detection_count_leaderboard.sql`).
  */
 export async function getDetectionCountLeaderboard(): Promise<DetectionLeaderboardRow[]> {

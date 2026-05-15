@@ -6,6 +6,10 @@ import { InlineFormError } from '@/components/screen/inline-form-error';
 import { ListDetailCard, listSectionSupportingStyles } from '@/components/screen/list-detail-card';
 import { authColors } from '@/constants/auth-theme';
 import { parseLeaderboardMotto } from '@/lib/leaderboard/formatLeaderboardMotto';
+import {
+  formatLeaderboardAccessibilityCounts,
+  formatLeaderboardSpeciesMeta,
+} from '@/lib/leaderboard/formatLeaderboardSpeciesCounts';
 import { routePublicUserProfile } from '@/lib/routing/routes';
 import type { DetectionLeaderboardRow } from '@/services/leaderboardService';
 
@@ -15,16 +19,12 @@ type Props = {
   error: string | null;
 };
 
-function detectionLabel(n: number): string {
-  return `${n} ${n === 1 ? 'detection' : 'detections'}`;
-}
-
 function leaderboardTitle(row: DetectionLeaderboardRow): string {
   return row.rank > 0 ? `#${row.rank} · @${row.username}` : `@${row.username}`;
 }
 
 /**
- * Ordered list by detection count (RPC). Shows rank, username, motto, and detection count.
+ * Ordered list by distinct native species (RPC). Shows native and non-native species counts.
  */
 export function DetectionCountLeaderboard({ rows, loading, error }: Props) {
   const router = useRouter();
@@ -48,7 +48,7 @@ export function DetectionCountLeaderboard({ rows, loading, error }: Props) {
   }
 
   return (
-    <View accessibilityLabel="Leaderboard by detections">
+    <View accessibilityLabel="Leaderboard by native species discovered">
       {rows.map((row) => {
         const motto = parseLeaderboardMotto(row.motto);
         const title = leaderboardTitle(row);
@@ -61,7 +61,7 @@ export function DetectionCountLeaderboard({ rows, loading, error }: Props) {
             android_ripple={{ color: 'rgba(255,255,255,0.08)' }}
             accessibilityRole="button"
             accessibilityHint="Opens this member's public profile"
-            accessibilityLabel={`${title}, ${motto ?? 'No motto'}, ${detectionLabel(row.detectionCount)}`}>
+            accessibilityLabel={`${title}, ${motto ?? 'No motto'}, ${formatLeaderboardAccessibilityCounts(row)}`}>
             <ListDetailCard
               leading={
                 <LeaderboardMemberAvatar
@@ -72,7 +72,7 @@ export function DetectionCountLeaderboard({ rows, loading, error }: Props) {
               }
               title={title}
               subtitle={motto}
-              meta={detectionLabel(row.detectionCount)}
+              meta={formatLeaderboardSpeciesMeta(row)}
             />
           </Pressable>
         );

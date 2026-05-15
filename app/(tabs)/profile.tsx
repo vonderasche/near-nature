@@ -206,7 +206,7 @@ export default function ProfileScreen() {
 
           <ScreenSection
             title="Gallery"
-            hint="Photos from identifications you saved to your account. Long-press a tile to delete."
+            hint="Grouped by native and non-native. Long-press a tile to delete."
             hintColor={muted}>
             <DetectionGalleryGrid
               items={galleryItems}
