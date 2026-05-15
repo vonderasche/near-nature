@@ -4,15 +4,17 @@ type UploadToDatabaseButtonProps = {
   onPress: () => void;
   disabled?: boolean;
   loading?: boolean;
-  /** Defaults to "Save to database". */
+  /** Defaults to "Save". */
   title?: string;
+  fillParent?: boolean;
 };
 
 export function UploadToDatabaseButton({
   onPress,
   disabled,
   loading,
-  title = 'Save to database',
+  title = 'Save',
+  fillParent = false,
 }: UploadToDatabaseButtonProps) {
   return (
     <AuthButton
@@ -21,6 +23,7 @@ export function UploadToDatabaseButton({
       disabled={disabled}
       loading={loading}
       variant="primary"
+      fillParent={fillParent}
       testID="upload-detection-to-database"
     />
   );

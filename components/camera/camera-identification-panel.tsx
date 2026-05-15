@@ -95,19 +95,6 @@ export function CameraIdentificationPanel({ photoUri, onRetake }: Props) {
           showsVerticalScrollIndicator={false}>
           <IdentificationPhotoSection photoUri={photoUri} />
 
-          {species.length > 0 && !identifying ? (
-            <View style={styles.saveRow}>
-              <UploadToDatabaseButton
-                onPress={handleSaveIdentification}
-                disabled={!userId || saving}
-                loading={saving}
-              />
-              {!userId ? (
-                <Text style={styles.saveHint}>Sign in to upload identifications to your account.</Text>
-              ) : null}
-            </View>
-          ) : null}
-
           <IdentificationSpeciesResultsList
             species={species}
             identifying={identifying}
@@ -119,7 +106,26 @@ export function CameraIdentificationPanel({ photoUri, onRetake }: Props) {
         </ScrollView>
 
         <View style={styles.footer}>
-          <AuthButton variant="outline" title="Retake" onPress={onRetake} />
+          {species.length > 0 && !identifying ? (
+            <View style={styles.footerActions}>
+              <View style={styles.footerHalf}>
+                <AuthButton fillParent variant="outline" title="Retake" onPress={onRetake} />
+              </View>
+              <View style={styles.footerHalf}>
+                <UploadToDatabaseButton
+                  fillParent
+                  onPress={handleSaveIdentification}
+                  disabled={!userId || saving}
+                  loading={saving}
+                />
+              </View>
+            </View>
+          ) : (
+            <AuthButton variant="outline" title="Retake" onPress={onRetake} />
+          )}
+          {species.length > 0 && !identifying && !userId ? (
+            <Text style={styles.saveHint}>Sign in to save identifications to your account.</Text>
+          ) : null}
         </View>
       </View>
       <ThemedMessageModal
@@ -144,9 +150,13 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: authSpacing.xl,
   },
-  saveRow: {
-    marginBottom: authSpacing.md,
+  footerActions: {
+    flexDirection: 'row',
     gap: authSpacing.sm,
+  },
+  footerHalf: {
+    flex: 1,
+    minWidth: 0,
   },
   saveHint: {
     ...authTypography.subtitle,
