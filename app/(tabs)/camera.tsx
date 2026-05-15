@@ -5,6 +5,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraBottomToolbar } from '@/components/camera/camera-bottom-toolbar';
 import { CameraLivePreview } from '@/components/camera/camera-live-preview';
 import { CameraTopControls } from '@/components/camera/camera-top-controls';
+import { CameraZoomChips } from '@/components/camera/camera-zoom-chips';
+import { useCameraCaptureFormat } from '@/hooks/useCameraCaptureFormat';
+import { useCameraZoom } from '@/hooks/useCameraZoom';
 import { CameraIdentificationPanel } from '@/components/camera/camera-identification-panel';
 import { MessageWithAction } from '@/components/screen/message-with-action';
 import { ScreenCenter } from '@/components/screen/screen-center';
@@ -45,6 +48,9 @@ export default function CameraScreen() {
     hasTorch,
     focusAt,
   } = useCameraScreen({ onPhotoCaptured });
+
+  const { format, photoHdr } = useCameraCaptureFormat(device ?? undefined);
+  const { zoom, chips, activeChipId, selectChip } = useCameraZoom(device ?? undefined);
 
   const messageModal = (
     <ThemedMessageModal
@@ -95,8 +101,17 @@ export default function CameraScreen() {
             <CameraLivePreview
               cameraRef={cameraRef}
               device={device}
+              format={format}
+              photoHdr={photoHdr}
+              zoom={zoom}
               torch={torchOn ? 'on' : 'off'}
               onFocusPoint={focusAt}
+            />
+            <CameraZoomChips
+              chips={chips}
+              activeChipId={activeChipId}
+              onSelectChip={selectChip}
+              bottomInset={insets.bottom}
             />
             <CameraTopControls
               insets={insets}

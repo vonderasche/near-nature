@@ -47,7 +47,7 @@ export function CameraTopControls({
         ) : null}
       </View>
       <Text style={styles.hint} accessibilityRole="text">
-        Pinch to zoom · Tap to focus
+        Tap to focus · Use zoom chips below
       </Text>
     </View>
   );

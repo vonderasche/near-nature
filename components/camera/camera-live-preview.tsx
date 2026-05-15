@@ -1,29 +1,55 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import type { Camera, CameraDevice } from 'react-native-vision-camera';
+import type { Camera, CameraDevice, CameraDeviceFormat } from 'react-native-vision-camera';
 import { Camera as VisionCamera } from 'react-native-vision-camera';
 import type { RefObject } from 'react';
 
+import { CameraFocusRing } from '@/components/camera/camera-focus-ring';
+import { CameraGridOverlay } from '@/components/camera/camera-grid-overlay';
+
 type Point = { x: number; y: number };
+
+type FocusRingState = Point & { key: number };
 
 type Props = {
   cameraRef: RefObject<Camera | null>;
   device: CameraDevice;
+  format: CameraDeviceFormat | undefined;
+  photoHdr: boolean;
+  zoom: number;
   torch: 'off' | 'on';
-  onFocusPoint: (point: Point) => void;
+  onFocusPoint: (point: Point) => void | Promise<void>;
 };
 
-/**
- * Full-screen camera with native pinch-zoom, optional torch, and tap-to-focus.
- */
-export function CameraLivePreview({ cameraRef, device, torch, onFocusPoint }: Props) {
-  const [layout, setLayout] = useState({ width: 0, height: 0 });
+const FOCUS_RING_MS = 1200;
 
-  const handleFocus = useCallback(
+/**
+ * Full-screen camera with quality capture settings, grid, tap-to-focus ring, and controlled zoom.
+ */
+export function CameraLivePreview({
+  cameraRef,
+  device,
+  format,
+  photoHdr,
+  zoom,
+  torch,
+  onFocusPoint,
+}: Props) {
+  const [layout, setLayout] = useState({ width: 0, height: 0 });
+  const [focusRing, setFocusRing] = useState<FocusRingState | null>(null);
+
+  useEffect(() => {
+    if (!focusRing) return;
+    const timer = setTimeout(() => setFocusRing(null), FOCUS_RING_MS);
+    return () => clearTimeout(timer);
+  }, [focusRing]);
+
+  const handleTap = useCallback(
     (x: number, y: number) => {
       if (layout.width <= 0 || layout.height <= 0) return;
-      onFocusPoint({
+      setFocusRing({ x, y, key: Date.now() });
+      void onFocusPoint({
         x: Math.min(1, Math.max(0, x / layout.width)),
         y: Math.min(1, Math.max(0, y / layout.height)),
       });
@@ -34,7 +60,7 @@ export function CameraLivePreview({ cameraRef, device, torch, onFocusPoint }: Pr
   const tapGesture = Gesture.Tap()
     .maxDuration(250)
     .onEnd((event) => {
-      handleFocus(event.x, event.y);
+      handleTap(event.x, event.y);
     });
 
   return (
@@ -49,11 +75,18 @@ export function CameraLivePreview({ cameraRef, device, torch, onFocusPoint }: Pr
           ref={cameraRef}
           style={StyleSheet.absoluteFill}
           device={device}
+          format={format}
           isActive
           photo
-          enableZoomGesture
+          photoQualityBalance="quality"
+          photoHdr={photoHdr}
+          zoom={zoom}
           torch={torch}
         />
+        <CameraGridOverlay />
+        {focusRing ? (
+          <CameraFocusRing key={focusRing.key} x={focusRing.x} y={focusRing.y} visible />
+        ) : null}
       </View>
     </GestureDetector>
   );
