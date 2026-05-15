@@ -14,7 +14,7 @@ type UseAuthReturn = {
   isLoading: boolean;
   isPasswordRecovery: boolean;
   clearPasswordRecovery: () => void;
-  login: (email: string, password: string) => Promise<void>;
+  login: (emailOrUsername: string, password: string) => Promise<void>;
   register: (email: string, password: string, fullName: string) => Promise<void>;
   logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
@@ -36,10 +36,10 @@ export function useAuth(): UseAuthReturn {
 
   const clearError = useCallback(() => setError(null), []);
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (emailOrUsername: string, password: string) => {
     setError(null);
     try {
-      await signIn(email, password);
+      await signIn(emailOrUsername, password);
     } catch (err: unknown) {
       const message = errMessage(err, 'Failed to sign in');
       setError(message);

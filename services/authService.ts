@@ -1,5 +1,6 @@
 import * as Linking from 'expo-linking';
 
+import { signInWithEmail } from '@/lib/auth/email-auth';
 import { supabase } from '@/lib/supabase';
 
 /** Add this URL (and your dev `exp://` variant) under Supabase Auth → URL configuration → Redirect URLs. */
@@ -17,10 +18,12 @@ export async function signUp(email: string, password: string, fullName: string) 
   return data;
 }
 
-export async function signIn(email: string, password: string) {
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) throw error;
-  return data;
+/** Email or `public.users.username` (same resolution as login screen). */
+export async function signIn(emailOrUsername: string, password: string) {
+  const result = await signInWithEmail(emailOrUsername, password);
+  if (!result.ok) {
+    throw new Error(result.message);
+  }
 }
 
 export async function signOut() {

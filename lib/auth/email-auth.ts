@@ -16,7 +16,7 @@ function mapAuthMessage(message: string): string {
 
   const m = message.toLowerCase();
   if (m.includes('invalid login credentials') || m.includes('invalid_credentials')) {
-    return 'Invalid email or password.';
+    return 'Invalid email, username, or password.';
   }
   if (
     m.includes('user already registered') ||
@@ -33,16 +33,38 @@ function mapAuthMessage(message: string): string {
   return message;
 }
 
-export async function signInWithEmail(email: string, password: string): Promise<EmailAuthResult> {
-  const e = email.trim();
-  if (!e || !password) {
-    return { ok: false, message: 'Email and password are required.' };
-  }
-  if (!validateEmailShape(e)) {
-    return { ok: false, message: 'Enter a valid email address.' };
+/**
+ * Sign in with either the account email or `public.users.username` (requires RPC
+ * `resolve_login_email` — see `sql/resolve_login_email.sql`).
+ */
+export async function signInWithEmail(emailOrUsername: string, password: string): Promise<EmailAuthResult> {
+  const trimmed = emailOrUsername.trim();
+  if (!trimmed || !password) {
+    return { ok: false, message: 'Email or username and password are required.' };
   }
 
-  const { error } = await supabase.auth.signInWithPassword({ email: e, password });
+  let emailForAuth: string;
+  if (trimmed.includes('@')) {
+    if (!validateEmailShape(trimmed)) {
+      return { ok: false, message: 'Enter a valid email address.' };
+    }
+    emailForAuth = trimmed;
+  } else {
+    if (trimmed.length < 2) {
+      return { ok: false, message: 'Enter a valid username.' };
+    }
+    const { data, error } = await supabase.rpc('resolve_login_email', { p_identifier: trimmed });
+    if (error) {
+      return { ok: false, message: mapSupabaseAuthErrorMessage(error.message) };
+    }
+    const resolved = typeof data === 'string' ? data.trim() : '';
+    if (!resolved) {
+      return { ok: false, message: 'Invalid email, username, or password.' };
+    }
+    emailForAuth = resolved;
+  }
+
+  const { error } = await supabase.auth.signInWithPassword({ email: emailForAuth, password });
   if (error) {
     return { ok: false, message: mapAuthMessage(error.message) };
   }

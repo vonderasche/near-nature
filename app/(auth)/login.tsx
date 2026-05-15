@@ -18,7 +18,7 @@ import { routes } from '@/lib/routing/routes';
 type InfoDialog = { title: string; message: string } | null;
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [info, setInfo] = useState<InfoDialog>(null);
@@ -26,7 +26,7 @@ export default function LoginScreen() {
   async function onSubmit() {
     setBusy(true);
     try {
-      const result = await signInWithEmail(email, password);
+      const result = await signInWithEmail(identifier, password);
       if (!result.ok) {
         setInfo({ title: 'Sign in', message: result.message });
         return;
@@ -55,16 +55,16 @@ export default function LoginScreen() {
 
   return (
     <AuthScreen>
-      <AuthScreenHeader title="Log in" subtitle="Use your email or Google." />
+      <AuthScreenHeader title="Log in" subtitle="Use your email, username, or Google." />
 
       <AuthField
-        label="Email"
-        value={email}
-        onChangeText={setEmail}
-        placeholder="you@example.com"
-        keyboardType="email-address"
-        autoComplete="email"
-        textContentType="emailAddress"
+        label="Email or username"
+        value={identifier}
+        onChangeText={setIdentifier}
+        placeholder="you@example.com or nature_fan"
+        autoCapitalize="none"
+        autoComplete="username"
+        textContentType="username"
       />
       <AuthField
         label="Password"

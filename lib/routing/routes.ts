@@ -9,7 +9,7 @@ export const routes = {
   login: '/login',
   signup: '/signup',
   /** Session exists but `public.users` has no row — sign out or fix DB (e.g. backfill). */
-  needsProfile: '/needs-profile',
+  needsProfile: '/(auth)/needs-profile',
   forgotPassword: '/forgot-password',
   resetPassword: '/reset-password',
   camera: '/camera',

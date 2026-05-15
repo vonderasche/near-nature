@@ -10,8 +10,8 @@ type AuthFieldProps = {
   secureTextEntry?: boolean;
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   keyboardType?: 'default' | 'email-address';
-  autoComplete?: 'email' | 'password' | 'new-password' | 'off';
-  textContentType?: 'emailAddress' | 'password' | 'newPassword';
+  autoComplete?: 'email' | 'password' | 'new-password' | 'username' | 'off';
+  textContentType?: 'emailAddress' | 'password' | 'newPassword' | 'username';
 };
 
 export function AuthField({
