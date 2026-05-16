@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { AuthButton } from '@/components/auth/auth-button';
+import { ButtonRow, ButtonRowSlot } from '@/components/ui/button-row';
 import { SheetModalShell, sheetModalShellStyles } from '@/components/ui/sheet-modal-shell';
 import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { authColors, authRadii, authSpacing, authTypography } from '@/constants/auth-theme';
@@ -78,14 +79,26 @@ export function MottoEditModal({
         </ScrollView>
 
         <View style={styles.actions}>
-          <View style={sheetModalShellStyles.actionRow}>
-            <View style={sheetModalShellStyles.actionHalf}>
-              <AuthButton title="Cancel" variant="outline" onPress={onClose} disabled={saving} />
-            </View>
-            <View style={sheetModalShellStyles.actionHalf}>
-              <AuthButton title="Save" onPress={() => void handleSave()} loading={saving} disabled={saving} />
-            </View>
-          </View>
+          <ButtonRow>
+            <ButtonRowSlot>
+              <AuthButton
+                title="Cancel"
+                variant="outline"
+                fillParent
+                onPress={onClose}
+                disabled={saving}
+              />
+            </ButtonRowSlot>
+            <ButtonRowSlot>
+              <AuthButton
+                title="Save"
+                fillParent
+                onPress={() => void handleSave()}
+                loading={saving}
+                disabled={saving}
+              />
+            </ButtonRowSlot>
+          </ButtonRow>
         </View>
       </SheetModalShell>
 

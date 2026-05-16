@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { LeaderboardMemberAvatar } from '@/components/leaderboard/leaderboard-member-avatar';
+import { ExplorerBoardMemberAvatar } from '@/components/explorer-board/explorer-board-member-avatar';
 import { InlineFormError } from '@/components/screen/inline-form-error';
 import { ListDetailCard, listSectionSupportingStyles } from '@/components/screen/list-detail-card';
 import { authColors } from '@/constants/auth-theme';
@@ -19,14 +19,18 @@ type Props = {
   error: string | null;
 };
 
-function leaderboardTitle(row: DetectionLeaderboardRow): string {
-  return row.rank > 0 ? `#${row.rank} · @${row.username}` : `@${row.username}`;
+function explorerBoardRankBadge(row: DetectionLeaderboardRow): string | null {
+  return row.rank > 0 ? String(row.rank) : null;
+}
+
+function explorerBoardAccessibilityTitle(row: DetectionLeaderboardRow): string {
+  return row.rank > 0 ? `Rank ${row.rank}, ${row.username}` : row.username;
 }
 
 /**
  * Ordered list by distinct native species (RPC). Shows native and non-native species counts.
  */
-export function DetectionCountLeaderboard({ rows, loading, error }: Props) {
+export function DetectionCountExplorerBoard({ rows, loading, error }: Props) {
   const router = useRouter();
 
   if (error) {
@@ -35,7 +39,7 @@ export function DetectionCountLeaderboard({ rows, loading, error }: Props) {
 
   if (loading) {
     return (
-      <View style={listSectionSupportingStyles.centered} accessibilityLabel="Loading leaderboard">
+      <View style={listSectionSupportingStyles.centered} accessibilityLabel="Loading explorer board">
         <ActivityIndicator color={authColors.textMuted} />
       </View>
     );
@@ -48,10 +52,10 @@ export function DetectionCountLeaderboard({ rows, loading, error }: Props) {
   }
 
   return (
-    <View accessibilityLabel="Leaderboard by native species discovered">
+    <View accessibilityLabel="Explorer board by native species discovered">
       {rows.map((row) => {
         const motto = parseLeaderboardMotto(row.motto);
-        const title = leaderboardTitle(row);
+        const a11yTitle = explorerBoardAccessibilityTitle(row);
 
         return (
           <Pressable
@@ -61,16 +65,17 @@ export function DetectionCountLeaderboard({ rows, loading, error }: Props) {
             android_ripple={{ color: 'rgba(255,255,255,0.08)' }}
             accessibilityRole="button"
             accessibilityHint="Opens this member's public profile"
-            accessibilityLabel={`${title}, ${motto ?? 'No motto'}, ${formatLeaderboardAccessibilityCounts(row)}`}>
+            accessibilityLabel={`${a11yTitle}, ${motto ?? 'No motto'}, ${formatLeaderboardAccessibilityCounts(row)}`}>
             <ListDetailCard
               leading={
-                <LeaderboardMemberAvatar
+                <ExplorerBoardMemberAvatar
                   storedUrl={row.avatarUrl}
                   borderColor={authColors.border}
                   mutedColor={authColors.textMuted}
                 />
               }
-              title={title}
+              cornerBadge={explorerBoardRankBadge(row)}
+              title={row.username}
               subtitle={motto}
               meta={formatLeaderboardSpeciesMeta(row)}
             />

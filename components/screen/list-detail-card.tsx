@@ -12,6 +12,8 @@ export type ListDetailCardProps = {
   meta?: string | null;
   /** Renders to the left of the text block (e.g. leaderboard avatar). */
   leading?: ReactNode;
+  /** Top-right badge (e.g. explorer board rank). */
+  cornerBadge?: string | null;
   children?: ReactNode;
 };
 
@@ -19,7 +21,7 @@ export type ListDetailCardProps = {
  * Bordered list row used by identification results and other stacked summaries
  * (same look as the original {@link SpeciesResultCard}).
  */
-export function ListDetailCard({ title, subtitle, meta, leading, children }: ListDetailCardProps) {
+export function ListDetailCard({ title, subtitle, meta, leading, cornerBadge, children }: ListDetailCardProps) {
   const subtitleTrimmed = subtitle?.trim();
   const metaTrimmed = meta?.trim();
   const body = (
@@ -31,15 +33,18 @@ export function ListDetailCard({ title, subtitle, meta, leading, children }: Lis
     </>
   );
 
+  const cornerTrimmed = cornerBadge?.trim();
+
   return (
     <View style={styles.card}>
+      {cornerTrimmed ? <Text style={styles.cornerBadge}>{cornerTrimmed}</Text> : null}
       {leading ? (
-        <View style={styles.leaderRow}>
+        <View style={[styles.leaderRow, cornerTrimmed && styles.rowWithCornerBadge]}>
           <View style={styles.leadingWrap}>{leading}</View>
           <View style={styles.bodyFlex}>{body}</View>
         </View>
       ) : (
-        body
+        <View style={cornerTrimmed ? styles.rowWithCornerBadge : undefined}>{body}</View>
       )}
     </View>
   );
@@ -61,15 +66,27 @@ export const listSectionSupportingStyles = StyleSheet.create({
 
 const styles = StyleSheet.create({
   card: {
+    position: 'relative',
     borderWidth: 1,
     borderColor: authColors.border,
     padding: authSpacing.md,
     marginBottom: authSpacing.sm,
   },
+  cornerBadge: {
+    position: 'absolute',
+    top: authSpacing.sm,
+    right: authSpacing.sm,
+    zIndex: 1,
+    ...authTypography.label,
+    color: authColors.textMuted,
+  },
   leaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: authSpacing.md,
+  },
+  rowWithCornerBadge: {
+    paddingRight: authSpacing.lg,
   },
   leadingWrap: {
     flexShrink: 0,

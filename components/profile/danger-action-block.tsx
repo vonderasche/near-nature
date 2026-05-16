@@ -25,7 +25,8 @@ export function DangerActionBlock({
     <View style={styles.zone}>
       <AuthButton
         title={title}
-        variant="outline"
+        variant="destructive"
+        fillParent
         onPress={onPress}
         loading={loading}
         disabled={disabled}

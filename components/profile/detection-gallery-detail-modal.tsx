@@ -1,10 +1,10 @@
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Image } from 'expo-image';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { NativeStatusBadge } from '@/components/profile/native-status-badge';
+import { ButtonStack } from '@/components/ui/button-stack';
 import { SheetModalShell } from '@/components/ui/sheet-modal-shell';
 import { ThemedConfirmModal, ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
@@ -124,27 +124,27 @@ export function DetectionGalleryDetailModal({
             ) : null}
             <Text style={styles.meta}>{`Saved ${formatDetectedAt(galleryItem.detectedAt)}`}</Text>
 
-            <View style={styles.actions}>
+            <ButtonStack>
               {deletable && onRequestDelete ? (
-                <Pressable
+                <AuthButton
+                  title="Delete from gallery"
+                  variant="outline"
+                  icon="delete-outline"
+                  fillParent
                   onPress={handleDeletePress}
+                  loading={deleteBusy}
                   disabled={deleteBusy || deleteConfirmOpen}
-                  style={({ pressed }) => [
-                    styles.deleteRow,
-                    (deleteBusy || deleteConfirmOpen || pressed) && styles.deleteRowPressed,
-                  ]}
-                  accessibilityRole="button"
-                  accessibilityLabel="Delete photo from gallery">
-                  {deleteBusy ? (
-                    <ActivityIndicator color={authColors.text} />
-                  ) : (
-                    <MaterialIcons name="delete-outline" size={22} color={authColors.text} />
-                  )}
-                  <Text style={styles.deleteLabel}>Delete from gallery</Text>
-                </Pressable>
+                  accessibilityLabel="Delete photo from gallery"
+                />
               ) : null}
-              <AuthButton title="Close" variant="outline" onPress={onClose} disabled={deleteBusy} />
-            </View>
+              <AuthButton
+                title="Close"
+                variant="outline"
+                fillParent
+                onPress={onClose}
+                disabled={deleteBusy}
+              />
+            </ButtonStack>
           </ScrollView>
         </SheetModalShell>
       ) : null}
@@ -221,27 +221,5 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: authColors.textMuted,
     textAlign: 'center',
-  },
-  actions: {
-    gap: authSpacing.sm,
-  },
-  deleteRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: authSpacing.sm,
-    paddingVertical: authSpacing.sm,
-    borderRadius: authSpacing.xs,
-    borderWidth: 1,
-    borderColor: authColors.border,
-    backgroundColor: authColors.background,
-  },
-  deleteRowPressed: {
-    opacity: 0.85,
-  },
-  deleteLabel: {
-    ...authTypography.body,
-    fontWeight: '600',
-    color: authColors.text,
   },
 });

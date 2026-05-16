@@ -5,12 +5,14 @@ import { ActivityIndicator, Image, Pressable, StyleSheet, View } from 'react-nat
 import { Colors } from '@/constants/theme';
 import { authColors, authSpacing } from '@/constants/auth-theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useStoredImageDisplayUrl } from '@/hooks/useStoredImageDisplayUrl';
 
 const INNER_SIZE = 96;
 const RING_SIZE = 112;
 
 type UserAvatarProps = {
-  imageUri: string | null | undefined;
+  /** Raw `users.avatar_url` (signed automatically for the private detections bucket). */
+  storedUrl: string | null | undefined;
   mutedIconColor: string;
   borderColor: string;
   /** When set, the avatar is tappable (e.g. open photo library on profile). */
@@ -20,7 +22,7 @@ type UserAvatarProps = {
 };
 
 export function UserAvatar({
-  imageUri,
+  storedUrl,
   mutedIconColor,
   borderColor,
   onPress,
@@ -28,20 +30,22 @@ export function UserAvatar({
 }: UserAvatarProps) {
   const colorScheme = useColorScheme() ?? 'light';
   const bg = Colors[colorScheme].background;
+  const displayUri = useStoredImageDisplayUrl(storedUrl);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     setFailed(false);
-  }, [imageUri]);
+  }, [storedUrl, displayUri]);
 
-  const showImage = Boolean(imageUri?.trim()) && !failed;
+  const showImage = Boolean(displayUri?.trim()) && !failed;
 
   const body = (
     <View style={[styles.ring, { borderColor }]}>
       <View style={[styles.inner, { backgroundColor: bg }]}>
         {showImage ? (
           <Image
-            source={{ uri: imageUri! }}
+            key={displayUri}
+            source={{ uri: displayUri! }}
             style={styles.image}
             accessibilityLabel="Profile photo"
             onError={() => setFailed(true)}

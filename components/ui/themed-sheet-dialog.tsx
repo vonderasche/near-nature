@@ -1,8 +1,9 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { AuthButton } from '@/components/auth/auth-button';
+import { ButtonRow, ButtonRowSlot } from '@/components/ui/button-row';
 import { SheetModalShell, sheetModalShellStyles } from '@/components/ui/sheet-modal-shell';
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { authSpacing } from '@/constants/auth-theme';
 
 export type ThemedMessageModalProps = {
   visible: boolean;
@@ -24,7 +25,7 @@ export function ThemedMessageModal({
     <SheetModalShell visible={visible} onRequestClose={onDismiss} onBackdropPress={onDismiss}>
       <Text style={sheetModalShellStyles.sheetTitle}>{title}</Text>
       <Text style={sheetModalShellStyles.sheetMessage}>{message}</Text>
-      <AuthButton title={buttonLabel} onPress={onDismiss} />
+      <AuthButton title={buttonLabel} fillParent onPress={onDismiss} />
     </SheetModalShell>
   );
 }
@@ -62,59 +63,27 @@ export function ThemedConfirmModal({
       backdropDisabled={confirmLoading}>
       <Text style={sheetModalShellStyles.sheetTitle}>{title}</Text>
       <Text style={sheetModalShellStyles.sheetMessage}>{message}</Text>
-      <View style={sheetModalShellStyles.actionRow}>
-        <View style={sheetModalShellStyles.actionHalf}>
-          <AuthButton title={cancelLabel} variant="outline" onPress={onCancel} disabled={confirmLoading} />
-        </View>
-        <View style={sheetModalShellStyles.actionHalf}>
-          {confirmDestructive ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={confirmLabel}
-              onPress={() => void onConfirm()}
-              disabled={confirmLoading}
-              style={({ pressed }) => [
-                styles.destructiveBtn,
-                (confirmLoading || pressed) && styles.destructiveBtnPressed,
-              ]}>
-              {confirmLoading ? (
-                <ActivityIndicator color={authColors.danger} />
-              ) : (
-                <Text style={styles.destructiveBtnLabel}>{confirmLabel}</Text>
-              )}
-            </Pressable>
-          ) : (
-            <AuthButton
-              title={confirmLabel}
-              onPress={() => void onConfirm()}
-              loading={confirmLoading}
-              disabled={confirmLoading}
-            />
-          )}
-        </View>
-      </View>
+      <ButtonRow>
+        <ButtonRowSlot>
+          <AuthButton
+            title={cancelLabel}
+            variant="outline"
+            fillParent
+            onPress={onCancel}
+            disabled={confirmLoading}
+          />
+        </ButtonRowSlot>
+        <ButtonRowSlot>
+          <AuthButton
+            title={confirmLabel}
+            variant={confirmDestructive ? 'destructive' : 'primary'}
+            fillParent
+            onPress={() => void onConfirm()}
+            loading={confirmLoading}
+            disabled={confirmLoading}
+          />
+        </ButtonRowSlot>
+      </ButtonRow>
     </SheetModalShell>
   );
 }
-
-const styles = StyleSheet.create({
-  destructiveBtn: {
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: authColors.danger,
-    minHeight: 48,
-    paddingVertical: authSpacing.sm,
-    paddingHorizontal: authSpacing.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: authColors.background,
-  },
-  destructiveBtnPressed: {
-    opacity: 0.85,
-  },
-  destructiveBtnLabel: {
-    ...authTypography.body,
-    fontWeight: '600',
-    color: authColors.danger,
-  },
-});

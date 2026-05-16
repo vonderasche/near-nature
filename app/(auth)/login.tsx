@@ -1,4 +1,3 @@
-import type { AuthSessionResult } from 'expo-auth-session';
 import { useCallback, useState } from 'react';
 
 import { AuthButton } from '@/components/auth/auth-button';
@@ -12,8 +11,8 @@ import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
 import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { authSpacing } from '@/constants/auth-theme';
 import { signInWithEmail } from '@/lib/auth/email-auth';
-import { signInWithGoogleAuthResult } from '@/lib/auth/google-supabase';
 import { routes } from '@/lib/routing/routes';
+import type { GoogleSupabaseResult } from '@/lib/auth/google-supabase';
 
 type InfoDialog = { title: string; message: string } | null;
 
@@ -37,21 +36,17 @@ export default function LoginScreen() {
     }
   }
 
-  const onGoogleSuccess = useCallback(
-    async (sessionResult: AuthSessionResult) => {
-      setBusy(true);
-      try {
-        const linked = await signInWithGoogleAuthResult(sessionResult);
-        if (!linked.ok) {
-          setInfo({ title: 'Google sign-in', message: linked.message });
-          return;
-        }
-      } finally {
-        setBusy(false);
+  const onGoogleFinished = useCallback(async (linked: GoogleSupabaseResult) => {
+    setBusy(true);
+    try {
+      if (!linked.ok) {
+        setInfo({ title: 'Google sign-in', message: linked.message });
       }
-    },
-    []
-  );
+      // Successful session propagates via AuthContext / AuthGate.
+    } finally {
+      setBusy(false);
+    }
+  }, []);
 
   return (
     <AuthScreen>
@@ -84,7 +79,7 @@ export default function LoginScreen() {
 
       <AuthDivider />
 
-      <GoogleSignInButton onSuccess={onGoogleSuccess} />
+      <GoogleSignInButton onFinished={onGoogleFinished} disabled={busy} />
 
       <AuthLinkRow prompt="No account?" href={routes.signup} linkText="Create one" />
 

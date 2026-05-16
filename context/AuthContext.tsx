@@ -3,6 +3,7 @@ import * as Linking from 'expo-linking';
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { parseSupabaseAuthParamsFromUrl } from '@/lib/auth/parseAuthCallbackUrl';
+import { getSessionClearingStaleRefresh } from '@/lib/auth/recoverSupabaseSession';
 import { supabase } from '@/lib/supabase';
 import { userProfileExists } from '@/services/userService';
 
@@ -91,9 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     (async () => {
       await applyAuthUrl(await Linking.getInitialURL());
-      const {
-        data: { session: initial },
-      } = await supabase.auth.getSession();
+      const initial = await getSessionClearingStaleRefresh();
       if (mounted) {
         setSession(initial);
         setIsLoading(false);

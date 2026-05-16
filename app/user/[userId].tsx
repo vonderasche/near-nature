@@ -103,7 +103,7 @@ export default function PublicUserProfileScreen() {
           {profile ? (
             <>
               <View style={styles.profileHero}>
-                <UserAvatar imageUri={profile.avatar_url} mutedIconColor={muted} borderColor={border} />
+                <UserAvatar storedUrl={profile.avatar_url} mutedIconColor={muted} borderColor={border} />
                 <ProfileStatStrip {...profileStatStripPropsFromPublicProfile(profile, muted, tint)} />
                 <PublicUserProfileSummary
                   username={profile.username}

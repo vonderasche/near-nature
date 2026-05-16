@@ -1,4 +1,3 @@
-import type { AuthSessionResult } from 'expo-auth-session';
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 
@@ -10,12 +9,12 @@ import { AuthScreen } from '@/components/auth/auth-screen';
 import { AuthScreenHeader } from '@/components/auth/auth-screen-header';
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
 import { UsStatePicker } from '@/components/auth/us-state-picker';
+import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { normalizeUsStateCode, type UsStateCode } from '@/constants/us-states';
 import { patchUserStateForCurrentUser } from '@/lib/auth/patchUserState';
-import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { signUpWithEmail } from '@/lib/auth/email-auth';
-import { signInWithGoogleAuthResult } from '@/lib/auth/google-supabase';
 import { routes } from '@/lib/routing/routes';
+import type { GoogleSupabaseResult } from '@/lib/auth/google-supabase';
 
 type InfoDialog = { title: string; message: string; goToLoginOnDismiss?: boolean } | null;
 
@@ -80,16 +79,16 @@ export default function SignUpScreen() {
     }
   }
 
-  const onGoogleSuccess = useCallback(
-    async (sessionResult: AuthSessionResult) => {
+  const onGoogleFinished = useCallback(
+    async (linked: GoogleSupabaseResult) => {
       const state = normalizeUsStateCode(stateCode);
       if (!state) {
-        setInfo({ title: 'Sign up', message: 'Select your US home state before continuing with Google.' });
+        setInfo({ title: 'Google sign-up', message: 'Select your US home state before continuing with Google.' });
         return;
       }
+
       setBusy(true);
       try {
-        const linked = await signInWithGoogleAuthResult(sessionResult);
         if (!linked.ok) {
           setInfo({ title: 'Google sign-in', message: linked.message });
           return;
@@ -128,7 +127,6 @@ export default function SignUpScreen() {
         onChangeText={setFirstName}
         placeholder="Given name"
         autoCapitalize="words"
-        autoComplete="off"
       />
       <AuthField
         label="Last name"
@@ -136,22 +134,16 @@ export default function SignUpScreen() {
         onChangeText={setLastName}
         placeholder="Family name"
         autoCapitalize="words"
-        autoComplete="off"
       />
-      <AuthField
-        label="Motto"
-        value={motto}
-        onChangeText={setMotto}
-        placeholder="A short line about you and nature"
-        autoCapitalize="sentences"
-        autoComplete="off"
-      />
-      <UsStatePicker value={stateCode} onChange={setStateCode} disabled={busy} />
+      <AuthField label="Short motto" value={motto} onChangeText={setMotto} placeholder="Shown on leaderboard" />
+
+      <UsStatePicker value={stateCode} onChange={setStateCode} />
+
       <AuthField
         label="Password"
         value={password}
         onChangeText={setPassword}
-        placeholder="At least 8 characters"
+        placeholder="At least 6 characters"
         secureTextEntry
         autoComplete="new-password"
         textContentType="newPassword"
@@ -166,11 +158,11 @@ export default function SignUpScreen() {
         textContentType="newPassword"
       />
 
-      <AuthButton title="Sign up" onPress={onSubmit} loading={busy} disabled={busy} />
+      <AuthButton title="Create account" onPress={onSubmit} loading={busy} disabled={busy} />
 
       <AuthDivider />
 
-      <GoogleSignInButton onSuccess={onGoogleSuccess} />
+      <GoogleSignInButton onFinished={onGoogleFinished} disabled={busy} />
 
       <AuthLinkRow prompt="Already have an account?" href={routes.login} linkText="Log in" />
 

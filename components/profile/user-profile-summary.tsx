@@ -57,7 +57,7 @@ export function UserProfileSummary({
         {lastName}
       </ThemedText>
       <ThemedText style={[styles.email, { color: mutedColor }]}>{email}</ThemedText>
-      <ThemedText style={[styles.username, { color: mutedColor }]}>@{username}</ThemedText>
+      <ThemedText style={[styles.username, { color: mutedColor }]}>{username}</ThemedText>
       <View style={styles.metaOuter}>
         {onStatePress ? (
           <Pressable

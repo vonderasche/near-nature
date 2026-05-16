@@ -23,7 +23,6 @@ import { useMottoSave } from '@/hooks/useMottoSave';
 import { useStateSave } from '@/hooks/useStateSave';
 import { useUserDetectionGallery } from '@/hooks/useUserDetectionGallery';
 import { useUser } from '@/hooks/useUser';
-import { getDetectionImageDisplayUrl } from '@/services/detectionImageUrl';
 import { getPublicUserProfile, type PublicUserProfile } from '@/services/userService';
 import type { DetectionGalleryItem } from '@/types';
 
@@ -46,7 +45,6 @@ export default function ProfileScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [mottoModalVisible, setMottoModalVisible] = useState(false);
   const [stateModalVisible, setStateModalVisible] = useState(false);
-  const [avatarDisplayUri, setAvatarDisplayUri] = useState<string | null>(null);
   const [avatarPickError, setAvatarPickError] = useState<string | null>(null);
   const [deleteProfileOpen, setDeleteProfileOpen] = useState(false);
   const [deleteProfileError, setDeleteProfileError] = useState<string | null>(null);
@@ -67,22 +65,6 @@ export default function ProfileScreen() {
       cancelled = true;
     };
   }, [user?.id]);
-
-  useEffect(() => {
-    const raw = user?.avatar_url?.trim();
-    if (!raw) {
-      setAvatarDisplayUri(null);
-      return;
-    }
-    setAvatarDisplayUri(raw);
-    let cancelled = false;
-    void getDetectionImageDisplayUrl(raw).then((url) => {
-      if (!cancelled) setAvatarDisplayUri(url);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.avatar_url]);
 
   const onAvatarPress = useCallback(() => {
     setAvatarPickError(null);
@@ -166,7 +148,7 @@ export default function ProfileScreen() {
         <>
           <View style={styles.profileHero}>
             <UserAvatar
-              imageUri={avatarDisplayUri}
+              storedUrl={user.avatar_url}
               mutedIconColor={muted}
               borderColor={border}
               onPress={onAvatarPress}

@@ -1,18 +1,34 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type AccessibilityState,
+  type Role,
+} from 'react-native';
+import type { ComponentProps } from 'react';
 
 import { authColors, authRadii, authSpacing, authTypography } from '@/constants/auth-theme';
 
-type Variant = 'primary' | 'outline';
+/** All app buttons use design tokens (`authColors`, `authRadii`, …) for future theme switching. */
+export type AuthButtonVariant = 'primary' | 'outline' | 'destructive';
 
-type AuthButtonProps = {
+export type AuthButtonProps = {
   title: string;
   onPress: () => void;
   disabled?: boolean;
   loading?: boolean;
-  variant?: Variant;
+  variant?: AuthButtonVariant;
   testID?: string;
-  /** Span parent width (e.g. equal columns inside a `flex: 1` wrapper). */
+  /** Span parent width (stacked sheets, equal columns in a row). */
   fillParent?: boolean;
+  /** Optional leading icon (e.g. delete-outline). */
+  icon?: ComponentProps<typeof MaterialIcons>['name'];
+  accessibilityLabel?: string;
+  accessibilityRole?: Role;
+  accessibilityState?: AccessibilityState;
 };
 
 export function AuthButton({
@@ -23,28 +39,51 @@ export function AuthButton({
   variant = 'primary',
   testID,
   fillParent = false,
+  icon,
+  accessibilityLabel,
+  accessibilityRole = 'button',
+  accessibilityState,
 }: AuthButtonProps) {
-  const isOutline = variant === 'outline';
+  const isPrimary = variant === 'primary';
+  const isDestructive = variant === 'destructive';
+
+  const spinnerColor = isPrimary
+    ? authColors.primaryOnFill
+    : isDestructive
+      ? authColors.danger
+      : authColors.text;
+
+  const labelStyle = isPrimary
+    ? styles.titlePrimary
+    : isDestructive
+      ? styles.titleDestructive
+      : styles.titleOutline;
+
   return (
     <Pressable
       testID={testID}
-      accessibilityRole="button"
+      accessibilityRole={accessibilityRole}
+      accessibilityState={accessibilityState}
+      accessibilityLabel={accessibilityLabel ?? title}
       onPress={onPress}
       disabled={disabled || loading}
       style={({ pressed }) => [
         styles.base,
         fillParent && styles.fillParent,
-        isOutline ? styles.outline : styles.primary,
+        isPrimary && styles.primary,
+        variant === 'outline' && styles.outline,
+        isDestructive && styles.destructive,
         (disabled || loading) && styles.disabled,
         pressed && !disabled && !loading && styles.pressed,
       ]}>
       <View style={styles.content}>
         {loading ? (
-          <ActivityIndicator color={isOutline ? authColors.text : authColors.primaryOnFill} />
+          <ActivityIndicator color={spinnerColor} />
         ) : (
-          <Text style={[styles.title, isOutline ? styles.titleOutline : styles.titlePrimary]}>
-            {title}
-          </Text>
+          <View style={styles.labelRow}>
+            {icon ? <MaterialIcons name={icon} size={22} color={spinnerColor} /> : null}
+            <Text style={[styles.title, labelStyle]}>{title}</Text>
+          </View>
         )}
       </View>
     </Pressable>
@@ -68,6 +107,10 @@ const styles = StyleSheet.create({
   outline: {
     backgroundColor: authColors.background,
   },
+  destructive: {
+    backgroundColor: authColors.background,
+    borderColor: authColors.danger,
+  },
   disabled: {
     opacity: 0.45,
   },
@@ -81,6 +124,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: authSpacing.sm,
+  },
   title: {
     ...authTypography.body,
     fontWeight: '600',
@@ -90,5 +139,8 @@ const styles = StyleSheet.create({
   },
   titleOutline: {
     color: authColors.text,
+  },
+  titleDestructive: {
+    color: authColors.danger,
   },
 });

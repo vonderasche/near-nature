@@ -4,55 +4,50 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { authColors } from '@/constants/auth-theme';
-import { getDetectionImageDisplayUrl } from '@/services/detectionImageUrl';
+import { useStoredImageDisplayUrl } from '@/hooks/useStoredImageDisplayUrl';
 
 const SIZE = 44;
 
-type LeaderboardMemberAvatarProps = {
-  /** Stored `users.avatar_url` (often a public bucket URL that still needs signing when private). */
+type ExplorerBoardMemberAvatarProps = {
+  /** Image URL (profile avatar, species photo, etc.). Non-detection URLs are used as-is. */
   storedUrl: string | null | undefined;
   borderColor: string;
   mutedColor: string;
+  /** Shown when there is no image or load fails. */
+  fallbackIcon?: React.ComponentProps<typeof MaterialIcons>['name'];
 };
 
 /**
- * Small circular avatar for leaderboard rows; mirrors profile/gallery signing for the detections bucket.
+ * Small circular avatar for explorer board rows (and other list cards using the same signing).
  */
-export function LeaderboardMemberAvatar({ storedUrl, borderColor, mutedColor }: LeaderboardMemberAvatarProps) {
-  const [uri, setUri] = useState<string | null>(null);
+export function ExplorerBoardMemberAvatar({
+  storedUrl,
+  borderColor,
+  mutedColor,
+  fallbackIcon = 'person',
+}: ExplorerBoardMemberAvatarProps) {
+  const displayUri = useStoredImageDisplayUrl(storedUrl);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
     setFailed(false);
-    const raw = storedUrl?.trim();
-    if (!raw) {
-      setUri(null);
-      return;
-    }
-    setUri(null);
-    void getDetectionImageDisplayUrl(raw).then((u) => {
-      if (!cancelled) setUri(u.trim().length > 0 ? u : null);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [storedUrl]);
+  }, [storedUrl, displayUri]);
 
-  const showImage = Boolean(uri?.trim()) && !failed;
+  const showImage = Boolean(displayUri?.trim()) && !failed;
 
   return (
     <View style={[styles.ring, { borderColor }]} accessibilityLabel="Member avatar">
       {showImage ? (
         <Image
-          source={{ uri: uri! }}
+          key={displayUri}
+          source={{ uri: displayUri! }}
           style={styles.image}
           contentFit="cover"
           transition={150}
           onError={() => setFailed(true)}
         />
       ) : (
-        <MaterialIcons name="person" size={24} color={mutedColor} accessibilityLabel="No profile photo" />
+        <MaterialIcons name={fallbackIcon} size={24} color={mutedColor} accessibilityLabel="No photo" />
       )}
     </View>
   );

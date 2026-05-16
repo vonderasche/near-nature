@@ -26,7 +26,7 @@ export function PublicUserProfileSummary({
   const stateTrimmed = state?.trim();
   return (
     <View style={styles.block}>
-      <ThemedText style={[styles.username, { color: mutedColor }]}>@{username}</ThemedText>
+      <ThemedText style={[styles.username, { color: mutedColor }]}>{username}</ThemedText>
       {stateTrimmed ? (
         <ThemedText style={[styles.state, { color: mutedColor }]}>{usStateLabel(stateTrimmed)}</ThemedText>
       ) : null}

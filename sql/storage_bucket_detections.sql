@@ -8,6 +8,7 @@ drop policy if exists "Users can upload their own detection images" on storage.o
 drop policy if exists "Users can view their own detection images"  on storage.objects;
 drop policy if exists "Users can delete their own detection images" on storage.objects;
 drop policy if exists "Authenticated can read non-sensitive owners detection images" on storage.objects;
+drop policy if exists "Authenticated can read profile avatars" on storage.objects;
 
 -- Allow users to upload their own images
 create policy "Users can upload their own detection images"
@@ -23,6 +24,16 @@ create policy "Users can view their own detection images"
   using (
     bucket_id = 'detections' and
     auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+-- Profile photos live at `{user_id}/profile-avatar.jpg` (not linked from detections).
+create policy "Authenticated can read profile avatars"
+  on storage.objects for select
+  to authenticated
+  using (
+    bucket_id = 'detections'
+    and (storage.foldername(name))[1] is not null
+    and right(name, length('profile-avatar.jpg')) = 'profile-avatar.jpg'
   );
 
 -- Signed URLs / gallery: any signed-in user may read an object only when a

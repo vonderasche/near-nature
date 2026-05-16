@@ -1,24 +1,10 @@
-import { DETECTIONS_BUCKET } from '@/lib/detections/detectionsBucket';
+import { extractDetectionsObjectPathFromStoredUrl } from '@/lib/detections/extractDetectionsObjectPath';
 import { createDetectionsSignedUrl } from '@/lib/detections/detectionsStorage';
 import { devWarn } from '@/lib/devLog';
 
-const SIGNED_URL_EXPIRY_SEC = 60 * 60 * 24; // 24h — refreshed on gallery refetch
+export { extractDetectionsObjectPathFromStoredUrl } from '@/lib/detections/extractDetectionsObjectPath';
 
-/**
- * Parses the object path inside `detections` from the URL stored by `getPublicUrl`.
- * Private buckets still use the `/object/public/{bucket}/…` path shape; those URLs are not anonymously readable.
- */
-export function extractDetectionsObjectPathFromStoredUrl(storedUrl: string): string | null {
-  try {
-    const u = new URL(storedUrl);
-    const prefix = `/storage/v1/object/public/${DETECTIONS_BUCKET}/`;
-    const idx = u.pathname.indexOf(prefix);
-    if (idx === -1) return null;
-    return decodeURIComponent(u.pathname.slice(idx + prefix.length));
-  } catch {
-    return null;
-  }
-}
+const SIGNED_URL_EXPIRY_SEC = 60 * 60 * 24; // 24h — refreshed on gallery refetch
 
 /**
  * Returns a URL that works in `<Image />` for the current session (signed URL for private bucket objects).

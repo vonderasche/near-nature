@@ -37,5 +37,7 @@ export async function uploadProfileAvatarFromLibrary(userId: string, localUri: s
     throw e instanceof Error ? e : new Error(msg);
   }
 
-  return getDetectionsObjectPublicUrl(objectPath);
+  const publicUrl = getDetectionsObjectPublicUrl(objectPath);
+  // Same object path on re-upload — bust image caches in clients and React state.
+  return `${publicUrl}?v=${Date.now()}`;
 }

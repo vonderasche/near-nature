@@ -1,36 +1,31 @@
-import type { AuthSessionResult } from 'expo-auth-session';
-
 import { mapSupabaseAuthErrorMessage } from '@/lib/auth/mapSupabaseAuthError';
 import { supabase } from '@/lib/supabase';
 
 export type GoogleSupabaseResult = { ok: true } | { ok: false; message: string };
 
 /**
- * Completes Supabase auth using the ID token from expo-auth-session (Google provider).
- * Pass `access_token` when present; some ID tokens include `at_hash` and require it.
+ * Signs into Supabase with a Google OAuth ID token (native Google Sign-In or other flows).
+ * Pass access_token when the provider returns one; some setups require both.
  */
-export async function signInWithGoogleAuthResult(
-  result: AuthSessionResult
-): Promise<GoogleSupabaseResult> {
-  if (result.type !== 'success') {
-    return { ok: false, message: 'Sign-in was cancelled.' };
-  }
-
-  const idToken = result.params.id_token;
+export async function signInWithGoogleTokens(input: {
+  idToken: string;
+  accessToken?: string | null;
+}): Promise<GoogleSupabaseResult> {
+  const idToken = input.idToken.trim();
   if (!idToken) {
     return {
       ok: false,
       message:
-        'Missing Google ID token. In Supabase Dashboard, enable the Google provider and ensure your Google OAuth client matches the platform (web / iOS / Android).',
+        'Missing Google ID token. Confirm EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID (Web OAuth client) is set and matches Supabase → Auth → Google.',
     };
   }
 
-  const access_token = result.params.access_token;
+  const accessToken = input.accessToken?.trim();
 
   const { error } = await supabase.auth.signInWithIdToken({
     provider: 'google',
     token: idToken,
-    ...(access_token ? { access_token } : {}),
+    ...(accessToken ? { access_token: accessToken } : {}),
   });
 
   if (error) {

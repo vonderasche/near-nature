@@ -2,6 +2,8 @@
  * Near Nature design tokens — single source of truth for color, spacing, radius, and type scales.
  * Prefer `colors`, `spacing`, `radii`, `typography` in new code.
  * `auth*` aliases match historical naming used across screens and components.
+ *
+ * Buttons: `components/auth/auth-button` + `components/ui/button-stack` / `button-row`.
  */
 
 /** Semantic palette (dark UI: black surfaces, light text, subtle borders). */

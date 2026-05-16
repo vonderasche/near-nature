@@ -1,34 +1,37 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Platform } from 'react-native';
-import type { AuthSessionResult } from 'expo-auth-session';
-import * as Google from 'expo-auth-session/providers/google';
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
-import {
-  getGoogleClientIdForPlatform,
-  isGoogleAuthConfigured,
-  readGoogleAuthEnv,
-} from '@/lib/auth/google-config';
+import { isGoogleAuthConfigured } from '@/lib/auth/google-config';
+import type { GoogleSupabaseResult } from '@/lib/auth/google-supabase';
 
 type GoogleSignInButtonProps = {
-  onSuccess?: (result: AuthSessionResult) => void;
+  /** Called after the native Google flow + Supabase `signInWithIdToken` attempt finishes. */
+  onFinished?: (result: GoogleSupabaseResult) => void | Promise<void>;
+  disabled?: boolean;
 };
 
-const CONFIG_HELP_MESSAGE = `Add OAuth client IDs for ${Platform.OS} via EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID, EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID, or EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID.`;
+function googleConfigHelpMessage(): string {
+  return [
+    'Native Google Sign-In needs:',
+    '',
+    '• EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID — Web OAuth client (same as Supabase Dashboard → Authentication → Providers → Google).',
+    '• Android: OAuth “Android” client in Google Cloud for package com.vonderasche.near_nature + your signing SHA-1 (run android\\gradlew.bat signingReport, use Variant debug / release SHA-1 for that keystore).',
+    '• iOS builds: EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID from an OAuth “iOS” client.',
+    '',
+    'Rebuild the APK or dev client after changing `.env` — EXPO_PUBLIC_* values are inlined at bundle time.',
+  ].join('\n');
+}
 
-/**
- * Mounts the Google OAuth hook only when client IDs exist (library requirement).
- * Without IDs, the same control explains how to configure `.env`.
- */
-export function GoogleSignInButton({ onSuccess }: GoogleSignInButtonProps) {
+export function GoogleSignInButton({ onFinished, disabled = false }: GoogleSignInButtonProps) {
   const configured = isGoogleAuthConfigured();
 
   if (!configured) {
     return <GoogleSignInNotConfigured />;
   }
 
-  return <GoogleSignInConfigured onSuccess={onSuccess} />;
+  return <GoogleSignInReady onFinished={onFinished} disabled={disabled} />;
 }
 
 function GoogleSignInNotConfigured() {
@@ -36,59 +39,51 @@ function GoogleSignInNotConfigured() {
 
   return (
     <>
-      <AuthButton variant="outline" title="Continue with Google" onPress={() => setHelpOpen(true)} />
+      <AuthButton
+        variant="outline"
+        title="Continue with Google"
+        onPress={() => setHelpOpen(true)}
+        disabled={Platform.OS === 'web'}
+      />
       <ThemedMessageModal
         visible={helpOpen}
         title="Google sign-in"
-        message={CONFIG_HELP_MESSAGE}
+        message={googleConfigHelpMessage()}
         onDismiss={() => setHelpOpen(false)}
       />
     </>
   );
 }
 
-function GoogleSignInConfigured({ onSuccess }: GoogleSignInButtonProps) {
-  const env = readGoogleAuthEnv();
-  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    webClientId: env.webClientId,
-    iosClientId: env.iosClientId,
-    androidClientId: env.androidClientId,
-  });
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+function GoogleSignInReady({
+  onFinished,
+  disabled,
+}: {
+  onFinished?: GoogleSignInButtonProps['onFinished'];
+  disabled: boolean;
+}) {
+  const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    if (!response) return;
-    if (response.type === 'success') {
-      onSuccess?.(response);
-      return;
+  const run = useCallback(async () => {
+    setBusy(true);
+    try {
+      const { signInWithGoogleNative } = await import('@/lib/auth/googleNativeSignIn');
+      const result = await signInWithGoogleNative();
+      await onFinished?.(result);
+    } finally {
+      setBusy(false);
     }
-    if (response.type === 'error') {
-      const message =
-        response.error && typeof response.error === 'object' && 'message' in response.error
-          ? String((response.error as { message?: string }).message)
-          : 'Something went wrong.';
-      setErrorMessage(message);
-    }
-  }, [response, onSuccess]);
+  }, [onFinished]);
 
-  const clientId = getGoogleClientIdForPlatform(env);
-  const ready = Boolean(request && clientId);
+  const blocked = Platform.OS === 'web';
 
   return (
-    <>
-      <AuthButton
-        variant="outline"
-        title="Continue with Google"
-        loading={!ready}
-        disabled={!ready}
-        onPress={() => promptAsync()}
-      />
-      <ThemedMessageModal
-        visible={errorMessage !== null}
-        title="Google sign-in"
-        message={errorMessage ?? ''}
-        onDismiss={() => setErrorMessage(null)}
-      />
-    </>
+    <AuthButton
+      variant="outline"
+      title="Continue with Google"
+      loading={busy}
+      disabled={disabled || blocked || busy}
+      onPress={() => void run()}
+    />
   );
 }
