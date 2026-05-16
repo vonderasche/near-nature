@@ -49,12 +49,12 @@ export type PublicUserProfile = {
   avatar_url: string | null;
   currentStreak: number;
   longestStreak: number;
-  /** Non-sensitive identifications (matches public gallery). */
-  publicDetectionCount: number;
+  /** Sum of `detections.points` on non-sensitive saves (public gallery). */
+  publicPoints: number;
   /** Distinct species on non-sensitive identifications. */
   publicSpeciesCount: number;
-  /** All identifications (includes sensitive); only set when the viewer is this user. */
-  ownerDetectionCount: number | null;
+  /** Sum of points on all saves; only set when the viewer is this user. */
+  ownerPoints: number | null;
   /** Distinct species across all identifications; only set when the viewer is this user. */
   ownerSpeciesCount: number | null;
 };
@@ -67,9 +67,9 @@ type PublicProfileRpcRow = {
   avatar_url: string | null;
   current_streak: number | string | null;
   longest_streak: number | string | null;
-  public_detection_count: number | string | null;
+  public_points: number | string | null;
   public_species_count: number | string | null;
-  owner_detection_count: number | string | null;
+  owner_points: number | string | null;
   owner_species_count: number | string | null;
 };
 
@@ -104,9 +104,9 @@ export async function getPublicUserProfile(userId: string): Promise<PublicUserPr
     avatar_url,
     currentStreak: num(row.current_streak, 0),
     longestStreak: num(row.longest_streak, 0),
-    publicDetectionCount: num(row.public_detection_count, 0),
+    publicPoints: num(row.public_points, 0),
     publicSpeciesCount: num(row.public_species_count, 0),
-    ownerDetectionCount: numOrNull(row.owner_detection_count),
+    ownerPoints: numOrNull(row.owner_points),
     ownerSpeciesCount: numOrNull(row.owner_species_count),
   };
 }

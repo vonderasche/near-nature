@@ -1,6 +1,6 @@
--- Public profile + stats (streak, detection/species counts) for any member.
+-- Public profile + stats (streak, points, species counts) for any member.
 -- SECURITY DEFINER: bypasses RLS on users/streaks/detections; only exposes safe aggregates.
--- Owner-only columns (all detections / all species) are filled only when auth.uid() = p_user_id.
+-- Owner-only columns are filled only when auth.uid() = p_user_id.
 -- Safe to re-run.
 
 drop function if exists public.get_public_user_profile(uuid);
@@ -14,9 +14,9 @@ returns table (
   avatar_url              text,
   current_streak          int,
   longest_streak          int,
-  public_detection_count  bigint,
+  public_points           bigint,
   public_species_count    bigint,
-  owner_detection_count   bigint,
+  owner_points            bigint,
   owner_species_count     bigint
 )
 language sql
@@ -33,11 +33,11 @@ as $$
     coalesce(s.current_streak, 0)::int,
     coalesce(s.longest_streak, 0)::int,
     (
-      select count(*)::bigint
+      select coalesce(sum(d.points), 0)::bigint
       from public.detections d
       where d.user_id = u.id
         and d.is_sensitive = false
-    ) as public_detection_count,
+    ) as public_points,
     (
       select count(distinct d.latin_name)::bigint
       from public.detections d
@@ -46,10 +46,12 @@ as $$
     ) as public_species_count,
     case
       when auth.uid() is not null and auth.uid() = u.id then (
-        select count(*)::bigint from public.detections d where d.user_id = u.id
+        select coalesce(sum(d.points), 0)::bigint
+        from public.detections d
+        where d.user_id = u.id
       )
       else null::bigint
-    end as owner_detection_count,
+    end as owner_points,
     case
       when auth.uid() is not null and auth.uid() = u.id then (
         select count(distinct d.latin_name)::bigint

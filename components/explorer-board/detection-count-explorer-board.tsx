@@ -2,7 +2,9 @@ import { useRouter } from 'expo-router';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ExplorerBoardMemberAvatar } from '@/components/explorer-board/explorer-board-member-avatar';
+import { ExplorerBoardRecentPreviewsStrip } from '@/components/explorer-board/explorer-board-recent-previews-strip';
 import { InlineFormError } from '@/components/screen/inline-form-error';
+import { useExplorerBoardDisplayUrls } from '@/hooks/useExplorerBoardDisplayUrls';
 import { ListDetailCard, listSectionSupportingStyles } from '@/components/screen/list-detail-card';
 import { authColors } from '@/constants/auth-theme';
 import { parseLeaderboardMotto } from '@/lib/leaderboard/formatLeaderboardMotto';
@@ -30,8 +32,11 @@ function explorerBoardAccessibilityTitle(row: DetectionLeaderboardRow): string {
 /**
  * Ordered list by distinct native species (RPC). Shows native and non-native species counts.
  */
+const MAX_RECENT_PREVIEWS = 3;
+
 export function DetectionCountExplorerBoard({ rows, loading, error }: Props) {
   const router = useRouter();
+  const { resolveDisplayUrl } = useExplorerBoardDisplayUrls(loading ? [] : rows);
 
   if (error) {
     return <InlineFormError>{error}</InlineFormError>;
@@ -56,6 +61,8 @@ export function DetectionCountExplorerBoard({ rows, loading, error }: Props) {
       {rows.map((row) => {
         const motto = parseLeaderboardMotto(row.motto);
         const a11yTitle = explorerBoardAccessibilityTitle(row);
+        const previewStored = row.recentDetectionImageUrls.slice(0, MAX_RECENT_PREVIEWS);
+        const previewDisplay = previewStored.map((url) => resolveDisplayUrl(url));
 
         return (
           <Pressable
@@ -70,6 +77,7 @@ export function DetectionCountExplorerBoard({ rows, loading, error }: Props) {
               leading={
                 <ExplorerBoardMemberAvatar
                   storedUrl={row.avatarUrl}
+                  displayUri={resolveDisplayUrl(row.avatarUrl)}
                   borderColor={authColors.border}
                   mutedColor={authColors.textMuted}
                 />
@@ -77,8 +85,13 @@ export function DetectionCountExplorerBoard({ rows, loading, error }: Props) {
               cornerBadge={explorerBoardRankBadge(row)}
               title={row.username}
               subtitle={motto}
-              meta={formatLeaderboardSpeciesMeta(row)}
-            />
+              meta={formatLeaderboardSpeciesMeta(row)}>
+              <ExplorerBoardRecentPreviewsStrip
+                storedUrls={previewStored}
+                displayUrls={previewDisplay}
+                borderColor={authColors.border}
+              />
+            </ListDetailCard>
           </Pressable>
         );
       })}

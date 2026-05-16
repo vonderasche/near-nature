@@ -11,6 +11,11 @@ const SIZE = 44;
 type ExplorerBoardMemberAvatarProps = {
   /** Image URL (profile avatar, species photo, etc.). Non-detection URLs are used as-is. */
   storedUrl: string | null | undefined;
+  /**
+   * Pre-resolved display URL (explorer board batch signing).
+   * When set, local signing is skipped; `null` shows the fallback icon.
+   */
+  displayUri?: string | null;
   borderColor: string;
   mutedColor: string;
   /** Shown when there is no image or load fails. */
@@ -22,11 +27,13 @@ type ExplorerBoardMemberAvatarProps = {
  */
 export function ExplorerBoardMemberAvatar({
   storedUrl,
+  displayUri: displayUriProp,
   borderColor,
   mutedColor,
   fallbackIcon = 'person',
 }: ExplorerBoardMemberAvatarProps) {
-  const displayUri = useStoredImageDisplayUrl(storedUrl);
+  const signedLocally = useStoredImageDisplayUrl(displayUriProp === undefined ? storedUrl : null);
+  const displayUri = displayUriProp !== undefined ? displayUriProp : signedLocally;
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {

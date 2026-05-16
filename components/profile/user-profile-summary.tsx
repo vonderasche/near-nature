@@ -1,8 +1,13 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import type { ReactNode } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { ThemedText } from '@/components/themed-text';
+import {
+  ProfileMetaCard,
+  ProfileMetaDivider,
+  ProfileMetaRow,
+} from '@/components/profile/profile-meta-row';
+import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import { usStateLabel } from '@/constants/us-states';
-import { authSpacing } from '@/constants/auth-theme';
 
 type UserProfileSummaryProps = {
   firstName: string;
@@ -11,14 +16,18 @@ type UserProfileSummaryProps = {
   username: string;
   motto: string | null | undefined;
   state: string | null | undefined;
-  mutedColor: string;
   mottoPlaceholder?: string;
   statePlaceholder?: string;
-  /** When set, the motto line is tappable (e.g. own profile edit). */
   onMottoPress?: () => void;
-  /** When set, the state line is tappable (e.g. own profile edit). */
   onStatePress?: () => void;
+  /** Rendered between username and editable rows (e.g. stat strip). */
+  statsSlot?: ReactNode;
 };
+
+function displayNameFrom(firstName: string, lastName: string, username: string): string {
+  const full = [firstName, lastName].map((s) => s.trim()).filter(Boolean).join(' ');
+  return full || username;
+}
 
 export function UserProfileSummary({
   firstName,
@@ -27,122 +36,77 @@ export function UserProfileSummary({
   username,
   motto,
   state,
-  mutedColor,
-  mottoPlaceholder = 'Add a short motto — it will show up here.',
-  statePlaceholder = 'Add your US home state',
+  mottoPlaceholder = 'Add a short motto',
+  statePlaceholder = 'Add home state',
   onMottoPress,
   onStatePress,
+  statsSlot,
 }: UserProfileSummaryProps) {
+  const displayName = displayNameFrom(firstName, lastName, username);
   const stateTrimmed = state?.trim();
-  const stateLabel = stateTrimmed ? usStateLabel(stateTrimmed) : statePlaceholder;
-  const stateContent = (
-    <ThemedText
-      style={[stateTrimmed ? styles.state : styles.statePlaceholder, { color: mutedColor }]}>
-      {stateLabel}
-    </ThemedText>
-  );
-
   const mottoTrimmed = motto?.trim();
-  const mottoContent = (
-    <ThemedText style={[mottoTrimmed ? styles.motto : styles.mottoPlaceholder, { color: mutedColor }]}>
-      {mottoTrimmed ?? mottoPlaceholder}
-    </ThemedText>
-  );
+
   return (
     <View style={styles.block}>
-      <ThemedText type="defaultSemiBold" style={styles.line}>
-        {firstName}
-      </ThemedText>
-      <ThemedText type="defaultSemiBold" style={styles.line}>
-        {lastName}
-      </ThemedText>
-      <ThemedText style={[styles.email, { color: mutedColor }]}>{email}</ThemedText>
-      <ThemedText style={[styles.username, { color: mutedColor }]}>{username}</ThemedText>
-      <View style={styles.metaOuter}>
-        {onStatePress ? (
-          <Pressable
-            onPress={onStatePress}
-            accessibilityRole="button"
-            accessibilityLabel="Edit home state"
-            style={({ pressed }) => [styles.metaPressable, pressed && styles.metaPressablePressed]}>
-            {stateContent}
-          </Pressable>
-        ) : (
-          stateContent
-        )}
-      </View>
-      <View style={styles.mottoOuter}>
-        {onMottoPress ? (
-          <Pressable
-            onPress={onMottoPress}
-            accessibilityRole="button"
-            accessibilityLabel="Edit motto"
-            style={({ pressed }) => [styles.mottoPressable, pressed && styles.mottoPressablePressed]}>
-            {mottoContent}
-          </Pressable>
-        ) : (
-          mottoContent
-        )}
-      </View>
+      <Text style={styles.displayName}>{displayName}</Text>
+      <Text style={styles.username}>{username}</Text>
+
+      {statsSlot ? <View style={styles.statsSlot}>{statsSlot}</View> : null}
+
+      <ProfileMetaCard>
+        <ProfileMetaRow
+          label="Home state"
+          value={stateTrimmed ? usStateLabel(stateTrimmed) : statePlaceholder}
+          placeholder={!stateTrimmed}
+          onPress={onStatePress}
+          accessibilityLabel="Edit home state"
+        />
+        <ProfileMetaDivider />
+        <ProfileMetaRow
+          label="Motto"
+          value={mottoTrimmed ?? mottoPlaceholder}
+          placeholder={!mottoTrimmed}
+          onPress={onMottoPress}
+          accessibilityLabel="Edit motto"
+        />
+      </ProfileMetaCard>
+
+      <Text style={styles.email} numberOfLines={1}>
+        {email}
+      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   block: {
+    alignSelf: 'stretch',
+    width: '100%',
+    maxWidth: 420,
     alignItems: 'center',
     gap: authSpacing.sm,
   },
-  line: {
-    textAlign: 'center',
-  },
-  email: {
-    fontSize: 15,
+  displayName: {
+    ...authTypography.title,
+    fontSize: 22,
+    lineHeight: 28,
+    color: authColors.text,
     textAlign: 'center',
   },
   username: {
-    fontSize: 14,
+    ...authTypography.subtitle,
+    color: authColors.textMuted,
     textAlign: 'center',
   },
-  metaOuter: {
-    paddingHorizontal: authSpacing.md,
-    alignItems: 'center',
+  statsSlot: {
+    alignSelf: 'stretch',
+    width: '100%',
   },
-  state: {
-    fontSize: 15,
+  email: {
+    ...authTypography.subtitle,
+    fontSize: 13,
+    color: authColors.textMuted,
     textAlign: 'center',
-  },
-  statePlaceholder: {
-    fontSize: 15,
-    fontStyle: 'italic',
-    textAlign: 'center',
-  },
-  metaPressable: {
-    paddingVertical: authSpacing.xs,
-    borderRadius: authSpacing.xs,
-  },
-  metaPressablePressed: {
-    opacity: 0.85,
-  },
-  mottoOuter: {
     marginTop: authSpacing.xs,
-    paddingHorizontal: authSpacing.md,
-    alignItems: 'center',
-  },
-  motto: {
-    fontSize: 15,
-    textAlign: 'center',
-  },
-  mottoPlaceholder: {
-    fontSize: 15,
-    fontStyle: 'italic',
-    textAlign: 'center',
-  },
-  mottoPressable: {
-    paddingVertical: authSpacing.xs,
-    borderRadius: authSpacing.xs,
-  },
-  mottoPressablePressed: {
-    opacity: 0.85,
   },
 });

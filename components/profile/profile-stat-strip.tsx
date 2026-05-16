@@ -1,17 +1,17 @@
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { authSpacing, authTypography } from '@/constants/auth-theme';
+import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 
 export type ProfileStatStripProps = {
   currentStreak: number;
   longestStreak: number;
-  /** Shown as middle column (all saves for owner, public-only for others). */
-  detectionCount: number;
-  /** Distinct species (latin_name) matching detectionCount scope. */
+  /** Shown as middle column — sum of detection points (all saves for owner, public-only for others). */
+  pointsTotal: number;
+  /** Distinct species (latin_name) matching points scope. */
   speciesCount: number;
-  /** e.g. "All identifications" vs "Public gallery" */
-  detectionCaption?: string;
+  /** e.g. "All saves" vs "Public saves" */
+  pointsCaption?: string;
   mutedColor: string;
   accentColor: string;
 };
@@ -55,9 +55,9 @@ function StatCell({
 export function ProfileStatStrip({
   currentStreak,
   longestStreak,
-  detectionCount,
+  pointsTotal,
   speciesCount,
-  detectionCaption,
+  pointsCaption,
   mutedColor,
   accentColor,
 }: ProfileStatStripProps) {
@@ -72,9 +72,9 @@ export function ProfileStatStrip({
       />
       <View style={styles.divider} />
       <StatCell
-        value={formatCount(detectionCount)}
-        label="Detections"
-        sublabel={detectionCaption}
+        value={formatCount(pointsTotal)}
+        label="Points"
+        sublabel={pointsCaption}
         mutedColor={mutedColor}
         accentColor={accentColor}
       />
@@ -97,8 +97,9 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 420,
     alignSelf: 'center',
-    marginTop: authSpacing.md,
-    paddingVertical: authSpacing.sm,
+    marginTop: authSpacing.xs,
+    marginBottom: authSpacing.xs,
+    paddingVertical: authSpacing.xs,
   },
   cell: {
     flex: 1,
@@ -125,7 +126,7 @@ const styles = StyleSheet.create({
   divider: {
     width: StyleSheet.hairlineWidth,
     alignSelf: 'stretch',
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: authColors.border,
     marginVertical: authSpacing.xs,
   },
 });

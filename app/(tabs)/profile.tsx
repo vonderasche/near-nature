@@ -1,48 +1,37 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import { TabScreenWithLogout } from '@/components/TabScreenWithLogout';
 import { CenteredActivityIndicator } from '@/components/profile/centered-activity-indicator';
 import { ProfileOverflowMenu } from '@/components/profile/profile-overflow-menu';
 import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
-import { DetectionGalleryGrid } from '@/components/profile/detection-gallery-grid';
+import {
+  UserDetectionGallerySection,
+  type UserDetectionGallerySectionHandle,
+} from '@/components/profile/user-detection-gallery-section';
 import { MottoEditModal } from '@/components/profile/motto-edit-modal';
 import { StateEditModal } from '@/components/profile/state-edit-modal';
 import { ProfileStatStrip } from '@/components/profile/profile-stat-strip';
 import { profileStatStripPropsFromPublicProfile } from '@/components/profile/profile-stats-from-public-profile';
-import { ScreenSection } from '@/components/profile/screen-section';
 import { UserAvatar } from '@/components/profile/user-avatar';
 import { UserProfileSummary } from '@/components/profile/user-profile-summary';
 import { ThemedConfirmModal, ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
-import { authSpacing, authTypography } from '@/constants/auth-theme';
-import { Colors } from '@/constants/theme';
+import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import { useAvatarFromGallery } from '@/hooks/useAvatarFromGallery';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useDeleteDetection } from '@/hooks/useDeleteDetection';
 import { useMottoSave } from '@/hooks/useMottoSave';
 import { useStateSave } from '@/hooks/useStateSave';
-import { useUserDetectionGallery } from '@/hooks/useUserDetectionGallery';
 import { useUser } from '@/hooks/useUser';
 import { requestExplorerBoardRefresh } from '@/lib/explorerBoard/explorerBoardRefresh';
 import { getPublicUserProfile, type PublicUserProfile } from '@/services/userService';
 import type { DetectionGalleryItem } from '@/types';
 
 export default function ProfileScreen() {
-  const colorScheme = useColorScheme() ?? 'light';
-  const muted = Colors[colorScheme].icon;
-  const border = Colors[colorScheme].tabIconDefault;
-  const tint = Colors[colorScheme].tint;
-
   const { user, loading, deleting, error, refresh, update, remove: deleteAccount } = useUser();
   const { saveMotto, saving: mottoSaving } = useMottoSave(update);
   const { saveState, saving: stateSaving } = useStateSave(update);
   const { deleteById, deletingId } = useDeleteDetection();
-  const {
-    items: galleryItems,
-    isLoading: galleryLoading,
-    error: galleryError,
-    refetch: refetchGallery,
-  } = useUserDetectionGallery({ userId: user?.id, limit: 24 });
+  const galleryRef = useRef<UserDetectionGallerySectionHandle>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [mottoModalVisible, setMottoModalVisible] = useState(false);
   const [stateModalVisible, setStateModalVisible] = useState(false);
@@ -84,18 +73,19 @@ export default function ProfileScreen() {
     setRefreshing(true);
     try {
       const statsPromise = user?.id ? getPublicUserProfile(user.id) : Promise.resolve(null);
-      const [, , stats] = await Promise.all([refresh(), refetchGallery(), statsPromise]);
+      const galleryPromise = galleryRef.current?.refetch() ?? Promise.resolve();
+      const [, , stats] = await Promise.all([refresh(), galleryPromise, statsPromise]);
       setStatsProfile(stats);
     } finally {
       setRefreshing(false);
     }
-  }, [refresh, refetchGallery, user?.id]);
+  }, [refresh, user?.id]);
 
   const handleGalleryDelete = useCallback(
     async (item: DetectionGalleryItem) => {
       const r = await deleteById(item.id);
       if (r.ok) {
-        await refetchGallery();
+        await galleryRef.current?.refetch();
         if (user?.id) {
           const row = await getPublicUserProfile(user.id);
           setStatsProfile(row);
@@ -103,7 +93,7 @@ export default function ProfileScreen() {
       }
       return r;
     },
-    [deleteById, refetchGallery, user?.id],
+    [deleteById, user?.id],
   );
 
   const confirmDeleteProfile = useCallback(() => {
@@ -118,6 +108,12 @@ export default function ProfileScreen() {
     }
   }, [deleteAccount]);
 
+  const statsSlot = statsProfile ? (
+    <ProfileStatStrip
+      {...profileStatStripPropsFromPublicProfile(statsProfile, authColors.textMuted, authColors.text)}
+    />
+  ) : null;
+
   return (
     <TabScreenWithLogout
       title="Profile"
@@ -131,19 +127,19 @@ export default function ProfileScreen() {
         <RefreshControl
           refreshing={refreshing}
           onRefresh={onRefresh}
-          tintColor={tint}
-          colors={[tint]}
+          tintColor={authColors.text}
+          colors={[authColors.text]}
         />
       }>
       {loading && !user ? (
-        <CenteredActivityIndicator color={tint} accessibilityLabel="Loading profile" />
+        <CenteredActivityIndicator color={authColors.text} accessibilityLabel="Loading profile" />
       ) : null}
 
       {error ? (
         <ErrorRetryBlock
           message={error}
           onRetry={() => void refresh()}
-          borderColor={border}
+          borderColor={authColors.border}
           retryLabel="Try again"
         />
       ) : null}
@@ -153,15 +149,11 @@ export default function ProfileScreen() {
           <View style={styles.profileHero}>
             <UserAvatar
               storedUrl={user.avatar_url}
-              mutedIconColor={muted}
-              borderColor={border}
+              mutedIconColor={authColors.textMuted}
+              borderColor={authColors.border}
               onPress={onAvatarPress}
               busy={avatarBusy}
             />
-
-            {statsProfile ? (
-              <ProfileStatStrip {...profileStatStripPropsFromPublicProfile(statsProfile, muted, tint)} />
-            ) : null}
 
             <UserProfileSummary
               firstName={user.first_name}
@@ -170,47 +162,44 @@ export default function ProfileScreen() {
               username={user.username}
               motto={user.motto}
               state={user.state}
-              mutedColor={muted}
+              statsSlot={statsSlot}
               onMottoPress={() => setMottoModalVisible(true)}
               onStatePress={() => setStateModalVisible(true)}
             />
-            <MottoEditModal
-              visible={mottoModalVisible}
-              initialMotto={user.motto}
-              onClose={() => setMottoModalVisible(false)}
-              onSave={saveMotto}
-              saving={mottoSaving}
-            />
-            <StateEditModal
-              visible={stateModalVisible}
-              initialState={user.state}
-              onClose={() => setStateModalVisible(false)}
-              onSave={saveState}
-              saving={stateSaving}
-            />
           </View>
 
-          <ScreenSection
-            title="Gallery"
-            hint="Grouped by native and non-native. Long-press a tile to delete."
-            hintColor={muted}>
-            <DetectionGalleryGrid
-              items={galleryItems}
-              loading={galleryLoading}
-              error={galleryError}
-              onRetry={() => void refetchGallery()}
-              borderColor={border}
-              mutedColor={muted}
-              activityColor={tint}
-              deletable
-              onDeleteItem={handleGalleryDelete}
-              deletingId={deletingId}
-            />
-          </ScreenSection>
+          <UserDetectionGallerySection
+            ref={galleryRef}
+            userId={user.id}
+            hint="Native and non-native · long-press to delete"
+            hintColor={authColors.textMuted}
+            borderColor={authColors.border}
+            mutedColor={authColors.textMuted}
+            activityColor={authColors.text}
+            deletable
+            onDeleteItem={handleGalleryDelete}
+            deletingId={deletingId}
+          />
+
+          <MottoEditModal
+            visible={mottoModalVisible}
+            initialMotto={user.motto}
+            onClose={() => setMottoModalVisible(false)}
+            onSave={saveMotto}
+            saving={mottoSaving}
+          />
+          <StateEditModal
+            visible={stateModalVisible}
+            initialState={user.state}
+            onClose={() => setStateModalVisible(false)}
+            onSave={saveState}
+            saving={stateSaving}
+          />
         </>
       ) : !loading && !error ? (
-        <Text style={[styles.emptyHint, { color: muted }]}>Sign in to load your profile.</Text>
+        <Text style={styles.emptyHint}>Sign in to load your profile.</Text>
       ) : null}
+
       <ThemedMessageModal
         visible={avatarPickError !== null}
         title="Profile photo"
@@ -239,9 +228,12 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   profileHero: {
     alignItems: 'center',
+    gap: authSpacing.sm,
+    marginBottom: authSpacing.md,
   },
   emptyHint: {
     ...authTypography.subtitle,
+    color: authColors.textMuted,
     textAlign: 'center',
     paddingVertical: authSpacing.sm,
   },

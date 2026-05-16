@@ -4,6 +4,10 @@ export type DetectionLeaderboardRow = {
   username: string;
   avatarUrl: string | null;
   motto: string | null;
+  /** Sum of `detections.points` on non-sensitive saves. */
+  pointsTotal: number;
+  /** Up to three latest public identification image URLs (storage paths or URLs). */
+  recentDetectionImageUrls: string[];
   /** Distinct latin names with native_status = native. */
   nativeSpeciesCount: number;
   /** Distinct latin names with native_status invasive or unknown. */
@@ -28,6 +32,18 @@ function readCount(record: Record<string, unknown>, keys: string[]): number {
   return 0;
 }
 
+function readStringArray(record: Record<string, unknown>, keys: string[]): string[] {
+  for (const key of keys) {
+    const v = record[key];
+    if (!Array.isArray(v)) continue;
+    return v
+      .filter((entry): entry is string => typeof entry === 'string')
+      .map((entry) => entry.trim())
+      .filter((entry) => entry.length > 0);
+  }
+  return [];
+}
+
 /** Maps one RPC row from `get_detection_count_leaderboard` (snake_case; tolerate missing keys). */
 export function mapDetectionLeaderboardRpcRow(raw: unknown): DetectionLeaderboardRow {
   const r =
@@ -40,6 +56,20 @@ export function mapDetectionLeaderboardRpcRow(raw: unknown): DetectionLeaderboar
   const avatarUrl = readNonEmptyString(r, ['avatar_url', 'avatarUrl']);
   const motto = readNonEmptyString(r, ['motto', 'Motto']);
 
+  const pointsTotal = readCount(r, [
+    'total_points',
+    'totalPoints',
+    'public_points',
+    'publicPoints',
+    'public_post_count',
+    'publicPostCount',
+  ]);
+  const recentDetectionImageUrls = readStringArray(r, [
+    'recent_detection_image_urls',
+    'recentDetectionImageUrls',
+    'recent_post_image_urls',
+    'recentPostImageUrls',
+  ]);
   const nativeSpeciesCount = readCount(r, [
     'native_species_count',
     'nativeSpeciesCount',
@@ -59,6 +89,8 @@ export function mapDetectionLeaderboardRpcRow(raw: unknown): DetectionLeaderboar
     username,
     avatarUrl,
     motto,
+    pointsTotal,
+    recentDetectionImageUrls,
     nativeSpeciesCount,
     nonNativeSpeciesCount,
   };

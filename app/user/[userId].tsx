@@ -1,20 +1,21 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { CenteredActivityIndicator } from '@/components/profile/centered-activity-indicator';
-import { DetectionGalleryGrid } from '@/components/profile/detection-gallery-grid';
+import {
+  UserDetectionGallerySection,
+  type UserDetectionGallerySectionHandle,
+} from '@/components/profile/user-detection-gallery-section';
 import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
 import { PublicUserProfileSummary } from '@/components/profile/public-user-profile-summary';
 import { ProfileStatStrip } from '@/components/profile/profile-stat-strip';
 import { profileStatStripPropsFromPublicProfile } from '@/components/profile/profile-stats-from-public-profile';
-import { ScreenSection } from '@/components/profile/screen-section';
 import { UserAvatar } from '@/components/profile/user-avatar';
 import { Colors } from '@/constants/theme';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { usePublicUserProfile } from '@/hooks/usePublicUserProfile';
-import { useUserDetectionGallery } from '@/hooks/useUserDetectionGallery';
 import { paramToString } from '@/lib/routing/searchParams';
 import { contentInsetsPadding } from '@/lib/screen/contentInsets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -32,23 +33,18 @@ export default function PublicUserProfileScreen() {
   const edge = contentInsetsPadding(insets);
 
   const { profile, isLoading, error, refetch } = usePublicUserProfile(userId);
-  const {
-    items: galleryItems,
-    isLoading: galleryLoading,
-    error: galleryError,
-    refetch: refetchGallery,
-  } = useUserDetectionGallery({ userId, limit: 24, publicOnly: true });
-
+  const galleryRef = useRef<UserDetectionGallerySectionHandle>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      await Promise.all([refetch(), refetchGallery()]);
+      const galleryPromise = galleryRef.current?.refetch() ?? Promise.resolve();
+      await Promise.all([refetch(), galleryPromise]);
     } finally {
       setRefreshing(false);
     }
-  }, [refetch, refetchGallery]);
+  }, [refetch]);
 
   const headerTitle = profile?.username ?? 'Member';
 
@@ -103,31 +99,37 @@ export default function PublicUserProfileScreen() {
           {profile ? (
             <>
               <View style={styles.profileHero}>
-                <UserAvatar storedUrl={profile.avatar_url} mutedIconColor={muted} borderColor={border} />
-                <ProfileStatStrip {...profileStatStripPropsFromPublicProfile(profile, muted, tint)} />
+                <UserAvatar
+                  storedUrl={profile.avatar_url}
+                  mutedIconColor={authColors.textMuted}
+                  borderColor={authColors.border}
+                />
+                <ProfileStatStrip
+                  {...profileStatStripPropsFromPublicProfile(
+                    profile,
+                    authColors.textMuted,
+                    authColors.text,
+                  )}
+                />
                 <PublicUserProfileSummary
                   username={profile.username}
                   motto={profile.motto}
                   state={profile.state}
-                  mutedColor={muted}
+                  mutedColor={authColors.textMuted}
                 />
               </View>
 
-              <ScreenSection
-                title="Gallery"
+              <UserDetectionGallerySection
+                ref={galleryRef}
+                userId={userId}
+                publicOnly
                 hint="Public identification photos they saved (non-sensitive)."
-                hintColor={muted}>
-                <DetectionGalleryGrid
-                  items={galleryItems}
-                  loading={galleryLoading}
-                  error={galleryError}
-                  onRetry={() => void refetchGallery()}
-                  borderColor={border}
-                  mutedColor={muted}
-                  activityColor={tint}
-                  emptyMessage="No public photos yet. Sensitive or private saves are not shown here."
-                />
-              </ScreenSection>
+                hintColor={muted}
+                borderColor={border}
+                mutedColor={muted}
+                activityColor={tint}
+                emptyMessage="No public photos yet. Sensitive or private saves are not shown here."
+              />
             </>
           ) : null}
         </ScrollView>
@@ -146,6 +148,8 @@ const styles = StyleSheet.create({
   },
   profileHero: {
     alignItems: 'center',
+    gap: authSpacing.sm,
+    marginBottom: authSpacing.md,
   },
   padH: {
     paddingHorizontal: authSpacing.lg,

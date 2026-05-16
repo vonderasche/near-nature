@@ -2,9 +2,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, StyleSheet, View } from 'react-native';
 
-import { Colors } from '@/constants/theme';
 import { authColors, authSpacing } from '@/constants/auth-theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useStoredImageDisplayUrl } from '@/hooks/useStoredImageDisplayUrl';
 
 const INNER_SIZE = 96;
@@ -28,8 +26,6 @@ export function UserAvatar({
   onPress,
   busy = false,
 }: UserAvatarProps) {
-  const colorScheme = useColorScheme() ?? 'light';
-  const bg = Colors[colorScheme].background;
   const displayUri = useStoredImageDisplayUrl(storedUrl);
   const [failed, setFailed] = useState(false);
 
@@ -41,7 +37,7 @@ export function UserAvatar({
 
   const body = (
     <View style={[styles.ring, { borderColor }]}>
-      <View style={[styles.inner, { backgroundColor: bg }]}>
+      <View style={styles.inner}>
         {showImage ? (
           <Image
             key={displayUri}
@@ -90,7 +86,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: authSpacing.xs,
+    marginBottom: authSpacing.sm,
   },
   inner: {
     width: INNER_SIZE,
@@ -100,6 +96,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
+    backgroundColor: authColors.fieldBackground,
   },
   image: {
     width: INNER_SIZE,

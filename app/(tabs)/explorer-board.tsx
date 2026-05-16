@@ -25,7 +25,7 @@ export default function ExplorerBoardScreen() {
   return (
     <TabScreenWithLogout
       title="Explorer Board"
-      subtitle="Ranked by distinct native species discovered. Each row shows native and non-native species counts."
+      subtitle="Ranked by distinct native species discovered. Each row shows points, species counts, and recent identification previews."
       hideLogout
       refreshControl={
         <RefreshControl

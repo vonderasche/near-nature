@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 
+import { AuthButton } from '@/components/auth/auth-button';
 import { DetectionGalleryDetailModal } from '@/components/profile/detection-gallery-detail-modal';
 import { ThemedConfirmModal, ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { ThemedText } from '@/components/themed-text';
@@ -18,6 +19,9 @@ const NUM_COLUMNS = 3;
 type DetectionGalleryGridProps = {
   items: DetectionGalleryItem[];
   loading: boolean;
+  hasMore?: boolean;
+  isLoadingMore?: boolean;
+  onLoadMore?: () => void;
   error: string | null;
   onRetry: () => void;
   borderColor: string;
@@ -41,6 +45,9 @@ type DetectionGalleryGridProps = {
 export function DetectionGalleryGrid({
   items,
   loading,
+  hasMore = false,
+  isLoadingMore = false,
+  onLoadMore,
   error,
   onRetry,
   borderColor,
@@ -180,12 +187,30 @@ export function DetectionGalleryGrid({
     );
   };
 
+  const showLoadMore = hasMore && Boolean(onLoadMore);
+
   return (
     <>
       <View accessibilityLabel="Saved identification photos">
         {renderSection(nativeItems, 'native')}
         {renderSection(nonNativeItems, 'non-native')}
       </View>
+
+      {showLoadMore ? (
+        <View style={styles.loadMoreWrap}>
+          {isLoadingMore ? (
+            <ActivityIndicator color={activityColor} accessibilityLabel="Loading more photos" />
+          ) : (
+            <AuthButton
+              title="Load more"
+              variant="outline"
+              onPress={onLoadMore!}
+              fillParent
+              accessibilityLabel="Load more gallery photos"
+            />
+          )}
+        </View>
+      ) : null}
 
       <DetectionGalleryDetailModal
         visible={selected !== null}
@@ -251,5 +276,11 @@ const styles = StyleSheet.create({
   empty: {
     fontSize: 14,
     lineHeight: 20,
+  },
+  loadMoreWrap: {
+    marginTop: authSpacing.md,
+    alignItems: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
   },
 });

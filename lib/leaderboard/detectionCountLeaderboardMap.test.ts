@@ -10,6 +10,8 @@ describe('mapDetectionLeaderboardRpcRow', () => {
       username: 'birder42',
       avatar_url: 'https://example.com/a.jpg',
       motto: '  Leave no trace. ',
+      total_points: 120,
+      recent_detection_image_urls: ['user/a.jpg', 'user/b.jpg'],
       native_species_count: 12,
       non_native_species_count: 4,
     });
@@ -19,6 +21,8 @@ describe('mapDetectionLeaderboardRpcRow', () => {
       username: 'birder42',
       avatarUrl: 'https://example.com/a.jpg',
       motto: 'Leave no trace.',
+      pointsTotal: 120,
+      recentDetectionImageUrls: ['user/a.jpg', 'user/b.jpg'],
       nativeSpeciesCount: 12,
       nonNativeSpeciesCount: 4,
     });
@@ -34,6 +38,8 @@ describe('mapDetectionLeaderboardRpcRow', () => {
       detection_count: '3',
     });
     expect(row.motto).toBe('Fungi first.');
+    expect(row.pointsTotal).toBe(0);
+    expect(row.recentDetectionImageUrls).toEqual([]);
     expect(row.nativeSpeciesCount).toBe(3);
     expect(row.nonNativeSpeciesCount).toBe(0);
     expect(row.avatarUrl).toBe(null);
