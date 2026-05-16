@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { subscribeExplorerBoardRefresh } from '@/lib/explorerBoard/explorerBoardRefresh';
 import { getDetectionCountLeaderboard, type DetectionLeaderboardRow } from '@/services/leaderboardService';
 
 export type { DetectionLeaderboardRow };
@@ -42,6 +43,12 @@ export function useDetectionLeaderboard(): {
 
   useEffect(() => {
     void fetchRows();
+  }, [fetchRows]);
+
+  useEffect(() => {
+    return subscribeExplorerBoardRefresh(() => {
+      void fetchRows();
+    });
   }, [fetchRows]);
 
   return { rows, isLoading, error, refetch: fetchRows };

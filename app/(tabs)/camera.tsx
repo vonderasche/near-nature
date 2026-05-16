@@ -11,7 +11,9 @@ import { useCameraCaptureFormat } from '@/hooks/useCameraCaptureFormat';
 import { useCameraZoom } from '@/hooks/useCameraZoom';
 import { CameraIdentificationPanel } from '@/components/camera/camera-identification-panel';
 import { ScreenCenter } from '@/components/screen/screen-center';
+import { NewSpeciesDiscoveryModal } from '@/components/identification/new-species-discovery-modal';
 import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
+import type { NewSpeciesDiscovery } from '@/types/species-discovery';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import { useCameraScreen } from '@/hooks/useCameraScreen';
 import { usePickPhotoFromGallery } from '@/hooks/usePickPhotoFromGallery';
@@ -25,6 +27,7 @@ export default function CameraScreen() {
     title: string;
     message: string;
   } | null>(null);
+  const [newSpeciesDiscovery, setNewSpeciesDiscovery] = useState<NewSpeciesDiscovery | null>(null);
 
   const onPhotoCaptured = useCallback((uri: string) => {
     setCapturedPhotoUri(uri);
@@ -94,6 +97,11 @@ export default function CameraScreen() {
         message={backgroundSaveError?.message ?? ''}
         onDismiss={() => setBackgroundSaveError(null)}
       />
+      <NewSpeciesDiscoveryModal
+        visible={newSpeciesDiscovery !== null}
+        discovery={newSpeciesDiscovery}
+        onDismiss={() => setNewSpeciesDiscovery(null)}
+      />
     </>
   );
 
@@ -109,6 +117,7 @@ export default function CameraScreen() {
             message,
           })
         }
+        onNewSpeciesDiscovery={setNewSpeciesDiscovery}
       />
     );
   }

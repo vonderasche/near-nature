@@ -18,13 +18,13 @@ const emptyByType = (): ExploreSpeciesByType => ({
   plants: [],
 });
 
-export function useExploreSpecies(stateName: string): UseExploreSpeciesResult {
+export function useExploreSpecies(stateName: string | null): UseExploreSpeciesResult {
   const [byType, setByType] = useState<ExploreSpeciesByType>(emptyByType);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchAll = useCallback(async () => {
-    const state = stateName.trim();
+    const state = stateName?.trim() ?? '';
     if (!state) {
       setByType(emptyByType());
       setIsLoading(false);

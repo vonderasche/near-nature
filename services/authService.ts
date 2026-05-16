@@ -1,6 +1,7 @@
 import * as Linking from 'expo-linking';
 
 import { signInWithEmail } from '@/lib/auth/email-auth';
+import { signOutGoogleNative } from '@/lib/auth/googleSignOut';
 import { supabase } from '@/lib/supabase';
 
 /** Add this URL (and your dev `exp://` variant) under Supabase Auth → URL configuration → Redirect URLs. */
@@ -27,6 +28,7 @@ export async function signIn(emailOrUsername: string, password: string) {
 }
 
 export async function signOut() {
+  await signOutGoogleNative();
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
 }

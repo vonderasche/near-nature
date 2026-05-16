@@ -17,7 +17,9 @@ import { useIdentificationResultsState } from '@/hooks/useIdentificationResultsS
 import { useIdentifications } from '@/hooks/useIdentifications';
 import { useSaveDetection } from '@/hooks/useSaveDetection';
 import { useSpeciesIdentification } from '@/hooks/useSpeciesIdentification';
+import { requestExplorerBoardRefresh } from '@/lib/explorerBoard/explorerBoardRefresh';
 import { contentInsetsPadding } from '@/lib/screen/contentInsets';
+import type { NewSpeciesDiscovery } from '@/types/species-discovery';
 
 type Props = {
   photoUri: string;
@@ -25,11 +27,18 @@ type Props = {
   onRetake: () => void;
   /** Shown on the camera screen if a background save fails after leaving this view. */
   onBackgroundSaveError?: (message: string) => void;
+  /** First-time species for this user (after background save completes). */
+  onNewSpeciesDiscovery?: (discovery: NewSpeciesDiscovery) => void;
 };
 
-export function CameraIdentificationPanel({ photoUri, onRetake, onBackgroundSaveError }: Props) {
+export function CameraIdentificationPanel({
+  photoUri,
+  onRetake,
+  onBackgroundSaveError,
+  onNewSpeciesDiscovery,
+}: Props) {
   const insets = useSafeAreaInsets();
-  const userState = useUserHomeState();
+  const { stateCode: userState } = useUserHomeState();
 
   const { userId } = useAuthContext();
   const { identify, isLoading: identifying, error: identifyError } = useSpeciesIdentification();
@@ -67,6 +76,11 @@ export function CameraIdentificationPanel({ photoUri, onRetake, onBackgroundSave
     saveInBackground(input, (result) => {
       if (!result.ok) {
         onBackgroundSaveError?.(result.message);
+        return;
+      }
+      if (result.result.newSpeciesDiscovery) {
+        requestExplorerBoardRefresh();
+        onNewSpeciesDiscovery?.(result.result.newSpeciesDiscovery);
       }
     });
   }, [
@@ -79,6 +93,7 @@ export function CameraIdentificationPanel({ photoUri, onRetake, onBackgroundSave
     onRetake,
     saveInBackground,
     onBackgroundSaveError,
+    onNewSpeciesDiscovery,
   ]);
 
   return (

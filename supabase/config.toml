@@ -6,3 +6,6 @@ project_id = "near_nature"
 
 [functions.delete-account]
 verify_jwt = true
+
+[functions.identify-species]
+verify_jwt = true

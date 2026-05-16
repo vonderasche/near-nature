@@ -23,6 +23,7 @@ import { useMottoSave } from '@/hooks/useMottoSave';
 import { useStateSave } from '@/hooks/useStateSave';
 import { useUserDetectionGallery } from '@/hooks/useUserDetectionGallery';
 import { useUser } from '@/hooks/useUser';
+import { requestExplorerBoardRefresh } from '@/lib/explorerBoard/explorerBoardRefresh';
 import { getPublicUserProfile, type PublicUserProfile } from '@/services/userService';
 import type { DetectionGalleryItem } from '@/types';
 
@@ -70,7 +71,10 @@ export default function ProfileScreen() {
     setAvatarPickError(null);
     void (async () => {
       const r = await pickAndSetAvatar();
-      if (r.ok) return;
+      if (r.ok) {
+        requestExplorerBoardRefresh();
+        return;
+      }
       if ('canceled' in r && r.canceled) return;
       setAvatarPickError('message' in r ? r.message : 'Something went wrong.');
     })();

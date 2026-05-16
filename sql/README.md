@@ -17,6 +17,12 @@ All files are safe to re-run. Run in this order in the Supabase SQL Editor:
 13. `get_detection_count_leaderboard.sql` — detection-count leaderboard RPC (includes `motto` from `public.users`)
 14. `get_public_user_profile.sql` — public member profile RPC + **streak & detection/species stats** (re-run after changing this function)
 
+## Friends APK (quick path)
+
+1. `friends_release_bootstrap.sql` — storage + explore_species policies  
+2. `get_detection_count_leaderboard.sql` + `get_public_user_profile.sql`  
+3. Deploy Edge Function `identify-species` with secret `ANTHROPIC_API_KEY`
+
 
 ## Points System
 

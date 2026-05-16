@@ -14,7 +14,14 @@ import { speciesStatusToNativeColumn } from '@/lib/detections/mapNativeStatusDb'
 import { devLog } from '@/lib/devLog';
 import { supabase } from '@/lib/supabase';
 import { extractDetectionsObjectPathFromStoredUrl } from './detectionImageUrl';
+import { FIRST_SPECIES_DISCOVERY_BONUS_POINTS } from '@/lib/discoveries/discoveryBonus';
 import type { ClassificationResult, Species, SpeciesStatus } from '@/types';
+import type { NewSpeciesDiscovery } from '@/types/species-discovery';
+
+export type SaveDetectionResult = {
+  detectionId: string;
+  newSpeciesDiscovery: NewSpeciesDiscovery | null;
+};
 
 export type SaveDetectionInput = {
   localImageUri: string;
@@ -43,7 +50,7 @@ function isDuplicateSpeciesTodayError(message: string): boolean {
 /**
  * Uploads the local image to Supabase Storage (`detections/{userId}/...`) and inserts `public.detections`.
  */
-export async function saveDetection(input: SaveDetectionInput): Promise<void> {
+export async function saveDetection(input: SaveDetectionInput): Promise<SaveDetectionResult> {
   const { localImageUri, userId, species, classification, stateCode, description = null } = input;
 
   const nat = await lookupNativeStatus(species.latinName, stateCode.trim());
@@ -80,22 +87,26 @@ export async function saveDetection(input: SaveDetectionInput): Promise<void> {
     Math.max(0, Math.round(Number(classification.confidence) * 10000) / 100)
   );
 
-  const { error: insertError } = await supabase.from('detections').insert({
-    user_id: userId,
-    image_url: publicUrl,
-    common_name: species.commonName,
-    latin_name: species.latinName,
-    confidence: confidencePct,
-    category,
-    description: description?.trim() ? description.trim().slice(0, 8000) : null,
-    native_status: nativeStatus,
-    state: stateCode.trim().toUpperCase().slice(0, 2),
-    inaturalist_id: inaturalistId,
-    is_sensitive: false,
-    is_verified: false,
-    confidence_threshold: 70,
-    points: 0,
-  });
+  const { data: inserted, error: insertError } = await supabase
+    .from('detections')
+    .insert({
+      user_id: userId,
+      image_url: publicUrl,
+      common_name: species.commonName,
+      latin_name: species.latinName,
+      confidence: confidencePct,
+      category,
+      description: description?.trim() ? description.trim().slice(0, 8000) : null,
+      native_status: nativeStatus,
+      state: stateCode.trim().toUpperCase().slice(0, 2),
+      inaturalist_id: inaturalistId,
+      is_sensitive: false,
+      is_verified: false,
+      confidence_threshold: 70,
+      points: 0,
+    })
+    .select('id')
+    .single();
 
   if (insertError) {
     await removeDetectionsObjects([objectPath]);
@@ -106,6 +117,25 @@ export async function saveDetection(input: SaveDetectionInput): Promise<void> {
     }
     throw insertError;
   }
+
+  const detectionId = inserted.id as string;
+  let newSpeciesDiscovery: NewSpeciesDiscovery | null = null;
+
+  const { data: discoveryRow, error: discoveryError } = await supabase
+    .from('discoveries')
+    .select('id')
+    .eq('detection_id', detectionId)
+    .maybeSingle();
+
+  if (!discoveryError && discoveryRow) {
+    newSpeciesDiscovery = {
+      commonName: species.commonName,
+      latinName: species.latinName,
+      bonusPoints: FIRST_SPECIES_DISCOVERY_BONUS_POINTS,
+    };
+  }
+
+  return { detectionId, newSpeciesDiscovery };
 }
 
 /**
