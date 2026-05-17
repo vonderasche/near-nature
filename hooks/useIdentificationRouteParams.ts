@@ -1,8 +1,9 @@
 import { useLocalSearchParams } from 'expo-router';
 
+import { DEFAULT_USER_STATE } from '@/constants/user-defaults';
 import { normalizePhotoUri, paramToString } from '@/lib/routing/searchParams';
 
-export const DEFAULT_USER_STATE = process.env.EXPO_PUBLIC_USER_STATE ?? 'FL';
+export { DEFAULT_USER_STATE };
 
 export function useIdentificationRouteParams(): {
   photoUri: string | undefined;

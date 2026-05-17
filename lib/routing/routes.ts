@@ -13,7 +13,14 @@ export const routes = {
   forgotPassword: '/forgot-password',
   resetPassword: '/reset-password',
   camera: '/camera',
+  discoverSpecies: '/discover/species',
+  discoverEcosystems: '/discover/ecosystems',
+  discoverParks: '/discover/parks',
 } as const;
+
+export function routeDiscoverPark(parkId: string) {
+  return { pathname: '/discover/park/[parkId]' as const, params: { parkId } };
+}
 
 export type AppRoute = (typeof routes)[keyof typeof routes];
 

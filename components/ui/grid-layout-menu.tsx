@@ -17,7 +17,10 @@ import {
   gridLayoutAccessibilityLabel,
   type GalleryGridColumns,
 } from '@/lib/detections/galleryGridColumns';
-import { explorerBoardLayoutAccessibilityLabel } from '@/lib/explorerBoard/explorerBoardColumns';
+import {
+  explorerBoardLayoutAccessibilityLabel,
+  type ExplorerBoardColumns,
+} from '@/lib/explorerBoard/explorerBoardColumns';
 
 type Props = {
   value: GalleryGridColumns;
@@ -46,7 +49,7 @@ export function GridLayoutMenu({
 }: Props) {
   const [open, setOpen] = useState(false);
   const [menuTop, setMenuTop] = useState(0);
-  const [menuRight, setMenuRight] = useState(authSpacing.lg);
+  const [menuRight, setMenuRight] = useState<number>(authSpacing.lg);
   const triggerRef = useRef<View>(null);
 
   const close = useCallback(() => setOpen(false), []);
@@ -73,14 +76,14 @@ export function GridLayoutMenu({
 
   const layoutLabel =
     context === 'explorer board'
-      ? explorerBoardLayoutAccessibilityLabel(value as 1 | 2 | 4)
+      ? explorerBoardLayoutAccessibilityLabel(value as ExplorerBoardColumns)
       : gridLayoutAccessibilityLabel(value);
 
   const menuTitle = context === 'explorer board' ? 'Members per row' : GRID_LAYOUT_MENU_TITLE;
 
   const optionLabel = (n: GalleryGridColumns) =>
     context === 'explorer board'
-      ? explorerBoardLayoutAccessibilityLabel(n as 1 | 2 | 4)
+      ? explorerBoardLayoutAccessibilityLabel(n as ExplorerBoardColumns)
       : gridLayoutAccessibilityLabel(n);
 
   return (

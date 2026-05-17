@@ -12,7 +12,7 @@ import {
 import { ExploreSpeciesCard } from '@/components/explore/explore-species-card';
 import { ExploreSpeciesDetailModal } from '@/components/explore/explore-species-detail-modal';
 import { ExploreSpeciesImageGrid } from '@/components/explore/explore-species-image-grid';
-import { InlineFormError } from '@/components/screen/inline-form-error';
+import { ExploreErrorState } from '@/components/explore/explore-error-state';
 import { listSectionSupportingStyles } from '@/components/screen/list-detail-card';
 import { authColors, authSpacing } from '@/constants/auth-theme';
 import type { GalleryGridColumns } from '@/lib/detections/galleryGridColumns';
@@ -41,6 +41,7 @@ type Props = {
   columnCount: GalleryGridColumns;
   loading: boolean;
   error: string | null;
+  onRetry?: () => void;
   refreshControl?: ReactElement<React.ComponentProps<typeof RefreshControl>>;
 };
 
@@ -53,6 +54,7 @@ export function ExploreCategoryPage({
   columnCount,
   loading,
   error,
+  onRetry,
   refreshControl,
 }: Props) {
   const [selected, setSelected] = useState<ExploreSpecies | null>(null);
@@ -91,7 +93,7 @@ export function ExploreCategoryPage({
   if (error && items.length === 0) {
     return (
       <View style={styles.page}>
-        <InlineFormError>{error}</InlineFormError>
+        <ExploreErrorState message={error} onRetry={onRetry} />
       </View>
     );
   }

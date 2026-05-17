@@ -5,8 +5,8 @@ import {
   StyleSheet,
   Text,
   View,
+  type AccessibilityRole,
   type AccessibilityState,
-  type Role,
 } from 'react-native';
 import type { ComponentProps } from 'react';
 
@@ -27,7 +27,7 @@ export type AuthButtonProps = {
   /** Optional leading icon (e.g. delete-outline). */
   icon?: ComponentProps<typeof MaterialIcons>['name'];
   accessibilityLabel?: string;
-  accessibilityRole?: Role;
+  accessibilityRole?: AccessibilityRole;
   accessibilityState?: AccessibilityState;
 };
 

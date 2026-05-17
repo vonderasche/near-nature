@@ -58,7 +58,6 @@ export default function CameraScreen() {
     requestPermission,
     isPermissionPending,
     isPermissionGranted,
-    facing,
     toggleFacing,
     takePicture,
     capturing,

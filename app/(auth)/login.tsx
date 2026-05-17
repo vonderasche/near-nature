@@ -1,18 +1,15 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 
 import { AuthButton } from '@/components/auth/auth-button';
-import { AuthDivider } from '@/components/auth/auth-divider';
 import { AuthField } from '@/components/auth/auth-field';
 import { AuthLinkRow } from '@/components/auth/auth-link-row';
 import { AuthScreen } from '@/components/auth/auth-screen';
 import { AuthScreenHeader } from '@/components/auth/auth-screen-header';
 import { AuthTextLink } from '@/components/auth/auth-text-link';
-import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
 import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { authSpacing } from '@/constants/auth-theme';
 import { signInWithEmail } from '@/lib/auth/email-auth';
 import { routes } from '@/lib/routing/routes';
-import type { GoogleSupabaseResult } from '@/lib/auth/google-supabase';
 
 type InfoDialog = { title: string; message: string } | null;
 
@@ -36,21 +33,9 @@ export default function LoginScreen() {
     }
   }
 
-  const onGoogleFinished = useCallback(async (linked: GoogleSupabaseResult) => {
-    setBusy(true);
-    try {
-      if (!linked.ok) {
-        setInfo({ title: 'Google sign-in', message: linked.message });
-      }
-      // Successful session propagates via AuthContext / AuthGate.
-    } finally {
-      setBusy(false);
-    }
-  }, []);
-
   return (
     <AuthScreen>
-      <AuthScreenHeader title="Log in" subtitle="Use your email, username, or Google." />
+      <AuthScreenHeader title="Log in" subtitle="Use your email or username." />
 
       <AuthField
         label="Email or username"
@@ -76,10 +61,6 @@ export default function LoginScreen() {
       <AuthTextLink href={routes.forgotPassword} variant="muted" style={{ marginTop: authSpacing.sm }}>
         Forgot password?
       </AuthTextLink>
-
-      <AuthDivider />
-
-      <GoogleSignInButton onFinished={onGoogleFinished} disabled={busy} />
 
       <AuthLinkRow prompt="No account?" href={routes.signup} linkText="Create one" />
 

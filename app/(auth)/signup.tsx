@@ -1,20 +1,16 @@
 import { router } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 
 import { AuthButton } from '@/components/auth/auth-button';
-import { AuthDivider } from '@/components/auth/auth-divider';
 import { AuthField } from '@/components/auth/auth-field';
 import { AuthLinkRow } from '@/components/auth/auth-link-row';
 import { AuthScreen } from '@/components/auth/auth-screen';
 import { AuthScreenHeader } from '@/components/auth/auth-screen-header';
-import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
 import { UsStatePicker } from '@/components/auth/us-state-picker';
 import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { normalizeUsStateCode, type UsStateCode } from '@/constants/us-states';
-import { patchUserStateForCurrentUser } from '@/lib/auth/patchUserState';
 import { signUpWithEmail } from '@/lib/auth/email-auth';
 import { routes } from '@/lib/routing/routes';
-import type { GoogleSupabaseResult } from '@/lib/auth/google-supabase';
 
 type InfoDialog = { title: string; message: string; goToLoginOnDismiss?: boolean } | null;
 
@@ -79,31 +75,9 @@ export default function SignUpScreen() {
     }
   }
 
-  const onGoogleFinished = useCallback(
-    async (linked: GoogleSupabaseResult) => {
-      const state = normalizeUsStateCode(stateCode);
-      if (!state) {
-        setInfo({ title: 'Google sign-up', message: 'Select your US home state before continuing with Google.' });
-        return;
-      }
-
-      setBusy(true);
-      try {
-        if (!linked.ok) {
-          setInfo({ title: 'Google sign-in', message: linked.message });
-          return;
-        }
-        await patchUserStateForCurrentUser(state);
-      } finally {
-        setBusy(false);
-      }
-    },
-    [stateCode],
-  );
-
   return (
     <AuthScreen>
-      <AuthScreenHeader title="Create account" subtitle="Email and password, or Google." />
+      <AuthScreenHeader title="Create account" subtitle="Email and password." />
 
       <AuthField
         label="Email"
@@ -159,10 +133,6 @@ export default function SignUpScreen() {
       />
 
       <AuthButton title="Create account" onPress={onSubmit} loading={busy} disabled={busy} />
-
-      <AuthDivider />
-
-      <GoogleSignInButton onFinished={onGoogleFinished} disabled={busy} />
 
       <AuthLinkRow prompt="Already have an account?" href={routes.login} linkText="Log in" />
 

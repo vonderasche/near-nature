@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 
+import { DEFAULT_USER_STATE } from '@/constants/user-defaults';
 import { normalizeUsStateCode } from '@/constants/us-states';
 import { useAuthContext } from '@/context/AuthContext';
-import { DEFAULT_USER_STATE } from '@/hooks/useIdentificationRouteParams';
 import { getUser } from '@/services/userService';
 
 export type UserHomeState = {

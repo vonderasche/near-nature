@@ -1,23 +1,5 @@
 import type { ExploreSpecies, ExploreSpeciesType } from '@/lib/explore/exploreSpeciesTypes';
-
-function readString(record: Record<string, unknown>, keys: string[]): string | null {
-  for (const key of keys) {
-    const v = record[key];
-    if (typeof v === 'string') {
-      const t = v.trim();
-      if (t.length > 0) return t;
-    }
-  }
-  return null;
-}
-
-function readNumber(record: Record<string, unknown>, keys: string[], fallback = 0): number {
-  for (const key of keys) {
-    const n = Number(record[key]);
-    if (Number.isFinite(n)) return n;
-  }
-  return fallback;
-}
+import { asRecord, readNumber, readString } from '@/lib/supabase/readRowFields';
 
 function readType(raw: unknown): ExploreSpeciesType {
   const t = String(raw ?? '').trim().toLowerCase();
@@ -26,8 +8,7 @@ function readType(raw: unknown): ExploreSpeciesType {
 
 /** Maps a Supabase `explore_species` row (snake_case). */
 export function mapExploreSpeciesRow(raw: unknown): ExploreSpecies {
-  const r =
-    raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
+  const r = asRecord(raw);
 
   return {
     id: String(r.id ?? ''),

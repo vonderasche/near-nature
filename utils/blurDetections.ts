@@ -2,7 +2,7 @@
 // utils/blurDetections.ts
 //
 // Detects whether a photo is too blurry to identify before
-// sending it to the Gemini API — saving an API call.
+// sending it to the vision API — saving an API call.
 //
 // HOW IT WORKS:
 //   Sharp images contain more detail → JPEG compression can't

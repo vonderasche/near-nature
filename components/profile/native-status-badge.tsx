@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { authSpacing, authTypography } from '@/constants/auth-theme';
 import {
   formatGalleryNativeBadgeLabel,
   type GalleryNativeCategory,

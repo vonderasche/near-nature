@@ -40,17 +40,13 @@ export function useSpeciesIdentification(): UseSpeciesIdentificationResult {
     let resizedUri: string | null = null;
 
     try {
-      // 1) Resize / compress so vision APIs stay under image size limits (e.g. Claude 5 MiB).
       const resized = await resizeForUpload(photoUri);
       resizedUri = resized.uri;
 
-      // 2) Convert prepared file to base64 for the vision API.
       const base64 = await readLocalFileAsBase64(resizedUri);
 
-      // 3) Ask Claude for species classifications.
       const rawClassifications = await identifySpeciesInImage(base64, 'image/jpeg');
 
-      // 4) Apply confidence + dedupe filters.
       const { results: classifications, summary } = filterClassifications(rawClassifications);
       devLog('[identify] filter summary', summary);
 
@@ -58,14 +54,12 @@ export function useSpeciesIdentification(): UseSpeciesIdentificationResult {
         return { species: [], classifications: [], wikiByLatinName: {}, wikiError: null };
       }
 
-      // 5) iNaturalist + Wikipedia in parallel (per species and across species).
       const { species, wikiByLatinName, wikiError } = await enrichSpeciesFromApis(
         classifications,
         userState,
       );
 
       return { species, classifications, wikiByLatinName, wikiError };
-
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Identification failed';
       setError(message);

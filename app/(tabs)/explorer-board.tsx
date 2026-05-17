@@ -12,7 +12,11 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useDetectionLeaderboard } from '@/hooks/useDetectionLeaderboard';
 import { useExplorerBoardColumns } from '@/hooks/useExplorerBoardColumns';
 import { useExplorerBoardLayout } from '@/hooks/useExplorerBoardLayout';
-import { EXPLORER_BOARD_COLUMN_OPTIONS } from '@/lib/explorerBoard/explorerBoardColumns';
+import {
+  EXPLORER_BOARD_COLUMN_OPTIONS,
+  isExplorerBoardColumns,
+} from '@/lib/explorerBoard/explorerBoardColumns';
+import type { GalleryGridColumns } from '@/lib/detections/galleryGridColumns';
 
 export default function ExplorerBoardScreen() {
   const colorScheme = useColorScheme() ?? 'light';
@@ -53,7 +57,9 @@ export default function ExplorerBoardScreen() {
           {layoutMode === 'grid' ? (
             <GridLayoutMenu
               value={columns}
-              onChange={setColumnCount}
+              onChange={(n: GalleryGridColumns) => {
+                if (isExplorerBoardColumns(n)) setColumnCount(n);
+              }}
               columnOptions={EXPLORER_BOARD_COLUMN_OPTIONS}
               mutedColor={authColors.textMuted}
               borderColor={authColors.border}

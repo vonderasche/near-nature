@@ -18,9 +18,7 @@ if (-not (Test-Path .env)) {
 
 $required = @(
     'EXPO_PUBLIC_SUPABASE_URL',
-    'EXPO_PUBLIC_SUPABASE_ANON_KEY',
-    'EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID',
-    'EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID'
+    'EXPO_PUBLIC_SUPABASE_ANON_KEY'
 )
 $missing = @($required | Where-Object { -not (Test-EnvVar $_) })
 if ($missing.Count -gt 0) {
@@ -47,19 +45,8 @@ Write-Host "  APK: $dest"
 Write-Host "  Size: $([math]::Round((Get-Item $dest).Length / 1MB, 1)) MB"
 Write-Host ""
 Write-Host "Supabase setup for friends:" -ForegroundColor Yellow
-Write-Host "  1. SQL Editor: sql/friends_release_bootstrap.sql"
-Write-Host "  2. SQL Editor: sql/get_detection_count_leaderboard.sql"
-Write-Host "  3. SQL Editor: sql/get_public_user_profile.sql"
-Write-Host "  4. Deploy Edge Function identify-species + secret ANTHROPIC_API_KEY"
-Write-Host "  5. Do not put EXPO_PUBLIC_ANTHROPIC_API_KEY in .env for friends builds"
-Write-Host ""
-Write-Host "Google Cloud OAuth Android client SHA-1 for this keystore:" -ForegroundColor Yellow
-$debugKeystore = Join-Path $Root "android\app\debug.keystore"
-if (Test-Path $debugKeystore) {
-    $keytoolOut = & keytool -list -v -keystore $debugKeystore -alias androiddebugkey -storepass android -keypass android 2>&1
-    $keytoolOut | Select-String "SHA1:"
-} else {
-    Write-Host "  debug.keystore not found under android/app"
-}
+Write-Host "  1. .\scripts\beta-production-setup.ps1  (SQL order)"
+Write-Host "  2. .\scripts\deploy-identify-species.ps1"
+Write-Host "  3. Do not put EXPO_PUBLIC_ANTHROPIC_API_KEY in .env for friends builds"
 Write-Host ""
 Write-Host "Friends: copy APK to phone, open it, allow install from unknown sources if asked." -ForegroundColor Cyan

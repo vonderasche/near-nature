@@ -1,9 +1,8 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text } from 'react-native';
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { ButtonRow, ButtonRowSlot } from '@/components/ui/button-row';
 import { SheetModalShell, sheetModalShellStyles } from '@/components/ui/sheet-modal-shell';
-import { authSpacing } from '@/constants/auth-theme';
 
 export type ThemedMessageModalProps = {
   visible: boolean;

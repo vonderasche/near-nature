@@ -67,7 +67,7 @@ async function fetchLegacyLeaderboardAll(): Promise<DetectionLeaderboardRow[]> {
 
 async function fetchDetectionLeaderboardPageLegacy({
   offset,
-  pageSize,
+  pageSize = EXPLORER_BOARD_PAGE_SIZE,
 }: FetchDetectionLeaderboardPageParams): Promise<FetchDetectionLeaderboardPageResult> {
   const all = await fetchLegacyLeaderboardAll();
   const rawSlice = all.slice(offset, offset + pageSize + 1);

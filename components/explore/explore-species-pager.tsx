@@ -8,13 +8,13 @@ import { DiscoverTypeMenu } from '@/components/discover/discover-type-menu';
 import { DiscoverViewModeToggle } from '@/components/discover/discover-view-mode-toggle';
 import { ExploreCategoryPage } from '@/components/explore/explore-category-page';
 import { GridLayoutMenu } from '@/components/ui/grid-layout-menu';
-import type { ExploreSpeciesByType } from '@/hooks/useExploreSpecies';
 import { authColors, authSpacing } from '@/constants/auth-theme';
 import type { GalleryGridColumns } from '@/lib/detections/galleryGridColumns';
 import type { ExploreDiscoverLayoutMode } from '@/lib/explore/exploreDiscoverLayout';
 import {
   exploreSpeciesItemsForCategory,
   exploreSpeciesSortForCategory,
+  type ExploreSpeciesByType,
   type ExploreSpeciesCategory,
 } from '@/lib/explore/exploreSpeciesCategory';
 import { filterExploreSpecies } from '@/lib/explore/filterExploreSpecies';
@@ -33,6 +33,7 @@ type Props = {
   onColumnCountChange: (columns: GalleryGridColumns) => void;
   loading: boolean;
   error: string | null;
+  onRetry?: () => void;
   refreshControl?: ReactElement<RefreshControlProps>;
 };
 
@@ -49,6 +50,7 @@ export function ExploreSpeciesPager({
   onColumnCountChange,
   loading,
   error,
+  onRetry,
   refreshControl,
 }: Props) {
   const items = useMemo(() => {
@@ -98,6 +100,7 @@ export function ExploreSpeciesPager({
         columnCount={columnCount}
         loading={loading}
         error={error}
+        onRetry={onRetry}
         refreshControl={refreshControl}
       />
     </View>

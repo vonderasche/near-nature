@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────
 // src/utils/imageFilters.ts
 //
-// Post-processing filters applied to Gemini's results before
+// Post-processing filters applied to vision model results before
 // they're shown to the user or saved to the database.
 //
 // Call filterAndClean() as a single step after the API returns.
@@ -28,7 +28,7 @@ export interface FilterSummary {
 // ── Main export ───────────────────────────────────────────────
 
 /**
- * Run all filters on raw ClassificationResults from Gemini.
+ * Run all filters on raw ClassificationResults from the vision API.
  * Call this before passing results to the iNaturalist lookup.
  *
  * Filters applied (in order):
@@ -75,7 +75,7 @@ export function filterSpecies(
 // ── Individual filters ────────────────────────────────────────
 
 /**
- * Remove results where Gemini's confidence is below the threshold.
+ * Remove results where confidence is below the threshold.
  * Low-confidence results are more likely to be wrong identifications.
  */
 export function filterByConfidence(
@@ -127,7 +127,7 @@ export function deduplicateSpecies(species: Species[]): Species[] {
 // ── Validation helpers ────────────────────────────────────────
 
 /**
- * Check if Gemini returned an error object instead of results.
+ * Check if the vision API returned an error object instead of results.
  * Handles the case where the prompt's moderation check fires.
  *
  * @example
