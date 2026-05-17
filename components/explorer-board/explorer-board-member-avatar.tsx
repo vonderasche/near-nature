@@ -64,12 +64,12 @@ const styles = StyleSheet.create({
   ring: {
     width: SIZE,
     height: SIZE,
-    borderRadius: SIZE / 2,
+    borderRadius: 0,
     borderWidth: 1,
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: authColors.fieldBackground,
+    backgroundColor: authColors.background,
   },
   image: {
     width: SIZE,

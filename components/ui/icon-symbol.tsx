@@ -22,6 +22,7 @@ const MAPPING = {
   'person.fill': 'person',
   'trophy.fill': 'leaderboard',
   'line.3.horizontal': 'menu',
+  'square.grid.2x2': 'grid-view',
 } as IconMapping;
 
 /**

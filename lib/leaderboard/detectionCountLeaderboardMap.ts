@@ -6,7 +6,7 @@ export type DetectionLeaderboardRow = {
   motto: string | null;
   /** Sum of `detections.points` on non-sensitive saves. */
   pointsTotal: number;
-  /** Up to three latest public identification image URLs (storage paths or URLs). */
+  /** Latest public identification image URL(s); newest first (RPC returns one). */
   recentDetectionImageUrls: string[];
   /** Distinct latin names with native_status = native. */
   nativeSpeciesCount: number;

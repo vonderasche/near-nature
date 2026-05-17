@@ -171,6 +171,7 @@ export default function ProfileScreen() {
           <UserDetectionGallerySection
             ref={galleryRef}
             userId={user.id}
+            searchPlaceholder="Search your identifications…"
             hint="Native and non-native · long-press to delete"
             hintColor={authColors.textMuted}
             borderColor={authColors.border}

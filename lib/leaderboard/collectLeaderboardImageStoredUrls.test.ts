@@ -19,24 +19,21 @@ function row(overrides: Partial<DetectionLeaderboardRow>): DetectionLeaderboardR
 }
 
 describe('collectLeaderboardImageStoredUrls', () => {
-  it('collects unique avatars and preview URLs across rows', () => {
-    const shared = 'https://x.co/storage/v1/object/public/detections/u1/a.jpg';
+  it('collects latest gallery, avatar, and dedupes per row', () => {
+    const latest = 'https://x.co/storage/v1/object/public/detections/u1/b.jpg';
+    const avatar = 'https://x.co/storage/v1/object/public/detections/u1/a.jpg';
     const urls = collectLeaderboardImageStoredUrls([
       row({
-        avatarUrl: shared,
-        recentDetectionImageUrls: [shared, 'https://x.co/storage/v1/object/public/detections/u1/b.jpg'],
+        avatarUrl: avatar,
+        recentDetectionImageUrls: [latest, 'https://x.co/storage/v1/object/public/detections/u1/old.jpg'],
       }),
       row({
         userId: 'user-b',
         avatarUrl: 'https://x.co/storage/v1/object/public/detections/u2/c.jpg',
-        recentDetectionImageUrls: ['https://x.co/storage/v1/object/public/detections/u1/b.jpg'],
+        recentDetectionImageUrls: [],
       }),
     ]);
 
-    expect(urls).toEqual([
-      shared,
-      'https://x.co/storage/v1/object/public/detections/u1/b.jpg',
-      'https://x.co/storage/v1/object/public/detections/u2/c.jpg',
-    ]);
+    expect(urls).toEqual([latest, avatar, 'https://x.co/storage/v1/object/public/detections/u2/c.jpg']);
   });
 });

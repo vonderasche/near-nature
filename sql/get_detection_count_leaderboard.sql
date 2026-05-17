@@ -1,6 +1,8 @@
 -- Leaderboard ranked by distinct native species discovered (non-sensitive saves).
 
--- Also returns total points, up to 3 recent identification image URLs, and species counts.
+-- Paginated via p_limit / p_offset. Global rank is preserved across pages.
+
+-- Also returns total points, latest public identification image URL, and species counts.
 
 -- Includes motto from public.users.
 
@@ -14,9 +16,17 @@
 
 drop function if exists public.get_detection_count_leaderboard();
 
+drop function if exists public.get_detection_count_leaderboard(int, int);
 
 
-create or replace function public.get_detection_count_leaderboard()
+
+create or replace function public.get_detection_count_leaderboard(
+
+  p_limit int default 20,
+
+  p_offset int default 0
+
+)
 
 returns table (
 
@@ -80,7 +90,7 @@ as $$
 
           order by d2.detected_at desc
 
-          limit 3
+          limit 1
 
         ) latest
 
@@ -108,15 +118,41 @@ as $$
 
     group by u.id, u.username, u.avatar_url, u.motto
 
+  ),
+
+  ordered as (
+
+    select
+
+      row_number() over (
+
+        order by native_species_count desc, non_native_species_count desc, username asc
+
+      ) as leaderboard_rank,
+
+      user_id,
+
+      username,
+
+      avatar_url,
+
+      motto,
+
+      total_points,
+
+      recent_detection_image_urls,
+
+      native_species_count,
+
+      non_native_species_count
+
+    from ranked
+
   )
 
   select
 
-    row_number() over (
-
-      order by native_species_count desc, non_native_species_count desc, username asc
-
-    ) as leaderboard_rank,
+    leaderboard_rank,
 
     user_id,
 
@@ -134,14 +170,18 @@ as $$
 
     non_native_species_count
 
-  from ranked
+  from ordered
 
-  order by leaderboard_rank asc;
+  order by leaderboard_rank asc
+
+  limit greatest(coalesce(p_limit, 20), 0)
+
+  offset greatest(coalesce(p_offset, 0), 0);
 
 $$;
 
 
 
-revoke all on function public.get_detection_count_leaderboard() from public;
+revoke all on function public.get_detection_count_leaderboard(int, int) from public;
 
-grant execute on function public.get_detection_count_leaderboard() to authenticated;
+grant execute on function public.get_detection_count_leaderboard(int, int) to authenticated;

@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { subscribeExplorerBoardRefresh } from '@/lib/explorerBoard/explorerBoardRefresh';
-import { getDetectionCountLeaderboard, type DetectionLeaderboardRow } from '@/services/leaderboardService';
+import {
+  clearLegacyLeaderboardCache,
+  EXPLORER_BOARD_PAGE_SIZE,
+  fetchDetectionLeaderboardPage,
+  type DetectionLeaderboardRow,
+} from '@/services/leaderboardService';
 
 export type { DetectionLeaderboardRow };
 
@@ -11,45 +16,85 @@ function rpcFailureMessage(e: unknown): string {
     const m = (e as { message: unknown }).message;
     if (typeof m === 'string' && m.trim().length > 0) return m;
   }
-  return 'Could not load leaderboard. In the Supabase SQL Editor, run sql/get_detection_count_leaderboard.sql, then pull to refresh.';
+  return 'Could not load explorer board. In Supabase → SQL Editor, run sql/get_detection_count_leaderboard.sql (paginated RPC), then pull to refresh.';
 }
 
-export function useDetectionLeaderboard(): {
+export function useDetectionLeaderboard(pageSize = EXPLORER_BOARD_PAGE_SIZE): {
   rows: DetectionLeaderboardRow[];
   isLoading: boolean;
+  isLoadingMore: boolean;
+  hasMore: boolean;
   error: string | null;
+  loadMore: () => Promise<void>;
   refetch: () => Promise<void>;
 } {
   const [rows, setRows] = useState<DetectionLeaderboardRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const offsetRef = useRef(0);
   const hasFetchedOnceRef = useRef(false);
 
-  const fetchRows = useCallback(async () => {
-    setError(null);
-    if (!hasFetchedOnceRef.current) {
-      setIsLoading(true);
-    }
-    try {
-      setRows(await getDetectionCountLeaderboard());
-      hasFetchedOnceRef.current = true;
-    } catch (e) {
-      setRows([]);
-      setError(rpcFailureMessage(e));
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const loadPage = useCallback(
+    async (mode: 'reset' | 'append') => {
+      if (mode === 'reset') {
+        clearLegacyLeaderboardCache();
+      }
+      const offset = mode === 'reset' ? 0 : offsetRef.current;
+      const isInitial = mode === 'reset' && !hasFetchedOnceRef.current;
+
+      setError(null);
+      if (mode === 'reset') {
+        if (isInitial) setIsLoading(true);
+      } else {
+        setIsLoadingMore(true);
+      }
+
+      try {
+        const { rows: pageRows, hasMore: more } = await fetchDetectionLeaderboardPage({
+          offset,
+          pageSize,
+        });
+
+        offsetRef.current = offset + pageRows.length;
+        setHasMore(more);
+        setRows((prev) => (mode === 'reset' ? pageRows : [...prev, ...pageRows]));
+        hasFetchedOnceRef.current = true;
+      } catch (e) {
+        if (mode === 'reset') {
+          setRows([]);
+          setHasMore(false);
+        }
+        setError(rpcFailureMessage(e));
+      } finally {
+        setIsLoading(false);
+        setIsLoadingMore(false);
+      }
+    },
+    [pageSize],
+  );
+
+  const refetch = useCallback(async () => {
+    await loadPage('reset');
+  }, [loadPage]);
+
+  const loadMore = useCallback(async () => {
+    if (!hasMore || isLoadingMore || isLoading) return;
+    await loadPage('append');
+  }, [hasMore, isLoadingMore, isLoading, loadPage]);
 
   useEffect(() => {
-    void fetchRows();
-  }, [fetchRows]);
+    hasFetchedOnceRef.current = false;
+    offsetRef.current = 0;
+    void loadPage('reset');
+  }, [loadPage]);
 
   useEffect(() => {
     return subscribeExplorerBoardRefresh(() => {
-      void fetchRows();
+      void loadPage('reset');
     });
-  }, [fetchRows]);
+  }, [loadPage]);
 
-  return { rows, isLoading, error, refetch: fetchRows };
+  return { rows, isLoading, isLoadingMore, hasMore, error, loadMore, refetch };
 }

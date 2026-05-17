@@ -11,13 +11,14 @@ import {
   formatGalleryNativeCategoryLabel,
   splitGalleryByNativeCategory,
 } from '@/lib/detections/galleryNativeCategory';
+import { minGalleryTileSize, type GalleryGridColumns } from '@/lib/detections/galleryGridColumns';
+import { isSearchQueryActive } from '@/lib/search/normalizeSearchQuery';
 import type { DetectionGalleryItem, GalleryNativeCategory } from '@/types';
 import { userFacingErr, type UserFacingResult } from '@/types/user-facing-result';
 
-const NUM_COLUMNS = 3;
-
 type DetectionGalleryGridProps = {
   items: DetectionGalleryItem[];
+  columnCount: GalleryGridColumns;
   loading: boolean;
   hasMore?: boolean;
   isLoadingMore?: boolean;
@@ -29,6 +30,10 @@ type DetectionGalleryGridProps = {
   activityColor: string;
   /** Shown when there are no items (default: own-profile copy). */
   emptyMessage?: string;
+  /** Active profile gallery search (for empty-state copy). */
+  searchQuery?: string;
+  /** Total rows loaded for this profile before search filtering. */
+  sourceItemCount?: number;
   /** Own profile: long-press tile or use modal delete to remove a saved photo. */
   deletable?: boolean;
   /** Called after user confirms delete (long-press or modal). */
@@ -44,6 +49,7 @@ type DetectionGalleryGridProps = {
  */
 export function DetectionGalleryGrid({
   items,
+  columnCount,
   loading,
   hasMore = false,
   isLoadingMore = false,
@@ -54,6 +60,8 @@ export function DetectionGalleryGrid({
   mutedColor,
   activityColor,
   emptyMessage = 'No saved photos yet. Save an identification from the camera flow.',
+  searchQuery = '',
+  sourceItemCount = 0,
   deletable = false,
   onDeleteItem,
   deletingId = null,
@@ -108,8 +116,12 @@ export function DetectionGalleryGrid({
     const horizontalPadding = authSpacing.lg * 2;
     const gap = authSpacing.sm;
     const inner = Math.max(0, windowWidth - horizontalPadding);
-    return Math.max(72, Math.floor((inner - gap * (NUM_COLUMNS - 1)) / NUM_COLUMNS));
-  }, [windowWidth]);
+    const cols = columnCount;
+    return Math.max(
+      minGalleryTileSize(cols),
+      Math.floor((inner - gap * (cols - 1)) / cols),
+    );
+  }, [windowWidth, columnCount]);
 
   const { native: nativeItems, nonNative: nonNativeItems } = useMemo(
     () => splitGalleryByNativeCategory(items),
@@ -141,9 +153,12 @@ export function DetectionGalleryGrid({
   }
 
   if (items.length === 0) {
-    return (
-      <ThemedText style={[styles.empty, { color: mutedColor }]}>{emptyMessage}</ThemedText>
-    );
+    const searchActive = isSearchQueryActive(searchQuery);
+    const message =
+      searchActive && sourceItemCount > 0
+        ? `No identifications match "${searchQuery.trim()}". Try another name or keyword from the description.`
+        : emptyMessage;
+    return <ThemedText style={[styles.empty, { color: mutedColor }]}>{message}</ThemedText>;
   }
 
   const renderSection = (sectionItems: DetectionGalleryItem[], category: GalleryNativeCategory) => {
@@ -254,10 +269,10 @@ const styles = StyleSheet.create({
     paddingVertical: authSpacing.xs,
   },
   tile: {
-    borderRadius: 8,
+    borderRadius: 0,
     borderWidth: 1,
     overflow: 'hidden',
-    backgroundColor: authColors.fieldBackground,
+    backgroundColor: authColors.background,
   },
   loaderWrap: {
     paddingVertical: authSpacing.lg,

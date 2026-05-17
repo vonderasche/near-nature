@@ -1,23 +1,36 @@
-import { useCallback, useRef, useState, type ReactElement } from 'react';
-import {
-  FlatList,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
-  type RefreshControlProps,
-  StyleSheet,
-  View,
-} from 'react-native';
+import type { ReactElement } from 'react';
+import { useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
+import type { RefreshControlProps } from 'react-native';
 
+import { DiscoverSortMenu } from '@/components/discover/discover-sort-menu';
+import { DiscoverTypeMenu } from '@/components/discover/discover-type-menu';
+import { DiscoverViewModeToggle } from '@/components/discover/discover-view-mode-toggle';
 import { ExploreCategoryPage } from '@/components/explore/explore-category-page';
-import { ExploreTypeTabs } from '@/components/explore/explore-type-tabs';
+import { GridLayoutMenu } from '@/components/ui/grid-layout-menu';
 import type { ExploreSpeciesByType } from '@/hooks/useExploreSpecies';
+import { authColors, authSpacing } from '@/constants/auth-theme';
+import type { GalleryGridColumns } from '@/lib/detections/galleryGridColumns';
+import type { ExploreDiscoverLayoutMode } from '@/lib/explore/exploreDiscoverLayout';
 import {
-  EXPLORE_SPECIES_TYPES,
-  type ExploreSpeciesType,
-} from '@/lib/explore/exploreSpeciesTypes';
+  exploreSpeciesItemsForCategory,
+  exploreSpeciesSortForCategory,
+  type ExploreSpeciesCategory,
+} from '@/lib/explore/exploreSpeciesCategory';
+import { filterExploreSpecies } from '@/lib/explore/filterExploreSpecies';
+import type { ExploreSpeciesSortMode } from '@/lib/explore/exploreSpeciesSort';
 
 type Props = {
   byType: ExploreSpeciesByType;
+  searchQuery: string;
+  category: ExploreSpeciesCategory;
+  onCategoryChange: (category: ExploreSpeciesCategory) => void;
+  sortMode: ExploreSpeciesSortMode;
+  onSortChange: (mode: ExploreSpeciesSortMode) => void;
+  layoutMode: ExploreDiscoverLayoutMode;
+  onLayoutChange: (mode: ExploreDiscoverLayoutMode) => void;
+  columnCount: GalleryGridColumns;
+  onColumnCountChange: (columns: GalleryGridColumns) => void;
   loading: boolean;
   error: string | null;
   refreshControl?: ReactElement<RefreshControlProps>;
@@ -25,71 +38,68 @@ type Props = {
 
 export function ExploreSpeciesPager({
   byType,
+  searchQuery,
+  category,
+  onCategoryChange,
+  sortMode,
+  onSortChange,
+  layoutMode,
+  onLayoutChange,
+  columnCount,
+  onColumnCountChange,
   loading,
   error,
   refreshControl,
 }: Props) {
-  const horizontalRef = useRef<FlatList<ExploreSpeciesType>>(null);
-  const [activeType, setActiveType] = useState<ExploreSpeciesType>('animals');
-  const [pageWidth, setPageWidth] = useState(0);
-
-  const onTabSelect = useCallback((type: ExploreSpeciesType) => {
-    const index = EXPLORE_SPECIES_TYPES.indexOf(type);
-    if (index < 0) return;
-    setActiveType(type);
-    if (pageWidth > 0) {
-      horizontalRef.current?.scrollToOffset({ offset: index * pageWidth, animated: true });
-    }
-  }, [pageWidth]);
-
-  const onMomentumScrollEnd = useCallback(
-    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-      if (pageWidth <= 0) return;
-      const index = Math.round(e.nativeEvent.contentOffset.x / pageWidth);
-      const type = EXPLORE_SPECIES_TYPES[index];
-      if (type) setActiveType(type);
-    },
-    [pageWidth],
-  );
-
-  const renderPage = useCallback(
-    ({ item: type }: { item: ExploreSpeciesType }) => (
-      <ExploreCategoryPage
-        type={type}
-        items={byType[type]}
-        loading={loading}
-        error={error}
-        pageWidth={pageWidth}
-        refreshControl={refreshControl}
-      />
-    ),
-    [byType, loading, error, pageWidth, refreshControl],
-  );
+  const items = useMemo(() => {
+    const categoryItems = exploreSpeciesItemsForCategory(byType, category);
+    return filterExploreSpecies(categoryItems, searchQuery);
+  }, [byType, category, searchQuery]);
+  const effectiveSort = exploreSpeciesSortForCategory(category, sortMode);
 
   return (
-    <View
-      style={styles.fill}
-      onLayout={(e) => {
-        const w = Math.round(e.nativeEvent.layout.width);
-        if (w > 0 && w !== pageWidth) setPageWidth(w);
-      }}>
-      <ExploreTypeTabs active={activeType} onSelect={onTabSelect} />
-      {pageWidth > 0 ? (
-        <FlatList
-          ref={horizontalRef}
-          data={EXPLORE_SPECIES_TYPES}
-          keyExtractor={(t) => t}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          decelerationRate="fast"
-          bounces={false}
-          onMomentumScrollEnd={onMomentumScrollEnd}
-          getItemLayout={(_, index) => ({ length: pageWidth, offset: pageWidth * index, index })}
-          renderItem={renderPage}
-          style={styles.fill}
+    <View style={styles.fill}>
+      <View style={styles.toolbar}>
+        <DiscoverTypeMenu
+          value={category}
+          onChange={onCategoryChange}
+          mutedColor={authColors.textMuted}
+          borderColor={authColors.border}
         />
-      ) : null}
+        {category !== 'all' ? (
+          <DiscoverSortMenu
+            value={sortMode}
+            onChange={onSortChange}
+            mutedColor={authColors.textMuted}
+            borderColor={authColors.border}
+          />
+        ) : null}
+        {layoutMode === 'grid' ? (
+          <GridLayoutMenu
+            value={columnCount}
+            onChange={onColumnCountChange}
+            mutedColor={authColors.textMuted}
+            borderColor={authColors.border}
+            context="discover"
+          />
+        ) : null}
+        <DiscoverViewModeToggle
+          value={layoutMode}
+          onChange={onLayoutChange}
+          mutedColor={authColors.textMuted}
+        />
+      </View>
+      <ExploreCategoryPage
+        category={category}
+        items={items}
+        searchQuery={searchQuery}
+        sortMode={effectiveSort}
+        layoutMode={layoutMode}
+        columnCount={columnCount}
+        loading={loading}
+        error={error}
+        refreshControl={refreshControl}
+      />
     </View>
   );
 }
@@ -98,5 +108,12 @@ const styles = StyleSheet.create({
   fill: {
     flex: 1,
     minHeight: 320,
+  },
+  toolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: authSpacing.xs,
+    marginBottom: authSpacing.md,
   },
 });

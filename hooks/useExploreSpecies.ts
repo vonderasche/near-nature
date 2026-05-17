@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import type { ExploreSpecies, ExploreSpeciesType } from '@/lib/explore/exploreSpeciesTypes';
+import type { ExploreSpeciesByType } from '@/lib/explore/exploreSpeciesCategory';
+import type { ExploreSpeciesType } from '@/lib/explore/exploreSpeciesTypes';
 import { EXPLORE_SPECIES_TYPES } from '@/lib/explore/exploreSpeciesTypes';
 import { fetchExploreSpecies } from '@/services/exploreSpeciesService';
 
-export type ExploreSpeciesByType = Record<ExploreSpeciesType, ExploreSpecies[]>;
+export type { ExploreSpeciesByType };
 
 type UseExploreSpeciesResult = {
   byType: ExploreSpeciesByType;

@@ -1,17 +1,28 @@
 import { useCallback, useState } from 'react';
-import { RefreshControl } from 'react-native';
+import { RefreshControl, StyleSheet, View } from 'react-native';
 
 import { TabScreenWithLogout } from '@/components/TabScreenWithLogout';
 import { DetectionCountExplorerBoard } from '@/components/explorer-board/detection-count-explorer-board';
+import { ExplorerBoardViewModeToggle } from '@/components/explorer-board/explorer-board-view-mode-toggle';
+import { GridLayoutMenu } from '@/components/ui/grid-layout-menu';
+import { ScreenSearchField } from '@/components/ui/screen-search-field';
+import { authColors, authSpacing } from '@/constants/auth-theme';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useDetectionLeaderboard } from '@/hooks/useDetectionLeaderboard';
+import { useExplorerBoardColumns } from '@/hooks/useExplorerBoardColumns';
+import { useExplorerBoardLayout } from '@/hooks/useExplorerBoardLayout';
+import { EXPLORER_BOARD_COLUMN_OPTIONS } from '@/lib/explorerBoard/explorerBoardColumns';
 
 export default function ExplorerBoardScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const tint = Colors[colorScheme].tint;
-  const { rows, isLoading, error, refetch } = useDetectionLeaderboard();
+  const { rows, isLoading, isLoadingMore, hasMore, error, loadMore, refetch } =
+    useDetectionLeaderboard();
+  const { layoutMode, setLayout } = useExplorerBoardLayout();
+  const { columns, setColumnCount } = useExplorerBoardColumns();
   const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -22,11 +33,35 @@ export default function ExplorerBoardScreen() {
     }
   }, [refetch]);
 
+  const subtitle =
+    layoutMode === 'grid'
+      ? "Ranked by native species discovered. Each tile shows a member's latest identification."
+      : 'Ranked by native species discovered. Points and species counts per member.';
+
   return (
     <TabScreenWithLogout
       title="Explorer Board"
-      subtitle="Ranked by distinct native species discovered. Each row shows points, species counts, and recent identification previews."
+      subtitle={subtitle}
       hideLogout
+      titleAccessory={
+        <View style={styles.toolbar}>
+          <ExplorerBoardViewModeToggle
+            value={layoutMode}
+            onChange={setLayout}
+            mutedColor={authColors.textMuted}
+          />
+          {layoutMode === 'grid' ? (
+            <GridLayoutMenu
+              value={columns}
+              onChange={setColumnCount}
+              columnOptions={EXPLORER_BOARD_COLUMN_OPTIONS}
+              mutedColor={authColors.textMuted}
+              borderColor={authColors.border}
+              context="explorer board"
+            />
+          ) : null}
+        </View>
+      }
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -35,7 +70,31 @@ export default function ExplorerBoardScreen() {
           colors={[tint]}
         />
       }>
-      <DetectionCountExplorerBoard rows={rows} loading={isLoading} error={error} />
+      <ScreenSearchField
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        placeholder="Search username or motto…"
+        accessibilityLabel="Search explorer board members"
+      />
+      <DetectionCountExplorerBoard
+        rows={rows}
+        searchQuery={searchQuery}
+        layoutMode={layoutMode}
+        columnCount={columns}
+        loading={isLoading}
+        isLoadingMore={isLoadingMore}
+        hasMore={hasMore}
+        onLoadMore={() => void loadMore()}
+        error={error}
+      />
     </TabScreenWithLogout>
   );
 }
+
+const styles = StyleSheet.create({
+  toolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: authSpacing.xs,
+  },
+});

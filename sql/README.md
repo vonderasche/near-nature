@@ -27,7 +27,7 @@ Use this when setting up a **new** project or when you want to recreate tables, 
 | 10 | `create_streaks.sql` | `public.streaks`, streak **after insert** on detections |
 | 11 | `create_discoveries.sql` | `public.discoveries`, first-species bonus **after insert** on detections |
 | 12 | `storage_bucket_detections.sql` | `detections` storage bucket + RLS (includes profile-avatar read policy) |
-| 13 | `get_detection_count_leaderboard.sql` | RPC: Explorer Board (points total, recent previews, native / non-native species) |
+| 13 | `get_detection_count_leaderboard.sql` | RPC: Explorer Board paginated (`p_limit`, `p_offset`; points, previews, species) |
 | 14 | `get_public_user_profile.sql` | RPC: public profile + streak, points & species stats |
 | 15 | `explore_species_public_read.sql` | RLS **select** on `public.explore_species` (table must already exist) |
 | 16 | `disable_one_species_per_day_temp.sql` | **Recommended for current app:** allows repeat saves of same species per day |

@@ -1,8 +1,12 @@
-import { forwardRef, useImperativeHandle } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 
 import { DetectionGalleryGrid } from '@/components/profile/detection-gallery-grid';
+import { GalleryGridColumnsPicker } from '@/components/profile/gallery-grid-columns-picker';
 import { ScreenSection } from '@/components/profile/screen-section';
+import { ScreenSearchField } from '@/components/ui/screen-search-field';
+import { useGalleryGridColumns } from '@/hooks/useGalleryGridColumns';
 import { useUserDetectionGallery } from '@/hooks/useUserDetectionGallery';
+import { filterDetectionGalleryItems } from '@/lib/detections/filterDetectionGalleryItems';
 import type { DetectionGalleryItem } from '@/types';
 import type { UserFacingResult } from '@/types/user-facing-result';
 
@@ -21,6 +25,7 @@ type UserDetectionGallerySectionProps = {
   mutedColor: string;
   activityColor: string;
   emptyMessage?: string;
+  searchPlaceholder?: string;
   deletable?: boolean;
   onDeleteItem?: (item: DetectionGalleryItem) => Promise<UserFacingResult>;
   deletingId?: string | null;
@@ -28,6 +33,7 @@ type UserDetectionGallerySectionProps = {
 
 /**
  * Paginated identification gallery for own profile or a member's public profile.
+ * Search filters only identifications already loaded for this `userId`.
  */
 export const UserDetectionGallerySection = forwardRef<
   UserDetectionGallerySectionHandle,
@@ -43,12 +49,14 @@ export const UserDetectionGallerySection = forwardRef<
     mutedColor,
     activityColor,
     emptyMessage,
+    searchPlaceholder = 'Search common or scientific name, description…',
     deletable = false,
     onDeleteItem,
     deletingId = null,
   },
   ref,
 ) {
+  const [searchQuery, setSearchQuery] = useState('');
   const {
     items,
     isLoading,
@@ -58,16 +66,48 @@ export const UserDetectionGallerySection = forwardRef<
     loadMore,
     refetch,
   } = useUserDetectionGallery({ userId, publicOnly });
+  const { columns, setColumnCount } = useGalleryGridColumns();
+
+  useEffect(() => {
+    setSearchQuery('');
+  }, [userId, publicOnly]);
+
+  const filteredItems = useMemo(
+    () => filterDetectionGalleryItems(items, searchQuery),
+    [items, searchQuery],
+  );
 
   useImperativeHandle(ref, () => ({ refetch }), [refetch]);
 
   return (
-    <ScreenSection title={title} hint={hint} hintColor={hintColor}>
+    <ScreenSection
+      title={title}
+      hint={hint}
+      hintColor={hintColor}
+      titleAccessory={
+        <GalleryGridColumnsPicker
+          value={columns}
+          onChange={setColumnCount}
+          mutedColor={mutedColor}
+          borderColor={borderColor}
+        />
+      }>
+      {userId ? (
+        <ScreenSearchField
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder={searchPlaceholder}
+          accessibilityLabel="Search profile gallery"
+        />
+      ) : null}
       <DetectionGalleryGrid
-        items={items}
+        items={filteredItems}
+        sourceItemCount={items.length}
+        searchQuery={searchQuery}
+        columnCount={columns}
         loading={isLoading}
         isLoadingMore={isLoadingMore}
-        hasMore={hasMore}
+        hasMore={hasMore && !searchQuery.trim()}
         onLoadMore={() => void loadMore()}
         error={error}
         onRetry={() => void refetch()}

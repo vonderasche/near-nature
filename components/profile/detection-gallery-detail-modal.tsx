@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
   imageFrame: {
     width: '100%',
     aspectRatio: 1,
-    borderRadius: 8,
+    borderRadius: 0,
     overflow: 'hidden',
     backgroundColor: authColors.background,
     borderWidth: 1,

@@ -1,42 +1,59 @@
 import { useRouter } from 'expo-router';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useMemo } from 'react';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
-import { ExplorerBoardMemberAvatar } from '@/components/explorer-board/explorer-board-member-avatar';
-import { ExplorerBoardRecentPreviewsStrip } from '@/components/explorer-board/explorer-board-recent-previews-strip';
+import { AuthButton } from '@/components/auth/auth-button';
+import { ExplorerBoardMemberGrid } from '@/components/explorer-board/explorer-board-member-grid';
+import { ExplorerBoardMemberList } from '@/components/explorer-board/explorer-board-member-list';
 import { InlineFormError } from '@/components/screen/inline-form-error';
 import { useExplorerBoardDisplayUrls } from '@/hooks/useExplorerBoardDisplayUrls';
-import { ListDetailCard, listSectionSupportingStyles } from '@/components/screen/list-detail-card';
-import { authColors } from '@/constants/auth-theme';
-import { parseLeaderboardMotto } from '@/lib/leaderboard/formatLeaderboardMotto';
-import {
-  formatLeaderboardAccessibilityCounts,
-  formatLeaderboardSpeciesMeta,
-} from '@/lib/leaderboard/formatLeaderboardSpeciesCounts';
+import { listSectionSupportingStyles } from '@/components/screen/list-detail-card';
+import { authColors, authSpacing } from '@/constants/auth-theme';
+import type { ExplorerBoardColumns } from '@/lib/explorerBoard/explorerBoardColumns';
+import type { ExplorerBoardLayoutMode } from '@/lib/explorerBoard/explorerBoardLayout';
+import { filterLeaderboardRows } from '@/lib/leaderboard/filterLeaderboardRows';
 import { routePublicUserProfile } from '@/lib/routing/routes';
+import { isSearchQueryActive } from '@/lib/search/normalizeSearchQuery';
 import type { DetectionLeaderboardRow } from '@/services/leaderboardService';
 
 type Props = {
   rows: DetectionLeaderboardRow[];
+  searchQuery: string;
+  layoutMode: ExplorerBoardLayoutMode;
+  columnCount: ExplorerBoardColumns;
   loading: boolean;
+  isLoadingMore?: boolean;
+  hasMore?: boolean;
+  onLoadMore?: () => void;
   error: string | null;
 };
 
-function explorerBoardRankBadge(row: DetectionLeaderboardRow): string | null {
-  return row.rank > 0 ? String(row.rank) : null;
-}
-
-function explorerBoardAccessibilityTitle(row: DetectionLeaderboardRow): string {
-  return row.rank > 0 ? `Rank ${row.rank}, ${row.username}` : row.username;
-}
-
 /**
- * Ordered list by distinct native species (RPC). Shows native and non-native species counts.
+ * Explorer board: list cards or member image grid (latest identification per tile).
  */
-const MAX_RECENT_PREVIEWS = 3;
-
-export function DetectionCountExplorerBoard({ rows, loading, error }: Props) {
+export function DetectionCountExplorerBoard({
+  rows,
+  searchQuery,
+  layoutMode,
+  columnCount,
+  loading,
+  isLoadingMore = false,
+  hasMore = false,
+  onLoadMore,
+  error,
+}: Props) {
   const router = useRouter();
-  const { resolveDisplayUrl } = useExplorerBoardDisplayUrls(loading ? [] : rows);
+  const filteredRows = useMemo(
+    () => filterLeaderboardRows(rows, searchQuery),
+    [rows, searchQuery],
+  );
+  const { resolveDisplayUrl } = useExplorerBoardDisplayUrls(
+    loading && rows.length === 0 ? [] : filteredRows,
+  );
+
+  const openMember = (row: DetectionLeaderboardRow) => {
+    router.push(routePublicUserProfile(row.userId));
+  };
 
   if (error) {
     return <InlineFormError>{error}</InlineFormError>;
@@ -52,55 +69,63 @@ export function DetectionCountExplorerBoard({ rows, loading, error }: Props) {
 
   if (rows.length === 0) {
     return (
-      <Text style={listSectionSupportingStyles.muted}>No rankings yet. Save identifications to appear here.</Text>
+      <Text style={listSectionSupportingStyles.muted}>
+        No rankings yet. Save identifications to appear here.
+      </Text>
+    );
+  }
+
+  if (filteredRows.length === 0 && isSearchQueryActive(searchQuery)) {
+    return (
+      <Text style={listSectionSupportingStyles.muted}>
+        {`No members match "${searchQuery.trim()}". Try another username or motto.`}
+      </Text>
     );
   }
 
   return (
     <View accessibilityLabel="Explorer board by native species discovered">
-      {rows.map((row) => {
-        const motto = parseLeaderboardMotto(row.motto);
-        const a11yTitle = explorerBoardAccessibilityTitle(row);
-        const previewStored = row.recentDetectionImageUrls.slice(0, MAX_RECENT_PREVIEWS);
-        const previewDisplay = previewStored.map((url) => resolveDisplayUrl(url));
+      {layoutMode === 'grid' ? (
+        <ExplorerBoardMemberGrid
+          rows={filteredRows}
+          columnCount={columnCount}
+          borderColor={authColors.border}
+          mutedColor={authColors.textMuted}
+          resolveDisplayUrl={resolveDisplayUrl}
+          onPressMember={openMember}
+        />
+      ) : (
+        <ExplorerBoardMemberList
+          rows={filteredRows}
+          resolveDisplayUrl={resolveDisplayUrl}
+          onPressMember={openMember}
+        />
+      )}
 
-        return (
-          <Pressable
-            key={row.userId}
-            onPress={() => router.push(routePublicUserProfile(row.userId))}
-            style={({ pressed }) => pressed && styles.rowPressed}
-            android_ripple={{ color: 'rgba(255,255,255,0.08)' }}
-            accessibilityRole="button"
-            accessibilityHint="Opens this member's public profile"
-            accessibilityLabel={`${a11yTitle}, ${motto ?? 'No motto'}, ${formatLeaderboardAccessibilityCounts(row)}`}>
-            <ListDetailCard
-              leading={
-                <ExplorerBoardMemberAvatar
-                  storedUrl={row.avatarUrl}
-                  displayUri={resolveDisplayUrl(row.avatarUrl)}
-                  borderColor={authColors.border}
-                  mutedColor={authColors.textMuted}
-                />
-              }
-              cornerBadge={explorerBoardRankBadge(row)}
-              title={row.username}
-              subtitle={motto}
-              meta={formatLeaderboardSpeciesMeta(row)}>
-              <ExplorerBoardRecentPreviewsStrip
-                storedUrls={previewStored}
-                displayUrls={previewDisplay}
-                borderColor={authColors.border}
-              />
-            </ListDetailCard>
-          </Pressable>
-        );
-      })}
+      {hasMore && onLoadMore ? (
+        <View style={styles.loadMoreWrap}>
+          {isLoadingMore ? (
+            <ActivityIndicator color={authColors.textMuted} accessibilityLabel="Loading more rankings" />
+          ) : (
+            <AuthButton
+              title="Load more"
+              variant="outline"
+              onPress={onLoadMore}
+              fillParent
+              accessibilityLabel="Load more explorer board rankings"
+            />
+          )}
+        </View>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  rowPressed: {
-    opacity: 0.92,
+  loadMoreWrap: {
+    marginTop: authSpacing.md,
+    alignItems: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
   },
 });

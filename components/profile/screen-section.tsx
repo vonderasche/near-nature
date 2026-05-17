@@ -8,15 +8,20 @@ type ScreenSectionProps = {
   title: string;
   hint?: string;
   hintColor: string;
+  /** Renders in the top-right of the section header (e.g. gallery grid menu). */
+  titleAccessory?: ReactNode;
   children?: ReactNode;
 };
 
-export function ScreenSection({ title, hint, hintColor, children }: ScreenSectionProps) {
+export function ScreenSection({ title, hint, hintColor, titleAccessory, children }: ScreenSectionProps) {
   return (
     <View>
-      <ThemedText type="subtitle" style={styles.title}>
-        {title}
-      </ThemedText>
+      <View style={styles.titleRow}>
+        <ThemedText type="subtitle" style={styles.title}>
+          {title}
+        </ThemedText>
+        {titleAccessory}
+      </View>
       {hint ? (
         <ThemedText style={[styles.hint, { color: hintColor }]}>{hint}</ThemedText>
       ) : null}
@@ -26,8 +31,16 @@ export function ScreenSection({ title, hint, hintColor, children }: ScreenSectio
 }
 
 const styles = StyleSheet.create({
-  title: {
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: authSpacing.sm,
     marginBottom: authSpacing.xs,
+  },
+  title: {
+    flex: 1,
+    marginBottom: 0,
   },
   hint: {
     fontSize: 14,

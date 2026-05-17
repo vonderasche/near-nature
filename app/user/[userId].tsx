@@ -123,6 +123,7 @@ export default function PublicUserProfileScreen() {
                 ref={galleryRef}
                 userId={userId}
                 publicOnly
+                searchPlaceholder="Search this member's identifications…"
                 hint="Public identification photos they saved (non-sensitive)."
                 hintColor={muted}
                 borderColor={border}

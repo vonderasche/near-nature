@@ -1,6 +1,7 @@
+import { leaderboardMemberTileImageUrl } from '@/lib/explorerBoard/latestLeaderboardGalleryImage';
 import type { DetectionLeaderboardRow } from '@/lib/leaderboard/detectionCountLeaderboardMap';
 
-/** Unique stored image URLs from explorer board rows (avatars + recent identification previews). */
+/** Unique tile image URLs for explorer board rows (latest gallery image or avatar). */
 export function collectLeaderboardImageStoredUrls(rows: readonly DetectionLeaderboardRow[]): string[] {
   const seen = new Set<string>();
   const urls: string[] = [];
@@ -13,10 +14,8 @@ export function collectLeaderboardImageStoredUrls(rows: readonly DetectionLeader
   };
 
   for (const row of rows) {
+    add(leaderboardMemberTileImageUrl(row));
     add(row.avatarUrl);
-    for (const preview of row.recentDetectionImageUrls) {
-      add(preview);
-    }
   }
 
   return urls;
