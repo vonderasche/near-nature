@@ -1,13 +1,13 @@
 import { useCallback, useState } from 'react';
 import { RefreshControl, StyleSheet, View } from 'react-native';
 
-import { TabScreenWithLogout } from '@/components/TabScreenWithLogout';
+import { TabScreenWithLogout } from '@/components/layout/tab-screen-with-logout';
 import { DetectionCountExplorerBoard } from '@/components/explorer-board/detection-count-explorer-board';
 import { ExplorerBoardViewModeToggle } from '@/components/explorer-board/explorer-board-view-mode-toggle';
 import { GridLayoutMenu } from '@/components/ui/grid-layout-menu';
 import { ScreenSearchField } from '@/components/ui/screen-search-field';
 import { authColors, authSpacing } from '@/constants/auth-theme';
-import { Colors } from '@/constants/theme';
+import { Colors } from '@/constants/auth-theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useDetectionLeaderboard } from '@/hooks/useDetectionLeaderboard';
 import { useExplorerBoardColumns } from '@/hooks/useExplorerBoardColumns';

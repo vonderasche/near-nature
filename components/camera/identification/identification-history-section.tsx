@@ -1,8 +1,8 @@
 import { ActivityIndicator, Text } from 'react-native';
 
-import { SpeciesResultCard } from '@/components/identification/species-result-card';
-import { SectionLabel } from '@/components/screen/section-label';
-import { listSectionSupportingStyles } from '@/components/screen/list-detail-card';
+import { SpeciesResultCard } from '@/components/camera/identification/species-result-card';
+import { SectionLabel } from '@/components/shared/section-label';
+import { listSectionSupportingStyles } from '@/components/shared/list-detail-card';
 import { authColors } from '@/constants/auth-theme';
 import type { Identification } from '@/types';
 

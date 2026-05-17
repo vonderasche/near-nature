@@ -2,9 +2,13 @@
  * Near Nature design tokens — single source of truth for color, spacing, radius, and type scales.
  * Prefer `colors`, `spacing`, `radii`, `typography` in new code.
  * `auth*` aliases match historical naming used across screens and components.
+ * `Colors` / `Fonts` support tab bar and `useThemeColor` (Expo template hooks).
  *
  * Buttons: `components/auth/auth-button` + `components/ui/button-stack` / `button-row`.
  */
+
+/** Tab / link accent (matches legacy Expo `theme.ts`). */
+export const tint = '#0a7ea4' as const;
 
 /** Semantic palette (dark UI: black surfaces, light text, subtle borders). */
 export const colors = {
@@ -49,3 +53,23 @@ export const authSpacing = spacing;
 export const authRadii = radii;
 /** Same object as {@link typography}. */
 export const authTypography = typography;
+
+/** Tab bar and navigation color scheme (light/dark share the same dark UI palette). */
+export const Colors = {
+  light: {
+    text: colors.text,
+    background: colors.background,
+    tint,
+    icon: '#ebebf5',
+    tabIconDefault: '#8e8e93',
+    tabIconSelected: tint,
+  },
+  dark: {
+    text: colors.text,
+    background: colors.background,
+    tint,
+    icon: '#ebebf5',
+    tabIconDefault: '#8e8e93',
+    tabIconSelected: tint,
+  },
+} as const;

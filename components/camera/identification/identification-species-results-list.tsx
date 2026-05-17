@@ -1,8 +1,8 @@
 import { Text } from 'react-native';
 
 import type { SpeciesWikiData } from '@/api/wikipedia';
-import { SpeciesResultCard } from '@/components/identification/species-result-card';
-import { listSectionSupportingStyles } from '@/components/screen/list-detail-card';
+import { SpeciesResultCard } from '@/components/camera/identification/species-result-card';
+import { listSectionSupportingStyles } from '@/components/shared/list-detail-card';
 import type { Species } from '@/types';
 
 import { IdentificationSpeciesWikiBody } from './identification-species-wiki-body';

@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet } from 'react-native';
 
 import { ExplorerBoardMemberAvatar } from '@/components/explorer-board/explorer-board-member-avatar';
-import { ListDetailCard } from '@/components/screen/list-detail-card';
+import { ListDetailCard } from '@/components/shared/list-detail-card';
 import { authColors } from '@/constants/auth-theme';
 import {
   formatLeaderboardAccessibilityCounts,

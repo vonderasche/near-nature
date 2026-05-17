@@ -10,9 +10,9 @@ import {
 import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
 import { PublicUserProfileSummary } from '@/components/profile/public-user-profile-summary';
 import { ProfileStatStrip } from '@/components/profile/profile-stat-strip';
-import { profileStatStripPropsFromPublicProfile } from '@/components/profile/profile-stats-from-public-profile';
+import { profileStatStripPropsFromPublicProfile } from '@/lib/profile/profileStatStripFromPublicProfile';
 import { UserAvatar } from '@/components/profile/user-avatar';
-import { Colors } from '@/constants/theme';
+import { Colors } from '@/constants/auth-theme';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { usePublicUserProfile } from '@/hooks/usePublicUserProfile';

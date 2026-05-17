@@ -4,7 +4,7 @@ import { AuthButton } from '@/components/auth/auth-button';
 import { AuthField } from '@/components/auth/auth-field';
 import { AuthScreen } from '@/components/auth/auth-screen';
 import { AuthScreenHeader } from '@/components/auth/auth-screen-header';
-import { InlineFormError } from '@/components/screen/inline-form-error';
+import { InlineFormError } from '@/components/shared/inline-form-error';
 import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { useAuth } from '@/hooks/useAuth';
 

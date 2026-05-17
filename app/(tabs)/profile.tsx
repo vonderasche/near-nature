@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RefreshControl, StyleSheet, Text, View } from 'react-native';
 
-import { TabScreenWithLogout } from '@/components/TabScreenWithLogout';
+import { TabScreenWithLogout } from '@/components/layout/tab-screen-with-logout';
 import { CenteredActivityIndicator } from '@/components/profile/centered-activity-indicator';
 import { ProfileOverflowMenu } from '@/components/profile/profile-overflow-menu';
 import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
@@ -12,7 +12,7 @@ import {
 import { MottoEditModal } from '@/components/profile/motto-edit-modal';
 import { StateEditModal } from '@/components/profile/state-edit-modal';
 import { ProfileStatStrip } from '@/components/profile/profile-stat-strip';
-import { profileStatStripPropsFromPublicProfile } from '@/components/profile/profile-stats-from-public-profile';
+import { profileStatStripPropsFromPublicProfile } from '@/lib/profile/profileStatStripFromPublicProfile';
 import { UserAvatar } from '@/components/profile/user-avatar';
 import { UserProfileSummary } from '@/components/profile/user-profile-summary';
 import { ThemedConfirmModal, ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';

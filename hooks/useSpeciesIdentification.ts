@@ -9,7 +9,7 @@ import type { SpeciesWikiData } from '@/api/wikipedia';
 import { useResizeImageForUpload } from '@/hooks/useResizeImageForUpload';
 import { enrichSpeciesFromApis } from '@/lib/identification/enrichSpeciesFromApis';
 import { devLog } from '@/lib/devLog';
-import { filterClassifications, hasNoSpeciesFound } from '@/utils/imageFilters';
+import { filterClassifications, hasNoSpeciesFound } from '@/lib/image/imageFilters';
 import type { ClassificationResult, Species } from '@/types';
 
 export type IdentifySpeciesOutcome = {

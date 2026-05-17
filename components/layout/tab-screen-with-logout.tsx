@@ -4,7 +4,7 @@ import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AuthButton } from '@/components/auth/auth-button';
-import { ScreenHeading } from '@/components/screen/screen-heading';
+import { ScreenHeading } from '@/components/shared/screen-heading';
 import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { authColors, authSpacing } from '@/constants/auth-theme';
 import { useLogout } from '@/hooks/useLogout';

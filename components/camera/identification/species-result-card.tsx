@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { ListDetailCard } from '@/components/screen/list-detail-card';
+import { ListDetailCard } from '@/components/shared/list-detail-card';
 
 type SpeciesResultCardProps = {
   commonName: string;

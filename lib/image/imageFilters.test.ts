@@ -4,7 +4,7 @@ import {
   deduplicateByLatinName,
   filterByConfidence,
   filterClassifications,
-} from '@/utils/imageFilters';
+} from '@/lib/image/imageFilters';
 import type { ClassificationResult } from '@/types';
 
 function classification(

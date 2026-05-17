@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { StyleSheet, View } from 'react-native';
 
-import { SectionLabel } from '@/components/screen/section-label';
+import { SectionLabel } from '@/components/shared/section-label';
 import { authColors, authSpacing } from '@/constants/auth-theme';
 
 type Props = {

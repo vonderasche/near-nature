@@ -6,7 +6,7 @@ import { StyleSheet } from 'react-native';
 import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { AuthGate } from '@/components/AuthGate';
+import { AuthGate } from '@/components/layout/auth-gate';
 import { AuthProvider } from '@/context/AuthContext';
 
 export const unstable_settings = {
