@@ -5,7 +5,6 @@ export const routes = {
   tabs: '/(tabs)',
   /** Own profile tab (see `app/(tabs)/profile.tsx`). */
   profileTab: '/(tabs)/profile',
-  modal: '/modal',
   login: '/login',
   signup: '/signup',
   /** Session exists but `public.users` has no row — sign out or fix DB (e.g. backfill). */
