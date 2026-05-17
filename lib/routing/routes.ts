@@ -12,15 +12,9 @@ export const routes = {
   needsProfile: '/(auth)/needs-profile',
   forgotPassword: '/forgot-password',
   resetPassword: '/reset-password',
-  camera: '/camera',
-  discoverSpecies: '/discover/species',
-  discoverEcosystems: '/discover/ecosystems',
-  discoverParks: '/discover/parks',
+  cameraTab: '/(tabs)/camera',
+  explorerBoardTab: '/(tabs)/explorer-board',
 } as const;
-
-export function routeDiscoverPark(parkId: string) {
-  return { pathname: '/discover/park/[parkId]' as const, params: { parkId } };
-}
 
 export type AppRoute = (typeof routes)[keyof typeof routes];
 

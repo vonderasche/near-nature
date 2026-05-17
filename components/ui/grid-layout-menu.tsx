@@ -28,7 +28,7 @@ type Props = {
   mutedColor: string;
   borderColor: string;
   /** Distinguishes gallery vs explorer board in the trigger accessibility label. */
-  context?: 'gallery' | 'explorer board' | 'discover';
+  context?: 'gallery' | 'explorer board';
   /** Defaults to gallery options (1, 2, 4, 8). Explorer board passes [1, 2, 4]. */
   columnOptions?: readonly GalleryGridColumns[];
 };
@@ -71,8 +71,7 @@ export function GridLayoutMenu({
     [close, onChange],
   );
 
-  const contextLabel =
-    context === 'explorer board' ? 'Explorer board' : context === 'discover' ? 'Discover' : 'Gallery';
+  const contextLabel = context === 'explorer board' ? 'Explorer board' : 'Gallery';
 
   const layoutLabel =
     context === 'explorer board'

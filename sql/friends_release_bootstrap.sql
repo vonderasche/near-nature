@@ -58,19 +58,6 @@ create policy "Users can delete their own detection images"
     auth.uid()::text = (storage.foldername(name))[1]
   );
 
--- ── Discover tab: explore_species read access ─────────────────────────────────
-alter table public.explore_species enable row level security;
-
-drop policy if exists "Authenticated users can read explore species" on public.explore_species;
-
-create policy "Authenticated users can read explore species"
-  on public.explore_species
-  for select
-  to authenticated
-  using (true);
-
-grant select on public.explore_species to authenticated;
-
 -- ── Also run in SQL Editor (full definitions; safe to re-run): ────────────────
 --   sql/create_discoveries.sql                (first-species discovery + bonus points)
 --   sql/get_detection_count_leaderboard.sql   (Explorer Board)

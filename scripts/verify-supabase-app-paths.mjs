@@ -1,5 +1,5 @@
 /**
- * Exercises the same Supabase calls the app uses (Discover hub + Explorer Board).
+ * Exercises Supabase calls used by the Explorer Board.
  * Usage: node scripts/verify-supabase-app-paths.mjs
  */
 import { readFileSync } from 'node:fs';
@@ -20,65 +20,11 @@ function loadEnv() {
   return env;
 }
 
-const EXPLORE_SPECIES_SELECT =
-  'id, inaturalist_id, latin_name, common_name, type, iconic_taxon_name, observations_count, rank, state, wikipedia_url, image_url, wiki_summary, wiki_image_url, is_featured, bonus_points';
-
 const env = loadEnv();
 const supabase = createClient(env.EXPO_PUBLIC_SUPABASE_URL, env.EXPO_PUBLIC_SUPABASE_ANON_KEY);
-const STATE = 'Florida';
 
-function mapSpecies(row) {
-  return {
-    id: row.id,
-    commonName: row.common_name,
-    type: row.type,
-    isFeatured: Boolean(row.is_featured),
-    bonusPoints: Number(row.bonus_points ?? 0),
-  };
-}
+console.log('\nApp-path verify (Explorer Board)\n');
 
-console.log('\nApp-path verify (Discover hub + Explorer Board)\n');
-
-// useDiscoverHub paths
-const { data: speciesRows, error: spErr } = await supabase
-  .from('explore_species')
-  .select(EXPLORE_SPECIES_SELECT)
-  .eq('state', STATE)
-  .order('rank', { ascending: true })
-  .limit(500);
-if (spErr) throw spErr;
-const species = (speciesRows ?? []).map(mapSpecies);
-const animals = species.filter((s) => s.type === 'animals');
-const plants = species.filter((s) => s.type === 'plants');
-console.log(`  species: ${species.length} (${animals.length} animals, ${plants.length} plants)`);
-
-const { data: featuredRaw, error: featErr } = await supabase.rpc('get_featured_species');
-if (featErr) throw featErr;
-const featured = (Array.isArray(featuredRaw) ? featuredRaw : []).map(mapSpecies);
-console.log(`  featured: ${featured.length} — ${featured.map((f) => f.commonName).join(', ') || '(none)'}`);
-
-const { data: summaryRaw, error: sumErr } = await supabase.rpc('get_park_summary_for_state', {
-  p_state: STATE,
-});
-let parkCount = 0;
-let speciesSightings = 0;
-if (!sumErr) {
-  const row = Array.isArray(summaryRaw) ? summaryRaw[0] : null;
-  parkCount = Number(row?.park_count ?? 0);
-  speciesSightings = Number(row?.species_sightings ?? 0);
-} else {
-  const { data: parks, error: parksErr } = await supabase
-    .from('parks_with_counts')
-    .select('*')
-    .eq('state', STATE);
-  if (parksErr) throw parksErr;
-  parkCount = parks?.length ?? 0;
-  speciesSightings = (parks ?? []).reduce((s, p) => s + Number(p.total_species ?? 0), 0);
-  console.log(`  park summary: fallback list (${sumErr.message})`);
-}
-console.log(`  park summary: ${parkCount} parks, ${speciesSightings} species sightings`);
-
-// leaderboardService path
 const pageSize = 20;
 const { data: lbRaw, error: lbErr } = await supabase.rpc('get_detection_count_leaderboard', {
   p_limit: pageSize + 1,
@@ -102,14 +48,8 @@ if (rows[0]) {
   );
 }
 
-const failures = [];
-if (species.length < 12) failures.push(`expected >=12 species, got ${species.length}`);
-if (featured.length < 1) failures.push('expected >=1 featured species');
-if (parkCount < 1) failures.push('expected >=1 park');
-if (rows.length < 1) failures.push('leaderboard empty');
-
-if (failures.length) {
-  console.error('\nFAILED:', failures.join('; '));
+if (rows.length < 1) {
+  console.error('\nFAILED: leaderboard empty');
   process.exit(1);
 }
-console.log('\nApp paths OK — Discover hub and Explorer Board data load correctly.\n');
+console.log('\nApp paths OK — Explorer Board data loads correctly.\n');

@@ -13,7 +13,7 @@
     "lint": "expo lint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "verify:supabase": "node scripts/verify-supabase-discover-leaderboard.mjs && node scripts/verify-supabase-app-paths.mjs"
+    "verify:supabase": "node scripts/verify-supabase-leaderboard.mjs && node scripts/verify-supabase-app-paths.mjs"
   },
   "dependencies": {
     "@expo/ngrok": "^4.1.3",

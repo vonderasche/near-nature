@@ -31,37 +31,24 @@ Use this when setting up a **new** project or when you want to recreate tables, 
 | 14 | `get_public_user_profile.sql` | RPC: public profile + streak, points & species stats |
 | 15 | `disable_one_species_per_day_temp.sql` | **Recommended for current app:** allows repeat saves per species per day |
 | 16 | `drop_streak_client_update_policy.sql` | Removes obsolete client `UPDATE` policy on streaks (harmless on fresh DB) |
-| 17 | `discover/create_explore_species.sql` | Curated `explore_species` table + RLS |
-| 18 | `discover/create_seasonality.sql` | Monthly seasonality keyed by `latin_name` |
-| 19 | `discover/create_parks.sql` | `parks` table |
-| 20 | `discover/create_park_species.sql` | `park_species` + `parks_with_counts` view |
-| 21 | `discover/create_species_park_link.sql` | RPCs: `get_park_species`, `get_nearby_parks`, etc. |
-| 22 | `discover/create_featured_rotation.sql` | Featured species rotation + detection bonus trigger |
-| 23 | `discover/explore_app_grants.sql` | Grants for Discover RPCs and park views |
-| 24 | `discover/seed/florida_data.sql` then `discover/seed_florida_discover_all.sql` | Florida Discover seed (see [discover/README.md](./discover/README.md)) |
-| — | `discover/get_park_summary_for_state.sql` | Optional: hub park counts without full park list |
 
 ### After a full rebuild
 
 | When | File |
 |------|------|
 | Auth accounts exist but no `public.users` rows | `backfill_public_users_from_auth.sql` |
-| Discover tab needs data | Run steps 17–24, or import your own CSV then `discover/explore_app_grants.sql` |
 | Friends APK / edge identification | `.\scripts\deploy-identify-species.ps1` and `ANTHROPIC_API_KEY` secret |
 
-### Beta production quick start (items 1–3)
+### Beta production quick start
 
 ```powershell
 .\scripts\beta-production-setup.ps1    # prints SQL file order
-.\scripts\deploy-identify-species.ps1    # item 3: deploy Edge Function
+.\scripts\deploy-identify-species.ps1    # deploy Edge Function
 ```
 
-**Item 1 — SQL:** Run core steps 1–16 if needed, then discover steps 17–23.  
-If you already imported `explore_species` via CSV, **skip** `discover/create_explore_species.sql` (it drops the table).
+**SQL:** Run core steps 1–16 if needed.
 
-**Item 2 — Seed:** Run `discover/seed/florida_data.sql`, then `discover/seed_florida_discover_all.sql` (see [discover/README.md](./discover/README.md)).
-
-**Item 3 — Edge:** `supabase secrets set ANTHROPIC_API_KEY=...` then deploy script above. Remove `EXPO_PUBLIC_ANTHROPIC_API_KEY` from release `.env`.
+**Edge:** `supabase secrets set ANTHROPIC_API_KEY=...` then deploy script above. Remove `EXPO_PUBLIC_ANTHROPIC_API_KEY` from release `.env`.
 
 ---
 
@@ -71,10 +58,9 @@ If tables already exist and you only need to refresh policies or RPCs:
 
 | Goal | File(s) |
 |------|---------|
-| Storage + avatars + Discover read access | `friends_release_bootstrap.sql` (subset of steps 12 + 15) |
+| Storage + avatars | `friends_release_bootstrap.sql` (subset of step 12) |
 | Explorer Board RPC only | `get_detection_count_leaderboard.sql` |
 | Public profile / stats RPC only | `get_public_user_profile.sql` |
-| Discover grants only | `discover/explore_app_grants.sql` |
 | Full storage policies (canonical) | `storage_bucket_detections.sql` |
 
 `friends_release_bootstrap.sql` is a shortcut for testers; for a clean install, prefer the **full rebuild** order above.
@@ -85,7 +71,7 @@ If tables already exist and you only need to refresh policies or RPCs:
 
 | Intent | File |
 |--------|------|
-| **Current default** — allow multiple saves per species per day | `disable_one_species_per_day_temp.sql` (included in full rebuild step 16) |
+| **Current default** — allow multiple saves per species per day | `disable_one_species_per_day_temp.sql` (included in full rebuild step 15) |
 | Production rule — one save per species per user per UTC day | `enable_one_species_per_day_temp.sql` (fails if duplicate rows already exist) |
 
 ---

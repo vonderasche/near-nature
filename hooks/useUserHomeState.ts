@@ -6,7 +6,7 @@ import { useAuthContext } from '@/context/AuthContext';
 import { getUser } from '@/services/userService';
 
 export type UserHomeState = {
-  /** Two-letter code used for iNaturalist / explore queries (defaults when unset). */
+  /** Two-letter code used for native-species identification (defaults when unset). */
   stateCode: string;
   /** True when `public.users.state` is set on the profile. */
   hasHomeState: boolean;
