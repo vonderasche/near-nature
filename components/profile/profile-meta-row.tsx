@@ -48,12 +48,18 @@ export function ProfileMetaRow({
   return <View style={styles.row}>{content}</View>;
 }
 
-type ProfileMetaCardProps = {
+type ProfileMetaGroupProps = {
   children: ReactNode;
 };
 
-export function ProfileMetaCard({ children }: ProfileMetaCardProps) {
-  return <View style={styles.card}>{children}</View>;
+/** Stacked meta rows without an outer border (home state, motto, etc.). */
+export function ProfileMetaGroup({ children }: ProfileMetaGroupProps) {
+  return <View style={styles.group}>{children}</View>;
+}
+
+/** @deprecated Use {@link ProfileMetaGroup} — borderless layout. */
+export function ProfileMetaCard({ children }: ProfileMetaGroupProps) {
+  return <ProfileMetaGroup>{children}</ProfileMetaGroup>;
 }
 
 export function ProfileMetaDivider() {
@@ -61,12 +67,10 @@ export function ProfileMetaDivider() {
 }
 
 const styles = StyleSheet.create({
-  card: {
+  group: {
     alignSelf: 'stretch',
     width: '100%',
     maxWidth: 420,
-    borderWidth: 1,
-    borderColor: authColors.border,
   },
   row: {
     flexDirection: 'row',

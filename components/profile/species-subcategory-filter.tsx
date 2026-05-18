@@ -96,26 +96,25 @@ type SpeciesSubcategoryFilterButtonProps = {
   value: GalleryCategoryFilter;
   onPress: () => void;
   mutedColor: string;
-  borderColor: string;
+  /** @deprecated No longer shown on the icon trigger. */
+  borderColor?: string;
 };
 
 export function SpeciesSubcategoryFilterButton({
   value,
   onPress,
   mutedColor,
-  borderColor,
 }: SpeciesSubcategoryFilterButtonProps) {
   const active = value.kind !== 'all';
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`Category filter: ${filterLabel(value)}`}
+      accessibilityHint="Opens category filter menu"
+      hitSlop={10}
       onPress={onPress}
-      style={[styles.button, { borderColor }, active && styles.buttonActive]}>
-      <HeroIcon name="funnel" size={18} color={active ? authColors.text : mutedColor} />
-      <Text style={[styles.buttonText, { color: active ? authColors.text : mutedColor }]} numberOfLines={1}>
-        {filterLabel(value)}
-      </Text>
+      style={({ pressed }) => [styles.iconTrigger, pressed && styles.iconTriggerPressed]}>
+      <HeroIcon name="funnel" size={22} color={active ? authColors.text : mutedColor} />
     </Pressable>
   );
 }
@@ -175,21 +174,10 @@ const styles = StyleSheet.create({
   rowLabelActive: {
     color: authColors.text,
   },
-  button: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: authSpacing.xs,
-    borderWidth: 1,
-    borderRadius: 4,
-    paddingHorizontal: authSpacing.sm,
-    paddingVertical: authSpacing.xs,
-    maxWidth: 200,
+  iconTrigger: {
+    padding: authSpacing.xs,
   },
-  buttonActive: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
-  },
-  buttonText: {
-    ...authTypography.subtitle,
-    flexShrink: 1,
+  iconTriggerPressed: {
+    opacity: 0.75,
   },
 });

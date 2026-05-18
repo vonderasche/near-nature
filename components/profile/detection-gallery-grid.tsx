@@ -9,7 +9,6 @@ import { ThemedConfirmModal, ThemedMessageModal } from '@/components/ui/themed-s
 import { ThemedText } from '@/components/themed-text';
 import { authColors, authSpacing } from '@/constants/auth-theme';
 import { buildGalleryListEntries, type GalleryListEntry } from '@/lib/detections/buildGalleryListEntries';
-import { formatGalleryNativeCategoryLabel } from '@/lib/detections/galleryNativeCategory';
 import { minGalleryTileSize, type GalleryGridColumns } from '@/lib/detections/galleryGridColumns';
 import { isSearchQueryActive } from '@/lib/search/normalizeSearchQuery';
 import type { DetectionGalleryItem, GalleryNativeCategory } from '@/types';
@@ -34,8 +33,6 @@ type DetectionGalleryGridProps = {
   onDeleteItem?: (item: DetectionGalleryItem) => Promise<UserFacingResult>;
   deletingId?: string | null;
 };
-
-const SECTION_HEADER_HEIGHT = 36;
 
 /**
  * Virtualized gallery grid (FlashList, scroll disabled — parent profile ScrollView scrolls).
@@ -124,15 +121,7 @@ export function DetectionGalleryGrid({
 
   const renderItem = useCallback(
     ({ item }: { item: GalleryListEntry }) => {
-      if (item.kind === 'section') {
-        return (
-          <ThemedText
-            type="defaultSemiBold"
-            style={[styles.sectionTitle, { color: mutedColor, height: SECTION_HEADER_HEIGHT }]}>
-            {formatGalleryNativeCategoryLabel(item.category)}
-          </ThemedText>
-        );
-      }
+      if (item.kind !== 'row') return null;
 
       const category: GalleryNativeCategory =
         item.items[0]?.nativeCategory === 'native' ? 'native' : 'non-native';
@@ -163,17 +152,6 @@ export function DetectionGalleryGrid({
       tileGap,
       tileSize,
     ],
-  );
-
-  const overrideItemLayout = useCallback(
-    (layout: { span?: number; size?: number }, item: GalleryListEntry) => {
-      if (item.kind === 'section') {
-        layout.size = SECTION_HEADER_HEIGHT + authSpacing.sm;
-      } else {
-        layout.size = estimatedRowHeight;
-      }
-    },
-    [estimatedRowHeight],
   );
 
   if (error) {
@@ -220,7 +198,6 @@ export function DetectionGalleryGrid({
           keyExtractor={(entry) => entry.id}
           estimatedItemSize={estimatedRowHeight}
           scrollEnabled={false}
-          overrideItemLayout={overrideItemLayout}
           extraData={{ tileSize, columnCount, borderColor, deletable }}
         />
       </View>
@@ -272,11 +249,6 @@ export function DetectionGalleryGrid({
 const styles = StyleSheet.create({
   listWrap: {
     minHeight: 2,
-  },
-  sectionTitle: {
-    fontSize: 15,
-    marginBottom: authSpacing.sm,
-    justifyContent: 'center',
   },
   row: {
     flexDirection: 'row',

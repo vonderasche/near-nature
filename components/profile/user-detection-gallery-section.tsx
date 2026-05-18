@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { DetectionGalleryGrid } from '@/components/profile/detection-gallery-grid';
 import { GalleryGridColumnsPicker } from '@/components/profile/gallery-grid-columns-picker';
@@ -7,8 +7,8 @@ import {
   SpeciesSubcategoryFilterButton,
   SpeciesSubcategoryFilterModal,
 } from '@/components/profile/species-subcategory-filter';
-import { ScreenSection } from '@/components/profile/screen-section';
 import { ScreenSearchField } from '@/components/ui/screen-search-field';
+import { authSpacing } from '@/constants/auth-theme';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useGalleryGridColumns } from '@/hooks/useGalleryGridColumns';
 import { useUserDetectionGallery } from '@/hooks/useUserDetectionGallery';
@@ -27,9 +27,6 @@ type UserDetectionGallerySectionProps = {
   userId?: string;
   /** When true, only non-sensitive rows (another member's public gallery). */
   publicOnly?: boolean;
-  title?: string;
-  hint?: string;
-  hintColor: string;
   borderColor: string;
   mutedColor: string;
   activityColor: string;
@@ -51,9 +48,6 @@ export const UserDetectionGallerySection = forwardRef<
   {
     userId,
     publicOnly = false,
-    title = 'Gallery',
-    hint,
-    hintColor,
     borderColor,
     mutedColor,
     activityColor,
@@ -94,26 +88,21 @@ export const UserDetectionGallerySection = forwardRef<
   useImperativeHandle(ref, () => ({ refetch }), [refetch]);
 
   return (
-    <ScreenSection
-      title={title}
-      hint={hint}
-      hintColor={hintColor}
-      titleAccessory={
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <SpeciesSubcategoryFilterButton
-            value={categoryFilter}
-            onPress={() => setCategoryFilterOpen(true)}
-            mutedColor={mutedColor}
-            borderColor={borderColor}
-          />
-          <GalleryGridColumnsPicker
-            value={columns}
-            onChange={setColumnCount}
-            mutedColor={mutedColor}
-            borderColor={borderColor}
-          />
-        </View>
-      }>
+    <View style={styles.wrap}>
+      <View style={styles.toolbar}>
+        <SpeciesSubcategoryFilterButton
+          value={categoryFilter}
+          onPress={() => setCategoryFilterOpen(true)}
+          mutedColor={mutedColor}
+        />
+        <GalleryGridColumnsPicker
+          value={columns}
+          onChange={setColumnCount}
+          mutedColor={mutedColor}
+          borderColor={borderColor}
+        />
+      </View>
+
       {userId ? (
         <ScreenSearchField
           value={searchQuery}
@@ -122,12 +111,14 @@ export const UserDetectionGallerySection = forwardRef<
           accessibilityLabel="Search profile gallery"
         />
       ) : null}
+
       <SpeciesSubcategoryFilterModal
         visible={categoryFilterOpen}
         value={categoryFilter}
         onChange={setCategoryFilter}
         onClose={() => setCategoryFilterOpen(false)}
       />
+
       <DetectionGalleryGrid
         items={filteredItems}
         sourceItemCount={items.length}
@@ -147,6 +138,18 @@ export const UserDetectionGallerySection = forwardRef<
         onDeleteItem={onDeleteItem}
         deletingId={deletingId}
       />
-    </ScreenSection>
+    </View>
   );
+});
+
+const styles = StyleSheet.create({
+  wrap: {
+    gap: authSpacing.sm,
+  },
+  toolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: authSpacing.xs,
+  },
 });
