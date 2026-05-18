@@ -39,9 +39,12 @@ All `.sql` scripts here are written to be **safe to re-run** (they drop/recreate
 | `add_naturalist_category_enums.sql` | Entomologist / ichthyologist / mycologist enum values (patch) |
 | `add_detection_naturalist_columns.sql` | `subcategory` + `main_category` on detections/discoveries, backfill, sync trigger |
 | `get_user_score_by_category.sql` | RPC: owner score breakdown by main discipline (detections + awards) |
-| `get_user_scoring_snapshot.sql` | RPC: one JSON payload — score rows, awards, sub/main species counts (profile scoring tab) |
+| `get_user_scoring_snapshot.sql` | RPC: one JSON payload — score rows, awards, sub/main species counts (profile scoring) |
+| `get_public_user_awards.sql` | RPC: earned badge rows for any member (public profile) |
 
 Gallery list metadata is cached on device (`near_nature:gallery_list:…` in AsyncStorage); images use signed-URL memory cache + `expo-image` disk cache.
+
+> **Note:** The old **Discover** explore tab (parks / species catalog under `sql/discover/`) was removed from the app. The `public.discoveries` table is unrelated — it stores each user’s first-time species logs for points and badges.
 | `drop_legacy_rpc.sql` | One-off: drops unused RPCs and old indexes |
 
 Print the bootstrap order in PowerShell:
@@ -71,7 +74,11 @@ Use for a **new** Supabase project or when you intentionally recreate the `publi
 | 8 | `storage_bucket_detections.sql` | `detections` bucket and storage policies |
 | 9 | `get_detection_count_leaderboard.sql` | Explorer board RPC |
 | 10 | `get_public_user_profile.sql` | Public profile RPC |
-| 11 | `drop_streak_client_update_policy.sql` | Policy cleanup (harmless on fresh DB) |
+| 11 | `add_detection_naturalist_columns.sql` | Taxonomy columns + milestone helpers |
+| 12 | `get_user_score_by_category.sql` | Owner score breakdown RPC |
+| 13 | `get_user_scoring_snapshot.sql` | Owner scoring snapshot RPC |
+| 14 | `get_public_user_awards.sql` | Public earned-badges RPC |
+| 15 | `drop_streak_client_update_policy.sql` | Policy cleanup (harmless on fresh DB) |
 
 ### After rebuild
 
@@ -99,6 +106,9 @@ If tables already exist and you only need to refresh objects:
 | Storage + gallery/avatar read policies | `storage_bucket_detections.sql` |
 | Explorer board | `get_detection_count_leaderboard.sql` |
 | Member profiles | `get_public_user_profile.sql` |
+| Member earned badges | `get_public_user_awards.sql` |
+| Profile scoring tab | `get_user_scoring_snapshot.sql`, `get_user_score_by_category.sql` |
+| Naturalist taxonomy | `add_naturalist_category_enums.sql`, `add_detection_naturalist_columns.sql`, `check_category_milestones.sql` |
 | Username login | `resolve_login_email.sql` |
 | Missing profile after sign-in | `ensure_public_user_profile.sql` |
 | Points on save | `create_leaderboard.sql` |
@@ -140,7 +150,8 @@ SQL: `create_point_awards.sql`, `check_category_milestones.sql` (runs after each
 | Sign in with email or username | RPC `resolve_login_email` |
 | Save / delete photo | `public.detections` + Storage |
 | Explorer board | RPC `get_detection_count_leaderboard` |
-| View another member | RPC `get_public_user_profile` |
+| View another member | RPC `get_public_user_profile`, `get_public_user_awards` |
+| Own profile scoring / badges | RPC `get_user_scoring_snapshot` (fallback: `get_user_score_by_category` + `point_awards`) |
 | Delete account | Edge Function `delete-account` |
 
 **Behavior notes:** Same species can be saved multiple times per day. GPS is never stored (US state code only). Sensitive species are hidden from public gallery and Explorer board aggregates.

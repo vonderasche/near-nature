@@ -10,7 +10,7 @@ For SQL setup order, see [`sql/README.md`](../sql/README.md).
 
 | Layer | Role |
 |--------|------|
-| **UI** | Three tabs: Camera, Explorer Board, Profile (+ auth screens, public user profiles) |
+| **UI** | Three tabs: Camera, Explorer Board, Profile (+ auth, public member profiles). No Discover explore tab. |
 | **Auth** | Supabase Auth session in AsyncStorage; `AuthGate` routes signed-in users to tabs only if `public.users` exists |
 | **Postgres** | Users, detections, discoveries, point awards, streaks — mostly via RPCs and RLS |
 | **Storage** | Private `detections` bucket; images shown via **signed URLs** |
@@ -83,41 +83,43 @@ AuthContext: check public.users row exists?
 
 ## Tab 3 — Profile
 
-Two sub-tabs: **Gallery** | **Scoring & badges**.
+Single scroll: collapsible identity → **Scoring & badges** (collapsed by default) → identification gallery.
+
+### Scoring & badges (expand to load)
+
+| Step | What happens |
+|------|----------------|
+| Collapsed | Section header only; snapshot hook not mounted |
+| Expand | Read **scoring snapshot cache** → badge group grid (bonus / main / sub tiers) |
+| Background | RPC **`get_user_scoring_snapshot`** (fallback: `get_user_score_by_category` + `point_awards`) |
+| UI | One icon per discipline opens a popover of tier badges; dimmed = unearned |
+
+Requires `sql/get_user_scoring_snapshot.sql` (or fallback RPCs) in Supabase.
 
 ### Gallery
 
 | Step | What happens |
 |------|----------------|
-| Open / mount | Read **gallery list cache** (AsyncStorage: row metadata, no signed URLs) → instant grid |
-| Background | `detections` paginated SELECT → merge → hydrate signed URLs → update cache |
-| Search | Debounced 280ms, filters **in memory** |
-| Images | Sign path: **memory → AsyncStorage → Supabase sign**; `expo-image` disk cache |
-| Delete | `DELETE detections` + storage cleanup → invalidate gallery + scoring caches |
-
-### Scoring & badges (mounted only when tab selected)
-
-| Step | What happens |
-|------|----------------|
-| Open tab | Read **scoring snapshot cache** (AsyncStorage) → show tree + summary |
-| Background | Single RPC **`get_user_scoring_snapshot`** → score rows, awards, sub/main species counts |
-| UI | Builds discipline tree + “points by discipline” summary client-side |
-
-Requires `sql/get_user_scoring_snapshot.sql` applied in Supabase.
+| Always visible | Below scoring section |
+| Open / mount | **Gallery list cache** → instant grid |
+| Toolbar | Category filter icon + grid-size menu + search (no section title) |
+| Background | `detections` paginated SELECT → signed URLs → cache update |
+| Delete | `DELETE detections` + invalidate gallery + scoring caches |
 
 ### Profile header
 
-- **`useUser`:** cached `users` + **`get_public_user_profile`** RPC (stats: points, species counts, streak).
-- Pull-to-refresh: profile + gallery refetch + scoring refetch.
+- Collapsible **username / motto / name / email / state** (editable motto & home state).
+- **`useUser`:** cached `users` + **`get_public_user_profile`** RPC (stats).
+- Pull-to-refresh: profile + gallery + scoring refetch.
 - Avatar upload → Storage + `users` update.
 
 ---
 
 ## Public user profile (`/user/[userId]`)
 
-- **`get_public_user_profile`** RPC.
-- Gallery with `publicOnly` (non-sensitive detections), same gallery cache key variant.
-- No scoring tab (owner-only RPCs).
+- **`get_public_user_profile`** RPC + avatar / stats strip.
+- **Badges** collapsible: **`get_public_user_awards`** — earned badges only (hidden if none).
+- Gallery with `publicOnly` (non-sensitive detections).
 
 ---
 
@@ -154,13 +156,13 @@ Stale-while-revalidate: show cache immediately, refresh in background, then upda
 | Login / signup | Auth + `resolve_login_email` / availability RPCs |
 | App open (signed in) | Session restore; profile row check |
 | Open Profile | Cache hit → then `users` + `get_public_user_profile` |
-| Open Gallery tab | Cache → `detections` SELECT (paged) |
-| Open Scoring tab | Cache → `get_user_scoring_snapshot` RPC |
+| Open gallery (profile) | Cache → `detections` SELECT (paged) |
+| Expand Scoring & badges | Cache → `get_user_scoring_snapshot` RPC |
 | Identify photo | Edge function only (+ optional `detections` read for saved species) |
 | Save identification | Storage upload + `INSERT detections` (+ triggers) |
 | Delete photo | `DELETE detections` + storage |
 | Explorer Board | `get_detection_count_leaderboard` RPC (paged) |
-| View other user | `get_public_user_profile` + public gallery SELECT |
+| View other user | `get_public_user_profile` + `get_public_user_awards` + public gallery SELECT |
 | Edit motto/state/avatar | `users` UPDATE (+ avatar storage) |
 
 **Avoided on hot paths:** full `discoveries` scan for scoring UI, identification history until after save, redundant iNat for alternate species.
@@ -189,7 +191,7 @@ Postgres triggers on `detections` insert handle points, streaks, discoveries, an
    └────┬─────┘              └──────┬───────┘  └─────┬──────┘  └──────┬──────┘
         │                           │                │                 │
         │                    ┌──────▼───────┐        │          ┌──────┴──────┐
-        │                    │ Resize 1280  │        │          │ Gallery │Score│
+        │                    │ Resize 1280  │        │          │ Badges│Gallery│
         │                    │ Edge: Claude │        │          └──────┬──────┘
         │                    └──────┬───────┘        │                 │
         │                           │                │                 │
@@ -213,6 +215,7 @@ Postgres triggers on `detections` insert handle points, streaks, discoveries, an
 │         │                              get_detection_count_leaderboard        │
 │         │                              get_public_user_profile              │
 │         │                              get_user_scoring_snapshot            │
+│         │                              get_public_user_awards               │
 │         └──────── signed URLs ◄────────────────────────────────────────────   │
 └───────────────────────────────────────────────────────────────────────────────┘
          ▲                           ▲                           ▲
@@ -258,7 +261,11 @@ Postgres triggers on `detections` insert handle points, streaks, discoveries, an
 
 ## Production checklist
 
-1. Run SQL patches in order (`add_naturalist_*`, `get_user_score_by_category`, `get_user_scoring_snapshot`).
+1. Run SQL patches in order (`add_naturalist_*`, `create_point_awards`, `check_category_milestones`, `get_user_score_by_category`, `get_user_scoring_snapshot`, `get_public_user_awards`).
 2. Reload Supabase schema cache (Settings → API).
-3. Deploy `identify-species` edge function.
-4. Rebuild native app after native dependency changes (e.g. FlashList).
+3. `npm run verify:supabase`
+4. Deploy `identify-species` edge function.
+5. Physical Android dev: `npm run start:dev` then `npm run android:install` (see `.env.example`).
+6. Rebuild native app after native dependency changes (e.g. FlashList).
+
+**Removed:** Discover explore tab and `sql/discover/*` catalog — not deployed. `public.discoveries` remains for first-species bonus + tier counts.
