@@ -1,9 +1,8 @@
--- Safe to re-run
+-- Safe to re-run (drop table first so fresh DBs never reference missing public.users)
 drop trigger if exists on_auth_user_created on auth.users;
-drop trigger if exists users_updated_at on public.users;
+drop table if exists public.users cascade;
 drop function if exists handle_new_user();
 drop function if exists update_updated_at();
-drop table if exists public.users cascade;
 
 -- Create users table
 create table public.users (
