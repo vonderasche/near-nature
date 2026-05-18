@@ -55,7 +55,6 @@ export function CameraIdentificationPanel({
     userState,
     userId ?? undefined,
     identify,
-    refetch,
   );
 
   const handleSaveIdentification = useCallback(() => {
@@ -79,6 +78,7 @@ export function CameraIdentificationPanel({
         onBackgroundSaveError?.(result.message);
         return;
       }
+      void refetch();
       if (result.result.newSpeciesDiscovery) {
         requestExplorerBoardRefresh();
         onNewSpeciesDiscovery?.(result.result.newSpeciesDiscovery);
@@ -95,6 +95,7 @@ export function CameraIdentificationPanel({
     saveInBackground,
     onBackgroundSaveError,
     onNewSpeciesDiscovery,
+    refetch,
   ]);
 
   return (

@@ -32,7 +32,7 @@ interface UseSpeciesIdentificationResult {
 export function useSpeciesIdentification(): UseSpeciesIdentificationResult {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { resizeForUpload } = useResizeImageForUpload();
+  const { resizeForUpload } = useResizeImageForUpload({ maxEdge: 1280 });
 
   const identify = useCallback(async (
     photoUri: string,

@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('@/lib/detections/signedDetectionUrlPersistentCache', () => ({
+  loadPersistedSignedUrl: vi.fn().mockResolvedValue(null),
+  persistSignedUrl: vi.fn().mockResolvedValue(undefined),
+  clearPersistedSignedUrls: vi.fn().mockResolvedValue(undefined),
+  loadPersistedSignedUrlMap: vi.fn().mockResolvedValue(new Map()),
+}));
+
 import { clearSignedDetectionUrlCache } from '@/lib/detections/signedDetectionUrlCache';
 
 vi.mock('@/lib/detections/detectionsStorage', () => ({

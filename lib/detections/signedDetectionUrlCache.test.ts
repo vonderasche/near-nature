@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('@/lib/detections/signedDetectionUrlPersistentCache', () => ({
+  loadPersistedSignedUrl: vi.fn().mockResolvedValue(null),
+  persistSignedUrl: vi.fn().mockResolvedValue(undefined),
+  clearPersistedSignedUrls: vi.fn().mockResolvedValue(undefined),
+  loadPersistedSignedUrlMap: vi.fn().mockResolvedValue(new Map()),
+}));
+
 import {
   clearSignedDetectionUrlCache,
   resolveSignedDetectionDisplayUrl,
@@ -41,6 +48,7 @@ describe('resolveSignedDetectionDisplayUrl', () => {
     const p1 = resolveSignedDetectionDisplayUrl(PATH, EXPIRES_SEC, sign, FALLBACK);
     const p2 = resolveSignedDetectionDisplayUrl(PATH, EXPIRES_SEC, sign, FALLBACK);
 
+    await Promise.resolve();
     expect(sign).toHaveBeenCalledTimes(1);
 
     resolveSign({ ok: true, signedUrl: 'https://signed.example/deduped.jpg' });

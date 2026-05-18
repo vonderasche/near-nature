@@ -1,8 +1,10 @@
-import { extractDetectionsObjectPathFromStoredUrl } from '@/lib/detections/extractDetectionsObjectPath';
 import { createDetectionsSignedUrl } from '@/lib/detections/detectionsStorage';
+import { extractDetectionsObjectPathFromStoredUrl } from '@/lib/detections/extractDetectionsObjectPath';
+import { loadPersistedSignedUrlMap } from '@/lib/detections/signedDetectionUrlPersistentCache';
 import {
   clearSignedDetectionUrlCache,
   resolveSignedDetectionDisplayUrl,
+  seedSignedDetectionUrlCache,
 } from '@/lib/detections/signedDetectionUrlCache';
 import { devWarn } from '@/lib/devLog';
 
@@ -43,6 +45,22 @@ export async function getDetectionImageDisplayUrlMap(
 ): Promise<Map<string, string>> {
   const unique = [...new Set(storedUrls.map((u) => u.trim()).filter((u) => u.length > 0))];
   if (unique.length === 0) return new Map();
+
+  const pathByStored = new Map<string, string>();
+  const objectPaths: string[] = [];
+  for (const stored of unique) {
+    const path = extractDetectionsObjectPathFromStoredUrl(stored);
+    if (path) {
+      pathByStored.set(stored, path);
+      objectPaths.push(path);
+    }
+  }
+
+  const persistedByPath = await loadPersistedSignedUrlMap(objectPaths);
+  const expiresAtMs = Date.now() + SIGNED_URL_EXPIRY_SEC * 1000;
+  for (const [path, signedUrl] of persistedByPath) {
+    seedSignedDetectionUrlCache(path, signedUrl, expiresAtMs);
+  }
 
   const entries = await Promise.all(
     unique.map(async (stored) => [stored, await getDetectionImageDisplayUrl(stored)] as const),

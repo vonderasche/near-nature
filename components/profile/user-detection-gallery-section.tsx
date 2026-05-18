@@ -9,6 +9,7 @@ import {
 } from '@/components/profile/species-subcategory-filter';
 import { ScreenSection } from '@/components/profile/screen-section';
 import { ScreenSearchField } from '@/components/ui/screen-search-field';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useGalleryGridColumns } from '@/hooks/useGalleryGridColumns';
 import { useUserDetectionGallery } from '@/hooks/useUserDetectionGallery';
 import {
@@ -83,9 +84,11 @@ export const UserDetectionGallerySection = forwardRef<
     setCategoryFilter({ kind: 'all' });
   }, [userId, publicOnly]);
 
+  const debouncedSearch = useDebouncedValue(searchQuery, 280);
+
   const filteredItems = useMemo(
-    () => filterDetectionGalleryItems(items, searchQuery, categoryFilter),
-    [items, searchQuery, categoryFilter],
+    () => filterDetectionGalleryItems(items, debouncedSearch, categoryFilter),
+    [items, debouncedSearch, categoryFilter],
   );
 
   useImperativeHandle(ref, () => ({ refetch }), [refetch]);
@@ -132,7 +135,7 @@ export const UserDetectionGallerySection = forwardRef<
         columnCount={columns}
         loading={isLoading}
         isLoadingMore={isLoadingMore}
-        hasMore={hasMore && !searchQuery.trim() && categoryFilter.kind === 'all'}
+        hasMore={hasMore && !debouncedSearch.trim() && categoryFilter.kind === 'all'}
         onLoadMore={() => void loadMore()}
         error={error}
         onRetry={() => void refetch()}

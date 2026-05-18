@@ -1,16 +1,15 @@
-import { Image } from 'expo-image';
+import { FlashList } from '@shopify/flash-list';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { DetectionGalleryDetailModal } from '@/components/profile/detection-gallery-detail-modal';
+import { DetectionGalleryTile } from '@/components/profile/detection-gallery-tile';
 import { ThemedConfirmModal, ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { ThemedText } from '@/components/themed-text';
 import { authColors, authSpacing } from '@/constants/auth-theme';
-import {
-  formatGalleryNativeCategoryLabel,
-  splitGalleryByNativeCategory,
-} from '@/lib/detections/galleryNativeCategory';
+import { buildGalleryListEntries, type GalleryListEntry } from '@/lib/detections/buildGalleryListEntries';
+import { formatGalleryNativeCategoryLabel } from '@/lib/detections/galleryNativeCategory';
 import { minGalleryTileSize, type GalleryGridColumns } from '@/lib/detections/galleryGridColumns';
 import { isSearchQueryActive } from '@/lib/search/normalizeSearchQuery';
 import type { DetectionGalleryItem, GalleryNativeCategory } from '@/types';
@@ -28,24 +27,18 @@ type DetectionGalleryGridProps = {
   borderColor: string;
   mutedColor: string;
   activityColor: string;
-  /** Shown when there are no items (default: own-profile copy). */
   emptyMessage?: string;
-  /** Active profile gallery search (for empty-state copy). */
   searchQuery?: string;
-  /** Total rows loaded for this profile before search filtering. */
   sourceItemCount?: number;
-  /** Own profile: long-press tile or use modal delete to remove a saved photo. */
   deletable?: boolean;
-  /** Called after user confirms delete (long-press or modal). */
   onDeleteItem?: (item: DetectionGalleryItem) => Promise<UserFacingResult>;
-  /** When set, matches `item.id` while that row is deleting (disables modal delete). */
   deletingId?: string | null;
 };
 
+const SECTION_HEADER_HEIGHT = 36;
+
 /**
- * Saved detection thumbnails in a multi-column grid. Scrolls with the parent screen
- * (profile `ScrollView`); uses `useWindowDimensions` so tiles stay square at ~⅓ width.
- * Tapping a tile opens {@link DetectionGalleryDetailModal}.
+ * Virtualized gallery grid (FlashList, scroll disabled — parent profile ScrollView scrolls).
  */
 export function DetectionGalleryGrid({
   items,
@@ -112,20 +105,75 @@ export function DetectionGalleryGrid({
     [onDeleteItem],
   );
 
+  const tileGap = authSpacing.sm;
   const tileSize = useMemo(() => {
     const horizontalPadding = authSpacing.lg * 2;
-    const gap = authSpacing.sm;
     const inner = Math.max(0, windowWidth - horizontalPadding);
-    const cols = columnCount;
     return Math.max(
-      minGalleryTileSize(cols),
-      Math.floor((inner - gap * (cols - 1)) / cols),
+      minGalleryTileSize(columnCount),
+      Math.floor((inner - tileGap * (columnCount - 1)) / columnCount),
     );
-  }, [windowWidth, columnCount]);
+  }, [windowWidth, columnCount, tileGap]);
 
-  const { native: nativeItems, nonNative: nonNativeItems } = useMemo(
-    () => splitGalleryByNativeCategory(items),
-    [items],
+  const listData = useMemo(
+    () => buildGalleryListEntries(items, columnCount),
+    [items, columnCount],
+  );
+
+  const estimatedRowHeight = tileSize + tileGap;
+
+  const renderItem = useCallback(
+    ({ item }: { item: GalleryListEntry }) => {
+      if (item.kind === 'section') {
+        return (
+          <ThemedText
+            type="defaultSemiBold"
+            style={[styles.sectionTitle, { color: mutedColor, height: SECTION_HEADER_HEIGHT }]}>
+            {formatGalleryNativeCategoryLabel(item.category)}
+          </ThemedText>
+        );
+      }
+
+      const category: GalleryNativeCategory =
+        item.items[0]?.nativeCategory === 'native' ? 'native' : 'non-native';
+
+      return (
+        <View style={[styles.row, { gap: tileGap, marginBottom: tileGap, height: tileSize }]}>
+          {item.items.map((tile) => (
+            <DetectionGalleryTile
+              key={tile.id}
+              item={tile}
+              category={category}
+              size={tileSize}
+              borderColor={borderColor}
+              deletable={deletable}
+              onPress={() => setSelected(tile)}
+              onLongPress={deletable && onDeleteItem ? () => confirmAndDelete(tile) : undefined}
+            />
+          ))}
+        </View>
+      );
+    },
+    [
+      borderColor,
+      confirmAndDelete,
+      deletable,
+      mutedColor,
+      onDeleteItem,
+      tileGap,
+      tileSize,
+    ],
+  );
+
+  const overrideItemLayout = useCallback(
+    (layout: { span?: number; size?: number }, item: GalleryListEntry) => {
+      if (item.kind === 'section') {
+        layout.size = SECTION_HEADER_HEIGHT + authSpacing.sm;
+      } else {
+        layout.size = estimatedRowHeight;
+      }
+    },
+    [estimatedRowHeight],
   );
 
   if (error) {
@@ -161,55 +209,20 @@ export function DetectionGalleryGrid({
     return <ThemedText style={[styles.empty, { color: mutedColor }]}>{message}</ThemedText>;
   }
 
-  const renderSection = (sectionItems: DetectionGalleryItem[], category: GalleryNativeCategory) => {
-    if (sectionItems.length === 0) return null;
-    return (
-      <View style={styles.section}>
-        <ThemedText type="defaultSemiBold" style={[styles.sectionTitle, { color: mutedColor }]}>
-          {formatGalleryNativeCategoryLabel(category)}
-        </ThemedText>
-        <View style={[styles.grid, { gap: authSpacing.sm }]}>
-          {sectionItems.map((item) => (
-            <Pressable
-              key={item.id}
-              accessibilityRole="button"
-              accessibilityHint={
-                deletable && onDeleteItem ? 'Opens details. Long press to delete.' : 'Opens details'
-              }
-              accessibilityLabel={`${item.commonName}, ${item.latinName}, ${formatGalleryNativeCategoryLabel(category)}`}
-              onPress={() => setSelected(item)}
-              onLongPress={deletable && onDeleteItem ? () => confirmAndDelete(item) : undefined}
-              delayLongPress={450}
-              style={({ pressed }) => [
-                styles.tile,
-                {
-                  width: tileSize,
-                  height: tileSize,
-                  borderColor,
-                  opacity: pressed ? 0.92 : 1,
-                },
-              ]}>
-              <Image
-                source={{ uri: item.displayUrl }}
-                style={StyleSheet.absoluteFillObject}
-                contentFit="cover"
-                cachePolicy="memory-disk"
-                transition={200}
-              />
-            </Pressable>
-          ))}
-        </View>
-      </View>
-    );
-  };
-
   const showLoadMore = hasMore && Boolean(onLoadMore);
 
   return (
     <>
-      <View accessibilityLabel="Saved identification photos">
-        {renderSection(nativeItems, 'native')}
-        {renderSection(nonNativeItems, 'non-native')}
+      <View accessibilityLabel="Saved identification photos" style={styles.listWrap}>
+        <FlashList
+          data={listData}
+          renderItem={renderItem}
+          keyExtractor={(entry) => entry.id}
+          estimatedItemSize={estimatedRowHeight}
+          scrollEnabled={false}
+          overrideItemLayout={overrideItemLayout}
+          extraData={{ tileSize, columnCount, borderColor, deletable }}
+        />
       </View>
 
       {showLoadMore ? (
@@ -257,23 +270,17 @@ export function DetectionGalleryGrid({
 }
 
 const styles = StyleSheet.create({
-  section: {
-    marginBottom: authSpacing.md,
+  listWrap: {
+    minHeight: 2,
   },
   sectionTitle: {
     fontSize: 15,
     marginBottom: authSpacing.sm,
+    justifyContent: 'center',
   },
-  grid: {
+  row: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingVertical: authSpacing.xs,
-  },
-  tile: {
-    borderRadius: 0,
-    borderWidth: 1,
-    overflow: 'hidden',
-    backgroundColor: authColors.background,
+    flexWrap: 'nowrap',
   },
   loaderWrap: {
     paddingVertical: authSpacing.lg,

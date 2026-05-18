@@ -1,7 +1,7 @@
 import * as Linking from 'expo-linking';
 
 import { signInWithEmail } from '@/lib/auth/email-auth';
-import { clearSignedDetectionUrlCache } from '@/lib/detections/signedDetectionUrlCache';
+import { clearAllSignedDetectionUrlCaches } from '@/lib/detections/signedDetectionUrlCache';
 import { clearAllCachedGalleryLists } from '@/lib/detections/galleryListCache';
 import { clearAllCachedOwnProfiles } from '@/lib/profile/ownProfileCache';
 import { supabase } from '@/lib/supabase';
@@ -31,7 +31,7 @@ export async function signIn(emailOrUsername: string, password: string) {
 
 export async function signOut() {
   const { error } = await supabase.auth.signOut();
-  clearSignedDetectionUrlCache();
+  await clearAllSignedDetectionUrlCaches();
   await clearAllCachedOwnProfiles();
   await clearAllCachedGalleryLists();
   if (error) throw error;
@@ -44,7 +44,7 @@ export async function signOut() {
  */
 export async function signOutLocalOnly(): Promise<void> {
   await supabase.auth.signOut({ scope: 'local' });
-  clearSignedDetectionUrlCache();
+  await clearAllSignedDetectionUrlCaches();
   await clearAllCachedOwnProfiles();
   await clearAllCachedGalleryLists();
 }

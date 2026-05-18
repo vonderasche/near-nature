@@ -1,4 +1,9 @@
 import type { CreateDetectionsSignedUrlResult } from '@/lib/detections/detectionsStorage';
+import {
+  loadPersistedSignedUrl,
+  persistSignedUrl,
+  clearPersistedSignedUrls,
+} from '@/lib/detections/signedDetectionUrlPersistentCache';
 
 type CacheEntry = {
   signedUrl: string;
@@ -15,15 +20,32 @@ export type SignDetectionObjectPath = (
   objectPath: string,
 ) => Promise<CreateDetectionsSignedUrlResult>;
 
-/** Clears cached signed URLs (e.g. tests or after sign-out). */
+/** Clears in-memory signed URL cache (safe in unit tests). */
 export function clearSignedDetectionUrlCache(): void {
   cache.clear();
   inFlight.clear();
 }
 
+/** Clears memory + AsyncStorage signed URLs (e.g. sign-out). */
+export async function clearAllSignedDetectionUrlCaches(): Promise<void> {
+  clearSignedDetectionUrlCache();
+  await clearPersistedSignedUrls();
+}
+
+/** Seed memory cache from a prior disk read (e.g. batch hydrate). */
+export function seedSignedDetectionUrlCache(
+  objectPath: string,
+  signedUrl: string,
+  expiresAtMs: number,
+): void {
+  const trimmed = objectPath.trim();
+  if (!trimmed) return;
+  cache.set(trimmed, { signedUrl, expiresAtMs });
+}
+
 /**
  * Returns a signed display URL for a detections bucket object path.
- * Caches successful results in memory and dedupes concurrent requests per path.
+ * Memory cache → AsyncStorage → sign. Persists successful signs to disk.
  */
 export async function resolveSignedDetectionDisplayUrl(
   objectPath: string,
@@ -40,27 +62,46 @@ export async function resolveSignedDetectionDisplayUrl(
     return cached.signedUrl;
   }
 
-  const pending = inFlight.get(trimmedPath);
+  let pending = inFlight.get(trimmedPath);
   if (pending) return pending;
 
-  const request = (async (): Promise<string> => {
-    const res = await sign(trimmedPath);
-    if (!res.ok) return fallbackUrl;
+  let resolvePending!: (url: string) => void;
+  pending = new Promise<string>((resolve) => {
+    resolvePending = resolve;
+  });
+  inFlight.set(trimmedPath, pending);
 
-    cache.set(trimmedPath, {
-      signedUrl: res.signedUrl,
-      expiresAtMs: now + expiresInSeconds * 1000,
-    });
-    return res.signedUrl;
+  void (async () => {
+    try {
+      const persisted = await loadPersistedSignedUrl(trimmedPath);
+      if (persisted) {
+        const expiresAtMs = Date.now() + expiresInSeconds * 1000;
+        cache.set(trimmedPath, { signedUrl: persisted, expiresAtMs });
+        resolvePending(persisted);
+        return;
+      }
+
+      const res = await sign(trimmedPath);
+      if (!res.ok) {
+        resolvePending(fallbackUrl);
+        return;
+      }
+
+      const expiresAtMs = Date.now() + expiresInSeconds * 1000;
+      cache.set(trimmedPath, {
+        signedUrl: res.signedUrl,
+        expiresAtMs,
+      });
+      await persistSignedUrl(trimmedPath, res.signedUrl, expiresAtMs);
+      resolvePending(res.signedUrl);
+    } catch {
+      resolvePending(fallbackUrl);
+    } finally {
+      if (inFlight.get(trimmedPath) === pending) {
+        inFlight.delete(trimmedPath);
+      }
+    }
   })();
 
-  inFlight.set(trimmedPath, request);
-
-  try {
-    return await request;
-  } finally {
-    if (inFlight.get(trimmedPath) === request) {
-      inFlight.delete(trimmedPath);
-    }
-  }
+  return pending;
 }
