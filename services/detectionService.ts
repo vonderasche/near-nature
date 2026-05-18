@@ -9,6 +9,7 @@ import {
   removeDetectionsObjects,
   uploadDetectionsObject,
 } from '@/lib/detections/detectionsStorage';
+import { invalidateCachedGalleryList } from '@/lib/detections/galleryListCache';
 import { classificationToSpeciesCategory } from '@/lib/detections/mapSpeciesCategory';
 import { resolveNaturalistCategoryFromClassification } from '@/lib/points/resolveNaturalistCategory';
 import { speciesStatusToNativeColumn } from '@/lib/detections/mapNativeStatusDb';
@@ -120,6 +121,8 @@ export async function saveDetection(input: SaveDetectionInput): Promise<SaveDete
     };
   }
 
+  await invalidateCachedGalleryList(userId);
+
   return { detectionId, newSpeciesDiscovery };
 }
 
@@ -129,7 +132,7 @@ export async function saveDetection(input: SaveDetectionInput): Promise<SaveDete
 export async function deleteSavedDetection(detectionId: string): Promise<void> {
   const { data: row, error: selectError } = await supabase
     .from('detections')
-    .select('image_url')
+    .select('image_url, user_id')
     .eq('id', detectionId)
     .maybeSingle();
 
@@ -144,6 +147,10 @@ export async function deleteSavedDetection(detectionId: string): Promise<void> {
 
   const { error: deleteError } = await supabase.from('detections').delete().eq('id', detectionId);
   if (deleteError) throw deleteError;
+
+  if (row.user_id) {
+    await invalidateCachedGalleryList(String(row.user_id));
+  }
 
   if (storagePath) {
     await removeDetectionsObjects([storagePath]);

@@ -193,6 +193,7 @@ export function DetectionGalleryGrid({
                 source={{ uri: item.displayUrl }}
                 style={StyleSheet.absoluteFillObject}
                 contentFit="cover"
+                cachePolicy="memory-disk"
                 transition={200}
               />
             </Pressable>

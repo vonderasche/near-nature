@@ -1,5 +1,5 @@
-import { mapDetectionGalleryRows, type DetectionGalleryRow } from '@/lib/detections/mapDetectionGalleryRow';
-import { getDetectionImageDisplayUrlMap } from '@/services/detectionImageUrl';
+import { hydrateGalleryItemsFromRows } from '@/lib/detections/hydrateGalleryItems';
+import type { DetectionGalleryRow } from '@/lib/detections/mapDetectionGalleryRow';
 import { supabase } from '@/lib/supabase';
 import type { DetectionGalleryItem } from '@/types';
 
@@ -15,21 +15,28 @@ export type FetchUserDetectionGalleryPageParams = {
   pageSize?: number;
 };
 
-export type FetchUserDetectionGalleryPageResult = {
-  items: DetectionGalleryItem[];
+export type FetchUserDetectionGalleryRowsPageResult = {
+  rows: DetectionGalleryRow[];
   hasMore: boolean;
 };
 
+export type FetchUserDetectionGalleryPageResult = {
+  items: DetectionGalleryItem[];
+  hasMore: boolean;
+  /** DB rows for device cache (no signed URLs). */
+  rows: DetectionGalleryRow[];
+};
+
 /**
- * Fetches one page of detection gallery rows (newest first).
+ * Fetches one page of gallery rows (newest first).
  * Requests `pageSize + 1` rows to detect whether another page exists.
  */
-export async function fetchUserDetectionGalleryPage({
+export async function fetchUserDetectionGalleryRowsPage({
   userId,
   publicOnly = false,
   offset,
   pageSize = GALLERY_PAGE_SIZE,
-}: FetchUserDetectionGalleryPageParams): Promise<FetchUserDetectionGalleryPageResult> {
+}: FetchUserDetectionGalleryPageParams): Promise<FetchUserDetectionGalleryRowsPageResult> {
   const from = offset;
   const to = offset + pageSize;
 
@@ -51,12 +58,16 @@ export async function fetchUserDetectionGalleryPage({
   const hasMore = rows.length > pageSize;
   const pageRows = hasMore ? rows.slice(0, pageSize) : rows;
 
-  const displayUrlByStored = await getDetectionImageDisplayUrlMap(
-    pageRows.map((row) => row.image_url),
-  );
+  return { rows: pageRows, hasMore };
+}
 
-  return {
-    items: mapDetectionGalleryRows(pageRows, displayUrlByStored),
-    hasMore,
-  };
+/**
+ * Fetches one page and resolves signed image URLs for display.
+ */
+export async function fetchUserDetectionGalleryPage(
+  params: FetchUserDetectionGalleryPageParams,
+): Promise<FetchUserDetectionGalleryPageResult> {
+  const { rows, hasMore } = await fetchUserDetectionGalleryRowsPage(params);
+  const items = await hydrateGalleryItemsFromRows(rows);
+  return { items, hasMore, rows };
 }

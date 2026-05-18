@@ -1,7 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
-  fetchUserDetectionGalleryPage,
+  galleryItemsPlaceholderFromRows,
+  hydrateGalleryItemsFromRows,
+} from '@/lib/detections/hydrateGalleryItems';
+import {
+  invalidateCachedGalleryList,
+  loadCachedGalleryList,
+  saveCachedGalleryList,
+} from '@/lib/detections/galleryListCache';
+import type { DetectionGalleryRow } from '@/lib/detections/mapDetectionGalleryRow';
+import {
+  fetchUserDetectionGalleryRowsPage,
   GALLERY_PAGE_SIZE,
 } from '@/services/detectionGalleryService';
 import type { DetectionGalleryItem } from '@/types';
@@ -13,15 +23,35 @@ type UseUserDetectionGalleryOptions = {
   publicOnly?: boolean;
 };
 
+type LoadMode = 'reset' | 'append';
+
 type UseUserDetectionGalleryResult = {
   items: DetectionGalleryItem[];
   isLoading: boolean;
   isLoadingMore: boolean;
+  /** Background refresh after showing device cache. */
+  isRefreshing: boolean;
   hasMore: boolean;
   error: string | null;
   loadMore: () => Promise<void>;
   refetch: () => Promise<void>;
 };
+
+function mergeRows(
+  mode: LoadMode,
+  previous: readonly DetectionGalleryRow[],
+  pageRows: readonly DetectionGalleryRow[],
+): DetectionGalleryRow[] {
+  const combined = mode === 'reset' ? [...pageRows] : [...previous, ...pageRows];
+  const seen = new Set<string>();
+  const out: DetectionGalleryRow[] = [];
+  for (const row of combined) {
+    if (seen.has(row.id)) continue;
+    seen.add(row.id);
+    out.push(row);
+  }
+  return out;
+}
 
 export function useUserDetectionGallery({
   userId,
@@ -31,62 +61,116 @@ export function useUserDetectionGallery({
   const [items, setItems] = useState<DetectionGalleryItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const offsetRef = useRef(0);
-  const hasFetchedOnceRef = useRef(false);
+  const rowsRef = useRef<DetectionGalleryRow[]>([]);
+  const hadCacheRef = useRef(false);
+
+  const persistCache = useCallback(
+    async (rows: readonly DetectionGalleryRow[], more: boolean) => {
+      if (!userId) return;
+      await saveCachedGalleryList(userId, publicOnly, { rows, hasMore: more });
+    },
+    [publicOnly, userId],
+  );
+
+  const applyHydratedRows = useCallback(async (rows: readonly DetectionGalleryRow[]) => {
+    const hydrated = await hydrateGalleryItemsFromRows(rows);
+    setItems(hydrated);
+  }, []);
 
   const loadPage = useCallback(
-    async (mode: 'reset' | 'append') => {
+    async (mode: LoadMode, options?: { force?: boolean }) => {
       if (!userId) {
         offsetRef.current = 0;
+        rowsRef.current = [];
         setItems([]);
         setHasMore(false);
         setError(null);
         setIsLoading(false);
         setIsLoadingMore(false);
+        setIsRefreshing(false);
+        hadCacheRef.current = false;
         return;
       }
 
+      const force = options?.force ?? false;
       const offset = mode === 'reset' ? 0 : offsetRef.current;
-      const isInitial = mode === 'reset' && !hasFetchedOnceRef.current;
+      let showedCache = false;
 
-      setError(null);
-      if (mode === 'reset') {
-        if (isInitial) setIsLoading(true);
-      } else {
+      if (mode === 'reset' && !force) {
+        const cached = await loadCachedGalleryList(userId, publicOnly);
+        if (cached && cached.rows.length > 0) {
+          rowsRef.current = cached.rows;
+          offsetRef.current = cached.rows.length;
+          setHasMore(cached.hasMore);
+          setItems(galleryItemsPlaceholderFromRows(cached.rows));
+          setIsLoading(false);
+          setIsRefreshing(true);
+          showedCache = true;
+          hadCacheRef.current = true;
+          void applyHydratedRows(cached.rows);
+        }
+      }
+
+      if (mode === 'reset' && !showedCache) {
+        setIsLoading(true);
+      } else if (mode === 'append') {
         setIsLoadingMore(true);
       }
 
+      setError(null);
+
       try {
-        const { items: pageItems, hasMore: more } = await fetchUserDetectionGalleryPage({
+        const requestSize =
+          mode === 'append' ? pageSize : Math.max(pageSize, rowsRef.current.length);
+
+        const { rows: pageRows, hasMore: more } = await fetchUserDetectionGalleryRowsPage({
           userId,
           publicOnly,
           offset,
-          pageSize,
+          pageSize: requestSize,
         });
 
-        offsetRef.current = offset + pageItems.length;
+        const allRows =
+          mode === 'reset'
+            ? mergeRows('reset', [], pageRows)
+            : mergeRows('append', rowsRef.current, pageRows);
+        rowsRef.current = allRows;
+        offsetRef.current = allRows.length;
         setHasMore(more);
-        setItems((prev) => (mode === 'reset' ? pageItems : [...prev, ...pageItems]));
-        hasFetchedOnceRef.current = true;
+
+        const hydrated = await hydrateGalleryItemsFromRows(allRows);
+        setItems(hydrated);
+        await persistCache(allRows, more);
       } catch (e) {
-        if (mode === 'reset') {
+        if (!showedCache && !hadCacheRef.current) {
           setItems([]);
           setHasMore(false);
+          rowsRef.current = [];
+          offsetRef.current = 0;
         }
         setError(e instanceof Error ? e.message : 'Failed to load gallery.');
       } finally {
         setIsLoading(false);
         setIsLoadingMore(false);
+        setIsRefreshing(false);
       }
     },
-    [userId, pageSize, publicOnly],
+    [applyHydratedRows, pageSize, persistCache, publicOnly, userId],
   );
 
   const refetch = useCallback(async () => {
-    await loadPage('reset');
-  }, [loadPage]);
+    if (userId) {
+      await invalidateCachedGalleryList(userId, publicOnly);
+    }
+    rowsRef.current = [];
+    offsetRef.current = 0;
+    hadCacheRef.current = false;
+    await loadPage('reset', { force: true });
+  }, [loadPage, publicOnly, userId]);
 
   const loadMore = useCallback(async () => {
     if (!hasMore || isLoadingMore || isLoading) return;
@@ -94,7 +178,8 @@ export function useUserDetectionGallery({
   }, [hasMore, isLoadingMore, isLoading, loadPage]);
 
   useEffect(() => {
-    hasFetchedOnceRef.current = false;
+    hadCacheRef.current = false;
+    rowsRef.current = [];
     offsetRef.current = 0;
     void loadPage('reset');
   }, [loadPage]);
@@ -103,6 +188,7 @@ export function useUserDetectionGallery({
     items,
     isLoading,
     isLoadingMore,
+    isRefreshing,
     hasMore,
     error,
     loadMore,

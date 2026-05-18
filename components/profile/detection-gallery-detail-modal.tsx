@@ -108,6 +108,7 @@ export function DetectionGalleryDetailModal({
                 source={{ uri: galleryItem.displayUrl }}
                 style={styles.imageFill}
                 contentFit="contain"
+                cachePolicy="memory-disk"
                 transition={200}
                 accessibilityLabel={`Photo of ${galleryItem.commonName}`}
               />
