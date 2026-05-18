@@ -11,13 +11,13 @@ import { listSectionSupportingStyles } from '@/components/shared/list-detail-car
 import { authColors, authSpacing } from '@/constants/auth-theme';
 import type { ExplorerBoardColumns } from '@/lib/explorerBoard/explorerBoardColumns';
 import type { ExplorerBoardLayoutMode } from '@/lib/explorerBoard/explorerBoardLayout';
-import { filterLeaderboardRows } from '@/lib/leaderboard/filterLeaderboardRows';
+import { filterExplorerBoardRows } from '@/lib/explorerBoard/filterExplorerBoardRows';
 import { routePublicUserProfile } from '@/lib/routing/routes';
 import { isSearchQueryActive } from '@/lib/search/normalizeSearchQuery';
-import type { DetectionLeaderboardRow } from '@/services/leaderboardService';
+import type { ExplorerBoardMemberRow } from '@/services/explorerBoardService';
 
 type Props = {
-  rows: DetectionLeaderboardRow[];
+  rows: ExplorerBoardMemberRow[];
   searchQuery: string;
   layoutMode: ExplorerBoardLayoutMode;
   columnCount: ExplorerBoardColumns;
@@ -44,14 +44,14 @@ export function DetectionCountExplorerBoard({
 }: Props) {
   const router = useRouter();
   const filteredRows = useMemo(
-    () => filterLeaderboardRows(rows, searchQuery),
+    () => filterExplorerBoardRows(rows, searchQuery),
     [rows, searchQuery],
   );
   const { resolveDisplayUrl } = useExplorerBoardDisplayUrls(
     loading && rows.length === 0 ? [] : filteredRows,
   );
 
-  const openMember = (row: DetectionLeaderboardRow) => {
+  const openMember = (row: ExplorerBoardMemberRow) => {
     router.push(routePublicUserProfile(row.userId));
   };
 

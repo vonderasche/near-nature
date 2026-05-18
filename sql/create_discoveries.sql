@@ -50,6 +50,8 @@ begin
     update public.detections
     set points = points + bonus_points
     where id = new.id;
+
+    perform public.check_category_milestones(new.user_id);
   end if;
 
   return new;

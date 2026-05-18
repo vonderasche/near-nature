@@ -4,23 +4,23 @@ import { ExplorerBoardMemberAvatar } from '@/components/explorer-board/explorer-
 import { ListDetailCard } from '@/components/shared/list-detail-card';
 import { authColors } from '@/constants/auth-theme';
 import {
-  formatLeaderboardAccessibilityCounts,
-  formatLeaderboardSpeciesMeta,
-} from '@/lib/leaderboard/formatLeaderboardSpeciesCounts';
-import { parseLeaderboardMotto } from '@/lib/leaderboard/formatLeaderboardMotto';
-import type { DetectionLeaderboardRow } from '@/services/leaderboardService';
+  formatExplorerBoardAccessibilityCounts,
+  formatExplorerBoardSpeciesMeta,
+} from '@/lib/explorerBoard/formatExplorerBoardSpeciesCounts';
+import { parseExplorerBoardMotto } from '@/lib/explorerBoard/formatExplorerBoardMotto';
+import type { ExplorerBoardMemberRow } from '@/services/explorerBoardService';
 
 type Props = {
-  rows: DetectionLeaderboardRow[];
+  rows: ExplorerBoardMemberRow[];
   resolveDisplayUrl: (storedUrl: string | null | undefined) => string | null;
-  onPressMember: (row: DetectionLeaderboardRow) => void;
+  onPressMember: (row: ExplorerBoardMemberRow) => void;
 };
 
-function rankBadge(row: DetectionLeaderboardRow): string | null {
+function rankBadge(row: ExplorerBoardMemberRow): string | null {
   return row.rank > 0 ? String(row.rank) : null;
 }
 
-function accessibilityTitle(row: DetectionLeaderboardRow): string {
+function accessibilityTitle(row: ExplorerBoardMemberRow): string {
   return row.rank > 0 ? `Rank ${row.rank}, ${row.username}` : row.username;
 }
 
@@ -31,7 +31,7 @@ export function ExplorerBoardMemberList({ rows, resolveDisplayUrl, onPressMember
   return (
     <>
       {rows.map((row) => {
-        const motto = parseLeaderboardMotto(row.motto);
+        const motto = parseExplorerBoardMotto(row.motto);
         const a11yTitle = accessibilityTitle(row);
 
         return (
@@ -42,7 +42,7 @@ export function ExplorerBoardMemberList({ rows, resolveDisplayUrl, onPressMember
             android_ripple={{ color: 'rgba(255,255,255,0.08)' }}
             accessibilityRole="button"
             accessibilityHint="Opens this member's public profile"
-            accessibilityLabel={`${a11yTitle}, ${motto ?? 'No motto'}, ${formatLeaderboardAccessibilityCounts(row)}`}>
+            accessibilityLabel={`${a11yTitle}, ${motto ?? 'No motto'}, ${formatExplorerBoardAccessibilityCounts(row)}`}>
             <ListDetailCard
               leading={
                 <ExplorerBoardMemberAvatar
@@ -55,7 +55,7 @@ export function ExplorerBoardMemberList({ rows, resolveDisplayUrl, onPressMember
               cornerBadge={rankBadge(row)}
               title={row.username}
               subtitle={motto}
-              meta={formatLeaderboardSpeciesMeta(row)}
+              meta={formatExplorerBoardSpeciesMeta(row)}
             />
           </Pressable>
         );

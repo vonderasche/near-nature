@@ -129,7 +129,7 @@ export function DetectionGalleryDetailModal({
                 <AuthButton
                   title="Delete from gallery"
                   variant="outline"
-                  icon="delete-outline"
+                  icon="trash"
                   fillParent
                   onPress={handleDeletePress}
                   loading={deleteBusy}

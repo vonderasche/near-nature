@@ -1,5 +1,7 @@
 import { lookupNativeStatus } from '@/api/inaturalist';
 import { fetchSpeciesWikiData, type SpeciesWikiData } from '@/api/wikipedia';
+import { getSpeciesSubcategoryLabel } from '@/constants/species-subcategories';
+import { classificationToSpeciesCategory } from '@/lib/detections/mapSpeciesCategory';
 import { devLog } from '@/lib/devLog';
 import type { ClassificationResult, Species } from '@/types';
 
@@ -75,11 +77,12 @@ export async function enrichSpeciesFromApis(
         });
       }
 
+      const category = classificationToSpeciesCategory(classification);
       return {
         id: `${baseId}-${index}`,
         latinName: classification.latinName,
         commonName: classification.commonName,
-        taxonGroup: classification.taxonGroup,
+        taxonGroup: getSpeciesSubcategoryLabel(category),
         status: nativeResult?.status ?? 'unknown',
       };
     }),

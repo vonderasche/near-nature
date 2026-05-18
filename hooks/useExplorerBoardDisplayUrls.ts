@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { collectLeaderboardImageStoredUrls } from '@/lib/leaderboard/collectLeaderboardImageStoredUrls';
-import type { DetectionLeaderboardRow } from '@/services/leaderboardService';
+import { collectExplorerBoardImageStoredUrls } from '@/lib/explorerBoard/collectExplorerBoardImageStoredUrls';
+import type { ExplorerBoardMemberRow } from '@/services/explorerBoardService';
 import { getDetectionImageDisplayUrlMap } from '@/services/detectionImageUrl';
 
-export function useExplorerBoardDisplayUrls(rows: readonly DetectionLeaderboardRow[]) {
+export function useExplorerBoardDisplayUrls(rows: readonly ExplorerBoardMemberRow[]) {
   const [displayUrlByStored, setDisplayUrlByStored] = useState<Map<string, string>>(() => new Map());
 
-  const storedUrls = useMemo(() => collectLeaderboardImageStoredUrls(rows), [rows]);
+  const storedUrls = useMemo(() => collectExplorerBoardImageStoredUrls(rows), [rows]);
   const storedUrlsKey = useMemo(() => storedUrls.join('\u0001'), [storedUrls]);
 
   useEffect(() => {

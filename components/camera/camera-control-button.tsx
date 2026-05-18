@@ -1,10 +1,10 @@
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Platform, Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
+import { HeroIcon, type HeroIconName } from '@/components/ui/hero-icon';
 import { authColors } from '@/constants/auth-theme';
 
 type Props = {
-  icon: keyof typeof MaterialIcons.glyphMap;
+  icon: HeroIconName;
   accessibilityLabel: string;
   onPress: () => void;
   active?: boolean;
@@ -35,7 +35,7 @@ export function CameraControlButton({
         pressed && !disabled && styles.btnPressed,
         style,
       ]}>
-      <MaterialIcons
+      <HeroIcon
         name={icon}
         size={26}
         color={disabled ? authColors.textMuted : authColors.text}

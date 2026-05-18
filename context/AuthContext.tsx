@@ -2,10 +2,11 @@ import type { Session } from '@supabase/supabase-js';
 import * as Linking from 'expo-linking';
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
+import { clearOrphanAuthSession } from '@/lib/auth/orphanAuthSession';
 import { parseSupabaseAuthParamsFromUrl } from '@/lib/auth/parseAuthCallbackUrl';
 import { getSessionClearingStaleRefresh } from '@/lib/auth/recoverSupabaseSession';
 import { supabase } from '@/lib/supabase';
-import { userProfileExists } from '@/services/userService';
+import { resolveUserProfile } from '@/services/userService';
 
 type AuthContextType = {
   session: Session | null;
@@ -60,9 +61,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setHasProfile(true);
       return;
     }
+    if (await clearOrphanAuthSession()) {
+      setProfileGateResolved(true);
+      setHasProfile(false);
+      setSession(null);
+      return;
+    }
     setProfileGateResolved(false);
     try {
-      setHasProfile(await userProfileExists(uid));
+      setHasProfile(await resolveUserProfile(uid));
     } catch {
       setHasProfile(false);
     } finally {
@@ -139,7 +146,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfileGateResolved(false);
     void (async () => {
       try {
-        const ok = await userProfileExists(session.user.id);
+        if (await clearOrphanAuthSession()) {
+          if (!cancelled) {
+            setSession(null);
+            setHasProfile(false);
+            setProfileGateResolved(true);
+          }
+          return;
+        }
+        const ok = await resolveUserProfile(session.user.id);
         if (!cancelled) {
           setHasProfile(ok);
           setProfileGateResolved(true);

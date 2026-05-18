@@ -1,4 +1,11 @@
+import {
+  animalSubcategoryIdsForPrompt,
+  plantSubcategoryIdsForPrompt,
+} from '@/constants/species-subcategories';
 import type { ClassificationResult, VisionTaxonGroup } from '@/types';
+
+const ANIMAL_SUBCATEGORIES = animalSubcategoryIdsForPrompt();
+const PLANT_SUBCATEGORIES = plantSubcategoryIdsForPrompt();
 
 export const IDENTIFICATION_PROMPT = `
 Identify every plant, animal, fungus, and bird that is clearly visible in this image.
@@ -11,12 +18,18 @@ Each item in the array must have exactly these fields:
   "commonName":  "Common English name",
   "confidence":  0.95,
   "taxonGroup":  "plants" | "animals" | "fungi" | "birds",
+  "subcategory": "<see rules below>",
   "boundingBox": { "x": 10, "y": 20, "width": 40, "height": 50 }
 }
 
 boundingBox values are percentages of the image dimensions (0–100).
 confidence is a number between 0 and 1.
 taxonGroup must be one of exactly: plants, animals, fungi, birds.
+
+subcategory rules (required for plants, animals, and birds; omit or use "other" for fungi):
+- When taxonGroup is "animals" or "birds", subcategory must be one of: ${ANIMAL_SUBCATEGORIES}
+- When taxonGroup is "plants", subcategory must be one of: ${PLANT_SUBCATEGORIES}
+- Pick the single best match (e.g. hawk → raptors, oak → trees, frog → frogs_toads).
 
 If no species are identifiable, return an empty array: []
 `.trim();
@@ -32,6 +45,7 @@ function isValidClassification(item: unknown): item is {
   commonName: string;
   confidence: number;
   taxonGroup: VisionTaxonGroup;
+  subcategory?: string;
   boundingBox?: { x: number; y: number; width: number; height: number };
 } {
   if (typeof item !== 'object' || item === null) return false;
@@ -53,6 +67,10 @@ export function sanitizeClassifications(parsed: unknown[]): ClassificationResult
       commonName: String(item.commonName).trim(),
       confidence: clamp(Number(item.confidence), 0, 1),
       taxonGroup: item.taxonGroup as VisionTaxonGroup,
+      subcategory:
+        typeof item.subcategory === 'string' && item.subcategory.trim()
+          ? item.subcategory.trim()
+          : undefined,
       boundingBox: item.boundingBox
         ? {
             x: clamp(Number(item.boundingBox.x), 0, 100),

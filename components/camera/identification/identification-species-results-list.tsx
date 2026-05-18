@@ -3,6 +3,7 @@ import { Text } from 'react-native';
 import type { SpeciesWikiData } from '@/api/wikipedia';
 import { SpeciesResultCard } from '@/components/camera/identification/species-result-card';
 import { listSectionSupportingStyles } from '@/components/shared/list-detail-card';
+import { getSpeciesSubcategoryLabel } from '@/constants/species-subcategories';
 import type { Species } from '@/types';
 
 import { IdentificationSpeciesWikiBody } from './identification-species-wiki-body';
@@ -31,7 +32,7 @@ export function IdentificationSpeciesResultsList({
           key={s.id}
           commonName={s.commonName}
           latinName={s.latinName}
-          meta={`${s.taxonGroup} · ${s.status}`}>
+          meta={`${getSpeciesSubcategoryLabel(s.taxonGroup)} · ${s.status}`}>
           <IdentificationSpeciesWikiBody latinName={s.latinName} wikiByLatinName={wikiByLatinName} />
         </SpeciesResultCard>
       ))}

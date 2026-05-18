@@ -1,4 +1,4 @@
--- Leaderboard ranked by distinct native species discovered (non-sensitive saves).
+-- Explorer board: ranked by distinct native species discovered (non-sensitive saves).
 
 -- Paginated via p_limit / p_offset. Global rank is preserved across pages.
 
@@ -72,7 +72,14 @@ as $$
 
       nullif(trim(u.motto), '')                       as motto,
 
-      coalesce(sum(d.points), 0)::bigint              as total_points,
+      (
+        coalesce(sum(d.points), 0)
+        + coalesce((
+          select sum(pa.points)
+          from public.point_awards pa
+          where pa.user_id = u.id
+        ), 0)
+      )::bigint                                       as total_points,
 
       (
 

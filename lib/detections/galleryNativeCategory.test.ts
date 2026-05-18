@@ -17,6 +17,7 @@ function item(id: string, category: 'native' | 'non-native'): DetectionGalleryIt
     detectedAt: '2026-01-01T00:00:00Z',
     commonName: 'A',
     latinName: 'a',
+    category: 'other',
     description: null,
     nativeStatus: category === 'native' ? 'native' : 'unknown',
     nativeCategory: category,

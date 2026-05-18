@@ -6,7 +6,7 @@ import type { DetectionGalleryItem } from '@/types';
 export const GALLERY_PAGE_SIZE = 18;
 
 const GALLERY_SELECT =
-  'id, image_url, detected_at, common_name, latin_name, description, native_status';
+  'id, image_url, detected_at, common_name, latin_name, category, description, native_status';
 
 export type FetchUserDetectionGalleryPageParams = {
   userId: string;

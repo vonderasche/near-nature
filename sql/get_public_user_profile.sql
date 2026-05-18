@@ -33,10 +33,19 @@ as $$
     coalesce(s.current_streak, 0)::int,
     coalesce(s.longest_streak, 0)::int,
     (
-      select coalesce(sum(d.points), 0)::bigint
-      from public.detections d
-      where d.user_id = u.id
-        and d.is_sensitive = false
+      select (
+        coalesce((
+          select sum(d.points)
+          from public.detections d
+          where d.user_id = u.id
+            and d.is_sensitive = false
+        ), 0)
+        + coalesce((
+          select sum(pa.points)
+          from public.point_awards pa
+          where pa.user_id = u.id
+        ), 0)
+      )::bigint
     ) as public_points,
     (
       select count(distinct d.latin_name)::bigint
@@ -46,9 +55,10 @@ as $$
     ) as public_species_count,
     case
       when auth.uid() is not null and auth.uid() = u.id then (
-        select coalesce(sum(d.points), 0)::bigint
-        from public.detections d
-        where d.user_id = u.id
+        select (
+          coalesce((select sum(d.points) from public.detections d where d.user_id = u.id), 0)
+          + coalesce((select sum(pa.points) from public.point_awards pa where pa.user_id = u.id), 0)
+        )::bigint
       )
       else null::bigint
     end as owner_points,

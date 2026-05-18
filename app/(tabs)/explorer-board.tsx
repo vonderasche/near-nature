@@ -9,7 +9,7 @@ import { ScreenSearchField } from '@/components/ui/screen-search-field';
 import { authColors, authSpacing } from '@/constants/auth-theme';
 import { Colors } from '@/constants/auth-theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useDetectionLeaderboard } from '@/hooks/useDetectionLeaderboard';
+import { useExplorerBoard } from '@/hooks/useExplorerBoard';
 import { useExplorerBoardColumns } from '@/hooks/useExplorerBoardColumns';
 import { useExplorerBoardLayout } from '@/hooks/useExplorerBoardLayout';
 import {
@@ -22,7 +22,7 @@ export default function ExplorerBoardScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const tint = Colors[colorScheme].tint;
   const { rows, isLoading, isLoadingMore, hasMore, error, loadMore, refetch } =
-    useDetectionLeaderboard();
+    useExplorerBoard();
   const { layoutMode, setLayout } = useExplorerBoardLayout();
   const { columns, setColumnCount } = useExplorerBoardColumns();
   const [refreshing, setRefreshing] = useState(false);

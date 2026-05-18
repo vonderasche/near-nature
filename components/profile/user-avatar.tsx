@@ -1,4 +1,4 @@
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { HeroIcon } from '@/components/ui/hero-icon';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, StyleSheet, View } from 'react-native';
 
@@ -48,7 +48,7 @@ export function UserAvatar({
             onLoad={() => setFailed(false)}
           />
         ) : (
-          <MaterialIcons name="person" size={48} color={mutedIconColor} accessibilityLabel="Profile photo placeholder" />
+          <HeroIcon name="user" size={48} color={mutedIconColor} />
         )}
         {busy ? (
           <View style={styles.busyOverlay} pointerEvents="none" accessibilityLabel="Updating profile photo">

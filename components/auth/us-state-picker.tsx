@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     borderRadius: authRadii.field,
     paddingHorizontal: authSpacing.sm,
     paddingVertical: authSpacing.sm,
-    backgroundColor: authColors.fieldBackground,
+    backgroundColor: 'transparent',
   },
   selectorDisabled: {
     opacity: 0.5,

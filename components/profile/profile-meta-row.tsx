@@ -1,4 +1,4 @@
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { HeroIcon } from '@/components/ui/hero-icon';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -28,7 +28,7 @@ export function ProfileMetaRow({
         {value}
       </Text>
       {onPress ? (
-        <MaterialIcons name="chevron-right" size={22} color={authColors.textMuted} />
+        <HeroIcon name="chevron-right" size={22} color={authColors.textMuted} />
       ) : null}
     </>
   );

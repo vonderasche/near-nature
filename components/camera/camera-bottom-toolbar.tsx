@@ -1,4 +1,4 @@
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { HeroIcon } from '@/components/ui/hero-icon';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
@@ -63,7 +63,7 @@ export function CameraBottomToolbar({
           <ActivityIndicator color={authColors.text} size="small" />
         ) : (
           <>
-            <MaterialIcons name="photo-library" size={22} color={authColors.text} />
+            <HeroIcon name="photo" size={22} color={authColors.text} />
             <Text style={styles.galleryLabel}>Gallery</Text>
           </>
         )}

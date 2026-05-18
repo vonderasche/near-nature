@@ -18,14 +18,16 @@ export function photoFlashAccessibilityLabel(mode: PhotoFlashMode): string {
   }
 }
 
-/** Material Icons name for the current flash mode. */
-export function photoFlashIconName(mode: PhotoFlashMode): 'flash-off' | 'flash-auto' | 'flash-on' {
+import type { HeroIconName } from '@/components/ui/hero-icon';
+
+/** Heroicon name for the current flash mode. */
+export function photoFlashIconName(mode: PhotoFlashMode): HeroIconName {
   switch (mode) {
     case 'off':
-      return 'flash-off';
+      return 'bolt-slash';
     case 'auto':
-      return 'flash-auto';
+      return 'bolt';
     case 'on':
-      return 'flash-on';
+      return 'bolt';
   }
 }

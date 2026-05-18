@@ -7,6 +7,7 @@ export type DetectionGalleryRow = {
   detected_at: string;
   common_name: string;
   latin_name: string;
+  category: string;
   description: string | null;
   native_status: string | null;
 };
@@ -34,6 +35,7 @@ export function mapDetectionGalleryRows(
       detectedAt: row.detected_at,
       commonName: row.common_name,
       latinName: row.latin_name,
+      category: String(row.category ?? 'other'),
       description,
       nativeStatus,
       nativeCategory,

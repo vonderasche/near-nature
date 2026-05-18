@@ -11,6 +11,7 @@ function item(overrides: Partial<DetectionGalleryItem>): DetectionGalleryItem {
     detectedAt: '2024-01-01',
     commonName: 'Lion',
     latinName: 'Panthera leo',
+    category: 'carnivores',
     description: 'Large African cat',
     nativeStatus: 'native',
     nativeCategory: 'native',
@@ -21,7 +22,13 @@ function item(overrides: Partial<DetectionGalleryItem>): DetectionGalleryItem {
 describe('filterDetectionGalleryItems', () => {
   const items = [
     item({ id: 'a', commonName: 'Lion', latinName: 'Panthera leo' }),
-    item({ id: 'b', commonName: 'Oak', latinName: 'Quercus', description: 'A deciduous tree' }),
+    item({
+      id: 'b',
+      commonName: 'Oak',
+      latinName: 'Quercus',
+      category: 'trees_shrubs',
+      description: 'A deciduous tree',
+    }),
   ];
 
   it('returns all when query is empty', () => {
@@ -31,5 +38,13 @@ describe('filterDetectionGalleryItems', () => {
   it('matches names and description', () => {
     expect(filterDetectionGalleryItems(items, 'panthera').map((i) => i.id)).toEqual(['a']);
     expect(filterDetectionGalleryItems(items, 'deciduous').map((i) => i.id)).toEqual(['b']);
+  });
+
+  it('filters by subcategory', () => {
+    expect(
+      filterDetectionGalleryItems(items, '', { kind: 'subcategory', subcategory: 'trees_shrubs' }).map(
+        (i) => i.id,
+      ),
+    ).toEqual(['b']);
   });
 });

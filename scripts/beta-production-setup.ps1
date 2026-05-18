@@ -11,9 +11,13 @@ Write-Host ""
 
 $core = @(
   "create_user.sql",
+  "ensure_public_user_profile.sql",
   "resolve_login_email.sql",
+  "check_user_exists.sql",
   "create_detections.sql",
   "create_leaderboard.sql",
+  "create_point_awards.sql",
+  "check_category_milestones.sql",
   "create_streaks.sql",
   "create_discoveries.sql",
   "storage_bucket_detections.sql",
@@ -36,7 +40,15 @@ function Show-Block([string]$title, [string[]]$files) {
 
 Show-Block "Core schema (sql/)" $core
 
-Write-Host "Existing DB cleanup (optional, drops unused RPCs + one_species_per_day index):" -ForegroundColor Green
+Write-Host "Existing DB patches (run when tables already exist):" -ForegroundColor Green
+Write-Host "  sql/ensure_public_user_profile.sql (if create_user.sql predates profile RPC)" -ForegroundColor White
+Write-Host "  sql/check_user_exists.sql" -ForegroundColor White
+Write-Host "  sql/add_user_date_of_birth.sql" -ForegroundColor White
+Write-Host "  sql/add_species_subcategories.sql" -ForegroundColor White
+Write-Host "  sql/add_naturalist_category_enums.sql" -ForegroundColor White
+Write-Host "  sql/create_point_awards.sql (if not in core rebuild)" -ForegroundColor White
+Write-Host "  sql/check_category_milestones.sql" -ForegroundColor White
+Write-Host "  Re-run sql/create_discoveries.sql to wire milestone trigger" -ForegroundColor White
 Write-Host "  sql/drop_legacy_rpc.sql" -ForegroundColor White
 Write-Host ""
 Write-Host "Edge function (terminal on your machine):" -ForegroundColor Green

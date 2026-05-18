@@ -1,4 +1,4 @@
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { HeroIcon } from '@/components/ui/hero-icon';
 import { Pressable, StyleSheet } from 'react-native';
 
 import { authSpacing } from '@/constants/auth-theme';
@@ -26,7 +26,7 @@ export function ExplorerBoardViewModeToggle({ value, onChange, mutedColor }: Pro
       hitSlop={10}
       onPress={() => onChange(next)}
       style={({ pressed }) => [styles.trigger, pressed && styles.triggerPressed]}>
-      <MaterialIcons name={isGrid ? 'view-list' : 'grid-view'} size={22} color={mutedColor} />
+      <HeroIcon name={isGrid ? 'list-bullet' : 'squares-2x2'} size={22} color={mutedColor} />
     </Pressable>
   );
 }

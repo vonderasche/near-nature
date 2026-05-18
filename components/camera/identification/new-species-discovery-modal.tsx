@@ -1,4 +1,4 @@
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { HeroIcon } from '@/components/ui/hero-icon';
 import * as Haptics from 'expo-haptics';
 import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -30,7 +30,7 @@ export function NewSpeciesDiscoveryModal({ visible, discovery, onDismiss }: Prop
   return (
     <SheetModalShell visible={visible} onRequestClose={onDismiss} onBackdropPress={onDismiss}>
       <View style={styles.iconWrap}>
-        <MaterialIcons name="emoji-events" size={40} color={authColors.text} accessibilityLabel="" />
+        <HeroIcon name="trophy" size={40} color={authColors.text} variant="solid" />
       </View>
       <Text style={sheetModalShellStyles.sheetTitle}>New species discovery</Text>
       <Text style={styles.speciesName}>{discovery.commonName}</Text>

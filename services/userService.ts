@@ -85,6 +85,31 @@ function numOrNull(v: number | string | null | undefined): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+function isRpcMissing(error: { message?: string } | null): boolean {
+  const msg = (error?.message ?? '').toLowerCase();
+  return (
+    msg.includes('could not find the function') ||
+    msg.includes('does not exist') ||
+    msg.includes('schema cache')
+  );
+}
+
+/**
+ * Creates `public.users` from auth metadata when missing (requires `ensure_public_user_profile` RPC).
+ */
+export async function ensurePublicUserProfile(): Promise<boolean> {
+  const { data, error } = await supabase.rpc('ensure_public_user_profile');
+  if (error) {
+    if (isRpcMissing(error)) {
+      throw new Error(
+        'Profile setup RPC is missing. In Supabase SQL Editor run sql/ensure_public_user_profile.sql (or re-run sql/create_user.sql), then reload the schema cache.',
+      );
+    }
+    throw error;
+  }
+  return Boolean(data);
+}
+
 export async function getPublicUserProfile(userId: string): Promise<PublicUserProfile | null> {
   const { data, error } = await supabase.rpc('get_public_user_profile', { p_user_id: userId });
   if (error) throw error;
@@ -116,6 +141,17 @@ export async function userProfileExists(userId: string): Promise<boolean> {
   const { data, error } = await supabase.from('users').select('id').eq('id', userId).maybeSingle();
   if (error) throw error;
   return !!data;
+}
+
+/** Ensures a profile row exists, then returns whether it is present. */
+export async function resolveUserProfile(userId: string): Promise<boolean> {
+  if (await userProfileExists(userId)) return true;
+  try {
+    await ensurePublicUserProfile();
+  } catch {
+    return false;
+  }
+  return userProfileExists(userId);
 }
 
 // Fetch the current user's profile

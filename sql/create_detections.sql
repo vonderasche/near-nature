@@ -5,16 +5,43 @@ drop type if exists native_status cascade;
 
 -- Enums
 create type species_category as enum (
+  -- legacy broad categories (older rows)
   'mammal',
   'reptile',
   'fish',
   'insect',
   'bird',
+  'amphibian',
   'plant_tree',
   'plant_flower',
   'plant_other',
-  'amphibian',
-  'other'
+  'other',
+  -- animal subcategories
+  'lizards',
+  'snakes',
+  'frogs_toads',
+  'turtles_tortoises',
+  'salamanders',
+  'songbirds',
+  'raptors',
+  'wading_birds',
+  'waterfowl',
+  'shorebirds',
+  'small_mammals',
+  'deer_hoofed',
+  'bats',
+  'marine_mammals',
+  'carnivores',
+  -- plant subcategories
+  'trees',
+  'shrubs',
+  'flowers',
+  'grasses_sedges',
+  'ferns',
+  'mosses_lichens',
+  'vines',
+  'succulents_cacti',
+  'aquatic_plants'
 );
 
 create type native_status as enum (

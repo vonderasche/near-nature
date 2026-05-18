@@ -53,7 +53,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
       }
     }
 
-    if (isAuthenticated && hasProfile && inAuth && !onResetPassword) {
+    if (isAuthenticated && hasProfile && inAuth && !onResetPassword && !onNeedsProfile) {
       router.replace(routes.tabs);
     }
   }, [

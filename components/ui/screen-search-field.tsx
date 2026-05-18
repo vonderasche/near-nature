@@ -1,6 +1,6 @@
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
+import { HeroIcon } from '@/components/ui/hero-icon';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 
 type Props = {
@@ -15,7 +15,7 @@ export function ScreenSearchField({ value, onChangeText, placeholder, accessibil
 
   return (
     <View style={styles.wrap} accessibilityLabel={accessibilityLabel}>
-      <MaterialIcons name="search" size={20} color={authColors.textMuted} style={styles.leadingIcon} />
+      <HeroIcon name="magnifying-glass" size={20} color={authColors.textMuted} style={styles.leadingIcon} />
       <TextInput
         value={value}
         onChangeText={onChangeText}
@@ -36,7 +36,7 @@ export function ScreenSearchField({ value, onChangeText, placeholder, accessibil
           hitSlop={8}
           onPress={() => onChangeText('')}
           style={({ pressed }) => [styles.clear, pressed && styles.clearPressed]}>
-          <MaterialIcons name="close" size={18} color={authColors.textMuted} />
+          <HeroIcon name="x-mark" size={18} color={authColors.textMuted} />
         </Pressable>
       ) : null}
     </View>

@@ -34,6 +34,8 @@ export type DetectionGalleryItem = {
   detectedAt: string;
   commonName: string;
   latinName: string;
+  /** Postgres `species_category` (subcategory or legacy broad category). */
+  category: string;
   /** Wikipedia summary (or other note) stored at save time; may be null for older rows. */
   description: string | null;
   /** iNaturalist-derived status at save time. */
@@ -56,6 +58,8 @@ export type ClassificationResult = {
   commonName: string;
   confidence: number;
   taxonGroup: VisionTaxonGroup;
+  /** Fine-grained category id (see `constants/species-subcategories.ts`). */
+  subcategory?: string;
   boundingBox?: { x: number; y: number; width: number; height: number };
 };
 

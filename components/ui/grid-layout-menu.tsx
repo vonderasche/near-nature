@@ -1,4 +1,3 @@
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useCallback, useRef, useState } from 'react';
 import {
   Dimensions,
@@ -9,6 +8,7 @@ import {
   View,
 } from 'react-native';
 
+import { HeroIcon } from '@/components/ui/hero-icon';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import {
@@ -132,7 +132,7 @@ export function GridLayoutMenu({
                     ]}>
                     <Text style={[styles.cellLabel, active && styles.cellLabelActive]}>{n}</Text>
                     {active ? (
-                      <MaterialIcons
+                      <HeroIcon
                         name="check"
                         size={14}
                         color={authColors.background}

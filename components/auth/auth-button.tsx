@@ -1,4 +1,3 @@
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import {
   ActivityIndicator,
   Pressable,
@@ -8,8 +7,8 @@ import {
   type AccessibilityRole,
   type AccessibilityState,
 } from 'react-native';
-import type { ComponentProps } from 'react';
 
+import { HeroIcon, type HeroIconName } from '@/components/ui/hero-icon';
 import { authColors, authRadii, authSpacing, authTypography } from '@/constants/auth-theme';
 
 /** All app buttons use design tokens (`authColors`, `authRadii`, …) for future theme switching. */
@@ -25,7 +24,7 @@ export type AuthButtonProps = {
   /** Span parent width (stacked sheets, equal columns in a row). */
   fillParent?: boolean;
   /** Optional leading icon (e.g. delete-outline). */
-  icon?: ComponentProps<typeof MaterialIcons>['name'];
+  icon?: HeroIconName;
   accessibilityLabel?: string;
   accessibilityRole?: AccessibilityRole;
   accessibilityState?: AccessibilityState;
@@ -81,7 +80,7 @@ export function AuthButton({
           <ActivityIndicator color={spinnerColor} />
         ) : (
           <View style={styles.labelRow}>
-            {icon ? <MaterialIcons name={icon} size={22} color={spinnerColor} /> : null}
+            {icon ? <HeroIcon name={icon} size={22} color={spinnerColor} /> : null}
             <Text style={[styles.title, labelStyle]}>{title}</Text>
           </View>
         )}

@@ -1,12 +1,20 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
+import { View } from 'react-native';
 
 import { DetectionGalleryGrid } from '@/components/profile/detection-gallery-grid';
 import { GalleryGridColumnsPicker } from '@/components/profile/gallery-grid-columns-picker';
+import {
+  SpeciesSubcategoryFilterButton,
+  SpeciesSubcategoryFilterModal,
+} from '@/components/profile/species-subcategory-filter';
 import { ScreenSection } from '@/components/profile/screen-section';
 import { ScreenSearchField } from '@/components/ui/screen-search-field';
 import { useGalleryGridColumns } from '@/hooks/useGalleryGridColumns';
 import { useUserDetectionGallery } from '@/hooks/useUserDetectionGallery';
-import { filterDetectionGalleryItems } from '@/lib/detections/filterDetectionGalleryItems';
+import {
+  filterDetectionGalleryItems,
+  type GalleryCategoryFilter,
+} from '@/lib/detections/filterDetectionGalleryItems';
 import type { DetectionGalleryItem } from '@/types';
 import type { UserFacingResult } from '@/types/user-facing-result';
 
@@ -57,6 +65,8 @@ export const UserDetectionGallerySection = forwardRef<
   ref,
 ) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<GalleryCategoryFilter>({ kind: 'all' });
+  const [categoryFilterOpen, setCategoryFilterOpen] = useState(false);
   const {
     items,
     isLoading,
@@ -70,11 +80,12 @@ export const UserDetectionGallerySection = forwardRef<
 
   useEffect(() => {
     setSearchQuery('');
+    setCategoryFilter({ kind: 'all' });
   }, [userId, publicOnly]);
 
   const filteredItems = useMemo(
-    () => filterDetectionGalleryItems(items, searchQuery),
-    [items, searchQuery],
+    () => filterDetectionGalleryItems(items, searchQuery, categoryFilter),
+    [items, searchQuery, categoryFilter],
   );
 
   useImperativeHandle(ref, () => ({ refetch }), [refetch]);
@@ -85,12 +96,20 @@ export const UserDetectionGallerySection = forwardRef<
       hint={hint}
       hintColor={hintColor}
       titleAccessory={
-        <GalleryGridColumnsPicker
-          value={columns}
-          onChange={setColumnCount}
-          mutedColor={mutedColor}
-          borderColor={borderColor}
-        />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <SpeciesSubcategoryFilterButton
+            value={categoryFilter}
+            onPress={() => setCategoryFilterOpen(true)}
+            mutedColor={mutedColor}
+            borderColor={borderColor}
+          />
+          <GalleryGridColumnsPicker
+            value={columns}
+            onChange={setColumnCount}
+            mutedColor={mutedColor}
+            borderColor={borderColor}
+          />
+        </View>
       }>
       {userId ? (
         <ScreenSearchField
@@ -100,6 +119,12 @@ export const UserDetectionGallerySection = forwardRef<
           accessibilityLabel="Search profile gallery"
         />
       ) : null}
+      <SpeciesSubcategoryFilterModal
+        visible={categoryFilterOpen}
+        value={categoryFilter}
+        onChange={setCategoryFilter}
+        onClose={() => setCategoryFilterOpen(false)}
+      />
       <DetectionGalleryGrid
         items={filteredItems}
         sourceItemCount={items.length}
@@ -107,7 +132,7 @@ export const UserDetectionGallerySection = forwardRef<
         columnCount={columns}
         loading={isLoading}
         isLoadingMore={isLoadingMore}
-        hasMore={hasMore && !searchQuery.trim()}
+        hasMore={hasMore && !searchQuery.trim() && categoryFilter.kind === 'all'}
         onLoadMore={() => void loadMore()}
         error={error}
         onRetry={() => void refetch()}

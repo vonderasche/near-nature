@@ -1,32 +1,33 @@
+import {
+  coerceAnimalSubcategory,
+  coercePlantSubcategory,
+  type SpeciesCategoryDb,
+} from '@/lib/detections/speciesSubcategory';
 import type { ClassificationResult } from '@/types';
 
-/** Matches `species_category` enum in `sql/create_detections.sql`. */
-export type SpeciesCategoryDb =
-  | 'mammal'
-  | 'reptile'
-  | 'fish'
-  | 'insect'
-  | 'bird'
-  | 'plant_tree'
-  | 'plant_flower'
-  | 'plant_other'
-  | 'amphibian'
-  | 'other';
-
 /**
- * Maps Claude vision `taxonGroup` labels into the Postgres enum used by `detections.category`.
+ * Maps vision classification into Postgres `species_category`.
+ * Prefers explicit `subcategory` from the model; falls back to broad taxon labels.
  */
 export function classificationToSpeciesCategory(c: ClassificationResult): SpeciesCategoryDb {
+  const animal = coerceAnimalSubcategory(c.subcategory);
+  if (animal) return animal;
+
+  const plant = coercePlantSubcategory(c.subcategory);
+  if (plant) return plant;
+
   switch (c.taxonGroup) {
     case 'birds':
-      return 'bird';
+      return 'songbirds';
     case 'plants':
-      return 'plant_other';
+      return 'wildflowers';
     case 'fungi':
       return 'other';
     case 'animals':
-      return 'other';
+      return 'small_mammals';
     default:
       return 'other';
   }
 }
+
+export type { SpeciesCategoryDb } from '@/lib/detections/speciesSubcategory';

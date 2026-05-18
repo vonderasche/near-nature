@@ -39,7 +39,7 @@ export function CameraTopControls({
         ) : null}
         {hasTorch ? (
           <CameraControlButton
-            icon={torchOn ? 'flashlight-on' : 'flashlight-off'}
+            icon="light-bulb"
             accessibilityLabel={torchOn ? 'Torch on' : 'Torch off'}
             onPress={onTorchPress}
             active={torchOn}

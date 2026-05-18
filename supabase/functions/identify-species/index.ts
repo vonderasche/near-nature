@@ -8,6 +8,11 @@ const corsHeaders: Record<string, string> = {
 const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
 const MODEL = Deno.env.get('ANTHROPIC_MODEL') ?? 'claude-sonnet-4-6';
 
+const ANIMAL_SUBCATEGORIES =
+  'lizards | snakes | frogs_toads | turtles_tortoises | salamanders | songbirds | raptors | wading_birds | waterfowl | shorebirds | small_mammals | deer_hoofed | bats | marine_mammals | carnivores';
+const PLANT_SUBCATEGORIES =
+  'wildflowers | trees_shrubs | ferns_mosses | aquatic_plants | cacti_succulents';
+
 const IDENTIFICATION_PROMPT = `
 Identify every plant, animal, fungus, and bird that is clearly visible in this image.
 
@@ -19,12 +24,18 @@ Each item in the array must have exactly these fields:
   "commonName":  "Common English name",
   "confidence":  0.95,
   "taxonGroup":  "plants" | "animals" | "fungi" | "birds",
+  "subcategory": "<see rules below>",
   "boundingBox": { "x": 10, "y": 20, "width": 40, "height": 50 }
 }
 
 boundingBox values are percentages of the image dimensions (0–100).
 confidence is a number between 0 and 1.
 taxonGroup must be one of exactly: plants, animals, fungi, birds.
+
+subcategory rules (required for plants, animals, and birds; omit or use "other" for fungi):
+- When taxonGroup is "animals" or "birds", subcategory must be one of: ${ANIMAL_SUBCATEGORIES}
+- When taxonGroup is "plants", subcategory must be one of: ${PLANT_SUBCATEGORIES}
+- Pick the single best match (e.g. hawk → raptors, oak → trees, frog → frogs_toads).
 
 If no species are identifiable, return an empty array: []
 `.trim();
@@ -68,6 +79,10 @@ function parseClaudeResponse(text: string): unknown[] {
       commonName: String(obj.commonName).trim(),
       confidence: clamp(Number(obj.confidence), 0, 1),
       taxonGroup: obj.taxonGroup,
+      subcategory:
+        typeof obj.subcategory === 'string' && obj.subcategory.trim()
+          ? obj.subcategory.trim()
+          : undefined,
       boundingBox: bb
         ? {
             x: clamp(Number(bb.x), 0, 100),

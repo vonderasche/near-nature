@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import { TabScreenWithLogout } from '@/components/layout/tab-screen-with-logout';
+import { ProfileScreenTabs, type ProfileScreenTab } from '@/components/profile/profile-screen-tabs';
+import { ScoringBadgesTree } from '@/components/profile/scoring-badges-tree';
 import { CenteredActivityIndicator } from '@/components/profile/centered-activity-indicator';
 import { ProfileOverflowMenu } from '@/components/profile/profile-overflow-menu';
 import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
@@ -39,6 +41,8 @@ export default function ProfileScreen() {
   const [deleteProfileOpen, setDeleteProfileOpen] = useState(false);
   const [deleteProfileError, setDeleteProfileError] = useState<string | null>(null);
   const [statsProfile, setStatsProfile] = useState<PublicUserProfile | null>(null);
+  const [profileTab, setProfileTab] = useState<ProfileScreenTab>('gallery');
+  const [scoringRefreshKey, setScoringRefreshKey] = useState(0);
 
   const { pickAndSetAvatar, busy: avatarBusy } = useAvatarFromGallery(user?.id, update);
 
@@ -76,6 +80,7 @@ export default function ProfileScreen() {
       const galleryPromise = galleryRef.current?.refetch() ?? Promise.resolve();
       const [, , stats] = await Promise.all([refresh(), galleryPromise, statsPromise]);
       setStatsProfile(stats);
+      setScoringRefreshKey((k) => k + 1);
     } finally {
       setRefreshing(false);
     }
@@ -168,19 +173,35 @@ export default function ProfileScreen() {
             />
           </View>
 
-          <UserDetectionGallerySection
-            ref={galleryRef}
-            userId={user.id}
-            searchPlaceholder="Search your identifications…"
-            hint="Native and non-native · long-press to delete"
-            hintColor={authColors.textMuted}
+          <ProfileScreenTabs
+            value={profileTab}
+            onChange={setProfileTab}
             borderColor={authColors.border}
             mutedColor={authColors.textMuted}
-            activityColor={authColors.text}
-            deletable
-            onDeleteItem={handleGalleryDelete}
-            deletingId={deletingId}
           />
+
+          {profileTab === 'gallery' ? (
+            <UserDetectionGallerySection
+              ref={galleryRef}
+              userId={user.id}
+              searchPlaceholder="Search your identifications…"
+              hint="Native and non-native · long-press to delete"
+              hintColor={authColors.textMuted}
+              borderColor={authColors.border}
+              mutedColor={authColors.textMuted}
+              activityColor={authColors.text}
+              deletable
+              onDeleteItem={handleGalleryDelete}
+              deletingId={deletingId}
+            />
+          ) : (
+            <ScoringBadgesTree
+              key={scoringRefreshKey}
+              userId={user.id}
+              borderColor={authColors.border}
+              mutedColor={authColors.textMuted}
+            />
+          )}
 
           <MottoEditModal
             visible={mottoModalVisible}

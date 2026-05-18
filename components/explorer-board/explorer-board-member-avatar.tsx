@@ -1,4 +1,4 @@
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { HeroIcon, type HeroIconName } from '@/components/ui/hero-icon';
 import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -19,7 +19,7 @@ type ExplorerBoardMemberAvatarProps = {
   borderColor: string;
   mutedColor: string;
   /** Shown when there is no image or load fails. */
-  fallbackIcon?: React.ComponentProps<typeof MaterialIcons>['name'];
+  fallbackIcon?: HeroIconName;
 };
 
 /**
@@ -30,7 +30,7 @@ export function ExplorerBoardMemberAvatar({
   displayUri: displayUriProp,
   borderColor,
   mutedColor,
-  fallbackIcon = 'person',
+  fallbackIcon = 'user',
 }: ExplorerBoardMemberAvatarProps) {
   const signedLocally = useStoredImageDisplayUrl(displayUriProp === undefined ? storedUrl : null);
   const displayUri = displayUriProp !== undefined ? displayUriProp : signedLocally;
@@ -54,7 +54,7 @@ export function ExplorerBoardMemberAvatar({
           onError={() => setFailed(true)}
         />
       ) : (
-        <MaterialIcons name={fallbackIcon} size={24} color={mutedColor} accessibilityLabel="No photo" />
+        <HeroIcon name={fallbackIcon ?? 'user'} size={24} color={mutedColor} />
       )}
     </View>
   );

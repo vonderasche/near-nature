@@ -1,31 +1,31 @@
 import { Image } from 'expo-image';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { HeroIcon } from '@/components/ui/hero-icon';
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
-import { leaderboardMemberTileImageUrl } from '@/lib/explorerBoard/latestLeaderboardGalleryImage';
 import {
   minExplorerBoardTileSize,
   type ExplorerBoardColumns,
 } from '@/lib/explorerBoard/explorerBoardColumns';
 import {
-  formatLeaderboardAccessibilityCounts,
-  formatLeaderboardSpeciesMeta,
-} from '@/lib/leaderboard/formatLeaderboardSpeciesCounts';
-import { parseLeaderboardMotto } from '@/lib/leaderboard/formatLeaderboardMotto';
-import type { DetectionLeaderboardRow } from '@/services/leaderboardService';
+  formatExplorerBoardAccessibilityCounts,
+  formatExplorerBoardSpeciesMeta,
+} from '@/lib/explorerBoard/formatExplorerBoardSpeciesCounts';
+import { parseExplorerBoardMotto } from '@/lib/explorerBoard/formatExplorerBoardMotto';
+import { explorerBoardMemberTileImageUrl } from '@/lib/explorerBoard/latestExplorerBoardGalleryImage';
+import type { ExplorerBoardMemberRow } from '@/services/explorerBoardService';
 
 type Props = {
-  rows: DetectionLeaderboardRow[];
+  rows: ExplorerBoardMemberRow[];
   columnCount: ExplorerBoardColumns;
   borderColor: string;
   mutedColor: string;
   resolveDisplayUrl: (storedUrl: string | null | undefined) => string | null;
-  onPressMember: (row: DetectionLeaderboardRow) => void;
+  onPressMember: (row: ExplorerBoardMemberRow) => void;
 };
 
-function rankLabel(row: DetectionLeaderboardRow): string | null {
+function rankLabel(row: ExplorerBoardMemberRow): string | null {
   return row.rank > 0 ? String(row.rank) : null;
 }
 
@@ -51,9 +51,9 @@ export function ExplorerBoardMemberGrid({
   return (
     <View style={[styles.grid, { gap: authSpacing.sm }]} accessibilityLabel="Explorer board members">
       {rows.map((row) => {
-        const stored = leaderboardMemberTileImageUrl(row);
+        const stored = explorerBoardMemberTileImageUrl(row);
         const uri = resolveDisplayUrl(stored);
-        const motto = parseLeaderboardMotto(row.motto);
+        const motto = parseExplorerBoardMotto(row.motto);
         const rank = rankLabel(row);
         const a11yTitle = row.rank > 0 ? `Rank ${row.rank}, ${row.username}` : row.username;
 
@@ -62,7 +62,7 @@ export function ExplorerBoardMemberGrid({
             key={row.userId}
             accessibilityRole="button"
             accessibilityHint="Opens this member's public profile"
-            accessibilityLabel={`${a11yTitle}, ${motto ?? 'No motto'}, ${formatLeaderboardAccessibilityCounts(row)}`}
+            accessibilityLabel={`${a11yTitle}, ${motto ?? 'No motto'}, ${formatExplorerBoardAccessibilityCounts(row)}`}
             onPress={() => onPressMember(row)}
             style={({ pressed }) => [
               styles.tileWrap,
@@ -73,7 +73,7 @@ export function ExplorerBoardMemberGrid({
                 <Image source={{ uri }} style={StyleSheet.absoluteFillObject} contentFit="cover" transition={200} />
               ) : (
                 <View style={styles.fallback}>
-                  <MaterialIcons name="person" size={compact ? 28 : 40} color={mutedColor} />
+                  <HeroIcon name="user" size={compact ? 28 : 40} color={mutedColor} />
                 </View>
               )}
               {rank ? (
@@ -89,7 +89,7 @@ export function ExplorerBoardMemberGrid({
             </View>
             {!compact ? (
               <Text style={[styles.meta, { color: mutedColor }]} numberOfLines={columnCount === 1 ? 2 : 1}>
-                {formatLeaderboardSpeciesMeta(row)}
+                {formatExplorerBoardSpeciesMeta(row)}
               </Text>
             ) : null}
           </Pressable>

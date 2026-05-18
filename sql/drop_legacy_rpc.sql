@@ -2,8 +2,6 @@
 -- Safe to re-run. Run after deploying the trimmed sql/ scripts.
 -- The app does not call these functions (uses RLS + direct table access + Edge Functions).
 
-drop function if exists public.check_email_exists(text);
-drop function if exists public.check_username_exists(text);
 drop function if exists public.update_user_profile(uuid, text, text, text, text, text);
 drop function if exists public.update_detection(uuid, text, text);
 drop function if exists public.delete_detection(uuid);
