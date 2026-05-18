@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import { TabScreenWithLogout } from '@/components/layout/tab-screen-with-logout';
@@ -25,40 +25,33 @@ import { useMottoSave } from '@/hooks/useMottoSave';
 import { useStateSave } from '@/hooks/useStateSave';
 import { useUser } from '@/hooks/useUser';
 import { requestExplorerBoardRefresh } from '@/lib/explorerBoard/explorerBoardRefresh';
-import { getPublicUserProfile, type PublicUserProfile } from '@/services/userService';
 import type { DetectionGalleryItem } from '@/types';
 
 export default function ProfileScreen() {
-  const { user, loading, deleting, error, refresh, update, remove: deleteAccount } = useUser();
+  const {
+    user,
+    stats,
+    loading,
+    refreshing: profileRefreshing,
+    deleting,
+    error,
+    refresh,
+    update,
+    remove: deleteAccount,
+  } = useUser();
   const { saveMotto, saving: mottoSaving } = useMottoSave(update);
   const { saveState, saving: stateSaving } = useStateSave(update);
   const { deleteById, deletingId } = useDeleteDetection();
   const galleryRef = useRef<UserDetectionGallerySectionHandle>(null);
-  const [refreshing, setRefreshing] = useState(false);
   const [mottoModalVisible, setMottoModalVisible] = useState(false);
   const [stateModalVisible, setStateModalVisible] = useState(false);
   const [avatarPickError, setAvatarPickError] = useState<string | null>(null);
   const [deleteProfileOpen, setDeleteProfileOpen] = useState(false);
   const [deleteProfileError, setDeleteProfileError] = useState<string | null>(null);
-  const [statsProfile, setStatsProfile] = useState<PublicUserProfile | null>(null);
   const [profileTab, setProfileTab] = useState<ProfileScreenTab>('gallery');
   const [scoringRefreshKey, setScoringRefreshKey] = useState(0);
 
   const { pickAndSetAvatar, busy: avatarBusy } = useAvatarFromGallery(user?.id, update);
-
-  useEffect(() => {
-    if (!user?.id) {
-      setStatsProfile(null);
-      return;
-    }
-    let cancelled = false;
-    void getPublicUserProfile(user.id).then((row) => {
-      if (!cancelled) setStatsProfile(row);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.id]);
 
   const onAvatarPress = useCallback(() => {
     setAvatarPickError(null);
@@ -73,32 +66,28 @@ export default function ProfileScreen() {
     })();
   }, [pickAndSetAvatar]);
 
+  const [pullRefreshing, setPullRefreshing] = useState(false);
+
   const onRefresh = useCallback(async () => {
-    setRefreshing(true);
+    setPullRefreshing(true);
     try {
-      const statsPromise = user?.id ? getPublicUserProfile(user.id) : Promise.resolve(null);
       const galleryPromise = galleryRef.current?.refetch() ?? Promise.resolve();
-      const [, , stats] = await Promise.all([refresh(), galleryPromise, statsPromise]);
-      setStatsProfile(stats);
+      await Promise.all([refresh(), galleryPromise]);
       setScoringRefreshKey((k) => k + 1);
     } finally {
-      setRefreshing(false);
+      setPullRefreshing(false);
     }
-  }, [refresh, user?.id]);
+  }, [refresh]);
 
   const handleGalleryDelete = useCallback(
     async (item: DetectionGalleryItem) => {
       const r = await deleteById(item.id);
       if (r.ok) {
-        await galleryRef.current?.refetch();
-        if (user?.id) {
-          const row = await getPublicUserProfile(user.id);
-          setStatsProfile(row);
-        }
+        await Promise.all([galleryRef.current?.refetch(), refresh()]);
       }
       return r;
     },
-    [deleteById, user?.id],
+    [deleteById, refresh],
   );
 
   const confirmDeleteProfile = useCallback(() => {
@@ -113,9 +102,9 @@ export default function ProfileScreen() {
     }
   }, [deleteAccount]);
 
-  const statsSlot = statsProfile ? (
+  const statsSlot = stats ? (
     <ProfileStatStrip
-      {...profileStatStripPropsFromPublicProfile(statsProfile, authColors.textMuted, authColors.text)}
+      {...profileStatStripPropsFromPublicProfile(stats, authColors.textMuted, authColors.text)}
     />
   ) : null;
 
@@ -130,7 +119,7 @@ export default function ProfileScreen() {
       }
       refreshControl={
         <RefreshControl
-          refreshing={refreshing}
+          refreshing={pullRefreshing || profileRefreshing}
           onRefresh={onRefresh}
           tintColor={authColors.text}
           colors={[authColors.text]}
