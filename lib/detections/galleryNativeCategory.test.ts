@@ -18,6 +18,8 @@ function item(id: string, category: 'native' | 'non-native'): DetectionGalleryIt
     commonName: 'A',
     latinName: 'a',
     category: 'other',
+    subcategory: null,
+    mainCategory: null,
     description: null,
     nativeStatus: category === 'native' ? 'native' : 'unknown',
     nativeCategory: category,

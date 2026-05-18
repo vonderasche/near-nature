@@ -8,6 +8,8 @@ export type DetectionGalleryRow = {
   common_name: string;
   latin_name: string;
   category: string;
+  subcategory?: string | null;
+  main_category?: string | null;
   description: string | null;
   native_status: string | null;
 };
@@ -36,6 +38,8 @@ export function mapDetectionGalleryRows(
       commonName: row.common_name,
       latinName: row.latin_name,
       category: String(row.category ?? 'other'),
+      subcategory: row.subcategory?.trim() ? row.subcategory.trim() : null,
+      mainCategory: row.main_category?.trim() ? row.main_category.trim() : null,
       description,
       nativeStatus,
       nativeCategory,

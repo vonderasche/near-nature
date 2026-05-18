@@ -8,10 +8,14 @@ const corsHeaders: Record<string, string> = {
 const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
 const MODEL = Deno.env.get('ANTHROPIC_MODEL') ?? 'claude-sonnet-4-6';
 
-const ANIMAL_SUBCATEGORIES =
-  'lizards | snakes | frogs_toads | turtles_tortoises | salamanders | songbirds | raptors | wading_birds | waterfowl | shorebirds | small_mammals | deer_hoofed | bats | marine_mammals | carnivores';
+// Keep in sync with constants/naturalist-subcategory-prompts.ts
 const PLANT_SUBCATEGORIES =
   'wildflowers | trees_shrubs | ferns_mosses | aquatic_plants | cacti_succulents';
+const BIRD_SUBCATEGORIES =
+  'songbirds | raptors | wading_birds | waterfowl | shorebirds';
+const ANIMAL_SUBCATEGORIES =
+  'lizards | snakes | frogs_toads | turtles_tortoises | salamanders | small_mammals | deer_hoofed | bats | marine_mammals | carnivores | butterflies_moths | beetles | bees_wasps | dragonflies | other_insects | spiders | scorpions | ticks_mites | other_arachnids | freshwater_fish | saltwater_fish | shellfish | other_fish';
+const FUNGI_SUBCATEGORIES = 'mushrooms | slime_molds | lichens | other_fungi';
 
 const IDENTIFICATION_PROMPT = `
 Identify every plant, animal, fungus, and bird that is clearly visible in this image.
@@ -32,10 +36,12 @@ boundingBox values are percentages of the image dimensions (0–100).
 confidence is a number between 0 and 1.
 taxonGroup must be one of exactly: plants, animals, fungi, birds.
 
-subcategory rules (required for plants, animals, and birds; omit or use "other" for fungi):
-- When taxonGroup is "animals" or "birds", subcategory must be one of: ${ANIMAL_SUBCATEGORIES}
+subcategory rules (required for every item):
 - When taxonGroup is "plants", subcategory must be one of: ${PLANT_SUBCATEGORIES}
-- Pick the single best match (e.g. hawk → raptors, oak → trees, frog → frogs_toads).
+- When taxonGroup is "birds", subcategory must be one of: ${BIRD_SUBCATEGORIES}
+- When taxonGroup is "animals", subcategory must be one of: ${ANIMAL_SUBCATEGORIES}
+- When taxonGroup is "fungi", subcategory must be one of: ${FUNGI_SUBCATEGORIES}
+- Pick the single best match (e.g. hawk → raptors, oak → trees_shrubs, beetle → beetles, mushroom → mushrooms).
 
 If no species are identifiable, return an empty array: []
 `.trim();

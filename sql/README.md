@@ -36,6 +36,9 @@ All `.sql` scripts here are written to be **safe to re-run** (they drop/recreate
 | `delete_auth_user_by_email.sql` | Dev reset: delete one auth user to sign up again |
 | `add_user_date_of_birth.sql` | `date_of_birth` column + signup trigger (patch existing DB) |
 | `add_species_subcategories.sql` | Plant/animal subcategory enum values (patch existing DB) |
+| `add_naturalist_category_enums.sql` | Entomologist / ichthyologist / mycologist enum values (patch) |
+| `add_detection_naturalist_columns.sql` | `subcategory` + `main_category` on detections/discoveries, backfill, sync trigger |
+| `get_user_score_by_category.sql` | RPC: owner score breakdown by main discipline (detections + awards) |
 | `drop_legacy_rpc.sql` | One-off: drops unused RPCs and old indexes |
 
 Print the bootstrap order in PowerShell:

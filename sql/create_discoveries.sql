@@ -10,6 +10,8 @@ create table public.discoveries (
   latin_name    text not null,
   common_name   text not null,
   category      species_category not null,
+  subcategory   text,
+  main_category text,
   detection_id  uuid not null references public.detections(id) on delete cascade,
   discovered_at timestamptz default now() not null,
   unique(user_id, latin_name)   -- one entry per species per user
@@ -41,9 +43,15 @@ begin
   if is_first_discovery then
     -- Log the discovery
     insert into public.discoveries (
-      user_id, latin_name, common_name, category, detection_id
+      user_id, latin_name, common_name, category, subcategory, main_category, detection_id
     ) values (
-      new.user_id, new.latin_name, new.common_name, new.category, new.id
+      new.user_id,
+      new.latin_name,
+      new.common_name,
+      new.category,
+      new.subcategory,
+      new.main_category,
+      new.id
     );
 
     -- Award bonus points on top of base points

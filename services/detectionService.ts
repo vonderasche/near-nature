@@ -10,6 +10,7 @@ import {
   uploadDetectionsObject,
 } from '@/lib/detections/detectionsStorage';
 import { classificationToSpeciesCategory } from '@/lib/detections/mapSpeciesCategory';
+import { resolveNaturalistCategoryFromClassification } from '@/lib/points/resolveNaturalistCategory';
 import { speciesStatusToNativeColumn } from '@/lib/detections/mapNativeStatusDb';
 import { devLog } from '@/lib/devLog';
 import { supabase } from '@/lib/supabase';
@@ -67,6 +68,7 @@ export async function saveDetection(input: SaveDetectionInput): Promise<SaveDete
   const publicUrl = getDetectionsObjectPublicUrl(objectPath);
 
   const category = classificationToSpeciesCategory(classification);
+  const { subcategory, mainCategory } = resolveNaturalistCategoryFromClassification(classification);
   const nativeStatus = speciesStatusToNativeColumn(species.status as SpeciesStatus);
   const confidencePct = Math.min(
     100,
@@ -82,6 +84,8 @@ export async function saveDetection(input: SaveDetectionInput): Promise<SaveDete
       latin_name: species.latinName,
       confidence: confidencePct,
       category,
+      subcategory,
+      main_category: mainCategory,
       description: description?.trim() ? description.trim().slice(0, 8000) : null,
       native_status: nativeStatus,
       state: stateCode.trim().toUpperCase().slice(0, 2),

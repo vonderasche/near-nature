@@ -50,14 +50,16 @@ export function useCategoryProgress(userId: string | undefined) {
     try {
       const { data, error: qErr } = await supabase
         .from('discoveries')
-        .select('latin_name, category')
+        .select('latin_name, category, subcategory, main_category')
         .eq('user_id', userId);
       if (qErr) throw qErr;
 
       const counts = buildSpeciesCounts(
         (data ?? []).map((row) => ({
           latin_name: String(row.latin_name),
-          category: String(row.category),
+          category: String(
+            row.subcategory?.trim() ? row.subcategory : row.category,
+          ),
         })),
       );
 

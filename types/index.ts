@@ -34,8 +34,12 @@ export type DetectionGalleryItem = {
   detectedAt: string;
   commonName: string;
   latinName: string;
-  /** Postgres `species_category` (subcategory or legacy broad category). */
+  /** Postgres `species_category` (canonical subcategory when set). */
   category: string;
+  /** Canonical subcategory id for badge scoring (may match category). */
+  subcategory: string | null;
+  /** Main discipline id: botanist, entomologist, … */
+  mainCategory: string | null;
   /** Wikipedia summary (or other note) stored at save time; may be null for older rows. */
   description: string | null;
   /** iNaturalist-derived status at save time. */

@@ -28,6 +28,14 @@ describe('classificationToSpeciesCategory', () => {
     ).toBe('trees_shrubs');
   });
 
+  it('maps entomologist subcategories', () => {
+    expect(
+      classificationToSpeciesCategory(
+        classification({ taxonGroup: 'animals', subcategory: 'dragonflies' }),
+      ),
+    ).toBe('dragonflies');
+  });
+
   it('falls back by taxon group', () => {
     expect(classificationToSpeciesCategory(classification({ taxonGroup: 'birds' }))).toBe(
       'songbirds',

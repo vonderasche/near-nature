@@ -63,6 +63,8 @@ create table public.detections (
   latin_name      text not null,
   confidence      numeric(5, 2) not null check (confidence >= 0 and confidence <= 100),
   category        species_category not null,
+  subcategory     text,   -- canonical subcategory for badge tiers
+  main_category   text,   -- main discipline: botanist, entomologist, …
   description     text,
 
   -- iNaturalist results

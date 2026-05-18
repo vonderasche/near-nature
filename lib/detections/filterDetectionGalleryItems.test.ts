@@ -12,6 +12,8 @@ function item(overrides: Partial<DetectionGalleryItem>): DetectionGalleryItem {
     commonName: 'Lion',
     latinName: 'Panthera leo',
     category: 'carnivores',
+    subcategory: 'carnivores',
+    mainCategory: 'mammalogist',
     description: 'Large African cat',
     nativeStatus: 'native',
     nativeCategory: 'native',

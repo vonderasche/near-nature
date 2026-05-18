@@ -62,7 +62,7 @@ export function useCameraScreen(options?: UseCameraScreenOptions): UseCameraScre
   const [torchOn, setTorchOn] = useState(false);
   const [gridVisible, setGridVisible] = useState(true);
 
-  const flashSupported = Boolean(device?.hasFlash);
+  const hasFlash = Boolean(device?.hasFlash);
   const hasTorch = Boolean(device?.hasTorch) && facing === 'back';
 
   useEffect(() => {
@@ -90,14 +90,14 @@ export function useCameraScreen(options?: UseCameraScreenOptions): UseCameraScre
   }, []);
 
   const toggleFlashMode = useCallback(() => {
-    if (!flashSupported) return;
+    if (!hasFlash) return;
     try {
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch {
       /* haptics unavailable */
     }
     setFlashMode((mode) => cyclePhotoFlashMode(mode));
-  }, [flashSupported]);
+  }, [hasFlash]);
 
   const toggleTorch = useCallback(() => {
     if (!hasTorch) return;

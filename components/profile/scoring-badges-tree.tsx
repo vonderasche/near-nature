@@ -5,8 +5,10 @@ import { CenteredActivityIndicator } from '@/components/profile/centered-activit
 import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
 import { HeroIcon } from '@/components/ui/hero-icon';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { ScoreByCategorySummary } from '@/components/profile/score-by-category-summary';
 import { useCategoryProgress } from '@/hooks/useCategoryProgress';
 import { usePointAwards } from '@/hooks/usePointAwards';
+import { useUserScoreBreakdown } from '@/hooks/useUserScoreBreakdown';
 import { buildScoringTree, type ScoringTreeNode } from '@/lib/profile/buildScoringTree';
 
 type Props = {
@@ -119,6 +121,12 @@ export function ScoringBadgesTree({ userId, borderColor, mutedColor }: Props) {
     useCategoryProgress(userId);
   const { awardKeys, loading: awardsLoading, error: awardsError, refetch: refetchAwards } =
     usePointAwards(userId);
+  const {
+    breakdown,
+    loading: breakdownLoading,
+    error: breakdownError,
+    refetch: refetchBreakdown,
+  } = useUserScoreBreakdown(userId);
 
   const [expandedIds, setExpandedIds] = useState<Set<string>>(
     () => new Set(['badges', 'disciplines', 'main:botanist']),
@@ -126,8 +134,8 @@ export function ScoringBadgesTree({ userId, borderColor, mutedColor }: Props) {
 
   const tree = useMemo(() => buildScoringTree(mains, awardKeys), [mains, awardKeys]);
 
-  const loading = progressLoading || awardsLoading;
-  const error = progressError ?? awardsError;
+  const loading = progressLoading || awardsLoading || breakdownLoading;
+  const error = progressError ?? awardsError ?? breakdownError;
 
   function toggle(id: string) {
     setExpandedIds((prev) => {
@@ -159,7 +167,19 @@ export function ScoringBadgesTree({ userId, borderColor, mutedColor }: Props) {
           onRetry={() => {
             void refetchProgress();
             void refetchAwards();
+            void refetchBreakdown();
           }}
+        />
+      ) : null}
+
+      {!error && breakdown && breakdown.rows.length > 0 ? (
+        <ScoreByCategorySummary
+          rows={breakdown.rows}
+          totalPoints={breakdown.totalPoints}
+          totalDetectionPoints={breakdown.totalDetectionPoints}
+          totalAwardPoints={breakdown.totalAwardPoints}
+          borderColor={borderColor}
+          mutedColor={mutedColor}
         />
       ) : null}
 

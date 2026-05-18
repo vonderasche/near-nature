@@ -113,6 +113,35 @@ as $$
   end;
 $$;
 
+create or replace function public.discovery_canonical_subcategory(
+  p_category text,
+  p_subcategory text
+)
+returns text
+language sql
+immutable
+as $$
+  select coalesce(
+    nullif(trim(p_subcategory), ''),
+    public.category_to_subcategory(p_category)
+  );
+$$;
+
+create or replace function public.discovery_canonical_main(
+  p_category text,
+  p_subcategory text,
+  p_main_category text
+)
+returns text
+language sql
+immutable
+as $$
+  select coalesce(
+    nullif(trim(p_main_category), ''),
+    public.subcategory_to_main(public.discovery_canonical_subcategory(p_category, p_subcategory))
+  );
+$$;
+
 create or replace function public.tier_for_species_count(cnt int)
 returns text
 language sql
@@ -171,7 +200,7 @@ begin
     into main_cnt
     from public.discoveries d
     where d.user_id = p_user_id
-      and public.subcategory_to_main(public.category_to_subcategory(d.category::text)) = main_id;
+      and public.discovery_canonical_main(d.category::text, d.subcategory, d.main_category) = main_id;
 
     main_tier := public.tier_for_species_count(main_cnt);
     if main_tier is null then
@@ -252,7 +281,7 @@ begin
     into sub_cnt
     from public.discoveries d
     where d.user_id = p_user_id
-      and public.category_to_subcategory(d.category::text) = sub;
+      and public.discovery_canonical_subcategory(d.category::text, d.subcategory) = sub;
 
     sub_tier := public.tier_for_species_count(sub_cnt);
     if sub_tier is null then
@@ -309,7 +338,7 @@ begin
     into main_cnt
     from public.discoveries d
     where d.user_id = p_user_id
-      and public.subcategory_to_main(public.category_to_subcategory(d.category::text)) = main_id;
+      and public.discovery_canonical_main(d.category::text, d.subcategory, d.main_category) = main_id;
 
     if public.tier_for_species_count(main_cnt) <> 'voyager' then
       continue;
@@ -332,7 +361,7 @@ begin
       into sub_cnt
       from public.discoveries d
       where d.user_id = p_user_id
-        and public.category_to_subcategory(d.category::text) = sub;
+        and public.discovery_canonical_subcategory(d.category::text, d.subcategory) = sub;
 
       if public.tier_for_species_count(sub_cnt) <> 'voyager' then
         all_subs_voyager := false;
@@ -362,7 +391,7 @@ begin
       into main_cnt
       from public.discoveries d
       where d.user_id = p_user_id
-        and public.subcategory_to_main(public.category_to_subcategory(d.category::text)) = main_id;
+        and public.discovery_canonical_main(d.category::text, d.subcategory, d.main_category) = main_id;
 
       if public.tier_for_species_count(main_cnt) <> 'voyager' then
         all_mains_voyager := false;
