@@ -39,7 +39,7 @@ export function useCameraZoom(device: CameraDevice | undefined) {
     [setZoom],
   );
 
-  const activeChipId = device ? findActiveZoomChipId(chips, zoom) : null;
+  const activeChipId = device ? findActiveZoomChipId(chips, zoom, device) : null;
 
   return {
     zoom,

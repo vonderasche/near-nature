@@ -21,6 +21,9 @@ import {
   MagnifyingGlassIcon,
   PhotoIcon,
   RectangleStackIcon,
+  SparklesIcon,
+  SpeakerWaveIcon,
+  SpeakerXMarkIcon,
   Squares2X2Icon,
   TrashIcon,
   TrophyIcon,
@@ -54,6 +57,9 @@ export type HeroIconName =
   | 'magnifying-glass'
   | 'photo'
   | 'rectangle-stack'
+  | 'sparkles'
+  | 'speaker-wave'
+  | 'speaker-x-mark'
   | 'squares-2x2'
   | 'trash'
   | 'trophy'
@@ -89,6 +95,9 @@ const OUTLINE: Record<HeroIconName, IconComponent> = {
   'magnifying-glass': MagnifyingGlassIcon,
   photo: PhotoIcon,
   'rectangle-stack': RectangleStackIcon,
+  sparkles: SparklesIcon,
+  'speaker-wave': SpeakerWaveIcon,
+  'speaker-x-mark': SpeakerXMarkIcon,
   'squares-2x2': Squares2X2Icon,
   trash: TrashIcon,
   trophy: TrophyIcon,

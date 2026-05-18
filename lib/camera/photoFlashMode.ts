@@ -18,6 +18,17 @@ export function photoFlashAccessibilityLabel(mode: PhotoFlashMode): string {
   }
 }
 
+export function photoFlashCaption(mode: PhotoFlashMode): string {
+  switch (mode) {
+    case 'off':
+      return 'Off';
+    case 'auto':
+      return 'Auto';
+    case 'on':
+      return 'On';
+  }
+}
+
 import type { HeroIconName } from '@/components/ui/hero-icon';
 
 /** Heroicon name for the current flash mode. */

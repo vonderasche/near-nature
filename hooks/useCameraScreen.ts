@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } fro
 import { Platform } from 'react-native';
 import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
 
+import { useCameraPreviewLifecycle } from '@/hooks/useCameraPreviewLifecycle';
 import { captureSquarePhotoFromCameraRef } from '@/lib/camera/capturePicture';
 import { cyclePhotoFlashMode, type PhotoFlashMode } from '@/lib/camera/photoFlashMode';
 
@@ -13,6 +14,7 @@ export type CameraScreenMessage = { title: string; message: string };
 export type UseCameraScreenOptions = {
   /** When set, called with the photo URI instead of surfacing a success message. */
   onPhotoCaptured?: (uri: string) => void;
+  enableShutterSound?: boolean;
 };
 
 export type UseCameraScreenResult = {
@@ -36,23 +38,31 @@ export type UseCameraScreenResult = {
   toggleTorch: () => void;
   hasTorch: boolean;
   focusAt: (point: { x: number; y: number }) => Promise<void>;
+  isPreviewActive: boolean;
+  previewKey: number;
+  isResumingPreview: boolean;
+  gridVisible: boolean;
+  toggleGrid: () => void;
 };
 
 export function useCameraScreen(options?: UseCameraScreenOptions): UseCameraScreenResult {
   const onPhotoCaptured = options?.onPhotoCaptured;
+  const enableShutterSound = options?.enableShutterSound ?? false;
 
   const cameraRef = useRef<Camera>(null);
   const { hasPermission, requestPermission } = useCameraPermission();
 
   const [facing, setFacing] = useState<CameraFacing>('back');
   const device = useCameraDevice(facing);
+  const { isPreviewActive, previewKey, isResumingPreview } = useCameraPreviewLifecycle();
 
   const [capturing, setCapturing] = useState(false);
   const [cameraMessage, setCameraMessage] = useState<CameraScreenMessage | null>(null);
   const [flashMode, setFlashMode] = useState<PhotoFlashMode>('off');
   const [torchOn, setTorchOn] = useState(false);
+  const [gridVisible, setGridVisible] = useState(true);
 
-  const hasFlash = Boolean(device?.hasFlash);
+  const flashSupported = Boolean(device?.hasFlash);
   const hasTorch = Boolean(device?.hasTorch) && facing === 'back';
 
   useEffect(() => {
@@ -60,19 +70,34 @@ export function useCameraScreen(options?: UseCameraScreenOptions): UseCameraScre
     setTorchOn(false);
   }, [facing]);
 
+  useEffect(() => {
+    if (!isPreviewActive) {
+      setTorchOn(false);
+    }
+  }, [isPreviewActive]);
+
   const clearCameraMessage = useCallback(() => {
     setCameraMessage(null);
   }, []);
 
+  const toggleGrid = useCallback(() => {
+    try {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {
+      /* haptics unavailable */
+    }
+    setGridVisible((v) => !v);
+  }, []);
+
   const toggleFlashMode = useCallback(() => {
-    if (!hasFlash) return;
+    if (!flashSupported) return;
     try {
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch {
       /* haptics unavailable */
     }
     setFlashMode((mode) => cyclePhotoFlashMode(mode));
-  }, [hasFlash]);
+  }, [flashSupported]);
 
   const toggleTorch = useCallback(() => {
     if (!hasTorch) return;
@@ -114,7 +139,7 @@ export function useCameraScreen(options?: UseCameraScreenOptions): UseCameraScre
     try {
       const photo = await captureSquarePhotoFromCameraRef(cameraRef, {
         flash: flashMode,
-        enableShutterSound: false,
+        enableShutterSound,
       });
       const uri = photo?.uri;
       if (!uri) return;
@@ -142,7 +167,7 @@ export function useCameraScreen(options?: UseCameraScreenOptions): UseCameraScre
     } finally {
       setCapturing(false);
     }
-  }, [capturing, flashMode, onPhotoCaptured]);
+  }, [capturing, enableShutterSound, flashMode, onPhotoCaptured]);
 
   const isPermissionPending = useMemo(() => hasPermission == null, [hasPermission]);
   const isPermissionGranted = Boolean(hasPermission);
@@ -166,6 +191,11 @@ export function useCameraScreen(options?: UseCameraScreenOptions): UseCameraScre
     toggleTorch,
     hasTorch,
     focusAt,
+    gridVisible,
+    toggleGrid,
+    isPreviewActive,
+    previewKey,
+    isResumingPreview,
   };
 }
 

@@ -8,6 +8,7 @@ import { CameraLivePreview } from '@/components/camera/camera-live-preview';
 import { CameraTopControls } from '@/components/camera/camera-top-controls';
 import { CameraZoomChips } from '@/components/camera/camera-zoom-chips';
 import { useCameraCaptureFormat } from '@/hooks/useCameraCaptureFormat';
+import { useCameraPreferences } from '@/hooks/useCameraPreferences';
 import { useCameraZoom } from '@/hooks/useCameraZoom';
 import { CameraIdentificationPanel } from '@/components/camera/camera-identification-panel';
 import { ScreenCenter } from '@/components/shared/screen-center';
@@ -54,6 +55,17 @@ export default function CameraScreen() {
   }, [pickFromGallery]);
 
   const {
+    hdrEnabled,
+    toggleHdr,
+    stabilizationEnabled,
+    toggleStabilization,
+    shutterSoundEnabled,
+    toggleShutterSound,
+    levelEnabled,
+    toggleLevel,
+  } = useCameraPreferences();
+
+  const {
     cameraRef,
     requestPermission,
     isPermissionPending,
@@ -66,15 +78,24 @@ export default function CameraScreen() {
     device,
     flashMode,
     toggleFlashMode,
+    facing,
     hasFlash,
     torchOn,
     toggleTorch,
     hasTorch,
     focusAt,
-  } = useCameraScreen({ onPhotoCaptured });
+    gridVisible,
+    toggleGrid,
+    isPreviewActive,
+    previewKey,
+    isResumingPreview,
+  } = useCameraScreen({ onPhotoCaptured, enableShutterSound: shutterSoundEnabled });
 
-  const { format, photoHdr } = useCameraCaptureFormat(device ?? undefined);
-  const { zoom, chips, activeChipId, selectChip } = useCameraZoom(device ?? undefined);
+  const { format, photoHdr, hdrSupported, stabilizationSupported } = useCameraCaptureFormat(
+    device ?? undefined,
+    { hdrEnabled, stabilizationEnabled },
+  );
+  const { zoom, setZoom, chips, activeChipId, selectChip } = useCameraZoom(device ?? undefined);
 
   const messageModal = (
     <>
@@ -171,23 +192,44 @@ export default function CameraScreen() {
               format={format}
               photoHdr={photoHdr}
               zoom={zoom}
+              onZoomChange={setZoom}
               torch={torchOn ? 'on' : 'off'}
+              isActive={isPreviewActive}
+              previewKey={previewKey}
+              isResumingPreview={isResumingPreview}
+              gridVisible={gridVisible}
+              levelVisible={levelEnabled}
+              stabilizationEnabled={stabilizationEnabled}
+              stabilizationSupported={stabilizationSupported}
               onFocusPoint={focusAt}
+            />
+            <CameraTopControls
+              insets={insets}
+              facing={facing}
+              flashMode={flashMode}
+              onFlashPress={toggleFlashMode}
+              flashSupported={hasFlash}
+              torchOn={torchOn}
+              onTorchPress={toggleTorch}
+              torchSupported={hasTorch}
+              gridVisible={gridVisible}
+              onGridPress={toggleGrid}
+              hdrEnabled={hdrEnabled}
+              onHdrPress={toggleHdr}
+              hdrSupported={hdrSupported}
+              stabilizationEnabled={stabilizationEnabled}
+              onStabilizationPress={toggleStabilization}
+              stabilizationSupported={stabilizationSupported}
+              shutterSoundEnabled={shutterSoundEnabled}
+              onShutterSoundPress={toggleShutterSound}
+              levelEnabled={levelEnabled}
+              onLevelPress={toggleLevel}
             />
             <CameraZoomChips
               chips={chips}
               activeChipId={activeChipId}
               onSelectChip={selectChip}
               bottomInset={insets.bottom}
-            />
-            <CameraTopControls
-              insets={insets}
-              flashMode={flashMode}
-              onFlashPress={toggleFlashMode}
-              hasFlash={hasFlash}
-              torchOn={torchOn}
-              onTorchPress={toggleTorch}
-              hasTorch={hasTorch}
             />
           </>
         ) : (

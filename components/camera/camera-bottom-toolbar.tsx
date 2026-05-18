@@ -84,6 +84,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: authSpacing.lg,
     paddingTop: authSpacing.md,
     backgroundColor: authColors.overlayScrim,
+    zIndex: 10,
+    elevation: 10,
   },
   toolBtn: {
     minWidth: 64,

@@ -1,5 +1,6 @@
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { cameraZoomChipsBottomOffset } from '@/constants/camera-layout';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import type { ZoomChip } from '@/lib/camera/cameraZoom';
 
@@ -14,7 +15,7 @@ export function CameraZoomChips({ chips, activeChipId, onSelectChip, bottomInset
   if (chips.length === 0) return null;
 
   return (
-    <View style={[styles.bar, { bottom: bottomInset + 100 }]} pointerEvents="box-none">
+    <View style={[styles.bar, { bottom: cameraZoomChipsBottomOffset(bottomInset) }]} pointerEvents="box-none">
       <View style={styles.row}>
         {chips.map((chip) => {
           const active = chip.id === activeChipId;
@@ -46,7 +47,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
-    zIndex: 2,
+    zIndex: 20,
+    elevation: 20,
   },
   row: {
     flexDirection: 'row',

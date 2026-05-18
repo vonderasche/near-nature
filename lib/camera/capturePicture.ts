@@ -5,7 +5,7 @@ import { deleteAsync } from '@/lib/fs/legacyFileSystem';
 import { cropImageToSquareCenter } from '@/lib/image/cropImageToSquareCenter';
 import { photoFileToUri } from '@/lib/camera/photoFileUri';
 
-const DEFAULT_OPTIONS: TakePhotoOptions = { enableShutterSound: false };
+const DEFAULT_OPTIONS: TakePhotoOptions = {};
 
 /**
  * Takes a photo using a mounted VisionCamera {@link Camera} ref.
@@ -13,14 +13,23 @@ const DEFAULT_OPTIONS: TakePhotoOptions = { enableShutterSound: false };
  *
  * Returns a `file://` URI ready for `<Image />`, file reads, and uploads.
  */
+export type CapturePhotoOptions = TakePhotoOptions & {
+  enableShutterSound?: boolean;
+};
+
 export async function captureSquarePhotoFromCameraRef(
   cameraRef: RefObject<Camera | null>,
-  options?: TakePhotoOptions
+  options?: CapturePhotoOptions,
 ): Promise<{ uri: string; width: number; height: number } | null> {
   const cam = cameraRef.current;
   if (!cam) return null;
 
-  const photo: PhotoFile = await cam.takePhoto({ ...DEFAULT_OPTIONS, ...options });
+  const { enableShutterSound = false, ...takeOptions } = options ?? {};
+  const photo: PhotoFile = await cam.takePhoto({
+    ...DEFAULT_OPTIONS,
+    ...takeOptions,
+    enableShutterSound,
+  });
   const uri = photoFileToUri(photo.path);
   const width = photo.width;
   const height = photo.height;
