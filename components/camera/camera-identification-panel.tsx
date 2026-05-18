@@ -53,6 +53,7 @@ export function CameraIdentificationPanel({
   const { species, classifications, wikiByLatinName, wikiError } = useIdentificationResultsState(
     photoUri,
     userState,
+    userId ?? undefined,
     identify,
     refetch,
   );

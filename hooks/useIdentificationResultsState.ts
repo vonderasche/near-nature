@@ -6,6 +6,7 @@ import type { ClassificationResult, Species } from '@/types';
 type IdentifyFn = (
   photoUri: string,
   userState: string,
+  userId?: string,
 ) => Promise<{
   species: Species[];
   classifications: ClassificationResult[];
@@ -21,6 +22,7 @@ type IdentifyFn = (
 export function useIdentificationResultsState(
   photoUri: string | undefined,
   userState: string,
+  userId: string | undefined,
   identify: IdentifyFn,
   refetch: () => void,
 ): {
@@ -46,7 +48,7 @@ export function useIdentificationResultsState(
     if (!photoUri) return;
     let cancelled = false;
     (async () => {
-      const results = await identify(photoUri, userState);
+      const results = await identify(photoUri, userState, userId);
       if (!cancelled) {
         setSpecies(results.species);
         setClassifications(results.classifications);
@@ -58,7 +60,7 @@ export function useIdentificationResultsState(
     return () => {
       cancelled = true;
     };
-  }, [photoUri, userState, identify, refreshHistory]);
+  }, [photoUri, userState, userId, identify, refreshHistory]);
 
   return { species, classifications, wikiByLatinName, wikiError, refreshHistory };
 }

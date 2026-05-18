@@ -20,7 +20,11 @@ export type IdentifySpeciesOutcome = {
 };
 
 interface UseSpeciesIdentificationResult {
-  identify: (photoUri: string, userState: string) => Promise<IdentifySpeciesOutcome>;
+  identify: (
+    photoUri: string,
+    userState: string,
+    userId?: string,
+  ) => Promise<IdentifySpeciesOutcome>;
   isLoading: boolean;
   error: string | null;
 }
@@ -33,6 +37,7 @@ export function useSpeciesIdentification(): UseSpeciesIdentificationResult {
   const identify = useCallback(async (
     photoUri: string,
     userState: string,
+    userId?: string,
   ): Promise<IdentifySpeciesOutcome> => {
     setIsLoading(true);
     setError(null);
@@ -57,6 +62,7 @@ export function useSpeciesIdentification(): UseSpeciesIdentificationResult {
       const { species, wikiByLatinName, wikiError } = await enrichSpeciesFromApis(
         classifications,
         userState,
+        { userId },
       );
 
       return { species, classifications, wikiByLatinName, wikiError };

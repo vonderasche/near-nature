@@ -3,12 +3,24 @@ import { fetchSpeciesWikiData, type SpeciesWikiData } from '@/api/wikipedia';
 import { getSpeciesSubcategoryLabel } from '@/constants/species-subcategories';
 import { classificationToSpeciesCategory } from '@/lib/detections/mapSpeciesCategory';
 import { devLog } from '@/lib/devLog';
-import type { ClassificationResult, Species } from '@/types';
+import { normalizeLatinName } from '@/lib/identification/normalizeLatinName';
+import { wikiFromSavedDescription } from '@/lib/identification/wikiFromSavedDescription';
+import {
+  fetchSavedSpeciesEnrichmentByLatinNames,
+  type SavedSpeciesEnrichment,
+} from '@/services/savedSpeciesEnrichmentService';
+import type { ClassificationResult, Species, SpeciesStatus } from '@/types';
 
 const DEFAULT_WIKI_SPECIES_LIMIT = 3;
 
 /** Wikipedia by latin name; missing key = not fetched, null = no article. */
 export type WikiByLatinName = Record<string, SpeciesWikiData | null>;
+
+export type EnrichSpeciesFromApisOptions = {
+  /** When set, reuses prior saved detection data instead of iNat/wiki when available. */
+  userId?: string;
+  wikiSpeciesLimit?: number;
+};
 
 export type EnrichSpeciesFromApisResult = {
   species: Species[];
@@ -27,16 +39,52 @@ async function fetchWikiForClassification(
   return byLatin ?? byCommon;
 }
 
+async function resolveNativeStatus(
+  classification: ClassificationResult,
+  userState: string,
+  saved: SavedSpeciesEnrichment | undefined,
+): Promise<SpeciesStatus> {
+  if (saved && saved.status !== 'unknown') {
+    return saved.status;
+  }
+  const nativeResult = await lookupNativeStatus(classification.latinName, userState);
+  return nativeResult?.status ?? saved?.status ?? 'unknown';
+}
+
+async function resolveWiki(
+  classification: ClassificationResult,
+  saved: SavedSpeciesEnrichment | undefined,
+  onWikiError: (message: string) => void,
+): Promise<SpeciesWikiData | null> {
+  const fromDb = wikiFromSavedDescription(saved?.description, classification.latinName);
+  if (fromDb) return fromDb;
+
+  try {
+    return await fetchWikiForClassification(classification.latinName, classification.commonName);
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : 'Wikipedia request failed.';
+    devLog('[enrich] wiki error', { latinName: classification.latinName, error: e });
+    onWikiError(message);
+    return null;
+  }
+}
+
 /**
  * After vision returns classifications, enrich each with iNaturalist status and (for the top
  * {@link wikiSpeciesLimit}) Wikipedia data. Per species, iNat and wiki run in parallel; species
  * are processed concurrently.
+ *
+ * When {@link EnrichSpeciesFromApisOptions.userId} is set, species the user has saved before
+ * reuse `detections` native status and description (no iNat/wiki calls when data is present).
  */
 export async function enrichSpeciesFromApis(
   classifications: ClassificationResult[],
   userState: string,
-  wikiSpeciesLimit = DEFAULT_WIKI_SPECIES_LIMIT,
+  options?: EnrichSpeciesFromApisOptions,
 ): Promise<EnrichSpeciesFromApisResult> {
+  const wikiSpeciesLimit = options?.wikiSpeciesLimit ?? DEFAULT_WIKI_SPECIES_LIMIT;
+  const userId = options?.userId;
+
   if (classifications.length === 0) {
     return { species: [], wikiByLatinName: {}, wikiError: null };
   }
@@ -45,7 +93,15 @@ export async function enrichSpeciesFromApis(
     count: classifications.length,
     wikiSpeciesLimit,
     userState,
+    userId: userId ?? null,
   });
+
+  const savedByLatin = userId
+    ? await fetchSavedSpeciesEnrichmentByLatinNames(
+        userId,
+        classifications.map((c) => c.latinName),
+      )
+    : new Map<string, SavedSpeciesEnrichment>();
 
   let wikiError: string | null = null;
   const wikiByLatinName: WikiByLatinName = {};
@@ -53,27 +109,32 @@ export async function enrichSpeciesFromApis(
 
   const species = await Promise.all(
     classifications.map(async (classification, index): Promise<Species> => {
+      const saved = savedByLatin.get(normalizeLatinName(classification.latinName));
       const fetchWiki = index < wikiSpeciesLimit && Boolean(classification.latinName);
 
-      const [nativeResult, wiki] = await Promise.all([
-        lookupNativeStatus(classification.latinName, userState),
-        fetchWiki
-          ? fetchWikiForClassification(classification.latinName, classification.commonName).catch(
-              (e: unknown) => {
-                const message = e instanceof Error ? e.message : 'Wikipedia request failed.';
-                devLog('[enrich] wiki error', { latinName: classification.latinName, error: e });
-                if (!wikiError) wikiError = message;
-                return null;
-              },
-            )
-          : Promise.resolve(null),
-      ]);
+      if (saved) {
+        devLog('[enrich] saved detection hit', {
+          latinName: classification.latinName,
+          hasDescription: Boolean(saved.description),
+          status: saved.status,
+        });
+      }
+
+      const statusPromise = resolveNativeStatus(classification, userState, saved);
+      const wikiPromise = fetchWiki
+        ? resolveWiki(classification, saved, (message) => {
+            if (!wikiError) wikiError = message;
+          })
+        : Promise.resolve(null);
+
+      const [status, wiki] = await Promise.all([statusPromise, wikiPromise]);
 
       if (fetchWiki) {
         wikiByLatinName[classification.latinName] = wiki;
         devLog('[enrich] wiki item', {
           latinName: classification.latinName,
           hasData: Boolean(wiki),
+          fromSaved: Boolean(saved?.description),
         });
       }
 
@@ -83,11 +144,15 @@ export async function enrichSpeciesFromApis(
         latinName: classification.latinName,
         commonName: classification.commonName,
         taxonGroup: getSpeciesSubcategoryLabel(category),
-        status: nativeResult?.status ?? 'unknown',
+        status,
       };
     }),
   );
 
-  devLog('[enrich] done', { species: species.length, wikiKeys: Object.keys(wikiByLatinName) });
+  devLog('[enrich] done', {
+    species: species.length,
+    wikiKeys: Object.keys(wikiByLatinName),
+    savedHits: savedByLatin.size,
+  });
   return { species, wikiByLatinName, wikiError };
 }

@@ -14,8 +14,13 @@ vi.mock('@/api/wikipedia', () => ({
   fetchSpeciesWikiData: vi.fn(),
 }));
 
+vi.mock('@/services/savedSpeciesEnrichmentService', () => ({
+  fetchSavedSpeciesEnrichmentByLatinNames: vi.fn(),
+}));
+
 import { lookupNativeStatus } from '@/api/inaturalist';
 import { fetchSpeciesWikiData } from '@/api/wikipedia';
+import { fetchSavedSpeciesEnrichmentByLatinNames } from '@/services/savedSpeciesEnrichmentService';
 
 import { enrichSpeciesFromApis } from './enrichSpeciesFromApis';
 
@@ -29,6 +34,7 @@ const classification: ClassificationResult = {
 describe('enrichSpeciesFromApis', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(fetchSavedSpeciesEnrichmentByLatinNames).mockResolvedValue(new Map());
     vi.mocked(lookupNativeStatus).mockResolvedValue({
       status: 'native',
       taxonId: 1,
@@ -56,7 +62,7 @@ describe('enrichSpeciesFromApis', () => {
       return null;
     });
 
-    await enrichSpeciesFromApis([classification], 'VA', 3);
+    await enrichSpeciesFromApis([classification], 'VA', { wikiSpeciesLimit: 3 });
 
     expect(lookupNativeStatus).toHaveBeenCalledWith('Danaus plexippus', 'VA');
     expect(fetchSpeciesWikiData).toHaveBeenCalledWith('Danaus plexippus');
@@ -72,7 +78,7 @@ describe('enrichSpeciesFromApis', () => {
       commonName: 'Honey bee',
     };
 
-    await enrichSpeciesFromApis([classification, second], 'FL', 1);
+    await enrichSpeciesFromApis([classification, second], 'FL', { wikiSpeciesLimit: 1 });
 
     expect(fetchSpeciesWikiData).toHaveBeenCalledTimes(2);
     expect(fetchSpeciesWikiData).not.toHaveBeenCalledWith('Apis mellifera');
@@ -85,5 +91,56 @@ describe('enrichSpeciesFromApis', () => {
     expect(result.species[0].status).toBe('native');
     expect(result.wikiByLatinName['Danaus plexippus']?.description).toBe('A butterfly.');
     expect(result.wikiError).toBeNull();
+  });
+
+  it('reuses saved detection and skips external APIs when data exists', async () => {
+    vi.mocked(fetchSavedSpeciesEnrichmentByLatinNames).mockResolvedValue(
+      new Map([
+        [
+          'danaus plexippus',
+          {
+            latinName: 'Danaus plexippus',
+            commonName: 'Monarch butterfly',
+            status: 'native',
+            description: 'Saved from your last sighting.',
+            inaturalistId: '123',
+          },
+        ],
+      ]),
+    );
+
+    const result = await enrichSpeciesFromApis([classification], 'VA', {
+      userId: 'user-1',
+      wikiSpeciesLimit: 3,
+    });
+
+    expect(lookupNativeStatus).not.toHaveBeenCalled();
+    expect(fetchSpeciesWikiData).not.toHaveBeenCalled();
+    expect(result.species[0].status).toBe('native');
+    expect(result.wikiByLatinName['Danaus plexippus']?.description).toBe(
+      'Saved from your last sighting.',
+    );
+  });
+
+  it('still calls iNat when saved native status is unknown', async () => {
+    vi.mocked(fetchSavedSpeciesEnrichmentByLatinNames).mockResolvedValue(
+      new Map([
+        [
+          'danaus plexippus',
+          {
+            latinName: 'Danaus plexippus',
+            commonName: 'Monarch',
+            status: 'unknown',
+            description: 'Prior note only.',
+            inaturalistId: null,
+          },
+        ],
+      ]),
+    );
+
+    await enrichSpeciesFromApis([classification], 'VA', { userId: 'user-1' });
+
+    expect(lookupNativeStatus).toHaveBeenCalled();
+    expect(fetchSpeciesWikiData).not.toHaveBeenCalled();
   });
 });
