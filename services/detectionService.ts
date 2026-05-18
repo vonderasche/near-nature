@@ -10,6 +10,8 @@ import {
   uploadDetectionsObject,
 } from '@/lib/detections/detectionsStorage';
 import { invalidateCachedGalleryList } from '@/lib/detections/galleryListCache';
+import { upsertSavedSpeciesInSession } from '@/lib/identification/savedSpeciesSessionCache';
+import { invalidateCachedScoringSnapshot } from '@/lib/profile/scoringSnapshotCache';
 import { classificationToSpeciesCategory } from '@/lib/detections/mapSpeciesCategory';
 import { resolveNaturalistCategoryFromClassification } from '@/lib/points/resolveNaturalistCategory';
 import { speciesStatusToNativeColumn } from '@/lib/detections/mapNativeStatusDb';
@@ -122,6 +124,15 @@ export async function saveDetection(input: SaveDetectionInput): Promise<SaveDete
   }
 
   await invalidateCachedGalleryList(userId);
+  await invalidateCachedScoringSnapshot(userId);
+
+  upsertSavedSpeciesInSession(userId, {
+    latinName: species.latinName,
+    commonName: species.commonName,
+    status: species.status,
+    description: input.description,
+    inaturalistId: inaturalistId,
+  });
 
   return { detectionId, newSpeciesDiscovery };
 }
@@ -149,7 +160,9 @@ export async function deleteSavedDetection(detectionId: string): Promise<void> {
   if (deleteError) throw deleteError;
 
   if (row.user_id) {
-    await invalidateCachedGalleryList(String(row.user_id));
+    const uid = String(row.user_id);
+    await invalidateCachedGalleryList(uid);
+    await invalidateCachedScoringSnapshot(uid);
   }
 
   if (storagePath) {

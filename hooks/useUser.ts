@@ -5,6 +5,7 @@ import {
   loadCachedOwnProfile,
   saveCachedOwnProfile,
 } from '@/lib/profile/ownProfileCache';
+import { warmSavedSpeciesSession } from '@/lib/identification/savedSpeciesSessionCache';
 import { signOutLocalOnly } from '@/services/authService';
 import {
   deleteAccount,
@@ -106,6 +107,7 @@ export function useUser(): UseUserReturn {
         setStats(profileStats);
         if (profile) {
           await persistCache(userId, profile, profileStats);
+          void warmSavedSpeciesSession(userId);
         }
         if (!profile) {
           setError('No profile row found. Try signing out and back in, or check your database trigger.');

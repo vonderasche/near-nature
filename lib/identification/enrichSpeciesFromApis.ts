@@ -5,10 +5,8 @@ import { classificationToSpeciesCategory } from '@/lib/detections/mapSpeciesCate
 import { devLog } from '@/lib/devLog';
 import { normalizeLatinName } from '@/lib/identification/normalizeLatinName';
 import { wikiFromSavedDescription } from '@/lib/identification/wikiFromSavedDescription';
-import {
-  fetchSavedSpeciesEnrichmentByLatinNames,
-  type SavedSpeciesEnrichment,
-} from '@/services/savedSpeciesEnrichmentService';
+import { resolveSavedSpeciesForLatinNames } from '@/lib/identification/savedSpeciesSessionCache';
+import type { SavedSpeciesEnrichment } from '@/services/savedSpeciesEnrichmentService';
 import type { ClassificationResult, Species, SpeciesStatus } from '@/types';
 
 const DEFAULT_WIKI_SPECIES_LIMIT = 3;
@@ -97,7 +95,7 @@ export async function enrichSpeciesFromApis(
   });
 
   const savedByLatin = userId
-    ? await fetchSavedSpeciesEnrichmentByLatinNames(
+    ? await resolveSavedSpeciesForLatinNames(
         userId,
         classifications.map((c) => c.latinName),
       )
@@ -120,7 +118,10 @@ export async function enrichSpeciesFromApis(
         });
       }
 
-      const statusPromise = resolveNativeStatus(classification, userState, saved);
+      const isPrimary = index === 0;
+      const statusPromise = isPrimary
+        ? resolveNativeStatus(classification, userState, saved)
+        : Promise.resolve(saved?.status ?? ('unknown' as SpeciesStatus));
       const wikiPromise = fetchWiki
         ? resolveWiki(classification, saved, (message) => {
             if (!wikiError) wikiError = message;

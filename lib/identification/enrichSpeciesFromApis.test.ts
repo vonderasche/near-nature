@@ -14,13 +14,13 @@ vi.mock('@/api/wikipedia', () => ({
   fetchSpeciesWikiData: vi.fn(),
 }));
 
-vi.mock('@/services/savedSpeciesEnrichmentService', () => ({
-  fetchSavedSpeciesEnrichmentByLatinNames: vi.fn(),
+vi.mock('@/lib/identification/savedSpeciesSessionCache', () => ({
+  resolveSavedSpeciesForLatinNames: vi.fn(),
 }));
 
 import { lookupNativeStatus } from '@/api/inaturalist';
 import { fetchSpeciesWikiData } from '@/api/wikipedia';
-import { fetchSavedSpeciesEnrichmentByLatinNames } from '@/services/savedSpeciesEnrichmentService';
+import { resolveSavedSpeciesForLatinNames } from '@/lib/identification/savedSpeciesSessionCache';
 
 import { enrichSpeciesFromApis } from './enrichSpeciesFromApis';
 
@@ -34,7 +34,7 @@ const classification: ClassificationResult = {
 describe('enrichSpeciesFromApis', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(fetchSavedSpeciesEnrichmentByLatinNames).mockResolvedValue(new Map());
+    vi.mocked(resolveSavedSpeciesForLatinNames).mockResolvedValue(new Map());
     vi.mocked(lookupNativeStatus).mockResolvedValue({
       status: 'native',
       taxonId: 1,
@@ -94,7 +94,7 @@ describe('enrichSpeciesFromApis', () => {
   });
 
   it('reuses saved detection and skips external APIs when data exists', async () => {
-    vi.mocked(fetchSavedSpeciesEnrichmentByLatinNames).mockResolvedValue(
+    vi.mocked(resolveSavedSpeciesForLatinNames).mockResolvedValue(
       new Map([
         [
           'danaus plexippus',
@@ -122,8 +122,22 @@ describe('enrichSpeciesFromApis', () => {
     );
   });
 
+  it('does not call iNat for alternate classifications', async () => {
+    const second: ClassificationResult = {
+      ...classification,
+      latinName: 'Apis mellifera',
+      commonName: 'Honey bee',
+    };
+
+    const result = await enrichSpeciesFromApis([classification, second], 'FL');
+
+    expect(lookupNativeStatus).toHaveBeenCalledTimes(1);
+    expect(lookupNativeStatus).toHaveBeenCalledWith('Danaus plexippus', 'FL');
+    expect(result.species[1].status).toBe('unknown');
+  });
+
   it('still calls iNat when saved native status is unknown', async () => {
-    vi.mocked(fetchSavedSpeciesEnrichmentByLatinNames).mockResolvedValue(
+    vi.mocked(resolveSavedSpeciesForLatinNames).mockResolvedValue(
       new Map([
         [
           'danaus plexippus',

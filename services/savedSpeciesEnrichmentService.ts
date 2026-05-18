@@ -77,3 +77,38 @@ export async function fetchSavedSpeciesEnrichmentByLatinNames(
 
   return out;
 }
+
+/** Latest saved detection per latin name for the user (session warm-up). */
+export async function fetchAllSavedSpeciesEnrichment(
+  userId: string,
+): Promise<Map<string, SavedSpeciesEnrichment>> {
+  const { data, error } = await supabase
+    .from('detections')
+    .select('latin_name, common_name, native_status, description, inaturalist_id, detected_at')
+    .eq('user_id', userId)
+    .order('detected_at', { ascending: false });
+
+  if (error) throw error;
+
+  const out = new Map<string, SavedSpeciesEnrichment>();
+  for (const row of (data ?? []) as DetectionEnrichmentRow[]) {
+    const key = normalizeLatinName(row.latin_name);
+    if (!key || out.has(key)) continue;
+
+    out.set(key, {
+      latinName: row.latin_name.trim(),
+      commonName: String(row.common_name ?? '').trim(),
+      status: mapDbNativeToSpeciesStatus(String(row.native_status ?? 'unknown')),
+      description:
+        typeof row.description === 'string' && row.description.trim().length > 0
+          ? row.description.trim()
+          : null,
+      inaturalistId:
+        typeof row.inaturalist_id === 'string' && row.inaturalist_id.trim().length > 0
+          ? row.inaturalist_id.trim()
+          : null,
+    });
+  }
+
+  return out;
+}

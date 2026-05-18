@@ -39,6 +39,7 @@ All `.sql` scripts here are written to be **safe to re-run** (they drop/recreate
 | `add_naturalist_category_enums.sql` | Entomologist / ichthyologist / mycologist enum values (patch) |
 | `add_detection_naturalist_columns.sql` | `subcategory` + `main_category` on detections/discoveries, backfill, sync trigger |
 | `get_user_score_by_category.sql` | RPC: owner score breakdown by main discipline (detections + awards) |
+| `get_user_scoring_snapshot.sql` | RPC: one JSON payload — score rows, awards, sub/main species counts (profile scoring tab) |
 
 Gallery list metadata is cached on device (`near_nature:gallery_list:…` in AsyncStorage); images use signed-URL memory cache + `expo-image` disk cache.
 | `drop_legacy_rpc.sql` | One-off: drops unused RPCs and old indexes |

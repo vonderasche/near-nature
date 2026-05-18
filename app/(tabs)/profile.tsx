@@ -3,7 +3,10 @@ import { RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import { TabScreenWithLogout } from '@/components/layout/tab-screen-with-logout';
 import { ProfileScreenTabs, type ProfileScreenTab } from '@/components/profile/profile-screen-tabs';
-import { ScoringBadgesTree } from '@/components/profile/scoring-badges-tree';
+import {
+  ScoringBadgesTree,
+  type ScoringBadgesTreeHandle,
+} from '@/components/profile/scoring-badges-tree';
 import { CenteredActivityIndicator } from '@/components/profile/centered-activity-indicator';
 import { ProfileOverflowMenu } from '@/components/profile/profile-overflow-menu';
 import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
@@ -43,13 +46,13 @@ export default function ProfileScreen() {
   const { saveState, saving: stateSaving } = useStateSave(update);
   const { deleteById, deletingId } = useDeleteDetection();
   const galleryRef = useRef<UserDetectionGallerySectionHandle>(null);
+  const scoringRef = useRef<ScoringBadgesTreeHandle>(null);
   const [mottoModalVisible, setMottoModalVisible] = useState(false);
   const [stateModalVisible, setStateModalVisible] = useState(false);
   const [avatarPickError, setAvatarPickError] = useState<string | null>(null);
   const [deleteProfileOpen, setDeleteProfileOpen] = useState(false);
   const [deleteProfileError, setDeleteProfileError] = useState<string | null>(null);
   const [profileTab, setProfileTab] = useState<ProfileScreenTab>('gallery');
-  const [scoringRefreshKey, setScoringRefreshKey] = useState(0);
 
   const { pickAndSetAvatar, busy: avatarBusy } = useAvatarFromGallery(user?.id, update);
 
@@ -72,8 +75,8 @@ export default function ProfileScreen() {
     setPullRefreshing(true);
     try {
       const galleryPromise = galleryRef.current?.refetch() ?? Promise.resolve();
-      await Promise.all([refresh(), galleryPromise]);
-      setScoringRefreshKey((k) => k + 1);
+      const scoringPromise = scoringRef.current?.refetch() ?? Promise.resolve();
+      await Promise.all([refresh(), galleryPromise, scoringPromise]);
     } finally {
       setPullRefreshing(false);
     }
@@ -185,7 +188,7 @@ export default function ProfileScreen() {
             />
           ) : (
             <ScoringBadgesTree
-              key={scoringRefreshKey}
+              ref={scoringRef}
               userId={user.id}
               borderColor={authColors.border}
               mutedColor={authColors.textMuted}

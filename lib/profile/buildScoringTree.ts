@@ -10,7 +10,7 @@ import {
   trueVoyagerBadgeKey,
   getSubcategoryLabel,
 } from '@/constants/naturalist-categories';
-import type { MainCategoryProgress } from '@/hooks/useCategoryProgress';
+import type { MainCategoryProgress } from '@/lib/profile/categoryProgressTypes';
 
 export type ScoringTreeNode = {
   id: string;

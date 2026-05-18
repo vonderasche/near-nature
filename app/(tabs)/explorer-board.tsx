@@ -9,6 +9,7 @@ import { ScreenSearchField } from '@/components/ui/screen-search-field';
 import { authColors, authSpacing } from '@/constants/auth-theme';
 import { Colors } from '@/constants/auth-theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useExplorerBoard } from '@/hooks/useExplorerBoard';
 import { useExplorerBoardColumns } from '@/hooks/useExplorerBoardColumns';
 import { useExplorerBoardLayout } from '@/hooks/useExplorerBoardLayout';
@@ -27,6 +28,7 @@ export default function ExplorerBoardScreen() {
   const { columns, setColumnCount } = useExplorerBoardColumns();
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, 280);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -84,7 +86,7 @@ export default function ExplorerBoardScreen() {
       />
       <DetectionCountExplorerBoard
         rows={rows}
-        searchQuery={searchQuery}
+        searchQuery={debouncedSearchQuery}
         layoutMode={layoutMode}
         columnCount={columns}
         loading={isLoading}

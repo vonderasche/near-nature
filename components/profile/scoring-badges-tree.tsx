@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { forwardRef, useImperativeHandle, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { CenteredActivityIndicator } from '@/components/profile/centered-activity-indicator';
@@ -6,15 +6,17 @@ import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
 import { HeroIcon } from '@/components/ui/hero-icon';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import { ScoreByCategorySummary } from '@/components/profile/score-by-category-summary';
-import { useCategoryProgress } from '@/hooks/useCategoryProgress';
-import { usePointAwards } from '@/hooks/usePointAwards';
-import { useUserScoreBreakdown } from '@/hooks/useUserScoreBreakdown';
+import { useUserScoringSnapshot } from '@/hooks/useUserScoringSnapshot';
 import { buildScoringTree, type ScoringTreeNode } from '@/lib/profile/buildScoringTree';
 
 type Props = {
   userId?: string;
   borderColor: string;
   mutedColor: string;
+};
+
+export type ScoringBadgesTreeHandle = {
+  refetch: () => Promise<void>;
 };
 
 function TreeNodeRow({
@@ -116,26 +118,23 @@ function TreeBranch({
   );
 }
 
-export function ScoringBadgesTree({ userId, borderColor, mutedColor }: Props) {
-  const { mains, loading: progressLoading, error: progressError, refetch: refetchProgress } =
-    useCategoryProgress(userId);
-  const { awardKeys, loading: awardsLoading, error: awardsError, refetch: refetchAwards } =
-    usePointAwards(userId);
-  const {
-    breakdown,
-    loading: breakdownLoading,
-    error: breakdownError,
-    refetch: refetchBreakdown,
-  } = useUserScoreBreakdown(userId);
+export const ScoringBadgesTree = forwardRef<ScoringBadgesTreeHandle, Props>(function ScoringBadgesTree(
+  { userId, borderColor, mutedColor },
+  ref,
+) {
+  const { snapshot, loading, error, refetch } = useUserScoringSnapshot(userId);
+
+  useImperativeHandle(ref, () => ({ refetch }), [refetch]);
 
   const [expandedIds, setExpandedIds] = useState<Set<string>>(
     () => new Set(['badges', 'disciplines', 'main:botanist']),
   );
 
-  const tree = useMemo(() => buildScoringTree(mains, awardKeys), [mains, awardKeys]);
+  const mains = snapshot?.mains ?? [];
+  const awardKeys = snapshot?.awardKeys ?? new Set<string>();
+  const breakdown = snapshot?.breakdown ?? null;
 
-  const loading = progressLoading || awardsLoading || breakdownLoading;
-  const error = progressError ?? awardsError ?? breakdownError;
+  const tree = useMemo(() => buildScoringTree(mains, awardKeys), [mains, awardKeys]);
 
   function toggle(id: string) {
     setExpandedIds((prev) => {
@@ -146,7 +145,7 @@ export function ScoringBadgesTree({ userId, borderColor, mutedColor }: Props) {
     });
   }
 
-  const totalEarned = [...awardKeys].length;
+  const totalEarned = awardKeys.size;
 
   return (
     <View style={styles.wrap}>
@@ -162,14 +161,7 @@ export function ScoringBadgesTree({ userId, borderColor, mutedColor }: Props) {
         <CenteredActivityIndicator color={mutedColor} />
       ) : null}
       {error ? (
-        <ErrorRetryBlock
-          message={error}
-          onRetry={() => {
-            void refetchProgress();
-            void refetchAwards();
-            void refetchBreakdown();
-          }}
-        />
+        <ErrorRetryBlock message={error} onRetry={() => void refetch()} />
       ) : null}
 
       {!error && breakdown && breakdown.rows.length > 0 ? (
@@ -203,7 +195,7 @@ export function ScoringBadgesTree({ userId, borderColor, mutedColor }: Props) {
       ) : null}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   wrap: {

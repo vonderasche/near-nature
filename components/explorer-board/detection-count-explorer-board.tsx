@@ -1,20 +1,24 @@
+import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useMemo } from 'react';
+import { ActivityIndicator, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { AuthButton } from '@/components/auth/auth-button';
-import { ExplorerBoardMemberGrid } from '@/components/explorer-board/explorer-board-member-grid';
-import { ExplorerBoardMemberList } from '@/components/explorer-board/explorer-board-member-list';
+import { ExplorerBoardMemberGridTile } from '@/components/explorer-board/explorer-board-member-grid-tile';
+import { ExplorerBoardMemberListItem } from '@/components/explorer-board/explorer-board-member-list-item';
 import { InlineFormError } from '@/components/shared/inline-form-error';
 import { useExplorerBoardDisplayUrls } from '@/hooks/useExplorerBoardDisplayUrls';
 import { listSectionSupportingStyles } from '@/components/shared/list-detail-card';
 import { authColors, authSpacing } from '@/constants/auth-theme';
 import type { ExplorerBoardColumns } from '@/lib/explorerBoard/explorerBoardColumns';
+import { minExplorerBoardTileSize } from '@/lib/explorerBoard/explorerBoardColumns';
 import type { ExplorerBoardLayoutMode } from '@/lib/explorerBoard/explorerBoardLayout';
 import { filterExplorerBoardRows } from '@/lib/explorerBoard/filterExplorerBoardRows';
 import { routePublicUserProfile } from '@/lib/routing/routes';
 import { isSearchQueryActive } from '@/lib/search/normalizeSearchQuery';
 import type { ExplorerBoardMemberRow } from '@/services/explorerBoardService';
+
+const LIST_ROW_ESTIMATE = 96;
 
 type Props = {
   rows: ExplorerBoardMemberRow[];
@@ -29,7 +33,7 @@ type Props = {
 };
 
 /**
- * Explorer board: list cards or member image grid (latest identification per tile).
+ * Explorer board: virtualized list cards or member image grid.
  */
 export function DetectionCountExplorerBoard({
   rows,
@@ -43,6 +47,7 @@ export function DetectionCountExplorerBoard({
   error,
 }: Props) {
   const router = useRouter();
+  const { width: windowWidth } = useWindowDimensions();
   const filteredRows = useMemo(
     () => filterExplorerBoardRows(rows, searchQuery),
     [rows, searchQuery],
@@ -51,9 +56,52 @@ export function DetectionCountExplorerBoard({
     loading && rows.length === 0 ? [] : filteredRows,
   );
 
-  const openMember = (row: ExplorerBoardMemberRow) => {
-    router.push(routePublicUserProfile(row.userId));
-  };
+  const compact = columnCount >= 4;
+  const tileSize = useMemo(() => {
+    const horizontalPadding = authSpacing.lg * 2;
+    const gap = authSpacing.sm;
+    const inner = Math.max(0, windowWidth - horizontalPadding);
+    return Math.max(
+      minExplorerBoardTileSize(columnCount),
+      Math.floor((inner - gap * (columnCount - 1)) / columnCount),
+    );
+  }, [windowWidth, columnCount]);
+
+  const gridRowEstimate = tileSize + (compact ? authSpacing.xs : tileSize * 0.35);
+
+  const openMember = useCallback(
+    (row: ExplorerBoardMemberRow) => {
+      router.push(routePublicUserProfile(row.userId));
+    },
+    [router],
+  );
+
+  const renderListItem = useCallback(
+    ({ item }: { item: ExplorerBoardMemberRow }) => (
+      <ExplorerBoardMemberListItem
+        row={item}
+        resolveDisplayUrl={resolveDisplayUrl}
+        onPressMember={openMember}
+      />
+    ),
+    [openMember, resolveDisplayUrl],
+  );
+
+  const renderGridItem = useCallback(
+    ({ item }: { item: ExplorerBoardMemberRow }) => (
+      <ExplorerBoardMemberGridTile
+        row={item}
+        tileSize={tileSize}
+        compact={compact}
+        columnCount={columnCount}
+        borderColor={authColors.border}
+        mutedColor={authColors.textMuted}
+        resolveDisplayUrl={resolveDisplayUrl}
+        onPressMember={openMember}
+      />
+    ),
+    [columnCount, compact, openMember, resolveDisplayUrl, tileSize],
+  );
 
   if (error) {
     return <InlineFormError>{error}</InlineFormError>;
@@ -83,24 +131,23 @@ export function DetectionCountExplorerBoard({
     );
   }
 
+  const isGrid = layoutMode === 'grid';
+  const estimatedItemSize = isGrid ? gridRowEstimate : LIST_ROW_ESTIMATE;
+
   return (
     <View accessibilityLabel="Explorer board by native species discovered">
-      {layoutMode === 'grid' ? (
-        <ExplorerBoardMemberGrid
-          rows={filteredRows}
-          columnCount={columnCount}
-          borderColor={authColors.border}
-          mutedColor={authColors.textMuted}
-          resolveDisplayUrl={resolveDisplayUrl}
-          onPressMember={openMember}
+      <View style={styles.listWrap}>
+        <FlashList
+          data={filteredRows}
+          key={isGrid ? `grid-${columnCount}` : 'list'}
+          numColumns={isGrid ? columnCount : 1}
+          renderItem={isGrid ? renderGridItem : renderListItem}
+          keyExtractor={(item) => item.userId}
+          estimatedItemSize={estimatedItemSize}
+          scrollEnabled={false}
+          extraData={{ tileSize, columnCount, compact, layoutMode }}
         />
-      ) : (
-        <ExplorerBoardMemberList
-          rows={filteredRows}
-          resolveDisplayUrl={resolveDisplayUrl}
-          onPressMember={openMember}
-        />
-      )}
+      </View>
 
       {hasMore && onLoadMore ? (
         <View style={styles.loadMoreWrap}>
@@ -122,6 +169,9 @@ export function DetectionCountExplorerBoard({
 }
 
 const styles = StyleSheet.create({
+  listWrap: {
+    minHeight: 2,
+  },
   loadMoreWrap: {
     marginTop: authSpacing.md,
     alignItems: 'center',

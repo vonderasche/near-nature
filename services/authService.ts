@@ -4,6 +4,8 @@ import { signInWithEmail } from '@/lib/auth/email-auth';
 import { clearAllSignedDetectionUrlCaches } from '@/lib/detections/signedDetectionUrlCache';
 import { clearAllCachedGalleryLists } from '@/lib/detections/galleryListCache';
 import { clearAllCachedOwnProfiles } from '@/lib/profile/ownProfileCache';
+import { clearAllCachedScoringSnapshots } from '@/lib/profile/scoringSnapshotCache';
+import { clearSavedSpeciesSession } from '@/lib/identification/savedSpeciesSessionCache';
 import { supabase } from '@/lib/supabase';
 
 /** Add this URL (and your dev `exp://` variant) under Supabase Auth → URL configuration → Redirect URLs. */
@@ -34,6 +36,8 @@ export async function signOut() {
   await clearAllSignedDetectionUrlCaches();
   await clearAllCachedOwnProfiles();
   await clearAllCachedGalleryLists();
+  await clearAllCachedScoringSnapshots();
+  clearSavedSpeciesSession();
   if (error) throw error;
 }
 
@@ -47,6 +51,8 @@ export async function signOutLocalOnly(): Promise<void> {
   await clearAllSignedDetectionUrlCaches();
   await clearAllCachedOwnProfiles();
   await clearAllCachedGalleryLists();
+  await clearAllCachedScoringSnapshots();
+  clearSavedSpeciesSession();
 }
 
 export async function sendPasswordReset(email: string) {
