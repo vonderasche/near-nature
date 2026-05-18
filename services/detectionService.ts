@@ -34,20 +34,6 @@ export type SaveDetectionInput = {
 };
 
 /**
- * Maps Postgres unique violations for `one_species_per_day` (when that index exists).
- * While repeats are allowed, run `sql/disable_one_species_per_day_temp.sql` so inserts are not blocked.
- */
-function isDuplicateSpeciesTodayError(message: string): boolean {
-  const m = message.toLowerCase();
-  return (
-    m.includes('duplicate') ||
-    m.includes('unique') ||
-    m.includes('one_species_per_day') ||
-    m.includes('violates unique constraint')
-  );
-}
-
-/**
  * Uploads the local image to Supabase Storage (`detections/{userId}/...`) and inserts `public.detections`.
  */
 export async function saveDetection(input: SaveDetectionInput): Promise<SaveDetectionResult> {
@@ -110,11 +96,6 @@ export async function saveDetection(input: SaveDetectionInput): Promise<SaveDete
 
   if (insertError) {
     await removeDetectionsObjects([objectPath]);
-    if (isDuplicateSpeciesTodayError(insertError.message)) {
-      throw new Error(
-        'You already saved this species today. Try again tomorrow or save a different identification.'
-      );
-    }
     throw insertError;
   }
 

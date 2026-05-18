@@ -6,25 +6,19 @@ $Root = Split-Path -Parent $PSScriptRoot
 
 Write-Host ""
 Write-Host "Near Nature - Beta production Supabase setup" -ForegroundColor Cyan
-Write-Host "Run each file in Supabase Dashboard -> SQL Editor -> New query" -ForegroundColor White
+Write-Host "Run each .sql FILE in Supabase SQL Editor (not this README / not sql/README.md)" -ForegroundColor Yellow
 Write-Host ""
 
 $core = @(
   "create_user.sql",
   "resolve_login_email.sql",
-  "check_user_exists.sql",
-  "update_user.sql",
-  "delete_user.sql",
   "create_detections.sql",
-  "update_detections.sql",
-  "delete_detections.sql",
   "create_leaderboard.sql",
   "create_streaks.sql",
   "create_discoveries.sql",
   "storage_bucket_detections.sql",
   "get_detection_count_leaderboard.sql",
   "get_public_user_profile.sql",
-  "disable_one_species_per_day_temp.sql",
   "drop_streak_client_update_policy.sql"
 )
 
@@ -42,6 +36,9 @@ function Show-Block([string]$title, [string[]]$files) {
 
 Show-Block "Core schema (sql/)" $core
 
+Write-Host "Existing DB cleanup (optional, drops unused RPCs + one_species_per_day index):" -ForegroundColor Green
+Write-Host "  sql/drop_legacy_rpc.sql" -ForegroundColor White
+Write-Host ""
 Write-Host "Edge function (terminal on your machine):" -ForegroundColor Green
 Write-Host "  .\scripts\deploy-identify-species.ps1" -ForegroundColor White
 Write-Host ""
