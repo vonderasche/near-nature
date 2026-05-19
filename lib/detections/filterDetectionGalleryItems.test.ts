@@ -29,6 +29,8 @@ describe('filterDetectionGalleryItems', () => {
       commonName: 'Oak',
       latinName: 'Quercus',
       category: 'trees_shrubs',
+      subcategory: 'trees_shrubs',
+      mainCategory: 'botanist',
       description: 'A deciduous tree',
     }),
   ];
@@ -40,6 +42,11 @@ describe('filterDetectionGalleryItems', () => {
   it('matches names and description', () => {
     expect(filterDetectionGalleryItems(items, 'panthera').map((i) => i.id)).toEqual(['a']);
     expect(filterDetectionGalleryItems(items, 'deciduous').map((i) => i.id)).toEqual(['b']);
+  });
+
+  it('matches taxonomy labels', () => {
+    expect(filterDetectionGalleryItems(items, 'mammalogist').map((i) => i.id)).toEqual(['a']);
+    expect(filterDetectionGalleryItems(items, 'botanist').map((i) => i.id)).toEqual(['b']);
   });
 
   it('filters by subcategory', () => {

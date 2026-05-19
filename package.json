@@ -11,6 +11,7 @@
     "android:install": "powershell -ExecutionPolicy Bypass -File ./scripts/run-android-device.ps1 -InstallOnly",
     "android:apk": "cd android && gradlew.bat assembleRelease",
     "android:friends-apk": "powershell -ExecutionPolicy Bypass -File ./scripts/build-friends-apk.ps1",
+    "android:device-test-apk": "powershell -ExecutionPolicy Bypass -File ./scripts/build-device-test-apk.ps1",
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",

@@ -238,6 +238,39 @@ export function buildProfileBadgeGroups(section: ProfileBadgeSection): ProfileBa
   ];
 }
 
+/** Compact row for the profile collapsible header: earned badges, or dimmed placeholders. */
+export function buildProfileBadgePreviewRow(
+  mains: readonly MainCategoryProgress[],
+  awardKeys: ReadonlySet<string>,
+): ProfileBadgeItem[] {
+  const earned = buildProfileBadgeSections(mains, awardKeys)
+    .flatMap((section) => section.badges)
+    .filter((badge) => badge.earned);
+
+  if (earned.length > 0) {
+    return earned;
+  }
+
+  return [
+    {
+      id: 'preview:bonus',
+      label: 'Bonus badges',
+      shortLabel: 'Bonus',
+      icon: 'trophy',
+      earned: false,
+      points: BADGE_BONUS_POINTS.endsOfTheEarth,
+    },
+    ...MAIN_CATEGORIES.map((main) => ({
+      id: `preview:${main.id}`,
+      label: main.label,
+      shortLabel: shortLabelFrom(main.label),
+      icon: VOYAGER_ICON_BY_MAIN[main.id],
+      earned: false,
+      points: MAIN_TIER_POINTS.explorer,
+    })),
+  ];
+}
+
 /** Sections containing only badges present in `awardKeys` (for public profiles). */
 export function buildEarnedProfileBadgeSections(
   awardKeys: ReadonlySet<string>,

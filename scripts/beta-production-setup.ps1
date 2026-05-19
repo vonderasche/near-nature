@@ -27,6 +27,7 @@ $core = @(
   "add_detection_naturalist_columns.sql",
   "get_user_score_by_category.sql",
   "get_user_scoring_snapshot.sql",
+  "add_detection_search.sql",
   "drop_streak_client_update_policy.sql"
 )
 

@@ -1,25 +1,40 @@
 import { detectionCategoryMatchesSubcategoryFilter } from '@/lib/detections/detectionCategoryTaxonFilter';
+import { detectionSearchFields } from '@/lib/detections/detectionSearchFields';
 import { speciesCategoryMatchesGroup } from '@/lib/detections/speciesSubcategory';
 import { matchesSearchInFields } from '@/lib/search/matchesSearchQuery';
 import type { SpeciesSubcategoryId } from '@/constants/species-subcategories';
+import type { DetectionGalleryRow } from '@/lib/detections/mapDetectionGalleryRow';
 import type { DetectionGalleryItem } from '@/types';
 import type { SpeciesSubcategoryGroup } from '@/constants/species-subcategories';
+
+function rowToSearchShape(row: DetectionGalleryRow) {
+  return {
+    commonName: row.common_name,
+    latinName: row.latin_name,
+    description: row.description,
+    category: row.category,
+    subcategory: row.subcategory ?? null,
+    mainCategory: row.main_category ?? null,
+  };
+}
 
 export type GalleryCategoryFilter =
   | { kind: 'all' }
   | { kind: 'group'; group: SpeciesSubcategoryGroup }
   | { kind: 'subcategory'; subcategory: SpeciesSubcategoryId };
 
-/** Matches common name, scientific (Latin) name, and saved description on gallery rows. */
+/** Matches names, taxonomy labels, normalized Latin/genus, description, and optional aliases. */
 export function filterDetectionGalleryItems(
   items: readonly DetectionGalleryItem[],
   query: string,
   categoryFilter: GalleryCategoryFilter = { kind: 'all' },
+  aliasesByLatinName?: ReadonlyMap<string, readonly string[]>,
 ): DetectionGalleryItem[] {
   const trimmed = query.trim();
 
   return items.filter((item) => {
-    if (trimmed && !matchesSearchInFields([item.commonName, item.latinName, item.description], trimmed)) {
+    const aliases = aliasesByLatinName?.get(item.latinName.trim().toLowerCase()) ?? [];
+    if (trimmed && !matchesSearchInFields(detectionSearchFields(item, aliases), trimmed)) {
       return false;
     }
     if (categoryFilter.kind === 'all') return true;
@@ -27,5 +42,20 @@ export function filterDetectionGalleryItems(
       return speciesCategoryMatchesGroup(item.category, categoryFilter.group);
     }
     return detectionCategoryMatchesSubcategoryFilter(item.category, categoryFilter.subcategory);
+  });
+}
+
+/** Text search on gallery DB rows (local / RPC fallback). */
+export function filterDetectionGalleryRows(
+  rows: readonly DetectionGalleryRow[],
+  query: string,
+  aliasesByLatinName?: ReadonlyMap<string, readonly string[]>,
+): DetectionGalleryRow[] {
+  const trimmed = query.trim();
+  if (!trimmed) return [...rows];
+
+  return rows.filter((row) => {
+    const aliases = aliasesByLatinName?.get(row.latin_name.trim().toLowerCase()) ?? [];
+    return matchesSearchInFields(detectionSearchFields(rowToSearchShape(row), aliases), trimmed);
   });
 }

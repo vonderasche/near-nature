@@ -1,4 +1,7 @@
+import { isLocalDetectionsMode } from '@/lib/config/isLocalDetectionsMode';
+import { loadLocalDetectionRows } from '@/lib/detections/localDetectionStore';
 import { buildMainCategoryProgress } from '@/lib/profile/buildCategoryProgress';
+import { buildLocalScoringSnapshot } from '@/lib/profile/buildLocalScoringSnapshot';
 import type { MainCategoryProgress } from '@/lib/profile/categoryProgressTypes';
 import {
   getMainCategory,
@@ -155,6 +158,11 @@ async function fetchUserScoringSnapshotFallback(userId: string): Promise<UserSco
 
 /** Owner-only RPC: score breakdown, awards, and discipline species counts. */
 export async function fetchUserScoringSnapshot(userId: string): Promise<UserScoringSnapshot> {
+  if (isLocalDetectionsMode()) {
+    const rows = await loadLocalDetectionRows(userId);
+    return buildLocalScoringSnapshot(rows);
+  }
+
   const { data, error } = await supabase.rpc('get_user_scoring_snapshot', {
     p_user_id: userId,
   });

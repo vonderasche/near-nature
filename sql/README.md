@@ -41,6 +41,7 @@ All `.sql` scripts here are written to be **safe to re-run** (they drop/recreate
 | `get_user_score_by_category.sql` | RPC: owner score breakdown by main discipline (detections + awards) |
 | `get_user_scoring_snapshot.sql` | RPC: one JSON payload — score rows, awards, sub/main species counts (profile scoring) |
 | `get_public_user_awards.sql` | RPC: earned badge rows for any member (public profile) |
+| `add_detection_search.sql` | `species_metadata`, search columns/indexes on detections, `search_user_detections` RPC |
 
 Gallery list metadata is cached on device (`near_nature:gallery_list:…` in AsyncStorage); images use signed-URL memory cache + `expo-image` disk cache.
 
@@ -78,6 +79,7 @@ Use for a **new** Supabase project or when you intentionally recreate the `publi
 | 12 | `get_user_score_by_category.sql` | Owner score breakdown RPC |
 | 13 | `get_user_scoring_snapshot.sql` | Owner scoring snapshot RPC |
 | 14 | `get_public_user_awards.sql` | Public earned-badges RPC |
+| 15 | `add_detection_search.sql` | Gallery search (FTS, trigram, aliases) |
 | 15 | `drop_streak_client_update_policy.sql` | Policy cleanup (harmless on fresh DB) |
 
 ### After rebuild

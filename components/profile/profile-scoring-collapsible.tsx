@@ -2,9 +2,11 @@ import { forwardRef, useImperativeHandle, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ProfileBadgeGrid } from '@/components/profile/profile-badge-grid';
+import { ProfileBadgePreviewRow } from '@/components/profile/profile-badge-preview-row';
 import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
 import { HeroIcon } from '@/components/ui/hero-icon';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { buildProfileBadgePreviewRow } from '@/lib/profile/profileBadges';
 import { useUserScoringSnapshot } from '@/hooks/useUserScoringSnapshot';
 
 type Props = {
@@ -22,7 +24,7 @@ export const ProfileScoringCollapsible = forwardRef<
   Props
 >(function ProfileScoringCollapsible({ userId, borderColor, mutedColor }, ref) {
   const [open, setOpen] = useState(false);
-  const { snapshot, loading, error, refetch } = useUserScoringSnapshot(open ? userId : undefined);
+  const { snapshot, loading, error, refetch } = useUserScoringSnapshot(userId);
 
   const mains = snapshot?.mains ?? [];
   const awardKeys = useMemo(
@@ -30,7 +32,22 @@ export const ProfileScoringCollapsible = forwardRef<
     [snapshot?.awardKeys],
   );
 
+  const previewBadges = useMemo(
+    () => buildProfileBadgePreviewRow(mains, awardKeys),
+    [awardKeys, mains],
+  );
+
+  const earnedCount = useMemo(
+    () => previewBadges.filter((b) => b.earned).length,
+    [previewBadges],
+  );
+
   useImperativeHandle(ref, () => ({ refetch }), [refetch]);
+
+  const accessibilityLabel =
+    earnedCount > 0
+      ? `${earnedCount} badge${earnedCount === 1 ? '' : 's'} earned. ${open ? 'Collapse' : 'Expand'} full badge list`
+      : `No badges earned yet. ${open ? 'Collapse' : 'Expand'} available badges`;
 
   return (
     <View style={styles.wrap}>
@@ -38,12 +55,19 @@ export const ProfileScoringCollapsible = forwardRef<
         onPress={() => setOpen((wasOpen) => !wasOpen)}
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
-        accessibilityLabel={open ? 'Collapse scoring and badges' : 'Expand scoring and badges'}
+        accessibilityLabel={accessibilityLabel}
         style={({ pressed }) => [styles.trigger, { borderColor }, pressed && styles.triggerPressed]}>
-        <View style={styles.triggerLeft}>
-          <HeroIcon name="trophy" size={20} color={authColors.text} />
-          <Text style={styles.triggerTitle}>Scoring & badges</Text>
-        </View>
+        {loading && !snapshot ? (
+          <View style={styles.previewLoading}>
+            <ActivityIndicator size="small" color={mutedColor} />
+          </View>
+        ) : (
+          <ProfileBadgePreviewRow
+            badges={previewBadges}
+            borderColor={borderColor}
+            mutedColor={mutedColor}
+          />
+        )}
         <View style={open ? styles.chevronExpanded : undefined}>
           <HeroIcon name="chevron-down" size={20} color={mutedColor} />
         </View>
@@ -91,26 +115,21 @@ const styles = StyleSheet.create({
   trigger: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     gap: authSpacing.sm,
     paddingVertical: authSpacing.sm,
-    paddingHorizontal: authSpacing.md,
+    paddingLeft: authSpacing.sm,
+    paddingRight: authSpacing.md,
     borderWidth: 1,
     borderRadius: 4,
   },
   triggerPressed: {
     opacity: 0.88,
   },
-  triggerLeft: {
+  previewLoading: {
     flex: 1,
-    flexDirection: 'row',
+    minHeight: 48,
     alignItems: 'center',
-    gap: authSpacing.sm,
-  },
-  triggerTitle: {
-    ...authTypography.subtitle,
-    fontWeight: '600',
-    color: authColors.text,
+    justifyContent: 'center',
   },
   chevronExpanded: {
     transform: [{ rotate: '180deg' }],

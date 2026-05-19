@@ -52,7 +52,7 @@ export const UserDetectionGallerySection = forwardRef<
     mutedColor,
     activityColor,
     emptyMessage,
-    searchPlaceholder = 'Search common or scientific name, description…',
+    searchPlaceholder = 'Search name, type, description, or alias…',
     deletable = false,
     onDeleteItem,
     deletingId = null,
@@ -70,7 +70,7 @@ export const UserDetectionGallerySection = forwardRef<
     error,
     loadMore,
     refetch,
-  } = useUserDetectionGallery({ userId, publicOnly });
+  } = useUserDetectionGallery({ userId, publicOnly, searchQuery: debouncedSearch });
   const { columns, setColumnCount } = useGalleryGridColumns();
 
   useEffect(() => {
@@ -81,8 +81,8 @@ export const UserDetectionGallerySection = forwardRef<
   const debouncedSearch = useDebouncedValue(searchQuery, 280);
 
   const filteredItems = useMemo(
-    () => filterDetectionGalleryItems(items, debouncedSearch, categoryFilter),
-    [items, debouncedSearch, categoryFilter],
+    () => filterDetectionGalleryItems(items, '', categoryFilter),
+    [items, categoryFilter],
   );
 
   useImperativeHandle(ref, () => ({ refetch }), [refetch]);
@@ -126,7 +126,7 @@ export const UserDetectionGallerySection = forwardRef<
         columnCount={columns}
         loading={isLoading}
         isLoadingMore={isLoadingMore}
-        hasMore={hasMore && !debouncedSearch.trim() && categoryFilter.kind === 'all'}
+        hasMore={hasMore && categoryFilter.kind === 'all'}
         onLoadMore={() => void loadMore()}
         error={error}
         onRetry={() => void refetch()}

@@ -2,8 +2,10 @@ import { decode } from 'base64-arraybuffer';
 import { randomUUID } from 'expo-crypto';
 import { readLocalFileAsBase64 } from '@/lib/fs/legacyFileSystem';
 
-import { lookupNativeStatus } from '@/api/inaturalist';
+import { fetchTaxonAlternateNames, lookupNativeStatus } from '@/api/inaturalist';
+import { isLocalDetectionsMode } from '@/lib/config/isLocalDetectionsMode';
 import { DETECTIONS_BUCKET } from '@/lib/detections/detectionsBucket';
+import { appendLocalDetection, removeLocalDetection } from '@/lib/detections/localDetectionStore';
 import {
   getDetectionsObjectPublicUrl,
   removeDetectionsObjects,
@@ -12,6 +14,7 @@ import {
 import { invalidateCachedGalleryList } from '@/lib/detections/galleryListCache';
 import { upsertSavedSpeciesInSession } from '@/lib/identification/savedSpeciesSessionCache';
 import { invalidateCachedScoringSnapshot } from '@/lib/profile/scoringSnapshotCache';
+import { upsertSpeciesMetadata } from '@/services/speciesMetadataService';
 import { classificationToSpeciesCategory } from '@/lib/detections/mapSpeciesCategory';
 import { resolveNaturalistCategoryFromClassification } from '@/lib/points/resolveNaturalistCategory';
 import { speciesStatusToNativeColumn } from '@/lib/detections/mapNativeStatusDb';
@@ -42,6 +45,27 @@ export type SaveDetectionInput = {
  */
 export async function saveDetection(input: SaveDetectionInput): Promise<SaveDetectionResult> {
   const { localImageUri, userId, species, classification, stateCode, description = null } = input;
+
+  if (isLocalDetectionsMode()) {
+    const { detectionId } = await appendLocalDetection({
+      localImageUri,
+      userId,
+      species,
+      classification,
+      description,
+    });
+    await invalidateCachedGalleryList(userId);
+    await invalidateCachedScoringSnapshot(userId);
+    upsertSavedSpeciesInSession(userId, {
+      latinName: species.latinName,
+      commonName: species.commonName,
+      status: species.status,
+      description: input.description,
+      inaturalistId: null,
+    });
+    devLog('[saveDetection] saved locally (device-only mode)', { detectionId });
+    return { detectionId, newSpeciesDiscovery: null };
+  }
 
   const nat = await lookupNativeStatus(species.latinName, stateCode.trim());
   const inaturalistId = nat ? String(nat.taxonId) : null;
@@ -107,6 +131,20 @@ export async function saveDetection(input: SaveDetectionInput): Promise<SaveDete
   }
 
   const detectionId = inserted.id as string;
+
+  void (async () => {
+    try {
+      const aliases = await fetchTaxonAlternateNames(species.latinName);
+      await upsertSpeciesMetadata({
+        latinName: species.latinName,
+        commonName: species.commonName,
+        aliases,
+      });
+    } catch (e) {
+      devLog('[saveDetection] species metadata upsert failed', e);
+    }
+  })();
+
   let newSpeciesDiscovery: NewSpeciesDiscovery | null = null;
 
   const { data: discoveryRow, error: discoveryError } = await supabase
@@ -141,6 +179,18 @@ export async function saveDetection(input: SaveDetectionInput): Promise<SaveDete
  * Deletes the current user's detection row (RLS) and best-effort removes the image from Storage.
  */
 export async function deleteSavedDetection(detectionId: string): Promise<void> {
+  if (isLocalDetectionsMode()) {
+    const { data: session } = await supabase.auth.getSession();
+    const userId = session.session?.user?.id;
+    if (!userId) {
+      throw new Error('Sign in to manage saved photos.');
+    }
+    await removeLocalDetection(userId, detectionId);
+    await invalidateCachedGalleryList(userId);
+    await invalidateCachedScoringSnapshot(userId);
+    return;
+  }
+
   const { data: row, error: selectError } = await supabase
     .from('detections')
     .select('image_url, user_id')

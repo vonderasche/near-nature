@@ -4,6 +4,7 @@ import { ENDS_OF_THE_EARTH_BADGE_KEY, trueVoyagerBadgeKey } from '@/constants/na
 import {
   buildEarnedProfileBadgeSections,
   buildProfileBadgeGroups,
+  buildProfileBadgePreviewRow,
   buildProfileBadgeSections,
 } from '@/lib/profile/profileBadges';
 
@@ -42,6 +43,20 @@ describe('buildProfileBadgeSections', () => {
     const groups = buildProfileBadgeGroups(bonusSection);
     expect(groups).toHaveLength(1);
     expect(groups[0].badges).toHaveLength(9);
+  });
+
+  it('buildProfileBadgePreviewRow returns dimmed placeholders when nothing earned', () => {
+    const row = buildProfileBadgePreviewRow([], new Set());
+    expect(row.length).toBe(9);
+    expect(row.every((b) => !b.earned)).toBe(true);
+    expect(row[0].id).toBe('preview:bonus');
+  });
+
+  it('buildProfileBadgePreviewRow returns earned badges when present', () => {
+    const keys = new Set([ENDS_OF_THE_EARTH_BADGE_KEY]);
+    const row = buildProfileBadgePreviewRow([], keys);
+    expect(row).toHaveLength(1);
+    expect(row[0].earned).toBe(true);
   });
 
   it('buildEarnedProfileBadgeSections omits unearned badges and empty sections', () => {

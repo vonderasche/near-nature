@@ -90,6 +90,46 @@ async function fetchTaxonId(latinName: string): Promise<number | null> {
   return (exact ?? results[0]).id;
 }
 
+type TaxonNameRow = { name?: string; lexicon?: string | null };
+
+type TaxonDetailPayload = {
+  preferred_common_name?: string;
+  matched_term?: string;
+  names?: TaxonNameRow[];
+};
+
+/**
+ * Alternate common names and matched terms from iNaturalist (for species_metadata aliases).
+ */
+export async function fetchTaxonAlternateNames(latinName: string): Promise<string[]> {
+  const taxonId = await fetchTaxonId(latinName);
+  if (taxonId === null) return [];
+
+  const url = `${INATURALIST_API}/taxa/${taxonId}`;
+  const response = await fetch(url);
+  if (!response.ok) return [];
+
+  const data = await response.json();
+  const taxon = (Array.isArray(data.results) ? data.results[0] : data) as TaxonDetailPayload | undefined;
+  if (!taxon) return [];
+
+  const out = new Set<string>();
+  const add = (value: string | undefined) => {
+    const t = value?.trim();
+    if (t && t.length > 1) out.add(t);
+  };
+
+  add(taxon.preferred_common_name);
+  add(taxon.matched_term);
+  for (const row of taxon.names ?? []) {
+    const lex = row.lexicon?.toLowerCase() ?? '';
+    if (lex && lex !== 'english' && lex !== 'english (uk)' && lex !== 'english (us)') continue;
+    add(row.name);
+  }
+
+  return [...out].slice(0, 24);
+}
+
 // ── Step 2: US state place ID ─────────────────────────────────
 
 async function fetchStatePlaceId(stateCode: string): Promise<number | null> {
