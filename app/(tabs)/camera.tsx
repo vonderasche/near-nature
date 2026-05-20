@@ -1,6 +1,10 @@
+import { Redirect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { useAuthContext } from '@/context/AuthContext';
+import { routes } from '@/lib/routing/routes';
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { CameraBottomToolbar } from '@/components/camera/camera-bottom-toolbar';
@@ -21,7 +25,12 @@ import { usePickPhotoFromGallery } from '@/hooks/usePickPhotoFromGallery';
 import { contentInsetsPadding } from '@/lib/screen/contentInsets';
 
 export default function CameraScreen() {
+  const { isAuthenticated, isLoading } = useAuthContext();
   const insets = useSafeAreaInsets();
+
+  if (!isLoading && !isAuthenticated) {
+    return <Redirect href={routes.login} />;
+  }
   const [capturedPhotoUri, setCapturedPhotoUri] = useState<string | null>(null);
   const [pickerNotice, setPickerNotice] = useState<{ title: string; message: string } | null>(null);
   const [backgroundSaveError, setBackgroundSaveError] = useState<{

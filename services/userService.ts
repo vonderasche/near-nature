@@ -154,12 +154,26 @@ export async function resolveUserProfile(userId: string): Promise<boolean> {
   return userProfileExists(userId);
 }
 
+/** Concurrent `getUser(userId)` calls share one PostgREST request; map entry clears when it settles. */
+const getUserInflight = new Map<string, Promise<User | null>>();
+
 // Fetch the current user's profile
 export async function getUser(userId: string): Promise<User | null> {
-  const { data, error } = await supabase.from('users').select('*').eq('id', userId).maybeSingle();
+  const existing = getUserInflight.get(userId);
+  if (existing) return existing;
 
-  if (error) throw error;
-  return data as User | null;
+  const promise = (async (): Promise<User | null> => {
+    try {
+      const { data, error } = await supabase.from('users').select('*').eq('id', userId).maybeSingle();
+      if (error) throw error;
+      return data as User | null;
+    } finally {
+      getUserInflight.delete(userId);
+    }
+  })();
+
+  getUserInflight.set(userId, promise);
+  return promise;
 }
 
 // Update the current user's profile (RLS: own row only)

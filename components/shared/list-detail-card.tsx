@@ -10,9 +10,9 @@ export type ListDetailCardProps = {
   subtitle?: string | null;
   /** Tertiary line, muted (e.g. timestamp or detection count). */
   meta?: string | null;
-  /** Renders to the left of the text block (e.g. Explorer board avatar). */
+  /** Renders to the left of the text block (e.g. Explorer Board avatar). */
   leading?: ReactNode;
-  /** Top-right badge (e.g. explorer board rank). */
+  /** Top-right badge (e.g. Explorer Board rank). */
   cornerBadge?: string | null;
   children?: ReactNode;
 };

@@ -71,13 +71,13 @@ AuthContext: check public.users row exists?
 
 ## Tab 2 — Explorer Board
 
-- Loads paginated leaderboard via RPC **`get_detection_count_leaderboard`**.
+- Loads paginated Explorer Board via RPC **`get_detection_count_leaderboard`**.
 - Search is **client-side** on loaded rows (280ms debounced).
 - Member avatars/tiles use **signed URL** batch resolution (same pipeline as gallery).
 - **FlashList** virtualizes list/grid inside parent scroll.
 - Refresh on pull; `requestExplorerBoardRefresh()` after saves updates the board when revisited.
 
-**No device cache** for leaderboard rows (always fresh from RPC). Column count preference is cached locally.
+**No device cache** for Explorer Board rows (always fresh from RPC). Column count preference is cached locally.
 
 ---
 
@@ -131,7 +131,7 @@ Requires `sql/get_user_scoring_snapshot.sql` applied in Supabase.
 | **Scoring snapshot** | `near_nature:scoring_snapshot:{userId}` | Mains, awards, score breakdown | Sign out, save, delete |
 | **Signed URLs** | Memory + `near_nature:signed_url:{path}` | Supabase signed image URLs | Sign out (+ memory on expiry) |
 | **Saved species session** | In-memory `Map` | Latest detection per latin name | Sign out; warmed on profile load |
-| **Explorer board columns** | AsyncStorage preference | 2/3/4 column grid | Never (UI pref) |
+| **Explorer Board columns** | AsyncStorage preference | 2/3/4 column grid | Never (UI pref) |
 | **Gallery grid columns** | AsyncStorage preference | Column count | Never |
 | **expo-image** | OS disk | Rendered bitmaps | OS-managed |
 

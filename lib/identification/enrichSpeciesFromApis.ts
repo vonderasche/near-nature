@@ -30,11 +30,10 @@ async function fetchWikiForClassification(
   latinName: string,
   commonName: string,
 ): Promise<SpeciesWikiData | null> {
-  const [byLatin, byCommon] = await Promise.all([
-    fetchSpeciesWikiData(latinName),
-    commonName ? fetchSpeciesWikiData(commonName) : Promise.resolve(null),
-  ]);
-  return byLatin ?? byCommon;
+  const byLatin = await fetchSpeciesWikiData(latinName);
+  if (byLatin) return byLatin;
+  if (commonName) return fetchSpeciesWikiData(commonName);
+  return null;
 }
 
 async function resolveNativeStatus(
@@ -70,7 +69,8 @@ async function resolveWiki(
 /**
  * After vision returns classifications, enrich each with iNaturalist status and (for the top
  * {@link wikiSpeciesLimit}) Wikipedia data. Per species, iNat and wiki run in parallel; species
- * are processed concurrently.
+ * are processed concurrently. Wikipedia tries the Latin name first, then the common name only if
+ * Latin returns no usable article, to avoid duplicate network work when both resolve the same page.
  *
  * When {@link EnrichSpeciesFromApisOptions.userId} is set, species the user has saved before
  * reuse `detections` native status and description (no iNat/wiki calls when data is present).

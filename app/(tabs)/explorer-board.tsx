@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { RefreshControl, StyleSheet, View } from 'react-native';
 
+import { AuthButton } from '@/components/auth/auth-button';
 import { TabScreenWithLogout } from '@/components/layout/tab-screen-with-logout';
 import { DetectionCountExplorerBoard } from '@/components/explorer-board/detection-count-explorer-board';
 import { ExplorerBoardViewModeToggle } from '@/components/explorer-board/explorer-board-view-mode-toggle';
@@ -12,7 +13,10 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useExplorerBoard } from '@/hooks/useExplorerBoard';
 import { useExplorerBoardColumns } from '@/hooks/useExplorerBoardColumns';
+import { useAuthContext } from '@/context/AuthContext';
 import { useExplorerBoardLayout } from '@/hooks/useExplorerBoardLayout';
+import { routes } from '@/lib/routing/routes';
+import { useRouter } from 'expo-router';
 import {
   EXPLORER_BOARD_COLUMN_OPTIONS,
   isExplorerBoardColumns,
@@ -20,6 +24,8 @@ import {
 import type { GalleryGridColumns } from '@/lib/detections/galleryGridColumns';
 
 export default function ExplorerBoardScreen() {
+  const { isAuthenticated } = useAuthContext();
+  const router = useRouter();
   const colorScheme = useColorScheme() ?? 'light';
   const tint = Colors[colorScheme].tint;
   const { rows, isLoading, isLoadingMore, hasMore, error, loadMore, refetch } =
@@ -82,7 +88,7 @@ export default function ExplorerBoardScreen() {
         value={searchQuery}
         onChangeText={setSearchQuery}
         placeholder="Search username or motto…"
-        accessibilityLabel="Search explorer board members"
+        accessibilityLabel="Search Explorer Board members"
       />
       <DetectionCountExplorerBoard
         rows={rows}
@@ -95,6 +101,13 @@ export default function ExplorerBoardScreen() {
         onLoadMore={() => void loadMore()}
         error={error}
       />
+
+      {!isAuthenticated ? (
+        <AuthButton
+          title="Log in to identify species"
+          onPress={() => router.push(routes.login)}
+        />
+      ) : null}
     </TabScreenWithLogout>
   );
 }

@@ -12,7 +12,7 @@ type ExplorerBoardMemberAvatarProps = {
   /** Image URL (profile avatar, species photo, etc.). Non-detection URLs are used as-is. */
   storedUrl: string | null | undefined;
   /**
-   * Pre-resolved display URL (explorer board batch signing).
+   * Pre-resolved display URL (Explorer Board batch signing).
    * When set, local signing is skipped; `null` shows the fallback icon.
    */
   displayUri?: string | null;
@@ -23,7 +23,7 @@ type ExplorerBoardMemberAvatarProps = {
 };
 
 /**
- * Small circular avatar for explorer board rows (and other list cards using the same signing).
+ * Small circular avatar for Explorer Board rows (and other list cards using the same signing).
  */
 export function ExplorerBoardMemberAvatar({
   storedUrl,

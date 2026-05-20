@@ -16,7 +16,7 @@ function rpcFailureMessage(e: unknown): string {
     const m = (e as { message: unknown }).message;
     if (typeof m === 'string' && m.trim().length > 0) return m;
   }
-  return 'Could not load Explorer board. In Supabase → SQL Editor, run sql/get_detection_count_leaderboard.sql (paginated RPC), then pull to refresh.';
+  return 'Could not load Explorer Board. In Supabase → SQL Editor, run sql/get_detection_count_leaderboard.sql (paginated RPC), then pull to refresh.';
 }
 
 export function useExplorerBoard(pageSize = EXPLORER_BOARD_PAGE_SIZE): {

@@ -15,8 +15,9 @@ type IdentifyFn = (
 }>;
 
 /**
- * Runs vision identification when `photoUri` / `userState` / `identify` change. Wiki and iNaturalist
- * enrichment run inside {@link IdentifyFn} (parallel after Claude).
+ * Runs vision identification when `photoUri` / `userState` / `identify` change. Skips until
+ * `userState` is a real two-letter code (not the empty placeholder while the profile loads).
+ * Wiki and iNaturalist enrichment run inside {@link IdentifyFn} (parallel after Claude).
  */
 export function useIdentificationResultsState(
   photoUri: string | undefined,
@@ -36,6 +37,8 @@ export function useIdentificationResultsState(
 
   useEffect(() => {
     if (!photoUri) return;
+    // Wait for profile home state (`useUserHomeState` is '' until `getUser` finishes).
+    if (userState.trim().length < 2) return;
     let cancelled = false;
     (async () => {
       const results = await identify(photoUri, userState, userId);

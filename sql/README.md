@@ -24,11 +24,11 @@ All `.sql` scripts here are written to be **safe to re-run** (they drop/recreate
 | `resolve_login_email.sql` | RPC: login with email or username |
 | `check_user_exists.sql` | RPCs: sign-up email / username availability |
 | `create_detections.sql` | Enums, `public.detections`, RLS |
-| `create_leaderboard.sql` | `calculate_points` trigger on insert (legacy filename; powers Explorer board points) |
+| `create_leaderboard.sql` | `calculate_points` trigger on insert (legacy filename; powers Explorer Board points) |
 | `create_streaks.sql` | `public.streaks`, streak trigger on insert |
 | `create_discoveries.sql` | `public.discoveries`, first-species bonus trigger |
 | `storage_bucket_detections.sql` | Storage bucket + policies |
-| `get_detection_count_leaderboard.sql` | RPC: Explorer board rankings (paginated; legacy SQL name) |
+| `get_detection_count_leaderboard.sql` | RPC: Explorer Board rankings (paginated; legacy SQL name) |
 | `get_public_user_profile.sql` | RPC: public profile + stats |
 | `drop_streak_client_update_policy.sql` | Removes obsolete streak `UPDATE` policy |
 | `ensure_public_user_profile.sql` | RPC: create missing `public.users` row for signed-in user; hardens signup trigger |
@@ -69,7 +69,7 @@ Use for a **new** Supabase project or when you intentionally recreate the `publi
 | 6 | `create_streaks.sql` | Streak table + trigger |
 | 7 | `create_discoveries.sql` | First-species discovery + bonus points |
 | 8 | `storage_bucket_detections.sql` | `detections` bucket and storage policies |
-| 9 | `get_detection_count_leaderboard.sql` | Explorer board RPC |
+| 9 | `get_detection_count_leaderboard.sql` | Explorer Board RPC |
 | 10 | `get_public_user_profile.sql` | Public profile RPC |
 | 11 | `drop_streak_client_update_policy.sql` | Policy cleanup (harmless on fresh DB) |
 
@@ -97,7 +97,7 @@ If tables already exist and you only need to refresh objects:
 | Add date of birth (existing DB) | `add_user_date_of_birth.sql` |
 | Species subcategories on detections | `add_species_subcategories.sql` |
 | Storage + gallery/avatar read policies | `storage_bucket_detections.sql` |
-| Explorer board | `get_detection_count_leaderboard.sql` |
+| Explorer Board | `get_detection_count_leaderboard.sql` |
 | Member profiles | `get_public_user_profile.sql` |
 | Username login | `resolve_login_email.sql` |
 | Missing profile after sign-in | `ensure_public_user_profile.sql` |
@@ -139,8 +139,8 @@ SQL: `create_point_awards.sql`, `check_category_milestones.sql` (runs after each
 | Sign up / edit profile | `public.users` (PostgREST + RLS); availability RPCs at sign-up |
 | Sign in with email or username | RPC `resolve_login_email` |
 | Save / delete photo | `public.detections` + Storage |
-| Explorer board | RPC `get_detection_count_leaderboard` |
+| Explorer Board | RPC `get_detection_count_leaderboard` |
 | View another member | RPC `get_public_user_profile` |
 | Delete account | Edge Function `delete-account` |
 
-**Behavior notes:** Same species can be saved multiple times per day. GPS is never stored (US state code only). Sensitive species are hidden from public gallery and Explorer board aggregates.
+**Behavior notes:** Same species can be saved multiple times per day. GPS is never stored (US state code only). Sensitive species are hidden from public gallery and Explorer Board aggregates.

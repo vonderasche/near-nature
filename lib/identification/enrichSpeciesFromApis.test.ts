@@ -49,7 +49,7 @@ describe('enrichSpeciesFromApis', () => {
     });
   });
 
-  it('calls iNaturalist and Wikipedia in parallel per species', async () => {
+  it('runs iNat and wiki together per species; wiki tries Latin then common when Latin misses', async () => {
     const order: string[] = [];
     vi.mocked(lookupNativeStatus).mockImplementation(async () => {
       order.push('inat-start');
@@ -69,6 +69,7 @@ describe('enrichSpeciesFromApis', () => {
     expect(fetchSpeciesWikiData).toHaveBeenCalledWith('Monarch butterfly');
     expect(order.indexOf('inat-start')).toBeLessThan(order.indexOf('inat-end'));
     expect(order.filter((e) => e.startsWith('wiki-')).length).toBe(2);
+    expect(order.indexOf('wiki-Danaus plexippus')).toBeLessThan(order.indexOf('wiki-Monarch butterfly'));
   });
 
   it('only fetches wiki for the first N species', async () => {
@@ -80,8 +81,29 @@ describe('enrichSpeciesFromApis', () => {
 
     await enrichSpeciesFromApis([classification, second], 'FL', { wikiSpeciesLimit: 1 });
 
-    expect(fetchSpeciesWikiData).toHaveBeenCalledTimes(2);
+    expect(fetchSpeciesWikiData).toHaveBeenCalledTimes(1);
+    expect(fetchSpeciesWikiData).toHaveBeenCalledWith('Danaus plexippus');
     expect(fetchSpeciesWikiData).not.toHaveBeenCalledWith('Apis mellifera');
+  });
+
+  it('fetches wiki by common name when Latin returns no article', async () => {
+    vi.mocked(fetchSpeciesWikiData).mockImplementation(async (name) => {
+      if (name === 'Danaus plexippus') return null;
+      return {
+        description: 'From common.',
+        fullDescription: 'Full.',
+        imageUrl: null,
+        funFacts: [],
+        pageUrl: 'https://en.wikipedia.org/wiki/Monarch',
+      };
+    });
+
+    const result = await enrichSpeciesFromApis([classification], 'VA', { wikiSpeciesLimit: 3 });
+
+    expect(fetchSpeciesWikiData).toHaveBeenCalledTimes(2);
+    expect(fetchSpeciesWikiData).toHaveBeenNthCalledWith(1, 'Danaus plexippus');
+    expect(fetchSpeciesWikiData).toHaveBeenNthCalledWith(2, 'Monarch butterfly');
+    expect(result.wikiByLatinName['Danaus plexippus']?.description).toBe('From common.');
   });
 
   it('returns combined species and wiki map', async () => {

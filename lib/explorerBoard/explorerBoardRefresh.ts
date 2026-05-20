@@ -2,7 +2,7 @@ type Listener = () => void;
 
 const listeners = new Set<Listener>();
 
-/** Subscribe to explorer board refresh requests (e.g. after avatar upload). */
+/** Subscribe to Explorer Board refresh requests (e.g. after avatar upload). */
 export function subscribeExplorerBoardRefresh(listener: Listener): () => void {
   listeners.add(listener);
   return () => {

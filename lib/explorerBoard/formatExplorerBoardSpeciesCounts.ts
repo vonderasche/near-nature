@@ -17,7 +17,7 @@ export function formatNonNativeSpeciesCount(n: number): string {
   return `${n} non-native ${speciesLabel(n)}`;
 }
 
-/** Meta line for Explorer board rows: points plus native and non-native distinct species. */
+/** Meta line for Explorer Board rows: points plus native and non-native distinct species. */
 export function formatExplorerBoardSpeciesMeta(
   row: Pick<ExplorerBoardMemberRow, 'pointsTotal' | 'nativeSpeciesCount' | 'nonNativeSpeciesCount'>,
 ): string {

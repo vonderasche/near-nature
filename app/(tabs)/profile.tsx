@@ -1,5 +1,9 @@
+import { Redirect } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { RefreshControl, StyleSheet, Text, View } from 'react-native';
+
+import { useAuthContext } from '@/context/AuthContext';
+import { routes } from '@/lib/routing/routes';
 
 import { TabScreenWithLogout } from '@/components/layout/tab-screen-with-logout';
 import { ProfileScreenTabs, type ProfileScreenTab } from '@/components/profile/profile-screen-tabs';
@@ -31,6 +35,7 @@ import { requestExplorerBoardRefresh } from '@/lib/explorerBoard/explorerBoardRe
 import type { DetectionGalleryItem } from '@/types';
 
 export default function ProfileScreen() {
+  const { isAuthenticated, isLoading: authLoading } = useAuthContext();
   const {
     user,
     stats,
@@ -110,6 +115,10 @@ export default function ProfileScreen() {
       {...profileStatStripPropsFromPublicProfile(stats, authColors.textMuted, authColors.text)}
     />
   ) : null;
+
+  if (!authLoading && !isAuthenticated) {
+    return <Redirect href={routes.login} />;
+  }
 
   return (
     <TabScreenWithLogout

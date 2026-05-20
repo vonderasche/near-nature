@@ -10,8 +10,8 @@ import { AuthGate } from '@/components/layout/auth-gate';
 import { AuthProvider } from '@/context/AuthContext';
 
 export const unstable_settings = {
-  /** Start at auth (not tabs). `app/index` removed so we do not rely on a redirect. */
-  initialRouteName: '(auth)',
+  /** Guests land on Explorer Board; signed-in users are routed to Camera via tabs index. */
+  initialRouteName: '(tabs)',
 };
 
 /** Stack / header chrome: black surface, light text (matches `authColors`). */

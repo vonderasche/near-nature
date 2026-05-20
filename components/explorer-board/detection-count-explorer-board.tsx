@@ -33,7 +33,7 @@ type Props = {
 };
 
 /**
- * Explorer board: virtualized list cards or member image grid.
+ * Explorer Board: virtualized list cards or member image grid.
  */
 export function DetectionCountExplorerBoard({
   rows,
@@ -109,7 +109,7 @@ export function DetectionCountExplorerBoard({
 
   if (loading) {
     return (
-      <View style={listSectionSupportingStyles.centered} accessibilityLabel="Loading explorer board">
+      <View style={listSectionSupportingStyles.centered} accessibilityLabel="Loading Explorer Board">
         <ActivityIndicator color={authColors.textMuted} />
       </View>
     );
@@ -135,7 +135,7 @@ export function DetectionCountExplorerBoard({
   const estimatedItemSize = isGrid ? gridRowEstimate : LIST_ROW_ESTIMATE;
 
   return (
-    <View accessibilityLabel="Explorer board by native species discovered">
+    <View accessibilityLabel="Explorer Board, ranked by native species discovered">
       <View style={styles.listWrap}>
         <FlashList
           data={filteredRows}
@@ -159,7 +159,7 @@ export function DetectionCountExplorerBoard({
               variant="outline"
               onPress={onLoadMore}
               fillParent
-              accessibilityLabel="Load more explorer board rankings"
+              accessibilityLabel="Load more Explorer Board rankings"
             />
           )}
         </View>

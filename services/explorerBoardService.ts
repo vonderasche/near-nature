@@ -74,7 +74,7 @@ async function fetchExplorerBoardPageLegacy({
 }
 
 /**
- * One page of the Explorer board (native species rank).
+ * One page of the Explorer Board (native species rank).
  * Uses `get_detection_count_leaderboard(p_limit, p_offset)` when deployed; otherwise
  * falls back to the legacy no-arg RPC and paginates in memory.
  */

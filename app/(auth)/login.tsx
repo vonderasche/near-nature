@@ -64,6 +64,12 @@ export default function LoginScreen() {
 
       <AuthLinkRow prompt="No account?" href={routes.signup} linkText="Create one" />
 
+      <AuthLinkRow
+        prompt="Just browsing?"
+        href={routes.explorerBoardTab}
+        linkText="View Explorer Board"
+      />
+
       <ThemedMessageModal
         visible={info !== null}
         title={info?.title ?? ''}

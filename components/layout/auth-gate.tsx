@@ -6,9 +6,22 @@ import { authColors } from '@/constants/auth-theme';
 import { useAuthContext } from '@/context/AuthContext';
 import { routes } from '@/lib/routing/routes';
 
+const GUEST_TAB = 'explorer-board';
+const AUTH_REQUIRED_TABS = new Set(['camera', 'profile']);
+
+function isGuestAllowedSegments(segs: readonly string[]): boolean {
+  if (segs[0] === 'user') return true;
+  if (segs[0] === '(tabs)') {
+    const tab = segs[1];
+    if (!tab || tab === 'index' || tab === GUEST_TAB) return true;
+  }
+  if (segs[0] === '(auth)' && !segs.includes('needs-profile')) return true;
+  return false;
+}
+
 /**
- * Redirects: signed-out users stay on (auth); signed-in users need a `public.users` row
- * before (tabs) or member routes; password recovery can use reset-password without a profile.
+ * Redirects: guests may browse Explorer Board (and public member profiles); Camera and Profile
+ * require sign-in. Signed-in users need a `public.users` row before (tabs) or member routes.
  */
 export function AuthGate({ children }: { children: ReactNode }) {
   const {
@@ -28,6 +41,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     const inTabs = segs[0] === '(tabs)';
     const inUserProfile = segs[0] === 'user';
     const inAuth = segs[0] === '(auth)';
+    const tab = segs[1];
     const onResetPassword = segs.includes('reset-password');
     const onNeedsProfile = segs.includes('needs-profile');
 
@@ -37,8 +51,19 @@ export function AuthGate({ children }: { children: ReactNode }) {
     }
 
     if (!isAuthenticated) {
-      if (inTabs || inUserProfile || onNeedsProfile) {
+      if (onNeedsProfile) {
         router.replace(routes.login);
+        return;
+      }
+      if (inTabs && tab && AUTH_REQUIRED_TABS.has(tab)) {
+        router.replace(routes.login);
+        return;
+      }
+      if (isGuestAllowedSegments(segs)) {
+        return;
+      }
+      if (!inAuth) {
+        router.replace(routes.explorerBoardTab);
       }
       return;
     }

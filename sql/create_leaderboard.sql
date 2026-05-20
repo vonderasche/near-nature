@@ -1,5 +1,5 @@
 -- Detection points trigger (before insert). Safe to re-run.
--- Explorer board rankings use get_detection_count_leaderboard.sql (not this file).
+-- Explorer Board rankings use get_detection_count_leaderboard.sql (not this file).
 
 drop trigger if exists set_detection_points on public.detections;
 drop function if exists calculate_points();

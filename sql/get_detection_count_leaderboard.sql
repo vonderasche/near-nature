@@ -1,4 +1,4 @@
--- Explorer board: ranked by distinct native species discovered (non-sensitive saves).
+-- Explorer Board: ranked by distinct native species discovered (non-sensitive saves).
 
 -- Paginated via p_limit / p_offset. Global rank is preserved across pages.
 
@@ -192,3 +192,4 @@ $$;
 revoke all on function public.get_detection_count_leaderboard(int, int) from public;
 
 grant execute on function public.get_detection_count_leaderboard(int, int) to authenticated;
+grant execute on function public.get_detection_count_leaderboard(int, int) to anon;

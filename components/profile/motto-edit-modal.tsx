@@ -60,7 +60,7 @@ export function MottoEditModal({
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}>
           <Text style={sheetModalShellStyles.sheetTitle}>Edit motto</Text>
-          <Text style={styles.hint}>Shown on your profile and the Explorer board.</Text>
+          <Text style={styles.hint}>Shown on your profile and the Explorer Board.</Text>
 
           <TextInput
             value={draft}

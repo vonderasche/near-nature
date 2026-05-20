@@ -44,7 +44,7 @@ function readStringArray(record: Record<string, unknown>, keys: string[]): strin
   return [];
 }
 
-/** Maps one RPC row from `get_detection_count_leaderboard` (snake_case; tolerate missing keys). */
+/** Maps one Explorer Board RPC row from `get_detection_count_leaderboard` (snake_case; tolerate missing keys). */
 export function mapExplorerBoardMemberRow(raw: unknown): ExplorerBoardMemberRow {
   const r =
     raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};

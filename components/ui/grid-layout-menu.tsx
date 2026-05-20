@@ -27,9 +27,9 @@ type Props = {
   onChange: (columns: GalleryGridColumns) => void;
   mutedColor: string;
   borderColor: string;
-  /** Distinguishes gallery vs explorer board in the trigger accessibility label. */
+  /** Distinguishes gallery vs Explorer Board in the trigger accessibility label. */
   context?: 'gallery' | 'explorer board';
-  /** Defaults to gallery options (1, 2, 4, 8). Explorer board passes [1, 2, 4]. */
+  /** Defaults to gallery options (1, 2, 4, 8). Explorer Board passes [1, 2, 4]. */
   columnOptions?: readonly GalleryGridColumns[];
 };
 
@@ -71,7 +71,7 @@ export function GridLayoutMenu({
     [close, onChange],
   );
 
-  const contextLabel = context === 'explorer board' ? 'Explorer board' : 'Gallery';
+  const contextLabel = context === 'explorer board' ? 'Explorer Board' : 'Gallery';
 
   const layoutLabel =
     context === 'explorer board'

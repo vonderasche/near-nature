@@ -1,5 +1,5 @@
 /**
- * Probes the linked Supabase project (from .env) for Explorer board RPC.
+ * Probes the linked Supabase project (from .env) for Explorer Board RPC.
  * Usage: node scripts/verify-supabase-explorer-board.mjs
  */
 import { readFileSync } from 'node:fs';
@@ -50,7 +50,7 @@ const supabase = createClient(url, anonKey);
 let exitCode = 0;
 
 console.log(`\nSupabase verify — ${url}\n`);
-console.log('Explorer board');
+console.log('Explorer Board');
 
 const { error: lbErr } = await supabase.rpc('get_detection_count_leaderboard', {
   p_limit: 1,
@@ -75,5 +75,5 @@ if (lbErr) {
   ok('get_detection_count_leaderboard', 'RPC callable');
 }
 
-console.log(exitCode === 0 ? '\nExplorer board checks passed.\n' : '\nExplorer board checks failed.\n');
+console.log(exitCode === 0 ? '\nExplorer Board checks passed.\n' : '\nExplorer Board checks failed.\n');
 process.exit(exitCode);
