@@ -10,9 +10,11 @@ import {
   saveCachedGalleryList,
 } from '@/lib/detections/galleryListCache';
 import type { DetectionGalleryRow } from '@/lib/detections/mapDetectionGalleryRow';
+import { isSearchQueryActive } from '@/lib/search/normalizeSearchQuery';
 import {
   fetchUserDetectionGalleryRowsPage,
   GALLERY_PAGE_SIZE,
+  searchUserDetectionGalleryRowsPage,
 } from '@/services/detectionGalleryService';
 import type { DetectionGalleryItem } from '@/types';
 
@@ -21,6 +23,8 @@ type UseUserDetectionGalleryOptions = {
   pageSize?: number;
   /** When true, only non-sensitive rows (public gallery / other users). */
   publicOnly?: boolean;
+  /** Debounced text query; uses server search when active. */
+  searchQuery?: string;
 };
 
 type LoadMode = 'reset' | 'append';
@@ -57,6 +61,7 @@ export function useUserDetectionGallery({
   userId,
   pageSize = GALLERY_PAGE_SIZE,
   publicOnly = false,
+  searchQuery = '',
 }: UseUserDetectionGalleryOptions = {}): UseUserDetectionGalleryResult {
   const [items, setItems] = useState<DetectionGalleryItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -100,7 +105,7 @@ export function useUserDetectionGallery({
       const offset = mode === 'reset' ? 0 : offsetRef.current;
       let showedCache = false;
 
-      if (mode === 'reset' && !force) {
+      if (mode === 'reset' && !force && !isSearchQueryActive(searchQuery)) {
         const cached = await loadCachedGalleryList(userId, publicOnly);
         if (cached && cached.rows.length > 0) {
           rowsRef.current = cached.rows;
@@ -124,15 +129,24 @@ export function useUserDetectionGallery({
       setError(null);
 
       try {
+        const queryActive = isSearchQueryActive(searchQuery);
         const requestSize =
-          mode === 'append' ? pageSize : Math.max(pageSize, rowsRef.current.length);
+          mode === 'append' || queryActive ? pageSize : Math.max(pageSize, rowsRef.current.length);
 
-        const { rows: pageRows, hasMore: more } = await fetchUserDetectionGalleryRowsPage({
-          userId,
-          publicOnly,
-          offset,
-          pageSize: requestSize,
-        });
+        const { rows: pageRows, hasMore: more } = queryActive
+          ? await searchUserDetectionGalleryRowsPage({
+              userId,
+              query: searchQuery,
+              publicOnly,
+              offset,
+              pageSize: requestSize,
+            })
+          : await fetchUserDetectionGalleryRowsPage({
+              userId,
+              publicOnly,
+              offset,
+              pageSize: requestSize,
+            });
 
         const allRows =
           mode === 'reset'
@@ -159,7 +173,7 @@ export function useUserDetectionGallery({
         setIsRefreshing(false);
       }
     },
-    [applyHydratedRows, pageSize, persistCache, publicOnly, userId],
+    [applyHydratedRows, pageSize, persistCache, publicOnly, searchQuery, userId],
   );
 
   const refetch = useCallback(async () => {

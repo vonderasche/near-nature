@@ -21,6 +21,7 @@ import {
   explorerBoardLayoutAccessibilityLabel,
   type ExplorerBoardColumns,
 } from '@/lib/explorerBoard/explorerBoardColumns';
+import { clampPopoverLeft } from '@/lib/ui/clampPopoverLeft';
 
 type Props = {
   value: GalleryGridColumns;
@@ -49,7 +50,7 @@ export function GridLayoutMenu({
 }: Props) {
   const [open, setOpen] = useState(false);
   const [menuTop, setMenuTop] = useState(0);
-  const [menuRight, setMenuRight] = useState<number>(authSpacing.lg);
+  const [menuLeft, setMenuLeft] = useState(authSpacing.lg);
   const triggerRef = useRef<View>(null);
 
   const close = useCallback(() => setOpen(false), []);
@@ -58,7 +59,7 @@ export function GridLayoutMenu({
     triggerRef.current?.measureInWindow((x, y, width, height) => {
       const screenW = Dimensions.get('window').width;
       setMenuTop(y + height + 4);
-      setMenuRight(Math.max(authSpacing.sm, screenW - x - width));
+      setMenuLeft(clampPopoverLeft(x, width, MENU_WIDTH, screenW, authSpacing.sm));
       setOpen(true);
     });
   }, []);
@@ -107,7 +108,7 @@ export function GridLayoutMenu({
               styles.menu,
               {
                 top: menuTop,
-                right: menuRight,
+                left: menuLeft,
                 borderColor,
                 width: MENU_WIDTH,
               },

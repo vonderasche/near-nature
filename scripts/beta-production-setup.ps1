@@ -23,6 +23,11 @@ $core = @(
   "storage_bucket_detections.sql",
   "get_detection_count_leaderboard.sql",
   "get_public_user_profile.sql",
+  "get_public_user_awards.sql",
+  "add_detection_naturalist_columns.sql",
+  "get_user_score_by_category.sql",
+  "get_user_scoring_snapshot.sql",
+  "add_detection_search.sql",
   "drop_streak_client_update_policy.sql"
 )
 
@@ -49,7 +54,12 @@ Write-Host "  sql/add_naturalist_category_enums.sql" -ForegroundColor White
 Write-Host "  sql/create_point_awards.sql (if not in core rebuild)" -ForegroundColor White
 Write-Host "  sql/check_category_milestones.sql" -ForegroundColor White
 Write-Host "  Re-run sql/create_discoveries.sql to wire milestone trigger" -ForegroundColor White
+Write-Host "  sql/get_public_user_awards.sql (member profile earned badges)" -ForegroundColor White
+Write-Host "  sql/get_user_scoring_snapshot.sql (own profile scoring tab)" -ForegroundColor White
 Write-Host "  sql/drop_legacy_rpc.sql" -ForegroundColor White
+Write-Host ""
+Write-Host "Removed from app (do not deploy sql/discover/*):" -ForegroundColor DarkGray
+Write-Host "  Discover explore tab (parks/species hub) — not part of this codebase" -ForegroundColor DarkGray
 Write-Host ""
 Write-Host "Edge function (terminal on your machine):" -ForegroundColor Green
 Write-Host "  .\scripts\deploy-identify-species.ps1" -ForegroundColor White

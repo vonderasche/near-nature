@@ -34,7 +34,6 @@ export function buildGalleryListEntries(
 
   const appendSection = (sectionItems: readonly DetectionGalleryItem[], category: GalleryNativeCategory) => {
     if (sectionItems.length === 0) return;
-    out.push({ kind: 'section', id: `section-${category}`, category });
     for (const rowItems of chunkRow(sectionItems, columnCount)) {
       out.push({
         kind: 'row',

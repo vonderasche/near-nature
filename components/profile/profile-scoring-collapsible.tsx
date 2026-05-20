@@ -1,0 +1,155 @@
+import { forwardRef, useImperativeHandle, useMemo, useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+
+import { ProfileBadgeGrid } from '@/components/profile/profile-badge-grid';
+import { ProfileBadgePreviewRow } from '@/components/profile/profile-badge-preview-row';
+import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
+import { HeroIcon } from '@/components/ui/hero-icon';
+import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { buildProfileBadgePreviewRow } from '@/lib/profile/profileBadges';
+import { useUserScoringSnapshot } from '@/hooks/useUserScoringSnapshot';
+
+type Props = {
+  userId: string;
+  borderColor: string;
+  mutedColor: string;
+};
+
+export type ProfileScoringCollapsibleHandle = {
+  refetch: () => Promise<void>;
+};
+
+export const ProfileScoringCollapsible = forwardRef<
+  ProfileScoringCollapsibleHandle,
+  Props
+>(function ProfileScoringCollapsible({ userId, borderColor, mutedColor }, ref) {
+  const [open, setOpen] = useState(false);
+  const { snapshot, loading, error, refetch } = useUserScoringSnapshot(userId);
+
+  const mains = snapshot?.mains ?? [];
+  const awardKeys = useMemo(
+    () => snapshot?.awardKeys ?? new Set<string>(),
+    [snapshot?.awardKeys],
+  );
+
+  const previewBadges = useMemo(
+    () => buildProfileBadgePreviewRow(mains, awardKeys),
+    [awardKeys, mains],
+  );
+
+  const earnedCount = useMemo(
+    () => previewBadges.filter((b) => b.earned).length,
+    [previewBadges],
+  );
+
+  useImperativeHandle(ref, () => ({ refetch }), [refetch]);
+
+  const accessibilityLabel =
+    earnedCount > 0
+      ? `${earnedCount} badge${earnedCount === 1 ? '' : 's'} earned. ${open ? 'Collapse' : 'Expand'} full badge list`
+      : `No badges earned yet. ${open ? 'Collapse' : 'Expand'} available badges`;
+
+  return (
+    <View style={styles.wrap}>
+      <Pressable
+        onPress={() => setOpen((wasOpen) => !wasOpen)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+        accessibilityLabel={accessibilityLabel}
+        style={({ pressed }) => [styles.trigger, { borderColor }, pressed && styles.triggerPressed]}>
+        {loading && !snapshot ? (
+          <View style={styles.previewLoading}>
+            <ActivityIndicator size="small" color={mutedColor} />
+          </View>
+        ) : (
+          <ProfileBadgePreviewRow
+            badges={previewBadges}
+            borderColor={borderColor}
+            mutedColor={mutedColor}
+          />
+        )}
+        <View style={open ? styles.chevronExpanded : undefined}>
+          <HeroIcon name="chevron-down" size={20} color={mutedColor} />
+        </View>
+      </Pressable>
+
+      {open ? (
+        <View style={styles.body}>
+          <Text style={[styles.hint, { color: mutedColor }]}>
+            Tap a discipline icon to see its tiers · dimmed = not earned yet
+          </Text>
+
+          <ProfileBadgeGrid
+            mains={mains}
+            awardKeys={awardKeys}
+            borderColor={borderColor}
+            mutedColor={mutedColor}
+          />
+
+          {loading ? (
+            <View style={styles.syncRow}>
+              <ActivityIndicator size="small" color={mutedColor} />
+              <Text style={[styles.syncText, { color: mutedColor }]}>Updating progress…</Text>
+            </View>
+          ) : null}
+
+          {error ? (
+            <ErrorRetryBlock
+              message="Couldn't sync progress. Badge icons still show what you can earn."
+              onRetry={() => void refetch()}
+              borderColor={borderColor}
+              retryLabel="Try again"
+            />
+          ) : null}
+        </View>
+      ) : null}
+    </View>
+  );
+});
+
+const styles = StyleSheet.create({
+  wrap: {
+    gap: authSpacing.sm,
+    marginBottom: authSpacing.md,
+  },
+  trigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: authSpacing.sm,
+    paddingVertical: authSpacing.sm,
+    paddingLeft: authSpacing.sm,
+    paddingRight: authSpacing.md,
+    borderWidth: 1,
+    borderRadius: 4,
+  },
+  triggerPressed: {
+    opacity: 0.88,
+  },
+  previewLoading: {
+    flex: 1,
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chevronExpanded: {
+    transform: [{ rotate: '180deg' }],
+  },
+  body: {
+    gap: authSpacing.sm,
+  },
+  hint: {
+    ...authTypography.subtitle,
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  syncRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: authSpacing.sm,
+  },
+  syncText: {
+    ...authTypography.subtitle,
+    fontSize: 12,
+  },
+});

@@ -3,17 +3,21 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "start": "expo start",
+    "start": "expo start --dev-client --lan",
+    "start:dev": "powershell -ExecutionPolicy Bypass -File ./scripts/start-dev-server.ps1",
+    "start:dev:tunnel": "expo start --dev-client --tunnel",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo run:android",
+    "android": "powershell -ExecutionPolicy Bypass -File ./scripts/run-android-device.ps1",
+    "android:install": "powershell -ExecutionPolicy Bypass -File ./scripts/run-android-device.ps1 -InstallOnly",
     "android:apk": "cd android && gradlew.bat assembleRelease",
     "android:friends-apk": "powershell -ExecutionPolicy Bypass -File ./scripts/build-friends-apk.ps1",
+    "android:device-test-apk": "powershell -ExecutionPolicy Bypass -File ./scripts/build-device-test-apk.ps1",
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "verify:supabase": "node scripts/verify-supabase-signup.mjs && node scripts/verify-supabase-explorer-board.mjs && node scripts/verify-supabase-app-paths.mjs"
+    "verify:supabase": "node scripts/verify-supabase-signup.mjs && node scripts/verify-supabase-explorer-board.mjs && node scripts/verify-supabase-app-paths.mjs && node scripts/verify-supabase-scoring.mjs"
   },
   "dependencies": {
     "@expo/ngrok": "^4.1.3",

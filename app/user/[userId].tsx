@@ -4,6 +4,10 @@ import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native
 
 import { CenteredActivityIndicator } from '@/components/profile/centered-activity-indicator';
 import {
+  ProfileEarnedBadgesSection,
+  type ProfileEarnedBadgesSectionHandle,
+} from '@/components/profile/profile-earned-badges-section';
+import {
   UserDetectionGallerySection,
   type UserDetectionGallerySectionHandle,
 } from '@/components/profile/user-detection-gallery-section';
@@ -34,13 +38,15 @@ export default function PublicUserProfileScreen() {
 
   const { profile, isLoading, error, refetch } = usePublicUserProfile(userId);
   const galleryRef = useRef<UserDetectionGallerySectionHandle>(null);
+  const badgesRef = useRef<ProfileEarnedBadgesSectionHandle>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
       const galleryPromise = galleryRef.current?.refetch() ?? Promise.resolve();
-      await Promise.all([refetch(), galleryPromise]);
+      const badgesPromise = badgesRef.current?.refetch() ?? Promise.resolve();
+      await Promise.all([refetch(), galleryPromise, badgesPromise]);
     } finally {
       setRefreshing(false);
     }
@@ -119,13 +125,18 @@ export default function PublicUserProfileScreen() {
                 />
               </View>
 
+              <ProfileEarnedBadgesSection
+                ref={badgesRef}
+                userId={userId}
+                borderColor={border}
+                mutedColor={muted}
+              />
+
               <UserDetectionGallerySection
                 ref={galleryRef}
                 userId={userId}
                 publicOnly
                 searchPlaceholder="Search this member's identifications…"
-                hint="Public identification photos they saved (non-sensitive)."
-                hintColor={muted}
                 borderColor={border}
                 mutedColor={muted}
                 activityColor={tint}

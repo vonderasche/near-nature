@@ -21,13 +21,13 @@ function item(id: string, category: 'native' | 'non-native'): DetectionGalleryIt
 }
 
 describe('buildGalleryListEntries', () => {
-  it('chunks items into rows with section headers', () => {
+  it('chunks items into rows in native then non-native order', () => {
     const entries = buildGalleryListEntries(
       [item('1', 'native'), item('2', 'native'), item('3', 'non-native')],
       2,
     );
-    expect(entries.map((e) => e.kind)).toEqual(['section', 'row', 'section', 'row']);
-    const firstRow = entries[1];
+    expect(entries.map((e) => e.kind)).toEqual(['row', 'row']);
+    const firstRow = entries[0];
     expect(firstRow.kind).toBe('row');
     if (firstRow.kind === 'row') expect(firstRow.items).toHaveLength(2);
   });
