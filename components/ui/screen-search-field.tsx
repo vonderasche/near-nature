@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { HeroIcon } from '@/components/ui/hero-icon';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
@@ -8,13 +8,26 @@ type Props = {
   onChangeText: (text: string) => void;
   placeholder: string;
   accessibilityLabel: string;
+  /** When true, no outline (e.g. inline toolbar next to icon buttons). */
+  borderless?: boolean;
+  /** Merged onto the outer row (e.g. `{ flex: 1 }` in a toolbar). */
+  containerStyle?: StyleProp<ViewStyle>;
 };
 
-export function ScreenSearchField({ value, onChangeText, placeholder, accessibilityLabel }: Props) {
+export function ScreenSearchField({
+  value,
+  onChangeText,
+  placeholder,
+  accessibilityLabel,
+  borderless = false,
+  containerStyle,
+}: Props) {
   const showClear = value.trim().length > 0;
 
   return (
-    <View style={styles.wrap} accessibilityLabel={accessibilityLabel}>
+    <View
+      style={[styles.wrap, borderless && styles.wrapBorderless, containerStyle]}
+      accessibilityLabel={accessibilityLabel}>
       <HeroIcon name="magnifying-glass" size={20} color={authColors.textMuted} style={styles.leadingIcon} />
       <TextInput
         value={value}
@@ -70,5 +83,9 @@ const styles = StyleSheet.create({
   },
   clearPressed: {
     opacity: 0.75,
+  },
+  wrapBorderless: {
+    borderWidth: 0,
+    marginBottom: 0,
   },
 });

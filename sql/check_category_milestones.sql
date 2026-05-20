@@ -169,7 +169,7 @@ declare
   main_cnt int;
   sub_tier text;
   main_tier text;
-  award_key text;
+  v_award_key text;
   pts int;
   lbl text;
   main_label text;
@@ -214,8 +214,8 @@ begin
         continue;
       end if;
 
-      award_key := 'main:' || main_id || ':' || sub_tier;
-      if award_key = any(existing_keys) then
+      v_award_key := 'main:' || main_id || ':' || sub_tier;
+      if v_award_key = any(existing_keys) then
         continue;
       end if;
 
@@ -228,10 +228,10 @@ begin
       lbl := main_label || ' ' || initcap(sub_tier);
 
       insert into public.point_awards (user_id, award_key, points, label)
-      values (p_user_id, award_key, pts, lbl)
+      values (p_user_id, v_award_key, pts, lbl)
       on conflict (user_id, award_key) do nothing;
 
-      existing_keys := existing_keys || award_key;
+      existing_keys := existing_keys || v_award_key;
     end loop;
   end loop;
 
@@ -295,8 +295,8 @@ begin
         continue;
       end if;
 
-      award_key := 'sub:' || sub || ':' || main_tier;
-      if award_key = any(existing_keys) then
+      v_award_key := 'sub:' || sub || ':' || main_tier;
+      if v_award_key = any(existing_keys) then
         continue;
       end if;
 
@@ -309,10 +309,10 @@ begin
       lbl := sub_label || ' ' || initcap(main_tier);
 
       insert into public.point_awards (user_id, award_key, points, label)
-      values (p_user_id, award_key, pts, lbl)
+      values (p_user_id, v_award_key, pts, lbl)
       on conflict (user_id, award_key) do nothing;
 
-      existing_keys := existing_keys || award_key;
+      existing_keys := existing_keys || v_award_key;
     end loop;
   end loop;
 
@@ -329,8 +329,8 @@ begin
       ('mycologist', 'Mycologist')
     ) as t(id, lbl)
   loop
-    award_key := 'badge:true_voyager:' || main_id;
-    if award_key = any(existing_keys) then
+    v_award_key := 'badge:true_voyager:' || main_id;
+    if v_award_key = any(existing_keys) then
       continue;
     end if;
 
@@ -374,10 +374,10 @@ begin
     end if;
 
     insert into public.point_awards (user_id, award_key, points, label)
-    values (p_user_id, award_key, 2000, 'True Voyager — ' || main_label)
+    values (p_user_id, v_award_key, 2000, 'True Voyager — ' || main_label)
     on conflict (user_id, award_key) do nothing;
 
-    existing_keys := existing_keys || award_key;
+    existing_keys := existing_keys || v_award_key;
   end loop;
 
   -- Ends of the Earth

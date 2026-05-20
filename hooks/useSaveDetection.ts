@@ -1,6 +1,9 @@
 import { useCallback, useState } from 'react';
 
+import { errorMessageFromUnknown } from '@/lib/errors/errorMessage';
 import { saveDetection, type SaveDetectionInput, type SaveDetectionResult } from '@/services/detectionService';
+
+const SAVE_FAILED_FALLBACK = 'Could not save identification.';
 
 export type SaveDetectionSuccess = {
   ok: true;
@@ -26,7 +29,7 @@ export function useSaveDetection() {
       const result = await saveDetection(input);
       return { ok: true, result };
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Could not save identification.';
+      const msg = errorMessageFromUnknown(e, SAVE_FAILED_FALLBACK);
       setSaveError(msg);
       return { ok: false, message: msg };
     } finally {
@@ -44,7 +47,7 @@ export function useSaveDetection() {
           const result = await saveDetection(input);
           onComplete?.({ ok: true, result });
         } catch (e) {
-          const message = e instanceof Error ? e.message : 'Could not save identification.';
+          const message = errorMessageFromUnknown(e, SAVE_FAILED_FALLBACK);
           onComplete?.({ ok: false, message });
         }
       })();

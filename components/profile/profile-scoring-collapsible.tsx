@@ -56,7 +56,7 @@ export const ProfileScoringCollapsible = forwardRef<
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
         accessibilityLabel={accessibilityLabel}
-        style={({ pressed }) => [styles.trigger, { borderColor }, pressed && styles.triggerPressed]}>
+        style={({ pressed }) => [styles.trigger, pressed && styles.triggerPressed]}>
         {loading && !snapshot ? (
           <View style={styles.previewLoading}>
             <ActivityIndicator size="small" color={mutedColor} />
@@ -119,8 +119,6 @@ const styles = StyleSheet.create({
     paddingVertical: authSpacing.sm,
     paddingLeft: authSpacing.sm,
     paddingRight: authSpacing.md,
-    borderWidth: 1,
-    borderRadius: 4,
   },
   triggerPressed: {
     opacity: 0.88,

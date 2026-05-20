@@ -62,6 +62,7 @@ export const UserDetectionGallerySection = forwardRef<
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<GalleryCategoryFilter>({ kind: 'all' });
   const [categoryFilterOpen, setCategoryFilterOpen] = useState(false);
+  const debouncedSearch = useDebouncedValue(searchQuery, 280);
   const {
     items,
     isLoading,
@@ -78,8 +79,6 @@ export const UserDetectionGallerySection = forwardRef<
     setCategoryFilter({ kind: 'all' });
   }, [userId, publicOnly]);
 
-  const debouncedSearch = useDebouncedValue(searchQuery, 280);
-
   const filteredItems = useMemo(
     () => filterDetectionGalleryItems(items, '', categoryFilter),
     [items, categoryFilter],
@@ -89,7 +88,19 @@ export const UserDetectionGallerySection = forwardRef<
 
   return (
     <View style={styles.wrap}>
-      <View style={styles.toolbar}>
+      <View style={styles.searchRow}>
+        {userId ? (
+          <ScreenSearchField
+            borderless
+            containerStyle={styles.searchField}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder={searchPlaceholder}
+            accessibilityLabel="Search profile gallery"
+          />
+        ) : (
+          <View style={styles.searchField} />
+        )}
         <SpeciesSubcategoryFilterButton
           value={categoryFilter}
           onPress={() => setCategoryFilterOpen(true)}
@@ -102,15 +113,6 @@ export const UserDetectionGallerySection = forwardRef<
           borderColor={borderColor}
         />
       </View>
-
-      {userId ? (
-        <ScreenSearchField
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholder={searchPlaceholder}
-          accessibilityLabel="Search profile gallery"
-        />
-      ) : null}
 
       <SpeciesSubcategoryFilterModal
         visible={categoryFilterOpen}
@@ -146,10 +148,13 @@ const styles = StyleSheet.create({
   wrap: {
     gap: authSpacing.sm,
   },
-  toolbar: {
+  searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: authSpacing.xs,
+    gap: authSpacing.sm,
+  },
+  searchField: {
+    flex: 1,
+    minWidth: 0,
   },
 });

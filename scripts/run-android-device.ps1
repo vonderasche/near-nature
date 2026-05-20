@@ -37,11 +37,11 @@ if (Get-Command adb -ErrorAction SilentlyContinue) {
 $metroListening = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
 
 if ($InstallOnly -or $metroListening) {
-  Write-Host ""
-  Write-Host "Port $Port is already in use — using existing Metro (not starting a second server)." -ForegroundColor Yellow
-  Write-Host "If the app shows a red error screen, run in another terminal:  npm run start:dev" -ForegroundColor Yellow
-  Write-Host ""
-  npx expo run:android --no-bundler --port $Port @args
+  Write-Host ''
+  Write-Host "Port $Port is already in use - using existing Metro (not starting a second server)." -ForegroundColor Yellow
+  Write-Host 'If the app shows a red error screen, run in another terminal:  npm run start:dev' -ForegroundColor Yellow
+  Write-Host ''
+  npx expo run:android --no-bundler @args
   exit $LASTEXITCODE
 }
 

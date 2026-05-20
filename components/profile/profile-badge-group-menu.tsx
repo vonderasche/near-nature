@@ -50,7 +50,7 @@ function BadgeMenuCell({
       accessibilityLabel={`${badge.label}, ${badge.earned ? 'earned' : 'not yet earned'}, ${badge.points} points`}
       style={[
         styles.menuCell,
-        { width: size, minHeight: size, borderColor },
+        { width: size, minHeight: size },
         active ? styles.menuCellActive : styles.menuCellIdle,
         !active && styles.menuCellDimmed,
       ]}>
@@ -127,7 +127,7 @@ export function ProfileBadgeGroupMenu({
           onPress={openMenu}
           style={({ pressed }) => [
             styles.trigger,
-            { width: size, minHeight: size, borderColor },
+            { width: size, minHeight: size },
             anyEarned ? styles.triggerEarned : styles.triggerIdle,
             pressed && styles.triggerPressed,
           ]}>
@@ -209,8 +209,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: authSpacing.sm,
     paddingHorizontal: authSpacing.xs,
-    borderWidth: 1,
-    borderRadius: 4,
     backgroundColor: authColors.background,
     gap: 2,
   },
@@ -279,13 +277,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: authSpacing.xs,
     paddingHorizontal: 4,
-    borderWidth: 1,
-    borderRadius: 0,
     gap: 2,
   },
   menuCellActive: {
     backgroundColor: authColors.text,
-    borderColor: authColors.text,
   },
   menuCellIdle: {
     backgroundColor: authColors.background,

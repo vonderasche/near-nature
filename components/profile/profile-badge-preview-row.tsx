@@ -12,11 +12,9 @@ type Props = {
 
 function PreviewChip({
   badge,
-  borderColor,
   mutedColor,
 }: {
   badge: ProfileBadgeItem;
-  borderColor: string;
   mutedColor: string;
 }) {
   const iconName: HeroIconName = badge.icon;
@@ -25,11 +23,7 @@ function PreviewChip({
 
   return (
     <View
-      style={[
-        styles.chip,
-        { borderColor },
-        badge.earned ? styles.chipEarned : styles.chipDimmed,
-      ]}
+      style={[styles.chip, badge.earned ? styles.chipEarned : styles.chipDimmed]}
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants">
       <HeroIcon
@@ -56,12 +50,7 @@ export function ProfileBadgePreviewRow({ badges, borderColor, mutedColor }: Prop
       contentContainerStyle={styles.scrollContent}
       style={styles.scroll}>
       {badges.map((badge) => (
-        <PreviewChip
-          key={badge.id}
-          badge={badge}
-          borderColor={borderColor}
-          mutedColor={mutedColor}
-        />
+        <PreviewChip key={badge.id} badge={badge} mutedColor={mutedColor} />
       ))}
     </ScrollView>
   );
@@ -83,8 +72,6 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderRadius: 4,
     backgroundColor: authColors.background,
   },
   chipEarned: {

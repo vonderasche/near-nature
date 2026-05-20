@@ -18,6 +18,7 @@ import { upsertSpeciesMetadata } from '@/services/speciesMetadataService';
 import { classificationToSpeciesCategory } from '@/lib/detections/mapSpeciesCategory';
 import { resolveNaturalistCategoryFromClassification } from '@/lib/points/resolveNaturalistCategory';
 import { speciesStatusToNativeColumn } from '@/lib/detections/mapNativeStatusDb';
+import { formatSupabaseError } from '@/lib/errors/errorMessage';
 import { devLog } from '@/lib/devLog';
 import { supabase } from '@/lib/supabase';
 import { extractDetectionsObjectPathFromStoredUrl } from './detectionImageUrl';
@@ -127,7 +128,19 @@ export async function saveDetection(input: SaveDetectionInput): Promise<SaveDete
 
   if (insertError) {
     await removeDetectionsObjects([objectPath]);
-    throw insertError;
+    devLog('[saveDetection] insert failed', {
+      message: insertError.message,
+      code: insertError.code,
+      details: insertError.details,
+      hint: insertError.hint,
+      category,
+      subcategory,
+      mainCategory,
+      nativeStatus,
+      state: stateCode.trim().toUpperCase().slice(0, 2),
+    });
+    const detail = formatSupabaseError(insertError);
+    throw new Error(detail || insertError.message || 'Could not save detection row.');
   }
 
   const detectionId = inserted.id as string;

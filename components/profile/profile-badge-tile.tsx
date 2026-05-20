@@ -22,7 +22,7 @@ export function ProfileBadgeTile({ badge, size, borderColor, compact = false }: 
       accessibilityLabel={`${badge.label}, earned, ${badge.points} points`}
       style={[
         styles.tile,
-        { width: size, minHeight: size, borderColor },
+        { width: size, minHeight: size },
         badge.featured && styles.tileFeatured,
       ]}>
       <View style={styles.iconWrap}>
@@ -50,8 +50,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: authSpacing.sm,
     paddingHorizontal: authSpacing.xs,
-    borderWidth: 1,
-    borderRadius: 4,
     backgroundColor: 'rgba(255,255,255,0.06)',
     gap: 2,
   },
