@@ -24,7 +24,7 @@ alter table public.discoveries enable row level security;
 
 create policy "Users can view their own discoveries"
   on public.discoveries for select
-  using (auth.uid() = user_id);
+  using ((select auth.uid()) = user_id);
 
 -- Auto-log first discovery and award bonus points
 create or replace function handle_first_discovery()

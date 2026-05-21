@@ -89,4 +89,5 @@ end;
 $$;
 
 revoke all on function public.get_user_scoring_snapshot(uuid) from public;
+revoke execute on function public.get_user_scoring_snapshot(uuid) from anon;
 grant execute on function public.get_user_scoring_snapshot(uuid) to authenticated;

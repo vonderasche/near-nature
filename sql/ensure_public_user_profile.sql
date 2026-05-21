@@ -101,6 +101,7 @@ $$;
 
 revoke all on function public.insert_public_user_from_auth(uuid) from public;
 revoke all on function public.ensure_public_user_profile() from public;
+revoke execute on function public.ensure_public_user_profile() from anon;
 grant execute on function public.ensure_public_user_profile() to authenticated;
 
 -- Harden signup trigger: retry on username collision

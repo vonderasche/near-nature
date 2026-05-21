@@ -2,7 +2,9 @@
 -- Requires: create_detections.sql, add_detection_naturalist_columns.sql
 -- Safe to re-run.
 
-create extension if not exists pg_trgm;
+create schema if not exists extensions;
+create extension if not exists pg_trgm with schema extensions;
+grant usage on schema extensions to postgres, anon, authenticated, service_role;
 
 -- ── Shared species aliases (synonyms / alternate common names) ───────────────
 
@@ -15,7 +17,7 @@ create table if not exists public.species_metadata (
 );
 
 create index if not exists species_metadata_latin_norm_trgm_idx
-  on public.species_metadata using gin (latin_name_normalized gin_trgm_ops);
+  on public.species_metadata using gin (latin_name_normalized extensions.gin_trgm_ops);
 
 alter table public.species_metadata enable row level security;
 
@@ -183,6 +185,7 @@ end;
 $$;
 
 revoke all on function public.upsert_species_metadata(text, text, text[]) from public;
+revoke execute on function public.upsert_species_metadata(text, text, text[]) from anon;
 grant execute on function public.upsert_species_metadata(text, text, text[]) to authenticated;
 
 -- ── Denormalized search columns on detections ─────────────────────────────────
@@ -354,13 +357,13 @@ create index if not exists detections_search_vector_idx
   on public.detections using gin (search_vector);
 
 create index if not exists detections_search_text_trgm_idx
-  on public.detections using gin (search_text gin_trgm_ops);
+  on public.detections using gin (search_text extensions.gin_trgm_ops);
 
 create index if not exists detections_latin_normalized_trgm_idx
-  on public.detections using gin (latin_name_normalized gin_trgm_ops);
+  on public.detections using gin (latin_name_normalized extensions.gin_trgm_ops);
 
 create index if not exists detections_common_name_trgm_idx
-  on public.detections using gin (common_name gin_trgm_ops);
+  on public.detections using gin (common_name extensions.gin_trgm_ops);
 
 -- ── Server-side gallery search (FTS + trigram + token match) ─────────────────
 

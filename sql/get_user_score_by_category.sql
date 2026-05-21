@@ -138,4 +138,5 @@ end;
 $$;
 
 revoke all on function public.get_user_score_by_category(uuid) from public;
+revoke execute on function public.get_user_score_by_category(uuid) from anon;
 grant execute on function public.get_user_score_by_category(uuid) to authenticated;

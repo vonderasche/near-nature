@@ -26,7 +26,8 @@ begin
   new.updated_at = now();
   return new;
 end;
-$$ language plpgsql;
+$$ language plpgsql
+set search_path = public;
 
 create trigger users_updated_at
   before update on public.users
@@ -37,15 +38,15 @@ alter table public.users enable row level security;
 
 create policy "Users can view their own profile"
   on public.users for select
-  using (auth.uid() = id);
+  using ((select auth.uid()) = id);
 
 create policy "Users can update their own profile"
   on public.users for update
-  using (auth.uid() = id);
+  using ((select auth.uid()) = id);
 
 create policy "Users can delete their own profile"
   on public.users for delete
-  using (auth.uid() = id);
+  using ((select auth.uid()) = id);
 
 -- Shared insert (also used by ensure_public_user_profile.sql on existing DBs)
 create or replace function public.insert_public_user_from_auth(p_user_id uuid)
@@ -147,6 +148,7 @@ $$;
 
 revoke all on function public.insert_public_user_from_auth(uuid) from public;
 revoke all on function public.ensure_public_user_profile() from public;
+revoke execute on function public.ensure_public_user_profile() from anon;
 grant execute on function public.ensure_public_user_profile() to authenticated;
 
 create or replace function handle_new_user()

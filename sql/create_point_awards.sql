@@ -18,6 +18,6 @@ alter table public.point_awards enable row level security;
 
 create policy "Users can view their own point awards"
   on public.point_awards for select
-  using (auth.uid() = user_id);
+  using ((select auth.uid()) = user_id);
 
 -- Inserts only via security definer triggers / functions.

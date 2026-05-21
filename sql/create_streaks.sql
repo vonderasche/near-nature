@@ -18,7 +18,7 @@ alter table public.streaks enable row level security;
 
 create policy "Users can view their own streak"
   on public.streaks for select
-  using (auth.uid() = user_id);
+  using ((select auth.uid()) = user_id);
 
 -- Inserts/updates are done only by trigger `update_streak` (security definer), not by clients.
 

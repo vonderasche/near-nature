@@ -95,18 +95,14 @@ create index detections_detected_at_idx on public.detections(detected_at desc);
 -- Row Level Security
 alter table public.detections enable row level security;
 
-create policy "Users can view their own detections"
+create policy "Users can select own or public non-sensitive detections"
   on public.detections for select
-  using (auth.uid() = user_id);
+  using ((select auth.uid()) = user_id or is_sensitive = false);
 
 create policy "Users can insert their own detections"
   on public.detections for insert
-  with check (auth.uid() = user_id);
+  with check ((select auth.uid()) = user_id);
 
 create policy "Users can delete their own detections"
   on public.detections for delete
-  using (auth.uid() = user_id);
-
-create policy "Non-sensitive detections are publicly viewable"
-  on public.detections for select
-  using (is_sensitive = false);
+  using ((select auth.uid()) = user_id);

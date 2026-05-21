@@ -19,23 +19,18 @@ import { useSaveDetection } from '@/hooks/useSaveDetection';
 import { useSpeciesIdentification } from '@/hooks/useSpeciesIdentification';
 import { requestExplorerBoardRefresh } from '@/lib/explorerBoard/explorerBoardRefresh';
 import { contentInsetsPadding } from '@/lib/screen/contentInsets';
-import type { NewSpeciesDiscovery } from '@/types/species-discovery';
-
 type Props = {
   photoUri: string;
   /** Return to the live camera (retake flow). */
   onRetake: () => void;
   /** Shown on the camera screen if a background save fails after leaving this view. */
   onBackgroundSaveError?: (message: string) => void;
-  /** First-time species for this user (after background save completes). */
-  onNewSpeciesDiscovery?: (discovery: NewSpeciesDiscovery) => void;
 };
 
 export function CameraIdentificationPanel({
   photoUri,
   onRetake,
   onBackgroundSaveError,
-  onNewSpeciesDiscovery,
 }: Props) {
   const insets = useSafeAreaInsets();
   const { stateCode: userState } = useUserHomeState();
@@ -81,7 +76,6 @@ export function CameraIdentificationPanel({
       void refetch();
       if (result.result.newSpeciesDiscovery) {
         requestExplorerBoardRefresh();
-        onNewSpeciesDiscovery?.(result.result.newSpeciesDiscovery);
       }
     });
   }, [
@@ -94,7 +88,6 @@ export function CameraIdentificationPanel({
     onRetake,
     saveInBackground,
     onBackgroundSaveError,
-    onNewSpeciesDiscovery,
     refetch,
   ]);
 

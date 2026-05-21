@@ -42,6 +42,9 @@ All `.sql` scripts here are written to be **safe to re-run** (they drop/recreate
 | `get_user_scoring_snapshot.sql` | RPC: one JSON payload — score rows, awards, sub/main species counts (profile scoring) |
 | `get_public_user_awards.sql` | RPC: earned badge rows for any member (public profile) |
 | `add_detection_search.sql` | `species_metadata`, search columns/indexes on detections, `search_user_detections` RPC |
+| `check_category_milestones.sql` | Milestone / badge awards after first species discovery (trigger calls this) |
+| `create_point_awards.sql` | `public.point_awards` table (tier bonuses) |
+| `harden_security_linter.sql` | Supabase linter fixes: `search_path`, RPC grants, `species_metadata` RLS, anon table access |
 | `drop_legacy_rpc.sql` | One-off: drops unused RPCs and old indexes |
 
 Gallery list metadata is cached on device (`near_nature:gallery_list:…` in AsyncStorage); images use signed-URL memory cache + `expo-image` disk cache.
@@ -81,6 +84,7 @@ Use for a **new** Supabase project or when you intentionally recreate the `publi
 | 14 | `get_public_user_awards.sql` | Public earned-badges RPC |
 | 15 | `add_detection_search.sql` | Gallery search (FTS, trigram, aliases) |
 | 16 | `drop_streak_client_update_policy.sql` | Policy cleanup (harmless on fresh DB) |
+| 17 | `harden_security_linter.sql` | Security hardening (see below) |
 
 ### After rebuild
 
@@ -114,8 +118,49 @@ If tables already exist and you only need to refresh objects:
 | Username login | `resolve_login_email.sql` |
 | Missing profile after sign-in | `ensure_public_user_profile.sql` |
 | Points on save | `create_leaderboard.sql` |
+| Gallery search | `add_detection_search.sql` |
+| Supabase Dashboard security linter warnings | `harden_security_linter.sql` |
 
 Then reload the schema cache and run `npm run verify:supabase`.
+
+---
+
+## Security hardening (`harden_security_linter.sql`)
+
+Run this on **any** project that already has the app schema deployed (local or hosted Supabase). It addresses most **WARN** items from **Database → Linter** in the Supabase Dashboard (security and RLS performance).
+
+**One file is enough** — you do not need to re-run the full bootstrap or every patch script for these fixes.
+
+### What it fixes
+
+| Linter | What we change |
+|--------|----------------|
+| `auth_rls_initplan` | `(select auth.uid())` in RLS on `detections`, `users`, `streaks`, `point_awards`, `discoveries` |
+| `multiple_permissive_policies` | Single `SELECT` policy on `detections`: own rows **or** `is_sensitive = false` |
+| `function_search_path_mutable` | `ALTER FUNCTION … SET search_path = public` on helpers and triggers |
+| `rls_policy_always_true` | Removes direct `INSERT`/`UPDATE` on `species_metadata`; writes only via RPC `upsert_species_metadata` |
+| `extension_in_public` | Moves `pg_trgm` to `extensions` schema; recreates trigram indexes |
+| `pg_graphql_anon_table_exposed` (partial) | `REVOKE SELECT` from `anon` on `users`, `discoveries`, `point_awards`, `streaks`, `species_metadata` |
+| `pg_graphql_authenticated_table_exposed` (partial) | `REVOKE SELECT` from `authenticated` on `species_metadata` (RPC-only) |
+| `anon_security_definer_function_executable` (partial) | `REVOKE EXECUTE` on triggers/internal RPCs and owner-only RPCs (`upsert_species_metadata`, scoring snapshot, etc.) |
+
+Also grants **`anon`** `EXECUTE` on `get_public_user_awards` so guests can load earned badges on public member profiles via RPC (not the `point_awards` table).
+
+### What stays as-is (by design)
+
+| Item | Why |
+|------|-----|
+| `detections` visible to `anon` | Guest Explorer Board and public member galleries read non-sensitive rows (RLS + PostgREST) |
+| `authenticated` GraphQL on `detections`, `users`, `discoveries`, `point_awards`, `streaks` | App uses `.from(...)` with RLS; clearing requires RPC-only refactors |
+| `0028` / `0029` on public RPCs | Linter flags any callable `SECURITY DEFINER` RPC; sign-up checks, leaderboard, and public profile RPCs are intentional |
+
+### Order relative to other patches
+
+1. If saves fail with **`award_key` is ambiguous**, run **`check_category_milestones.sql`** first (uses `v_award_key` in the function body).
+2. Run **`harden_security_linter.sql`**.
+3. **Reload schema cache**, then `npm run verify:supabase`.
+
+`harden_security_linter.sql` does **not** replace the body of `check_category_milestones`; it only revokes client `EXECUTE` and pins `search_path` on related helpers.
 
 ---
 
