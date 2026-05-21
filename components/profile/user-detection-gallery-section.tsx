@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { DetectionGalleryGrid } from '@/components/profile/detection-gallery-grid';
@@ -12,10 +12,8 @@ import { authSpacing } from '@/constants/auth-theme';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useGalleryGridColumns } from '@/hooks/useGalleryGridColumns';
 import { useUserDetectionGallery } from '@/hooks/useUserDetectionGallery';
-import {
-  filterDetectionGalleryItems,
-  type GalleryCategoryFilter,
-} from '@/lib/detections/filterDetectionGalleryItems';
+import type { GalleryCategoryFilter } from '@/lib/detections/filterDetectionGalleryItems';
+import { isSearchQueryActive } from '@/lib/search/normalizeSearchQuery';
 import type { DetectionGalleryItem } from '@/types';
 import type { UserFacingResult } from '@/types/user-facing-result';
 
@@ -39,7 +37,7 @@ type UserDetectionGallerySectionProps = {
 
 /**
  * Paginated identification gallery for own profile or a member's public profile.
- * Search filters only identifications already loaded for this `userId`.
+ * Search and taxon filters run in `search_user_detections` when the RPC is deployed.
  */
 export const UserDetectionGallerySection = forwardRef<
   UserDetectionGallerySectionHandle,
@@ -68,10 +66,16 @@ export const UserDetectionGallerySection = forwardRef<
     isLoading,
     isLoadingMore,
     hasMore,
+    totalCount,
     error,
     loadMore,
     refetch,
-  } = useUserDetectionGallery({ userId, publicOnly, searchQuery: debouncedSearch });
+  } = useUserDetectionGallery({
+    userId,
+    publicOnly,
+    searchQuery: debouncedSearch,
+    categoryFilter,
+  });
   const { columns, setColumnCount } = useGalleryGridColumns();
 
   useEffect(() => {
@@ -79,12 +83,14 @@ export const UserDetectionGallerySection = forwardRef<
     setCategoryFilter({ kind: 'all' });
   }, [userId, publicOnly]);
 
-  const filteredItems = useMemo(
-    () => filterDetectionGalleryItems(items, '', categoryFilter),
-    [items, categoryFilter],
-  );
-
   useImperativeHandle(ref, () => ({ refetch }), [refetch]);
+
+  const filterOrSearchActive =
+    isSearchQueryActive(debouncedSearch) || categoryFilter.kind !== 'all';
+  const resolvedEmptyMessage =
+    filterOrSearchActive && totalCount === 0 && !isLoading
+      ? 'No identifications match your search or filter.'
+      : emptyMessage;
 
   return (
     <View style={styles.wrap}>
@@ -122,20 +128,20 @@ export const UserDetectionGallerySection = forwardRef<
       />
 
       <DetectionGalleryGrid
-        items={filteredItems}
-        sourceItemCount={items.length}
+        items={items}
+        sourceItemCount={totalCount ?? items.length}
         searchQuery={searchQuery}
         columnCount={columns}
         loading={isLoading}
         isLoadingMore={isLoadingMore}
-        hasMore={hasMore && categoryFilter.kind === 'all'}
+        hasMore={hasMore}
         onLoadMore={() => void loadMore()}
         error={error}
         onRetry={() => void refetch()}
         borderColor={borderColor}
         mutedColor={mutedColor}
         activityColor={activityColor}
-        emptyMessage={emptyMessage}
+        emptyMessage={resolvedEmptyMessage}
         deletable={deletable}
         onDeleteItem={onDeleteItem}
         deletingId={deletingId}

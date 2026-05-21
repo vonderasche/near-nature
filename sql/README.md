@@ -42,6 +42,7 @@ All `.sql` scripts here are written to be **safe to re-run** (they drop/recreate
 | `get_user_scoring_snapshot.sql` | RPC: one JSON payload — score rows, awards, sub/main species counts (profile scoring) |
 | `get_public_user_awards.sql` | RPC: earned badge rows for any member (public profile) |
 | `add_detection_search.sql` | `species_metadata`, search columns/indexes on detections, `search_user_detections` RPC |
+| `optimize_detection_gallery.sql` | Gallery indexes, faster search RPC, SQL category filter, alias refresh trigger |
 | `check_category_milestones.sql` | Milestone / badge awards after first species discovery (trigger calls this) |
 | `create_point_awards.sql` | `public.point_awards` table (tier bonuses) |
 | `harden_security_linter.sql` | Supabase linter fixes: `search_path`, RPC grants, `species_metadata` RLS, anon table access |
@@ -83,8 +84,9 @@ Use for a **new** Supabase project or when you intentionally recreate the `publi
 | 13 | `get_user_scoring_snapshot.sql` | Owner scoring snapshot RPC |
 | 14 | `get_public_user_awards.sql` | Public earned-badges RPC |
 | 15 | `add_detection_search.sql` | Gallery search (FTS, trigram, aliases) |
-| 16 | `drop_streak_client_update_policy.sql` | Policy cleanup (harmless on fresh DB) |
-| 17 | `harden_security_linter.sql` | Security hardening (see below) |
+| 16 | `optimize_detection_gallery.sql` | Gallery browse/search performance (existing DBs) |
+| 17 | `drop_streak_client_update_policy.sql` | Policy cleanup (harmless on fresh DB) |
+| 18 | `harden_security_linter.sql` | Security hardening (see below) |
 
 ### After rebuild
 
@@ -119,6 +121,7 @@ If tables already exist and you only need to refresh objects:
 | Missing profile after sign-in | `ensure_public_user_profile.sql` |
 | Points on save | `create_leaderboard.sql` |
 | Gallery search | `add_detection_search.sql` |
+| Gallery search slow / filter incomplete | `optimize_detection_gallery.sql` (after `add_detection_search.sql`) |
 | Supabase Dashboard security linter warnings | `harden_security_linter.sql` |
 
 Then reload the schema cache and run `npm run verify:supabase`.

@@ -45,17 +45,24 @@ export function filterDetectionGalleryItems(
   });
 }
 
-/** Text search on gallery DB rows (local / RPC fallback). */
+/** Text + category filter on gallery DB rows (local mode / RPC fallback). */
 export function filterDetectionGalleryRows(
   rows: readonly DetectionGalleryRow[],
   query: string,
   aliasesByLatinName?: ReadonlyMap<string, readonly string[]>,
+  categoryFilter: GalleryCategoryFilter = { kind: 'all' },
 ): DetectionGalleryRow[] {
   const trimmed = query.trim();
-  if (!trimmed) return [...rows];
 
   return rows.filter((row) => {
     const aliases = aliasesByLatinName?.get(row.latin_name.trim().toLowerCase()) ?? [];
-    return matchesSearchInFields(detectionSearchFields(rowToSearchShape(row), aliases), trimmed);
+    if (trimmed && !matchesSearchInFields(detectionSearchFields(rowToSearchShape(row), aliases), trimmed)) {
+      return false;
+    }
+    if (categoryFilter.kind === 'all') return true;
+    if (categoryFilter.kind === 'group') {
+      return speciesCategoryMatchesGroup(row.category, categoryFilter.group);
+    }
+    return detectionCategoryMatchesSubcategoryFilter(row.category, categoryFilter.subcategory);
   });
 }

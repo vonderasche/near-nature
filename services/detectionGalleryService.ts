@@ -1,8 +1,13 @@
 import { isLocalDetectionsMode } from '@/lib/config/isLocalDetectionsMode';
+import { filterDetectionGalleryRows } from '@/lib/detections/filterDetectionGalleryItems';
+import {
+  toGalleryListFilterParams,
+  type GalleryListFilterParams,
+} from '@/lib/detections/galleryCategoryFilterParams';
+import type { GalleryCategoryFilter } from '@/lib/detections/filterDetectionGalleryItems';
 import { hydrateGalleryItemsFromRows } from '@/lib/detections/hydrateGalleryItems';
 import { loadLocalDetectionRows } from '@/lib/detections/localDetectionStore';
 import type { DetectionGalleryRow } from '@/lib/detections/mapDetectionGalleryRow';
-import { filterDetectionGalleryRows } from '@/lib/detections/filterDetectionGalleryItems';
 import { isSearchQueryActive } from '@/lib/search/normalizeSearchQuery';
 import { supabase } from '@/lib/supabase';
 import type { DetectionGalleryItem } from '@/types';
@@ -17,37 +22,73 @@ export type FetchUserDetectionGalleryPageParams = {
   publicOnly?: boolean;
   offset: number;
   pageSize?: number;
+  query?: string;
+  categoryFilter?: GalleryCategoryFilter;
 };
 
 export type FetchUserDetectionGalleryRowsPageResult = {
   rows: DetectionGalleryRow[];
   hasMore: boolean;
+  /** Set when loaded via `search_user_detections` RPC. */
+  totalCount: number | null;
 };
 
 export type FetchUserDetectionGalleryPageResult = {
   items: DetectionGalleryItem[];
   hasMore: boolean;
+  totalCount: number | null;
   /** DB rows for device cache (no signed URLs). */
   rows: DetectionGalleryRow[];
 };
 
-/**
- * Fetches one page of gallery rows (newest first).
- * Requests `pageSize + 1` rows to detect whether another page exists.
- */
-export async function fetchUserDetectionGalleryRowsPage({
-  userId,
-  publicOnly = false,
-  offset,
-  pageSize = GALLERY_PAGE_SIZE,
-}: FetchUserDetectionGalleryPageParams): Promise<FetchUserDetectionGalleryRowsPageResult> {
-  if (isLocalDetectionsMode()) {
-    const all = await loadLocalDetectionRows(userId);
-    const pageRows = all.slice(offset, offset + pageSize);
-    const hasMore = offset + pageSize < all.length;
-    return { rows: pageRows, hasMore };
-  }
+function mapRpcRow(row: Record<string, unknown>): DetectionGalleryRow {
+  return {
+    id: String(row.id),
+    image_url: String(row.image_url),
+    detected_at: String(row.detected_at),
+    common_name: String(row.common_name),
+    latin_name: String(row.latin_name),
+    category: String(row.category),
+    subcategory: row.subcategory != null ? String(row.subcategory) : null,
+    main_category: row.main_category != null ? String(row.main_category) : null,
+    description: row.description != null ? String(row.description) : null,
+    native_status: row.native_status != null ? String(row.native_status) : null,
+  };
+}
 
+function isGalleryRpcUnavailable(error: { code?: string; message?: string }): boolean {
+  const message = (error.message ?? '').toLowerCase();
+  return (
+    error.code === 'PGRST202' ||
+    error.code === '42883' ||
+    message.includes('search_user_detections') ||
+    message.includes('does not exist')
+  );
+}
+
+function applyLocalGalleryPage(
+  all: readonly DetectionGalleryRow[],
+  query: string,
+  categoryFilter: GalleryCategoryFilter,
+  offset: number,
+  pageSize: number,
+): FetchUserDetectionGalleryRowsPageResult {
+  const filtered = filterDetectionGalleryRows(all, query, undefined, categoryFilter);
+  const pageRows = filtered.slice(offset, offset + pageSize);
+  const hasMore = offset + pageSize < filtered.length;
+  return {
+    rows: pageRows,
+    hasMore,
+    totalCount: isSearchQueryActive(query) || categoryFilter.kind !== 'all' ? filtered.length : null,
+  };
+}
+
+async function fetchGalleryRowsViaPostgrest(
+  userId: string,
+  publicOnly: boolean,
+  offset: number,
+  pageSize: number,
+): Promise<FetchUserDetectionGalleryRowsPageResult> {
   const from = offset;
   const to = offset + pageSize;
 
@@ -69,90 +110,90 @@ export async function fetchUserDetectionGalleryRowsPage({
   const hasMore = rows.length > pageSize;
   const pageRows = hasMore ? rows.slice(0, pageSize) : rows;
 
-  return { rows: pageRows, hasMore };
+  return { rows: pageRows, hasMore, totalCount: null };
 }
 
-export type SearchUserDetectionGalleryRowsPageParams = {
-  userId: string;
-  query: string;
-  publicOnly?: boolean;
-  offset: number;
-  pageSize?: number;
-};
+async function fetchGalleryRowsViaRpc(
+  userId: string,
+  query: string,
+  publicOnly: boolean,
+  offset: number,
+  pageSize: number,
+  listFilter: GalleryListFilterParams,
+): Promise<FetchUserDetectionGalleryRowsPageResult> {
+  const { data, error } = await supabase.rpc('search_user_detections', {
+    p_user_id: userId,
+    p_query: query.trim(),
+    p_public_only: publicOnly,
+    p_offset: offset,
+    p_limit: pageSize,
+    p_filter_group: listFilter.filterGroup,
+    p_filter_subcategory: listFilter.filterSubcategory,
+  });
 
-function isSearchDetectionsRpcUnavailable(error: { code?: string; message?: string }): boolean {
-  const message = (error.message ?? '').toLowerCase();
-  return (
-    error.code === 'PGRST202' ||
-    error.code === '42883' ||
-    message.includes('search_user_detections') ||
-    message.includes('does not exist')
-  );
+  if (error) throw error;
+
+  const raw = (data ?? []) as Array<Record<string, unknown>>;
+  const totalCount =
+    raw.length > 0 && raw[0].total_count != null ? Number(raw[0].total_count) : null;
+  const rows = raw.map(mapRpcRow);
+  const hasMore = totalCount != null ? offset + rows.length < totalCount : false;
+
+  return { rows, hasMore, totalCount };
 }
 
 /**
- * Server-side search (FTS + trigram + token match). Falls back to loading a page and filtering in-app.
+ * Fetches one page of gallery rows (browse, search, and category filter).
+ * Uses `search_user_detections` when available; falls back to PostgREST + in-app filter.
  */
-export async function searchUserDetectionGalleryRowsPage({
+export async function fetchUserDetectionGalleryRowsPage({
   userId,
-  query,
   publicOnly = false,
   offset,
   pageSize = GALLERY_PAGE_SIZE,
-}: SearchUserDetectionGalleryRowsPageParams): Promise<FetchUserDetectionGalleryRowsPageResult> {
+  query = '',
+  categoryFilter = { kind: 'all' },
+}: FetchUserDetectionGalleryPageParams): Promise<FetchUserDetectionGalleryRowsPageResult> {
   const trimmed = query.trim();
-  if (!isSearchQueryActive(trimmed)) {
-    return fetchUserDetectionGalleryRowsPage({ userId, publicOnly, offset, pageSize });
-  }
+  const listFilter = toGalleryListFilterParams(categoryFilter);
 
   if (isLocalDetectionsMode()) {
     const all = await loadLocalDetectionRows(userId);
-    const filtered = filterDetectionGalleryRows(all, trimmed);
-    const pageRows = filtered.slice(offset, offset + pageSize);
-    const hasMore = offset + pageSize < filtered.length;
-    return { rows: pageRows, hasMore };
+    return applyLocalGalleryPage(all, trimmed, categoryFilter, offset, pageSize);
   }
 
-  const { data, error } = await supabase.rpc('search_user_detections', {
-    p_user_id: userId,
-    p_query: trimmed,
-    p_public_only: publicOnly,
-    p_offset: offset,
-    p_limit: pageSize + 1,
-  });
-
-  if (error) {
-    if (!isSearchDetectionsRpcUnavailable(error)) throw error;
-    const { rows: allRows } = await fetchUserDetectionGalleryRowsPage({
+  try {
+    return await fetchGalleryRowsViaRpc(
       userId,
+      trimmed,
       publicOnly,
-      offset: 0,
-      pageSize: 500,
-    });
-    const filtered = filterDetectionGalleryRows(allRows, trimmed);
-    const pageRows = filtered.slice(offset, offset + pageSize);
-    const hasMore = offset + pageSize < filtered.length;
-    return { rows: pageRows, hasMore };
+      offset,
+      pageSize,
+      listFilter,
+    );
+  } catch (error) {
+    const err = error as { code?: string; message?: string };
+    if (!isGalleryRpcUnavailable(err)) throw error;
+
+    if (isSearchQueryActive(trimmed) || categoryFilter.kind !== 'all') {
+      const { rows: allRows } = await fetchGalleryRowsViaPostgrest(userId, publicOnly, 0, 500);
+      return applyLocalGalleryPage(allRows, trimmed, categoryFilter, offset, pageSize);
+    }
+
+    return fetchGalleryRowsViaPostgrest(userId, publicOnly, offset, pageSize);
   }
+}
 
-  const raw = (data ?? []) as Array<Record<string, unknown>>;
-  const hasMore = raw.length > pageSize;
-  const slice = hasMore ? raw.slice(0, pageSize) : raw;
+/** @deprecated Use `fetchUserDetectionGalleryRowsPage` with `query` set. */
+export type SearchUserDetectionGalleryRowsPageParams = Omit<
+  FetchUserDetectionGalleryPageParams,
+  'query'
+> & { query: string };
 
-  const rows: DetectionGalleryRow[] = slice.map((row) => ({
-    id: String(row.id),
-    image_url: String(row.image_url),
-    detected_at: String(row.detected_at),
-    common_name: String(row.common_name),
-    latin_name: String(row.latin_name),
-    category: String(row.category),
-    subcategory: row.subcategory != null ? String(row.subcategory) : null,
-    main_category: row.main_category != null ? String(row.main_category) : null,
-    description: row.description != null ? String(row.description) : null,
-    native_status: row.native_status != null ? String(row.native_status) : null,
-  }));
-
-  return { rows, hasMore };
+export async function searchUserDetectionGalleryRowsPage(
+  params: SearchUserDetectionGalleryRowsPageParams,
+): Promise<FetchUserDetectionGalleryRowsPageResult> {
+  return fetchUserDetectionGalleryRowsPage(params);
 }
 
 /**
@@ -161,7 +202,7 @@ export async function searchUserDetectionGalleryRowsPage({
 export async function fetchUserDetectionGalleryPage(
   params: FetchUserDetectionGalleryPageParams,
 ): Promise<FetchUserDetectionGalleryPageResult> {
-  const { rows, hasMore } = await fetchUserDetectionGalleryRowsPage(params);
+  const { rows, hasMore, totalCount } = await fetchUserDetectionGalleryRowsPage(params);
   const items = await hydrateGalleryItemsFromRows(rows);
-  return { items, hasMore, rows };
+  return { items, hasMore, totalCount, rows };
 }

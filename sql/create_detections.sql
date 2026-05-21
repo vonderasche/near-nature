@@ -91,6 +91,10 @@ create index detections_state_idx       on public.detections(state);
 create index detections_category_idx    on public.detections(category);
 create index detections_native_idx      on public.detections(native_status);
 create index detections_detected_at_idx on public.detections(detected_at desc);
+create index detections_user_detected_at_idx on public.detections(user_id, detected_at desc);
+create index detections_public_gallery_idx
+  on public.detections(user_id, detected_at desc)
+  where is_sensitive = false;
 
 -- Row Level Security
 alter table public.detections enable row level security;

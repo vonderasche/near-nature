@@ -4,6 +4,7 @@ import {
   galleryItemsPlaceholderFromRows,
   hydrateGalleryItemsFromRows,
 } from '@/lib/detections/hydrateGalleryItems';
+import type { GalleryCategoryFilter } from '@/lib/detections/filterDetectionGalleryItems';
 import {
   invalidateCachedGalleryList,
   loadCachedGalleryList,
@@ -14,7 +15,6 @@ import { isSearchQueryActive } from '@/lib/search/normalizeSearchQuery';
 import {
   fetchUserDetectionGalleryRowsPage,
   GALLERY_PAGE_SIZE,
-  searchUserDetectionGalleryRowsPage,
 } from '@/services/detectionGalleryService';
 import type { DetectionGalleryItem } from '@/types';
 
@@ -23,8 +23,10 @@ type UseUserDetectionGalleryOptions = {
   pageSize?: number;
   /** When true, only non-sensitive rows (public gallery / other users). */
   publicOnly?: boolean;
-  /** Debounced text query; uses server search when active. */
+  /** Debounced text query; server search when active. */
   searchQuery?: string;
+  /** Taxon filter; applied in SQL when RPC is available. */
+  categoryFilter?: GalleryCategoryFilter;
 };
 
 type LoadMode = 'reset' | 'append';
@@ -36,6 +38,8 @@ type UseUserDetectionGalleryResult = {
   /** Background refresh after showing device cache. */
   isRefreshing: boolean;
   hasMore: boolean;
+  /** Total rows matching search/filter (from RPC `total_count`). */
+  totalCount: number | null;
   error: string | null;
   loadMore: () => Promise<void>;
   refetch: () => Promise<void>;
@@ -62,12 +66,14 @@ export function useUserDetectionGallery({
   pageSize = GALLERY_PAGE_SIZE,
   publicOnly = false,
   searchQuery = '',
+  categoryFilter = { kind: 'all' },
 }: UseUserDetectionGalleryOptions = {}): UseUserDetectionGalleryResult {
   const [items, setItems] = useState<DetectionGalleryItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasMore, setHasMore] = useState(false);
+  const [totalCount, setTotalCount] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const offsetRef = useRef(0);
   const rowsRef = useRef<DetectionGalleryRow[]>([]);
@@ -93,6 +99,7 @@ export function useUserDetectionGallery({
         rowsRef.current = [];
         setItems([]);
         setHasMore(false);
+        setTotalCount(null);
         setError(null);
         setIsLoading(false);
         setIsLoadingMore(false);
@@ -103,14 +110,17 @@ export function useUserDetectionGallery({
 
       const force = options?.force ?? false;
       const offset = mode === 'reset' ? 0 : offsetRef.current;
+      const queryActive = isSearchQueryActive(searchQuery);
+      const filterActive = categoryFilter.kind !== 'all';
       let showedCache = false;
 
-      if (mode === 'reset' && !force && !isSearchQueryActive(searchQuery)) {
+      if (mode === 'reset' && !force && !queryActive && !filterActive) {
         const cached = await loadCachedGalleryList(userId, publicOnly);
         if (cached && cached.rows.length > 0) {
           rowsRef.current = cached.rows;
           offsetRef.current = cached.rows.length;
           setHasMore(cached.hasMore);
+          setTotalCount(null);
           setItems(galleryItemsPlaceholderFromRows(cached.rows));
           setIsLoading(false);
           setIsRefreshing(true);
@@ -129,24 +139,20 @@ export function useUserDetectionGallery({
       setError(null);
 
       try {
-        const queryActive = isSearchQueryActive(searchQuery);
         const requestSize =
-          mode === 'append' || queryActive ? pageSize : Math.max(pageSize, rowsRef.current.length);
+          mode === 'append' || queryActive || filterActive
+            ? pageSize
+            : Math.max(pageSize, rowsRef.current.length);
 
-        const { rows: pageRows, hasMore: more } = queryActive
-          ? await searchUserDetectionGalleryRowsPage({
-              userId,
-              query: searchQuery,
-              publicOnly,
-              offset,
-              pageSize: requestSize,
-            })
-          : await fetchUserDetectionGalleryRowsPage({
-              userId,
-              publicOnly,
-              offset,
-              pageSize: requestSize,
-            });
+        const { rows: pageRows, hasMore: more, totalCount: total } =
+          await fetchUserDetectionGalleryRowsPage({
+            userId,
+            query: searchQuery,
+            publicOnly,
+            offset,
+            pageSize: requestSize,
+            categoryFilter,
+          });
 
         const allRows =
           mode === 'reset'
@@ -155,14 +161,18 @@ export function useUserDetectionGallery({
         rowsRef.current = allRows;
         offsetRef.current = allRows.length;
         setHasMore(more);
+        setTotalCount(total);
 
         const hydrated = await hydrateGalleryItemsFromRows(allRows);
         setItems(hydrated);
-        await persistCache(allRows, more);
+        if (!queryActive && !filterActive) {
+          await persistCache(allRows, more);
+        }
       } catch (e) {
         if (!showedCache && !hadCacheRef.current) {
           setItems([]);
           setHasMore(false);
+          setTotalCount(null);
           rowsRef.current = [];
           offsetRef.current = 0;
         }
@@ -173,7 +183,15 @@ export function useUserDetectionGallery({
         setIsRefreshing(false);
       }
     },
-    [applyHydratedRows, pageSize, persistCache, publicOnly, searchQuery, userId],
+    [
+      applyHydratedRows,
+      categoryFilter,
+      pageSize,
+      persistCache,
+      publicOnly,
+      searchQuery,
+      userId,
+    ],
   );
 
   const refetch = useCallback(async () => {
@@ -204,6 +222,7 @@ export function useUserDetectionGallery({
     isLoadingMore,
     isRefreshing,
     hasMore,
+    totalCount,
     error,
     loadMore,
     refetch,
