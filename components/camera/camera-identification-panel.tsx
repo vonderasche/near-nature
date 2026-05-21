@@ -1,4 +1,12 @@
 import { useCallback } from 'react';
+
+import { classificationToSpeciesCategory } from '@/lib/detections/mapSpeciesCategory';
+import {
+  addPendingGalleryDetection,
+  createPendingGalleryDetectionId,
+  removePendingGalleryDetection,
+} from '@/lib/detections/pendingGalleryDetection';
+import { resolveNaturalistCategoryFromClassification } from '@/lib/points/resolveNaturalistCategory';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -57,18 +65,36 @@ export function CameraIdentificationPanel({
 
     const primary = species[0];
     const wiki = wikiByLatinName[primary.latinName];
+    const classification = classifications[0];
+    const { subcategory, mainCategory } = resolveNaturalistCategoryFromClassification(classification);
+    const category = classificationToSpeciesCategory(classification);
+
     const input = {
       localImageUri: photoUri,
       userId,
       species: primary,
-      classification: classifications[0],
+      classification,
       stateCode: userState,
       description: wiki?.description ?? null,
     };
 
+    const pendingId = createPendingGalleryDetectionId();
+    addPendingGalleryDetection(pendingId, {
+      userId,
+      localImageUri: photoUri,
+      commonName: primary.commonName,
+      latinName: primary.latinName,
+      category,
+      subcategory,
+      mainCategory,
+      description: wiki?.description ?? null,
+      nativeStatus: primary.status,
+    });
+
     onRetake();
 
     saveInBackground(input, (result) => {
+      removePendingGalleryDetection(pendingId, userId);
       if (!result.ok) {
         onBackgroundSaveError?.(result.message);
         return;

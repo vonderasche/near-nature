@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { buildOwnerGalleryDisplayItems } from '@/lib/detections/mergeGalleryDisplayItems';
 import {
   galleryItemsPlaceholderFromRows,
   hydrateGalleryItemsFromRows,
@@ -11,6 +12,11 @@ import {
   saveCachedGalleryList,
 } from '@/lib/detections/galleryListCache';
 import type { DetectionGalleryRow } from '@/lib/detections/mapDetectionGalleryRow';
+import {
+  getPendingGalleryItems,
+  mergePendingAndServerGalleryItems,
+  subscribePendingGalleryDetection,
+} from '@/lib/detections/pendingGalleryDetection';
 import { isSearchQueryActive } from '@/lib/search/normalizeSearchQuery';
 import {
   fetchUserDetectionGalleryRowsPage,
@@ -79,6 +85,9 @@ export function useUserDetectionGallery({
   const rowsRef = useRef<DetectionGalleryRow[]>([]);
   const hadCacheRef = useRef(false);
 
+  const showOptimisticPending =
+    Boolean(userId) && !publicOnly && !isSearchQueryActive(searchQuery) && categoryFilter.kind === 'all';
+
   const persistCache = useCallback(
     async (rows: readonly DetectionGalleryRow[], more: boolean) => {
       if (!userId) return;
@@ -87,10 +96,21 @@ export function useUserDetectionGallery({
     [publicOnly, userId],
   );
 
-  const applyHydratedRows = useCallback(async (rows: readonly DetectionGalleryRow[]) => {
-    const hydrated = await hydrateGalleryItemsFromRows(rows);
-    setItems(hydrated);
-  }, []);
+  const applyDisplayItems = useCallback(
+    async (serverRows: readonly DetectionGalleryRow[]) => {
+      if (!userId) {
+        setItems([]);
+        return;
+      }
+      if (showOptimisticPending) {
+        setItems(await buildOwnerGalleryDisplayItems(userId, serverRows));
+        return;
+      }
+      const hydrated = await hydrateGalleryItemsFromRows(serverRows);
+      setItems(hydrated);
+    },
+    [showOptimisticPending, userId],
+  );
 
   const loadPage = useCallback(
     async (mode: LoadMode, options?: { force?: boolean }) => {
@@ -121,12 +141,26 @@ export function useUserDetectionGallery({
           offsetRef.current = cached.rows.length;
           setHasMore(cached.hasMore);
           setTotalCount(null);
-          setItems(galleryItemsPlaceholderFromRows(cached.rows));
+          if (showOptimisticPending) {
+            const pending = getPendingGalleryItems(userId);
+            const placeholders = galleryItemsPlaceholderFromRows(cached.rows);
+            setItems(mergePendingAndServerGalleryItems(pending, placeholders));
+          } else {
+            setItems(galleryItemsPlaceholderFromRows(cached.rows));
+          }
           setIsLoading(false);
           setIsRefreshing(true);
           showedCache = true;
           hadCacheRef.current = true;
-          void applyHydratedRows(cached.rows);
+          void applyDisplayItems(cached.rows);
+        } else if (showOptimisticPending) {
+          const pending = getPendingGalleryItems(userId);
+          if (pending.length > 0) {
+            setItems(pending);
+            setIsLoading(false);
+            setIsRefreshing(true);
+            showedCache = true;
+          }
         }
       }
 
@@ -163,14 +197,13 @@ export function useUserDetectionGallery({
         setHasMore(more);
         setTotalCount(total);
 
-        const hydrated = await hydrateGalleryItemsFromRows(allRows);
-        setItems(hydrated);
+        await applyDisplayItems(allRows);
         if (!queryActive && !filterActive) {
           await persistCache(allRows, more);
         }
       } catch (e) {
         if (!showedCache && !hadCacheRef.current) {
-          setItems([]);
+          setItems(showOptimisticPending ? getPendingGalleryItems(userId) : []);
           setHasMore(false);
           setTotalCount(null);
           rowsRef.current = [];
@@ -184,12 +217,13 @@ export function useUserDetectionGallery({
       }
     },
     [
-      applyHydratedRows,
+      applyDisplayItems,
       categoryFilter,
       pageSize,
       persistCache,
       publicOnly,
       searchQuery,
+      showOptimisticPending,
       userId,
     ],
   );
@@ -215,6 +249,23 @@ export function useUserDetectionGallery({
     offsetRef.current = 0;
     void loadPage('reset');
   }, [loadPage]);
+
+  useEffect(() => {
+    if (!showOptimisticPending || !userId) return;
+    return subscribePendingGalleryDetection(() => {
+      void (async () => {
+        const cached = await loadCachedGalleryList(userId, publicOnly);
+        if (cached && cached.rows.length > 0) {
+          rowsRef.current = cached.rows;
+          offsetRef.current = cached.rows.length;
+          setHasMore(cached.hasMore);
+          await applyDisplayItems(cached.rows);
+          return;
+        }
+        await applyDisplayItems(rowsRef.current);
+      })();
+    });
+  }, [applyDisplayItems, publicOnly, showOptimisticPending, userId]);
 
   return {
     items,

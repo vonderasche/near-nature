@@ -41,7 +41,7 @@ function DetectionGalleryTileComponent({
           width: size,
           height: size,
           borderColor,
-          opacity: pressed ? 0.92 : 1,
+          opacity: item.uploadStatus === 'pending' ? (pressed ? 0.75 : 0.92) : pressed ? 0.92 : 1,
         },
       ]}>
       <Image

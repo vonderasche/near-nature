@@ -3,6 +3,7 @@ import * as Linking from 'expo-linking';
 import { signInWithEmail } from '@/lib/auth/email-auth';
 import { clearAllSignedDetectionUrlCaches } from '@/lib/detections/signedDetectionUrlCache';
 import { clearAllCachedGalleryLists } from '@/lib/detections/galleryListCache';
+import { clearAllPendingGalleryDetections } from '@/lib/detections/pendingGalleryDetection';
 import { clearAllCachedOwnProfiles } from '@/lib/profile/ownProfileCache';
 import { clearAllCachedScoringSnapshots } from '@/lib/profile/scoringSnapshotCache';
 import { clearSavedSpeciesSession } from '@/lib/identification/savedSpeciesSessionCache';
@@ -37,6 +38,7 @@ export async function signOut() {
   await clearAllCachedOwnProfiles();
   await clearAllCachedGalleryLists();
   await clearAllCachedScoringSnapshots();
+  clearAllPendingGalleryDetections();
   clearSavedSpeciesSession();
   if (error) throw error;
 }
@@ -52,6 +54,7 @@ export async function signOutLocalOnly(): Promise<void> {
   await clearAllCachedOwnProfiles();
   await clearAllCachedGalleryLists();
   await clearAllCachedScoringSnapshots();
+  clearAllPendingGalleryDetections();
   clearSavedSpeciesSession();
 }
 

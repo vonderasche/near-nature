@@ -11,7 +11,8 @@ import {
   removeDetectionsObjects,
   uploadDetectionsObject,
 } from '@/lib/detections/detectionsStorage';
-import { invalidateCachedGalleryList } from '@/lib/detections/galleryListCache';
+import { invalidateCachedGalleryList, prependCachedGalleryRow } from '@/lib/detections/galleryListCache';
+import type { DetectionGalleryRow } from '@/lib/detections/mapDetectionGalleryRow';
 import { upsertSavedSpeciesInSession } from '@/lib/identification/savedSpeciesSessionCache';
 import { invalidateCachedScoringSnapshot } from '@/lib/profile/scoringSnapshotCache';
 import { upsertSpeciesMetadata } from '@/services/speciesMetadataService';
@@ -29,6 +30,7 @@ import type { NewSpeciesDiscovery } from '@/types/species-discovery';
 export type SaveDetectionResult = {
   detectionId: string;
   newSpeciesDiscovery: NewSpeciesDiscovery | null;
+  galleryRow: DetectionGalleryRow;
 };
 
 export type SaveDetectionInput = {
@@ -48,14 +50,14 @@ export async function saveDetection(input: SaveDetectionInput): Promise<SaveDete
   const { localImageUri, userId, species, classification, stateCode, description = null } = input;
 
   if (isLocalDetectionsMode()) {
-    const { detectionId } = await appendLocalDetection({
+    const { detectionId, row } = await appendLocalDetection({
       localImageUri,
       userId,
       species,
       classification,
       description,
     });
-    await invalidateCachedGalleryList(userId);
+    await prependCachedGalleryRow(userId, false, row);
     await invalidateCachedScoringSnapshot(userId);
     upsertSavedSpeciesInSession(userId, {
       latinName: species.latinName,
@@ -65,7 +67,7 @@ export async function saveDetection(input: SaveDetectionInput): Promise<SaveDete
       inaturalistId: null,
     });
     devLog('[saveDetection] saved locally (device-only mode)', { detectionId });
-    return { detectionId, newSpeciesDiscovery: null };
+    return { detectionId, newSpeciesDiscovery: null, galleryRow: row };
   }
 
   const nat = await lookupNativeStatus(species.latinName, stateCode.trim());
@@ -123,7 +125,9 @@ export async function saveDetection(input: SaveDetectionInput): Promise<SaveDete
       confidence_threshold: 70,
       points: 0,
     })
-    .select('id')
+    .select(
+      'id, image_url, detected_at, common_name, latin_name, category, subcategory, main_category, description, native_status',
+    )
     .single();
 
   if (insertError) {
@@ -144,6 +148,29 @@ export async function saveDetection(input: SaveDetectionInput): Promise<SaveDete
   }
 
   const detectionId = inserted.id as string;
+
+  const galleryRow: DetectionGalleryRow = {
+    id: detectionId,
+    image_url: String(inserted.image_url),
+    detected_at: String(inserted.detected_at),
+    common_name: String(inserted.common_name),
+    latin_name: String(inserted.latin_name),
+    category: String(inserted.category),
+    subcategory:
+      inserted.subcategory != null && String(inserted.subcategory).trim()
+        ? String(inserted.subcategory)
+        : null,
+    main_category:
+      inserted.main_category != null && String(inserted.main_category).trim()
+        ? String(inserted.main_category)
+        : null,
+    description:
+      inserted.description != null && String(inserted.description).trim()
+        ? String(inserted.description)
+        : null,
+    native_status:
+      inserted.native_status != null ? String(inserted.native_status) : null,
+  };
 
   void (async () => {
     try {
@@ -174,7 +201,7 @@ export async function saveDetection(input: SaveDetectionInput): Promise<SaveDete
     };
   }
 
-  await invalidateCachedGalleryList(userId);
+  await prependCachedGalleryRow(userId, false, galleryRow);
   await invalidateCachedScoringSnapshot(userId);
 
   upsertSavedSpeciesInSession(userId, {
@@ -185,7 +212,7 @@ export async function saveDetection(input: SaveDetectionInput): Promise<SaveDete
     inaturalistId: inaturalistId,
   });
 
-  return { detectionId, newSpeciesDiscovery };
+  return { detectionId, newSpeciesDiscovery, galleryRow };
 }
 
 /**

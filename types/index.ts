@@ -46,6 +46,8 @@ export type DetectionGalleryItem = {
   nativeStatus: SpeciesStatus;
   /** Native vs non-native section in the gallery. */
   nativeCategory: GalleryNativeCategory;
+  /** Optimistic tile while Storage + DB save is in flight. */
+  uploadStatus?: 'pending';
 };
 
 export type SpeciesClassification = {

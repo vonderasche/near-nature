@@ -84,6 +84,21 @@ export async function saveCachedGalleryList(
   await AsyncStorage.setItem(cacheKey(userId, publicOnly), JSON.stringify(entry));
 }
 
+/** Prepends a saved row after upload (keeps existing cache entries below). */
+export async function prependCachedGalleryRow(
+  userId: string,
+  publicOnly: boolean,
+  row: DetectionGalleryRow,
+): Promise<void> {
+  const cached = await loadCachedGalleryList(userId, publicOnly);
+  const existing = cached?.rows ?? [];
+  const rows = dedupeRowsById([row, ...existing.filter((r) => r.id !== row.id)]);
+  await saveCachedGalleryList(userId, publicOnly, {
+    rows,
+    hasMore: cached?.hasMore ?? true,
+  });
+}
+
 export async function invalidateCachedGalleryList(
   userId: string,
   publicOnly?: boolean,
