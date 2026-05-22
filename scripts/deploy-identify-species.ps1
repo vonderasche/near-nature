@@ -3,7 +3,7 @@
 # Usage:
 #   .\scripts\deploy-identify-species.ps1
 #   .\scripts\deploy-identify-species.ps1 -ProjectRef axvubbqcdbxsetqwvjof
-# Set secret (once): supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
+# Set secret (once): supabase secrets set GEMINI_API_KEY=...
 
 param(
   [string]$ProjectRef = ""
@@ -24,7 +24,7 @@ if (-not (Get-Command supabase -ErrorAction SilentlyContinue)) {
   Write-Host "Install: https://supabase.com/docs/guides/cli" -ForegroundColor White
   Write-Host "Then: supabase login" -ForegroundColor White
   Write-Host "      supabase link --project-ref <your-project-ref>" -ForegroundColor White
-  Write-Host "      supabase secrets set ANTHROPIC_API_KEY=<key>" -ForegroundColor White
+  Write-Host "      supabase secrets set GEMINI_API_KEY=<key>" -ForegroundColor White
   Write-Host "      supabase functions deploy identify-species" -ForegroundColor White
   exit 1
 }
@@ -56,11 +56,11 @@ Write-Host ""
 Write-Host "Deployed identify-species." -ForegroundColor Green
 Write-Host ""
 Write-Host "Required secrets (set if not already):" -ForegroundColor Yellow
-Write-Host "  supabase secrets set ANTHROPIC_API_KEY=sk-ant-..." -ForegroundColor White
-Write-Host "  supabase secrets set ANTHROPIC_MODEL=claude-sonnet-4-6   # optional" -ForegroundColor DarkGray
+Write-Host "  supabase secrets set GEMINI_API_KEY=<your-google-ai-key>" -ForegroundColor White
+Write-Host "  supabase secrets set GEMINI_MODEL=gemini-2.0-flash   # optional" -ForegroundColor DarkGray
 Write-Host ""
-Write-Host "Friends/release builds: remove EXPO_PUBLIC_ANTHROPIC_API_KEY from .env" -ForegroundColor Yellow
-Write-Host "  so the app uses the Edge Function (see api/claude.ts)." -ForegroundColor DarkGray
+Write-Host "Friends/release builds: remove EXPO_PUBLIC_GEMINI_API_KEY from .env" -ForegroundColor Yellow
+Write-Host "  so the app uses the Edge Function (see api/gemini.ts)." -ForegroundColor DarkGray
 Write-Host ""
 Write-Host "Test: sign in on device, capture photo, run identification." -ForegroundColor Cyan
 Write-Host ""

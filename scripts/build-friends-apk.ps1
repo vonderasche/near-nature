@@ -47,6 +47,6 @@ Write-Host ""
 Write-Host "Supabase setup for friends:" -ForegroundColor Yellow
 Write-Host "  1. .\scripts\beta-production-setup.ps1  (SQL order)"
 Write-Host "  2. .\scripts\deploy-identify-species.ps1"
-Write-Host "  3. Do not put EXPO_PUBLIC_ANTHROPIC_API_KEY in .env for friends builds"
+Write-Host "  3. Do not put EXPO_PUBLIC_GEMINI_API_KEY in .env for friends builds"
 Write-Host ""
 Write-Host "Friends: copy APK to phone, open it, allow install from unknown sources if asked." -ForegroundColor Cyan

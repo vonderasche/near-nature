@@ -1,5 +1,5 @@
 // src/api/index.ts
-export { identifySpeciesInImage } from './claude';
+export { identifySpeciesInImage } from './gemini';
 export { lookupNativeStatus } from './inaturalist';
 export type { NativeLookupResult } from './inaturalist';
 export { fetchSpeciesWikiData } from './wikipedia';

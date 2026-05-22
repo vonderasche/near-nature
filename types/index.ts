@@ -56,7 +56,7 @@ export type SpeciesClassification = {
   taxonGroup: string;
 };
 
-/** Taxon labels returned by the Claude vision identification API (`api/claude.ts`). */
+/** Taxon labels returned by the Gemini vision identification API (`api/gemini.ts`). */
 export type VisionTaxonGroup = 'plants' | 'animals' | 'fungi' | 'birds';
 
 export type ClassificationResult = {

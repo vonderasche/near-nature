@@ -1,10 +1,10 @@
 // React hook that orchestrates identification flow:
-// photo -> Claude -> filters -> parallel iNaturalist + Wikipedia enrich
+// photo -> Gemini -> filters -> parallel iNaturalist + Wikipedia enrich
 
 import { deleteAsync, readLocalFileAsBase64 } from '@/lib/fs/legacyFileSystem';
 import { useCallback, useState } from 'react';
 
-import { identifySpeciesInImage } from '@/api/claude';
+import { identifySpeciesInImage } from '@/api/gemini';
 import type { SpeciesWikiData } from '@/api/wikipedia';
 import { useResizeImageForUpload } from '@/hooks/useResizeImageForUpload';
 import { enrichSpeciesFromApis } from '@/lib/identification/enrichSpeciesFromApis';
