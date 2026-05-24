@@ -23,23 +23,26 @@ describe('resolveNaturalistCategory', () => {
       subcategory: 'trees_shrubs',
       mainCategory: 'botanist',
     });
-    expect(resolveNaturalistCategoryFromDb('insect')).toEqual({
-      subcategory: 'other_insects',
-      mainCategory: 'entomologist',
-    });
+    expect(resolveNaturalistCategoryFromDb('insect')).toBeNull();
   });
 
   it('resolves classification subcategory to main discipline', () => {
     expect(
       resolveNaturalistCategoryFromClassification(
-        classification({ taxonGroup: 'animals', subcategory: 'beetles' }),
+        classification({ taxonGroup: 'animals', subcategory: 'snakes' }),
       ),
-    ).toEqual({ subcategory: 'beetles', mainCategory: 'entomologist' });
+    ).toEqual({ subcategory: 'snakes', mainCategory: 'herpetologist' });
   });
 
-  it('falls back by taxon group when subcategory missing', () => {
-    expect(resolveNaturalistCategoryFromClassification(classification({ taxonGroup: 'fungi' }))).toEqual(
-      { subcategory: 'other_fungi', mainCategory: 'mycologist' },
-    );
+  it('maps unlisted animal subcategory to default mammal bucket', () => {
+    expect(
+      resolveNaturalistCategoryFromClassification(
+        classification({ taxonGroup: 'animals', subcategory: 'beetles' }),
+      ),
+    ).toEqual({ subcategory: 'small_mammals', mainCategory: 'mammalogist' });
+  });
+
+  it('returns null for fungi (no badge discipline)', () => {
+    expect(resolveNaturalistCategoryFromClassification(classification({ taxonGroup: 'fungi' }))).toBeNull();
   });
 });

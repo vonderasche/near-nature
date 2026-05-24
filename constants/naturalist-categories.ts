@@ -9,11 +9,7 @@ export type MainCategoryId =
   | 'botanist'
   | 'herpetologist'
   | 'ornithologist'
-  | 'mammalogist'
-  | 'entomologist'
-  | 'arachnologist'
-  | 'ichthyologist'
-  | 'mycologist';
+  | 'mammalogist';
 
 export type SubcategoryId =
   | 'wildflowers'
@@ -35,24 +31,7 @@ export type SubcategoryId =
   | 'deer_hoofed'
   | 'bats'
   | 'marine_mammals'
-  | 'carnivores'
-  | 'butterflies_moths'
-  | 'beetles'
-  | 'bees_wasps'
-  | 'dragonflies'
-  | 'other_insects'
-  | 'spiders'
-  | 'scorpions'
-  | 'ticks_mites'
-  | 'other_arachnids'
-  | 'freshwater_fish'
-  | 'saltwater_fish'
-  | 'shellfish'
-  | 'other_fish'
-  | 'mushrooms'
-  | 'slime_molds'
-  | 'lichens'
-  | 'other_fungi';
+  | 'carnivores';
 
 export type SubcategoryDef = {
   id: SubcategoryId;
@@ -95,10 +74,6 @@ export const ENDS_OF_THE_EARTH_MAIN_IDS: readonly MainCategoryId[] = [
   'herpetologist',
   'ornithologist',
   'mammalogist',
-  'entomologist',
-  'arachnologist',
-  'ichthyologist',
-  'mycologist',
 ];
 
 export const MAIN_CATEGORIES: readonly MainCategoryDef[] = [
@@ -133,32 +108,6 @@ export const MAIN_CATEGORIES: readonly MainCategoryDef[] = [
       'marine_mammals',
       'carnivores',
     ],
-  },
-  {
-    id: 'entomologist',
-    label: 'Entomologist',
-    subcategoryIds: [
-      'butterflies_moths',
-      'beetles',
-      'bees_wasps',
-      'dragonflies',
-      'other_insects',
-    ],
-  },
-  {
-    id: 'arachnologist',
-    label: 'Arachnologist',
-    subcategoryIds: ['spiders', 'scorpions', 'ticks_mites', 'other_arachnids'],
-  },
-  {
-    id: 'ichthyologist',
-    label: 'Ichthyologist',
-    subcategoryIds: ['freshwater_fish', 'saltwater_fish', 'shellfish', 'other_fish'],
-  },
-  {
-    id: 'mycologist',
-    label: 'Mycologist',
-    subcategoryIds: ['mushrooms', 'slime_molds', 'lichens', 'other_fungi'],
   },
 ];
 
@@ -195,23 +144,6 @@ function subcategoryLabel(id: SubcategoryId): string {
     bats: 'Bats',
     marine_mammals: 'Marine Mammals',
     carnivores: 'Carnivores',
-    butterflies_moths: 'Butterflies & Moths',
-    beetles: 'Beetles',
-    bees_wasps: 'Bees & Wasps',
-    dragonflies: 'Dragonflies & Damselflies',
-    other_insects: 'Other Insects',
-    spiders: 'Spiders',
-    scorpions: 'Scorpions',
-    ticks_mites: 'Ticks & Mites',
-    other_arachnids: 'Other Arachnids',
-    freshwater_fish: 'Freshwater Fish',
-    saltwater_fish: 'Saltwater Fish',
-    shellfish: 'Shellfish & Crustaceans',
-    other_fish: 'Other Fish',
-    mushrooms: 'Mushrooms',
-    slime_molds: 'Slime Molds',
-    lichens: 'Lichens',
-    other_fungi: 'Other Fungi',
   };
   return labels[id];
 }

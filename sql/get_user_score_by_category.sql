@@ -43,11 +43,7 @@ begin
       ('botanist'),
       ('herpetologist'),
       ('ornithologist'),
-      ('mammalogist'),
-      ('entomologist'),
-      ('arachnologist'),
-      ('ichthyologist'),
-      ('mycologist')
+      ('mammalogist')
     ) as t(main_category)
   ),
   det as (
@@ -107,8 +103,7 @@ begin
         select mc from disc
       ) u
       where mc not in (
-        'botanist', 'herpetologist', 'ornithologist', 'mammalogist',
-        'entomologist', 'arachnologist', 'ichthyologist', 'mycologist'
+        'botanist', 'herpetologist', 'ornithologist', 'mammalogist'
       )
     ) e
     left join det on det.mc = e.mc

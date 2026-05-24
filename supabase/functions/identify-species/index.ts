@@ -14,8 +14,7 @@ const PLANT_SUBCATEGORIES =
 const BIRD_SUBCATEGORIES =
   'songbirds | raptors | wading_birds | waterfowl | shorebirds';
 const ANIMAL_SUBCATEGORIES =
-  'lizards | snakes | frogs_toads | turtles_tortoises | salamanders | small_mammals | deer_hoofed | bats | marine_mammals | carnivores | butterflies_moths | beetles | bees_wasps | dragonflies | other_insects | spiders | scorpions | ticks_mites | other_arachnids | freshwater_fish | saltwater_fish | shellfish | other_fish';
-const FUNGI_SUBCATEGORIES = 'mushrooms | slime_molds | lichens | other_fungi';
+  'lizards | snakes | frogs_toads | turtles_tortoises | salamanders | small_mammals | deer_hoofed | bats | marine_mammals | carnivores';
 
 const IDENTIFICATION_PROMPT = `
 Identify every plant, animal, fungus, and bird that is clearly visible in this image.
@@ -36,12 +35,11 @@ boundingBox values are percentages of the image dimensions (0–100).
 confidence is a number between 0 and 1.
 taxonGroup must be one of exactly: plants, animals, fungi, birds.
 
-subcategory rules (required for every item):
+subcategory rules (required for plants, animals, and birds; omit for fungi):
 - When taxonGroup is "plants", subcategory must be one of: ${PLANT_SUBCATEGORIES}
 - When taxonGroup is "birds", subcategory must be one of: ${BIRD_SUBCATEGORIES}
 - When taxonGroup is "animals", subcategory must be one of: ${ANIMAL_SUBCATEGORIES}
-- When taxonGroup is "fungi", subcategory must be one of: ${FUNGI_SUBCATEGORIES}
-- Pick the single best match (e.g. hawk → raptors, oak → trees_shrubs, beetle → beetles, mushroom → mushrooms).
+- Pick the single best match (e.g. hawk → raptors, oak → trees_shrubs, frog → frogs_toads).
 
 If no species are identifiable, return an empty array: []
 `.trim();

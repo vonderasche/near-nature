@@ -38,7 +38,7 @@ export type DetectionGalleryItem = {
   category: string;
   /** Canonical subcategory id for badge scoring (may match category). */
   subcategory: string | null;
-  /** Main discipline id: botanist, entomologist, … */
+  /** Main discipline id: botanist, ornithologist, … */
   mainCategory: string | null;
   /** Wikipedia summary (or other note) stored at save time; may be null for older rows. */
   description: string | null;

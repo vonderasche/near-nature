@@ -57,10 +57,6 @@ const VOYAGER_ICON_BY_MAIN: Record<MainCategoryId, HeroIconName> = {
   herpetologist: 'bolt',
   ornithologist: 'eye',
   mammalogist: 'user',
-  entomologist: 'bolt',
-  arachnologist: 'funnel',
-  ichthyologist: 'photo',
-  mycologist: 'light-bulb',
 };
 
 function tierEarned(
@@ -80,7 +76,7 @@ function buildBonusBadges(awardKeys: ReadonlySet<string>): ProfileBadgeItem[] {
     icon: 'trophy',
     earned: awardKeys.has(ENDS_OF_THE_EARTH_BADGE_KEY),
     points: BADGE_BONUS_POINTS.endsOfTheEarth,
-    requirement: 'Voyager in all 8 disciplines',
+    requirement: 'Voyager in all 4 disciplines',
     featured: true,
   };
 

@@ -98,7 +98,9 @@ export async function saveDetection(input: SaveDetectionInput): Promise<SaveDete
   const publicUrl = getDetectionsObjectPublicUrl(objectPath);
 
   const category = classificationToSpeciesCategory(classification);
-  const { subcategory, mainCategory } = resolveNaturalistCategoryFromClassification(classification);
+  const naturalist = resolveNaturalistCategoryFromClassification(classification);
+  const subcategory = naturalist?.subcategory ?? null;
+  const mainCategory = naturalist?.mainCategory ?? null;
   const nativeStatus = speciesStatusToNativeColumn(species.status as SpeciesStatus);
   const confidencePct = Math.min(
     100,

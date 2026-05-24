@@ -15,7 +15,6 @@ export type SpeciesCategoryDb = SubcategoryId | string;
 const LEGACY_TO_SUBCATEGORY: Partial<Record<string, SpeciesSubcategoryId>> = {
   mammal: 'small_mammals',
   reptile: 'lizards',
-  insect: 'other_insects',
   bird: 'songbirds',
   amphibian: 'frogs_toads',
   plant_tree: 'trees_shrubs',
@@ -36,7 +35,7 @@ export function normalizeSpeciesCategoryDb(value: string): string {
   const mapped = mapDbCategoryToSubcategory(trimmed);
   if (mapped) return mapped;
   if (isSpeciesSubcategoryId(trimmed)) return trimmed;
-  return trimmed in LEGACY_TO_SUBCATEGORY ? LEGACY_TO_SUBCATEGORY[trimmed]! : 'other_fungi';
+  return trimmed in LEGACY_TO_SUBCATEGORY ? LEGACY_TO_SUBCATEGORY[trimmed]! : trimmed;
 }
 
 export function speciesCategoryMatchesGroup(

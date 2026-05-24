@@ -52,7 +52,9 @@ export async function appendLocalDetection(
   const { localImageUri, userId, species, classification, description = null } = input;
   const detectionId = randomUUID();
   const category = classificationToSpeciesCategory(classification);
-  const { subcategory, mainCategory } = resolveNaturalistCategoryFromClassification(classification);
+  const naturalist = resolveNaturalistCategoryFromClassification(classification);
+  const subcategory = naturalist?.subcategory ?? null;
+  const mainCategory = naturalist?.mainCategory ?? null;
   const nativeStatus = speciesStatusToNativeColumn(species.status as SpeciesStatus);
 
   const row: DetectionGalleryRow = {

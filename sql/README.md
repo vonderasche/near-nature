@@ -186,7 +186,7 @@ Counts use distinct `latin_name` in `public.discoveries`. Bonuses are one-time p
 | Main category | 50 | 150 | 500 |
 | Subcategory | 25 | 75 | 250 |
 
-**Badges:** Ends of the Earth (Voyager in all 8 main categories) +1,000 · True Voyager per discipline (main + all subs Voyager) +2,000.
+**Badges:** Ends of the Earth (Voyager in all 4 main categories) +1,000 · True Voyager per discipline (main + all subs Voyager) +2,000.
 
 SQL: `create_point_awards.sql`, `check_category_milestones.sql` (runs after each new discovery).
 

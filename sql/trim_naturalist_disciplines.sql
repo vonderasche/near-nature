@@ -1,0 +1,10 @@
+-- Trim badge disciplines to 4 mains (botanist, herpetologist, ornithologist, mammalogist).
+-- Removes entomologist, arachnologist, ichthyologist, mycologist and their subcategories.
+--
+-- On hosted Supabase, run (in order):
+--   1. sql/check_category_milestones.sql
+--   2. sql/get_user_score_by_category.sql
+--   3. sql/optimize_detection_gallery.sql   (gallery filters only; skip if already applied)
+-- Or re-run sql/optimize_detection_gallery.sql + sql/add_detection_search.sql if gallery RPCs missing.
+--
+-- Existing point_awards for removed disciplines are kept (historical). New awards use the trimmed taxonomy only.

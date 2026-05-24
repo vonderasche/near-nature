@@ -376,8 +376,8 @@ as $$
   select case trim(coalesce(p_category, ''))
     when 'mammal' then 'small_mammals'
     when 'reptile' then 'lizards'
-    when 'fish' then 'freshwater_fish'
-    when 'insect' then 'other_insects'
+    when 'fish' then 'small_mammals'
+    when 'insect' then 'small_mammals'
     when 'bird' then 'songbirds'
     when 'amphibian' then 'frogs_toads'
     when 'plant_tree' then 'trees_shrubs'
@@ -421,12 +421,11 @@ as $$
       )
       or trim(p_category) like 'plant\_%' escape '\'
     when nullif(trim(coalesce(p_filter_group, '')), '') = 'animal' then
-      trim(coalesce(p_main_category, '')) in ('herpetologist', 'ornithologist', 'mammalogist', 'entomologist', 'ichthyologist')
+      trim(coalesce(p_main_category, '')) in ('herpetologist', 'ornithologist', 'mammalogist')
       or coalesce(nullif(trim(p_subcategory), ''), public.normalize_species_category_for_gallery(p_category)) in (
         'lizards', 'snakes', 'frogs_toads', 'turtles_tortoises', 'salamanders',
         'songbirds', 'raptors', 'wading_birds', 'waterfowl', 'shorebirds',
-        'small_mammals', 'deer_hoofed', 'bats', 'marine_mammals', 'carnivores',
-        'other_insects', 'freshwater_fish', 'saltwater_fish', 'shellfish', 'other_fish'
+        'small_mammals', 'deer_hoofed', 'bats', 'marine_mammals', 'carnivores'
       )
       or trim(p_category) in (
         'mammal', 'reptile', 'fish', 'insect', 'bird', 'amphibian',

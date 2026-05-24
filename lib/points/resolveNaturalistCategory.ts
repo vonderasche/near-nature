@@ -26,17 +26,21 @@ function defaultSubcategoryForTaxon(taxonGroup: VisionTaxonGroup): SubcategoryId
       return 'songbirds';
     case 'plants':
       return 'wildflowers';
-    case 'fungi':
-      return 'other_fungi';
     case 'animals':
       return 'small_mammals';
+    case 'fungi':
+      return 'wildflowers';
   }
 }
 
 /** Resolves vision output to canonical subcategory + main discipline for scoring. */
 export function resolveNaturalistCategoryFromClassification(
   classification: ClassificationResult,
-): ResolvedNaturalistCategory {
+): ResolvedNaturalistCategory | null {
+  if (classification.taxonGroup === 'fungi') {
+    return null;
+  }
+
   const raw = classification.subcategory?.trim();
   const mapped = raw ? mapDbCategoryToSubcategory(raw) : null;
   const subcategory = mapped ?? defaultSubcategoryForTaxon(classification.taxonGroup);

@@ -66,7 +66,7 @@ export function CameraIdentificationPanel({
     const primary = species[0];
     const wiki = wikiByLatinName[primary.latinName];
     const classification = classifications[0];
-    const { subcategory, mainCategory } = resolveNaturalistCategoryFromClassification(classification);
+    const naturalist = resolveNaturalistCategoryFromClassification(classification);
     const category = classificationToSpeciesCategory(classification);
 
     const input = {
@@ -85,8 +85,8 @@ export function CameraIdentificationPanel({
       commonName: primary.commonName,
       latinName: primary.latinName,
       category,
-      subcategory,
-      mainCategory,
+      subcategory: naturalist?.subcategory ?? null,
+      mainCategory: naturalist?.mainCategory ?? null,
       description: wiki?.description ?? null,
       nativeStatus: primary.status,
     });

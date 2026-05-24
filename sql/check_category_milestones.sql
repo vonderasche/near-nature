@@ -42,26 +42,6 @@ as $$
     when 'reptile' then 'lizards'
     when 'amphibian' then 'frogs_toads'
     when 'bird' then 'songbirds'
-    when 'insect' then 'other_insects'
-    when 'fish' then 'freshwater_fish'
-    when 'butterflies_moths' then 'butterflies_moths'
-    when 'beetles' then 'beetles'
-    when 'bees_wasps' then 'bees_wasps'
-    when 'dragonflies' then 'dragonflies'
-    when 'other_insects' then 'other_insects'
-    when 'spiders' then 'spiders'
-    when 'scorpions' then 'scorpions'
-    when 'ticks_mites' then 'ticks_mites'
-    when 'other_arachnids' then 'other_arachnids'
-    when 'freshwater_fish' then 'freshwater_fish'
-    when 'saltwater_fish' then 'saltwater_fish'
-    when 'shellfish' then 'shellfish'
-    when 'other_fish' then 'other_fish'
-    when 'mushrooms' then 'mushrooms'
-    when 'slime_molds' then 'slime_molds'
-    when 'lichens' then 'lichens'
-    when 'other_fungi' then 'other_fungi'
-    when 'other' then 'other_fungi'
     else null
   end;
 $$;
@@ -92,23 +72,6 @@ as $$
     when 'bats' then 'mammalogist'
     when 'marine_mammals' then 'mammalogist'
     when 'carnivores' then 'mammalogist'
-    when 'butterflies_moths' then 'entomologist'
-    when 'beetles' then 'entomologist'
-    when 'bees_wasps' then 'entomologist'
-    when 'dragonflies' then 'entomologist'
-    when 'other_insects' then 'entomologist'
-    when 'spiders' then 'arachnologist'
-    when 'scorpions' then 'arachnologist'
-    when 'ticks_mites' then 'arachnologist'
-    when 'other_arachnids' then 'arachnologist'
-    when 'freshwater_fish' then 'ichthyologist'
-    when 'saltwater_fish' then 'ichthyologist'
-    when 'shellfish' then 'ichthyologist'
-    when 'other_fish' then 'ichthyologist'
-    when 'mushrooms' then 'mycologist'
-    when 'slime_molds' then 'mycologist'
-    when 'lichens' then 'mycologist'
-    when 'other_fungi' then 'mycologist'
     else null
   end;
 $$;
@@ -189,11 +152,7 @@ begin
       ('botanist', 'Botanist'),
       ('herpetologist', 'Herpetologist'),
       ('ornithologist', 'Ornithologist'),
-      ('mammalogist', 'Mammalogist'),
-      ('entomologist', 'Entomologist'),
-      ('arachnologist', 'Arachnologist'),
-      ('ichthyologist', 'Ichthyologist'),
-      ('mycologist', 'Mycologist')
+      ('mammalogist', 'Mammalogist')
     ) as t(id, lbl)
   loop
     select count(distinct d.latin_name)::int
@@ -257,24 +216,7 @@ begin
       ('deer_hoofed', 'Deer & Hoofed', 'mammalogist'),
       ('bats', 'Bats', 'mammalogist'),
       ('marine_mammals', 'Marine Mammals', 'mammalogist'),
-      ('carnivores', 'Carnivores', 'mammalogist'),
-      ('butterflies_moths', 'Butterflies & Moths', 'entomologist'),
-      ('beetles', 'Beetles', 'entomologist'),
-      ('bees_wasps', 'Bees & Wasps', 'entomologist'),
-      ('dragonflies', 'Dragonflies & Damselflies', 'entomologist'),
-      ('other_insects', 'Other Insects', 'entomologist'),
-      ('spiders', 'Spiders', 'arachnologist'),
-      ('scorpions', 'Scorpions', 'arachnologist'),
-      ('ticks_mites', 'Ticks & Mites', 'arachnologist'),
-      ('other_arachnids', 'Other Arachnids', 'arachnologist'),
-      ('freshwater_fish', 'Freshwater Fish', 'ichthyologist'),
-      ('saltwater_fish', 'Saltwater Fish', 'ichthyologist'),
-      ('shellfish', 'Shellfish & Crustaceans', 'ichthyologist'),
-      ('other_fish', 'Other Fish', 'ichthyologist'),
-      ('mushrooms', 'Mushrooms', 'mycologist'),
-      ('slime_molds', 'Slime Molds', 'mycologist'),
-      ('lichens', 'Lichens', 'mycologist'),
-      ('other_fungi', 'Other Fungi', 'mycologist')
+      ('carnivores', 'Carnivores', 'mammalogist')
     ) as t(sub_id, sub_lbl, main_id)
   loop
     select count(distinct d.latin_name)::int
@@ -322,11 +264,7 @@ begin
       ('botanist', 'Botanist'),
       ('herpetologist', 'Herpetologist'),
       ('ornithologist', 'Ornithologist'),
-      ('mammalogist', 'Mammalogist'),
-      ('entomologist', 'Entomologist'),
-      ('arachnologist', 'Arachnologist'),
-      ('ichthyologist', 'Ichthyologist'),
-      ('mycologist', 'Mycologist')
+      ('mammalogist', 'Mammalogist')
     ) as t(id, lbl)
   loop
     v_award_key := 'badge:true_voyager:' || main_id;
@@ -351,10 +289,6 @@ begin
         when 'herpetologist' then array['lizards','snakes','frogs_toads','turtles_tortoises','salamanders']
         when 'ornithologist' then array['songbirds','raptors','wading_birds','waterfowl','shorebirds']
         when 'mammalogist' then array['small_mammals','deer_hoofed','bats','marine_mammals','carnivores']
-        when 'entomologist' then array['butterflies_moths','beetles','bees_wasps','dragonflies','other_insects']
-        when 'arachnologist' then array['spiders','scorpions','ticks_mites','other_arachnids']
-        when 'ichthyologist' then array['freshwater_fish','saltwater_fish','shellfish','other_fish']
-        else array['mushrooms','slime_molds','lichens','other_fungi']
       end)
     loop
       select count(distinct d.latin_name)::int
@@ -384,8 +318,7 @@ begin
   if not ('badge:ends_of_the_earth' = any(existing_keys)) then
     all_mains_voyager := true;
     foreach main_id in array array[
-      'botanist','herpetologist','ornithologist','mammalogist',
-      'entomologist','arachnologist','ichthyologist','mycologist'
+      'botanist','herpetologist','ornithologist','mammalogist'
     ] loop
       select count(distinct d.latin_name)::int
       into main_cnt

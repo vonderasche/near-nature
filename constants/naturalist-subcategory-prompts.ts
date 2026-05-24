@@ -16,9 +16,4 @@ export const BIRD_SUBCATEGORIES_PROMPT = joinIds('ornithologist');
 export const ANIMAL_SUBCATEGORIES_PROMPT = [
   joinIds('herpetologist'),
   joinIds('mammalogist'),
-  joinIds('entomologist'),
-  joinIds('arachnologist'),
-  joinIds('ichthyologist'),
 ].join(' | ');
-
-export const FUNGI_SUBCATEGORIES_PROMPT = joinIds('mycologist');
