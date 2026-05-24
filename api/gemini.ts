@@ -87,8 +87,9 @@ async function identifyViaDirectApi(
         },
       ],
       generationConfig: {
-        maxOutputTokens: 1024,
+        maxOutputTokens: 2048,
         temperature: 0.2,
+        responseMimeType: 'application/json',
       },
     }),
   });

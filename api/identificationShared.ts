@@ -82,21 +82,80 @@ export function sanitizeClassifications(parsed: unknown[]): ClassificationResult
     }));
 }
 
-export function parseIdentificationResponse(text: string, providerLabel: string): ClassificationResult[] {
+/** Strip trailing commas Gemini sometimes emits before `}` or `]`. */
+export function stripTrailingCommasInJson(json: string): string {
+  return json.replace(/,\s*([}\]])/g, '$1');
+}
+
+/** Close a truncated `[{ ...` array when the model hits the token limit. */
+export function repairTruncatedJsonArray(payload: string): string {
+  let s = stripTrailingCommasInJson(payload.trim());
+  if (!s.startsWith('[') || s.endsWith(']')) return s;
+
+  s = s.replace(/,\s*$/, '');
+  const openBraces = (s.match(/\{/g) ?? []).length;
+  const closeBraces = (s.match(/\}/g) ?? []).length;
+  for (let i = 0; i < openBraces - closeBraces; i++) s += '}';
+  if (!s.endsWith(']')) s += ']';
+  return s;
+}
+
+function extractBalancedJsonObjects(source: string): unknown[] {
+  const objects: unknown[] = [];
+  let depth = 0;
+  let start = -1;
+
+  for (let i = 0; i < source.length; i++) {
+    const ch = source[i];
+    if (ch === '{') {
+      if (depth === 0) start = i;
+      depth += 1;
+    } else if (ch === '}') {
+      depth -= 1;
+      if (depth === 0 && start >= 0) {
+        const chunk = source.slice(start, i + 1);
+        try {
+          objects.push(JSON.parse(stripTrailingCommasInJson(chunk)));
+        } catch {
+          // skip malformed object
+        }
+        start = -1;
+      }
+    }
+  }
+
+  return objects;
+}
+
+function tryParseIdentificationArray(text: string): unknown[] | null {
   const cleaned = text.replace(/```json/gi, '').replace(/```/g, '').trim();
   const start = cleaned.indexOf('[');
-  const end = cleaned.lastIndexOf(']');
-  const payload =
-    start !== -1 && end > start ? cleaned.slice(start, end + 1) : cleaned;
+  if (start === -1) return null;
 
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(payload);
-  } catch {
-    throw new Error(`${providerLabel} returned non-JSON response: ${text.slice(0, 200)}`);
+  const end = cleaned.lastIndexOf(']');
+  const payloads = [
+    end > start ? cleaned.slice(start, end + 1) : null,
+    repairTruncatedJsonArray(cleaned.slice(start)),
+    cleaned.slice(start),
+  ].filter((p): p is string => Boolean(p));
+
+  for (const raw of payloads) {
+    try {
+      const parsed = JSON.parse(stripTrailingCommasInJson(raw));
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      // try next strategy
+    }
   }
-  if (!Array.isArray(parsed)) {
-    throw new Error(`Expected JSON array from ${providerLabel}, got: ${typeof parsed}`);
+
+  const salvaged = extractBalancedJsonObjects(cleaned.slice(start));
+  return salvaged.length > 0 ? salvaged : null;
+}
+
+export function parseIdentificationResponse(text: string, providerLabel: string): ClassificationResult[] {
+  const parsed = tryParseIdentificationArray(text);
+  if (parsed == null) {
+    throw new Error(`${providerLabel} returned non-JSON response: ${text.slice(0, 200)}`);
   }
   return sanitizeClassifications(parsed);
 }
