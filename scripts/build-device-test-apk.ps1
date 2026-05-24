@@ -3,7 +3,7 @@
 #
 # Sets EXPO_PUBLIC_LOCAL_DETECTIONS=true for this build. Camera saves stay on the phone;
 # profile gallery and badge progress read from that local store. Auth + identify still use
-# network (Supabase session + identify-species or EXPO_PUBLIC_ANTHROPIC_API_KEY).
+# network (Supabase session + identify-species or EXPO_PUBLIC_GEMINI_API_KEY).
 
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
@@ -47,8 +47,8 @@ if ($missing.Count -gt 0) {
 Set-EnvVar 'EXPO_PUBLIC_LOCAL_DETECTIONS' 'true'
 Write-Host "EXPO_PUBLIC_LOCAL_DETECTIONS=true (camera saves on-device only)" -ForegroundColor Yellow
 
-if (-not (Test-EnvVar 'EXPO_PUBLIC_ANTHROPIC_API_KEY')) {
-    Write-Host "Tip: add EXPO_PUBLIC_ANTHROPIC_API_KEY for offline-from-edge identify on device," -ForegroundColor Yellow
+if (-not (Test-EnvVar 'EXPO_PUBLIC_GEMINI_API_KEY')) {
+    Write-Host "Tip: add EXPO_PUBLIC_GEMINI_API_KEY for offline-from-edge identify on device," -ForegroundColor Yellow
     Write-Host "     or ensure identify-species Edge Function is deployed." -ForegroundColor Yellow
 }
 

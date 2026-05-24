@@ -5,8 +5,8 @@ const corsHeaders: Record<string, string> = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
-const MODEL = Deno.env.get('ANTHROPIC_MODEL') ?? 'claude-sonnet-4-6';
+const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
+const MODEL = Deno.env.get('GEMINI_MODEL') ?? 'gemini-2.0-flash';
 
 // Keep in sync with constants/naturalist-subcategory-prompts.ts
 const PLANT_SUBCATEGORIES =
@@ -61,11 +61,14 @@ function clamp(value: number, min: number, max: number): number {
 
 const VALID_TAXON_GROUPS = ['animals', 'plants', 'fungi', 'birds'] as const;
 
-function parseClaudeResponse(text: string): unknown[] {
+function parseGeminiResponse(text: string): unknown[] {
   const cleaned = text.replace(/```json/gi, '').replace(/```/g, '').trim();
-  const parsed = JSON.parse(cleaned);
+  const start = cleaned.indexOf('[');
+  const end = cleaned.lastIndexOf(']');
+  const payload = start !== -1 && end > start ? cleaned.slice(start, end + 1) : cleaned;
+  const parsed = JSON.parse(payload);
   if (!Array.isArray(parsed)) {
-    throw new Error(`Expected JSON array from Claude, got: ${typeof parsed}`);
+    throw new Error(`Expected JSON array from Gemini, got: ${typeof parsed}`);
   }
   return parsed.filter((item) => {
     if (typeof item !== 'object' || item === null) return false;
@@ -101,6 +104,19 @@ function parseClaudeResponse(text: string): unknown[] {
   });
 }
 
+function extractGeminiText(data: unknown): string {
+  if (!data || typeof data !== 'object') return '[]';
+  const candidates = (data as { candidates?: unknown[] }).candidates;
+  if (!Array.isArray(candidates) || candidates.length === 0) return '[]';
+  const parts = (candidates[0] as { content?: { parts?: unknown[] } })?.content?.parts;
+  if (!Array.isArray(parts)) return '[]';
+  const text = parts
+    .map((p) => (p && typeof p === 'object' && 'text' in p ? String((p as { text: unknown }).text) : ''))
+    .join('')
+    .trim();
+  return text || '[]';
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -115,9 +131,9 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: 'Unauthorized' }, 401);
   }
 
-  const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
+  const apiKey = Deno.env.get('GEMINI_API_KEY');
   if (!apiKey) {
-    return jsonResponse({ error: 'ANTHROPIC_API_KEY not configured on server' }, 500);
+    return jsonResponse({ error: 'GEMINI_API_KEY not configured on server' }, 500);
   }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -157,39 +173,40 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: 'Unsupported mediaType' }, 400);
   }
 
-  const response = await fetch(CLAUDE_API_URL, {
+  const response = await fetch(`${GEMINI_API_BASE}/${MODEL}:generateContent`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
+      'x-goog-api-key': apiKey,
     },
     body: JSON.stringify({
-      model: MODEL,
-      max_tokens: 1024,
-      messages: [
+      contents: [
         {
           role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: mediaType, data: photoBase64 } },
-            { type: 'text', text: IDENTIFICATION_PROMPT },
+          parts: [
+            { inline_data: { mime_type: mediaType, data: photoBase64 } },
+            { text: IDENTIFICATION_PROMPT },
           ],
         },
       ],
+      generationConfig: {
+        maxOutputTokens: 1024,
+        temperature: 0.2,
+      },
     }),
   });
 
   if (!response.ok) {
     const errText = await response.text();
-    console.error('identify-species: Claude error', response.status, errText.slice(0, 300));
+    console.error('identify-species: Gemini error', response.status, errText.slice(0, 300));
     return jsonResponse({ error: `Identification failed (${response.status})` }, 502);
   }
 
   const data = await response.json();
-  const text: string = data.content?.[0]?.text ?? '[]';
+  const text = extractGeminiText(data);
 
   try {
-    const classifications = parseClaudeResponse(text);
+    const classifications = parseGeminiResponse(text);
     return jsonResponse({ classifications });
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Parse error';
