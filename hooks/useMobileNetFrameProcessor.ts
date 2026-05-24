@@ -9,6 +9,7 @@ import {
 } from 'react-native-vision-camera';
 import { useResizePlugin } from 'vision-camera-resize-plugin';
 
+import { areFrameProcessorsAvailable } from '@/lib/camera/areFrameProcessorsAvailable';
 import { getImageNetLabel } from '@/lib/camera/mobilenet/imagenetLabels';
 import { parseMobileNetTop1 } from '@/lib/camera/mobilenet/parseMobileNetOutput';
 
@@ -94,7 +95,8 @@ export function useMobileNetFrameProcessor(active: boolean): UseMobileNetFramePr
   );
 
   return {
-    frameProcessor: active && model != null ? frameProcessor : undefined,
+    frameProcessor:
+      active && model != null && areFrameProcessorsAvailable() ? frameProcessor : undefined,
     modelState,
     modelError,
     debug,

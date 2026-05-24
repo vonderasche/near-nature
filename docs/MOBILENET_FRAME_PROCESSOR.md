@@ -16,7 +16,7 @@ Runs **MobileNet v2 224 (quantized)** on live camera frames via Vision Camera + 
    EXPO_PUBLIC_MOBILENET_FRAME_PROCESSOR=true
    ```
 
-3. **Rebuild the native app** (frame processors + TFLite are not available in Expo Go):
+3. **Rebuild the native app** — required after enabling frame processors. An older dev client will crash or show “Frame Processors are disabled” until you rebuild (not available in Expo Go):
 
    ```powershell
    npx expo prebuild

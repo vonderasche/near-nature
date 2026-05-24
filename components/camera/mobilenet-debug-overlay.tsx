@@ -4,7 +4,7 @@ import type { MobileNetDebugState } from '@/hooks/useMobileNetFrameProcessor';
 import { authColors, authSpacing, authTypography, tint } from '@/constants/auth-theme';
 
 type Props = {
-  modelState: 'loading' | 'loaded' | 'error';
+  modelState: 'loading' | 'loaded' | 'error' | 'unavailable';
   modelError: string | null;
   debug: MobileNetDebugState | null;
 };
@@ -13,6 +13,9 @@ export function MobileNetDebugOverlay({ modelState, modelError, debug }: Props) 
   return (
     <View style={styles.wrap} pointerEvents="none">
       <Text style={styles.badge}>MobileNet test</Text>
+      {modelState === 'unavailable' ? (
+        <Text style={styles.lineError}>{modelError ?? 'Frame processors unavailable'}</Text>
+      ) : null}
       {modelState === 'loading' ? (
         <Text style={styles.line}>Loading model…</Text>
       ) : null}
