@@ -9,6 +9,7 @@ import { routes } from '@/lib/routing/routes';
 import { AuthButton } from '@/components/auth/auth-button';
 import { CameraBottomToolbar } from '@/components/camera/camera-bottom-toolbar';
 import { CameraLivePreview } from '@/components/camera/camera-live-preview';
+import { CameraLivePreviewWithMobileNet } from '@/components/camera/camera-live-preview-with-mobilenet';
 import { CameraTopControls } from '@/components/camera/camera-top-controls';
 import { CameraZoomChips } from '@/components/camera/camera-zoom-chips';
 import { useCameraCaptureFormat } from '@/hooks/useCameraCaptureFormat';
@@ -20,6 +21,7 @@ import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import { useCameraScreen } from '@/hooks/useCameraScreen';
 import { usePickPhotoFromGallery } from '@/hooks/usePickPhotoFromGallery';
+import { isMobileNetFrameProcessorEnabled } from '@/lib/config/isMobileNetFrameProcessorEnabled';
 import { contentInsetsPadding } from '@/lib/screen/contentInsets';
 
 export default function CameraScreen() {
@@ -101,6 +103,8 @@ export default function CameraScreen() {
     { hdrEnabled, stabilizationEnabled },
   );
   const { zoom, setZoom, chips, activeChipId, selectChip } = useCameraZoom(device ?? undefined);
+  const mobileNetPreview = isMobileNetFrameProcessorEnabled();
+  const LivePreview = mobileNetPreview ? CameraLivePreviewWithMobileNet : CameraLivePreview;
 
   const messageModal = (
     <>
@@ -185,7 +189,7 @@ export default function CameraScreen() {
       <View style={styles.root}>
         {device ? (
           <>
-            <CameraLivePreview
+            <LivePreview
               cameraRef={cameraRef}
               device={device}
               format={format}

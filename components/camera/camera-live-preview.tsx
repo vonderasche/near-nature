@@ -2,7 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
-import type { Camera, CameraDevice, CameraDeviceFormat } from 'react-native-vision-camera';
+import type {
+  Camera,
+  CameraDevice,
+  CameraDeviceFormat,
+  FrameProcessor,
+} from 'react-native-vision-camera';
 import { Camera as VisionCamera } from 'react-native-vision-camera';
 import type { RefObject } from 'react';
 
@@ -33,6 +38,8 @@ type Props = {
   stabilizationEnabled?: boolean;
   stabilizationSupported?: boolean;
   onFocusPoint: (point: Point) => void | Promise<void>;
+  /** Optional Vision Camera frame processor (e.g. MobileNet test). */
+  frameProcessor?: FrameProcessor;
 };
 
 const FOCUS_RING_MS = 1200;
@@ -56,6 +63,7 @@ export function CameraLivePreview({
   stabilizationEnabled = false,
   stabilizationSupported = false,
   onFocusPoint,
+  frameProcessor,
 }: Props) {
   const stabilizationMode =
     stabilizationEnabled && stabilizationSupported ? 'auto' : 'off';
@@ -141,6 +149,7 @@ export function CameraLivePreview({
             videoStabilizationMode={stabilizationMode}
             zoom={zoom}
             torch={torch}
+            frameProcessor={frameProcessor}
           />
         ) : (
           <View style={styles.paused} />
