@@ -1,0 +1,109 @@
+{
+  "architecture": "mobilenet_v3_small",
+  "checkpoint": "E:\\PROGRAMMING\\Portfolio\\near nature\\python\\models\\trained\\mobilenetv3_small_top16_groups\\best.pt",
+  "inputSize": 224,
+  "numClasses": 16,
+  "tfliteFile": "species_classifier.tflite",
+  "inputLayout": "NHWC",
+  "inputDtype": "float32",
+  "normalization": {
+    "mean": [
+      0.485,
+      0.456,
+      0.406
+    ],
+    "std": [
+      0.229,
+      0.224,
+      0.225
+    ]
+  },
+  "reactNativeNote": "Resize 224x224 RGB, ImageNet normalize, input [1,224,224,3] float32, argmax logits.",
+  "val_acc": 0.7085523172479694,
+  "epoch": 3,
+  "trainingSummary": {
+    "model": "mobilenet_v3_small",
+    "dataset": "FLORIDA_TOP16_GROUPS",
+    "num_classes": 16,
+    "class_names": [
+      "Flowering Plant",
+      "Bird",
+      "Dragonfly/Damselfly",
+      "Butterfly/Moth",
+      "Cactus",
+      "Legume",
+      "Tree/Shrub",
+      "Snake",
+      "Bee/Wasp",
+      "Conifer",
+      "Fern",
+      "Beetle",
+      "Frog",
+      "Lizard",
+      "Palm",
+      "Grass"
+    ],
+    "max_per_group": 800,
+    "train_samples": 12800,
+    "val_samples": 2093,
+    "epochs_target": 15,
+    "early_stop_patience": 3,
+    "early_stop_min_delta": 0.0,
+    "stopped_early": true,
+    "stop_epoch": 6,
+    "best_val_acc": 0.7085523172479694,
+    "history": [
+      {
+        "epoch": 1,
+        "train_loss": 1.114921086356044,
+        "train_acc": 0.64515625,
+        "val_loss": 1.1671716873861078,
+        "val_acc": 0.5857620640229336,
+        "elapsed_sec": 151.2706503868103
+      },
+      {
+        "epoch": 2,
+        "train_loss": 0.7247707380354405,
+        "train_acc": 0.762578125,
+        "val_loss": 1.1505833393184408,
+        "val_acc": 0.6086956521739131,
+        "elapsed_sec": 150.97546768188477
+      },
+      {
+        "epoch": 3,
+        "train_loss": 0.5663078897446394,
+        "train_acc": 0.813203125,
+        "val_loss": 0.9532770332513217,
+        "val_acc": 0.7085523172479694,
+        "elapsed_sec": 156.45003461837769
+      },
+      {
+        "epoch": 4,
+        "train_loss": 0.4816984497755766,
+        "train_acc": 0.8371875,
+        "val_loss": 1.3477640462103953,
+        "val_acc": 0.5676063067367415,
+        "elapsed_sec": 154.77244305610657
+      },
+      {
+        "epoch": 5,
+        "train_loss": 0.4065927764028311,
+        "train_acc": 0.86453125,
+        "val_loss": 1.3149570984756098,
+        "val_acc": 0.6096512183468705,
+        "elapsed_sec": 152.94753909111023
+      },
+      {
+        "epoch": 6,
+        "train_loss": 0.34761864906176926,
+        "train_acc": 0.882578125,
+        "val_loss": 1.3031924496526304,
+        "val_acc": 0.6287625418060201,
+        "elapsed_sec": 151.52364921569824
+      }
+    ],
+    "best_checkpoint": "E:\\PROGRAMMING\\Portfolio\\near nature\\python\\models\\trained\\mobilenetv3_small_top16_groups\\best.pt",
+    "last_checkpoint": "E:\\PROGRAMMING\\Portfolio\\near nature\\python\\models\\trained\\mobilenetv3_small_top16_groups\\last.pt",
+    "resumed_from": null
+  }
+}

@@ -32,6 +32,8 @@ type Props = {
   onShutterSoundPress: () => void;
   levelEnabled: boolean;
   onLevelPress: () => void;
+  liveClassifierEnabled: boolean;
+  onLiveClassifierPress: () => void;
 };
 
 function toggleCaption(on: boolean): string {
@@ -59,6 +61,8 @@ export function CameraTopControls({
   onShutterSoundPress,
   levelEnabled,
   onLevelPress,
+  liveClassifierEnabled,
+  onLiveClassifierPress,
 }: Props) {
   const showFlash = facing === 'back' || flashSupported;
   const showTorch = facing === 'back';
@@ -141,6 +145,15 @@ export function CameraTopControls({
           onPress={onLevelPress}
           active={levelEnabled}
           caption={`Level ${toggleCaption(levelEnabled)}`}
+        />
+        <CameraControlButton
+          icon="sparkles"
+          accessibilityLabel={
+            liveClassifierEnabled ? 'Turn live classifier off' : 'Turn live classifier on'
+          }
+          onPress={onLiveClassifierPress}
+          active={liveClassifierEnabled}
+          caption={`AI ${toggleCaption(liveClassifierEnabled)}`}
         />
       </ScrollView>
     </View>

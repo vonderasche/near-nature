@@ -4,7 +4,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
 import type { Camera, CameraDevice, CameraDeviceFormat } from 'react-native-vision-camera';
 import { Camera as VisionCamera } from 'react-native-vision-camera';
-import type { RefObject } from 'react';
+import type { ComponentProps, RefObject } from 'react';
 
 import { CameraFocusRing } from '@/components/camera/camera-focus-ring';
 import { CameraGridOverlay } from '@/components/camera/camera-grid-overlay';
@@ -15,6 +15,7 @@ import { clampZoom } from '@/lib/camera/cameraZoom';
 type Point = { x: number; y: number };
 
 type FocusRingState = Point & { key: number };
+type CameraFrameProcessor = ComponentProps<typeof VisionCamera>['frameProcessor'];
 
 type Props = {
   cameraRef: RefObject<Camera | null>;
@@ -32,6 +33,7 @@ type Props = {
   levelVisible?: boolean;
   stabilizationEnabled?: boolean;
   stabilizationSupported?: boolean;
+  frameProcessor?: CameraFrameProcessor;
   onFocusPoint: (point: Point) => void | Promise<void>;
 };
 
@@ -55,6 +57,7 @@ export function CameraLivePreview({
   levelVisible = false,
   stabilizationEnabled = false,
   stabilizationSupported = false,
+  frameProcessor,
   onFocusPoint,
 }: Props) {
   const stabilizationMode =
@@ -141,6 +144,7 @@ export function CameraLivePreview({
             videoStabilizationMode={stabilizationMode}
             zoom={zoom}
             torch={torch}
+            frameProcessor={frameProcessor}
           />
         ) : (
           <View style={styles.paused} />

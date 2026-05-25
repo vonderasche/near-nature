@@ -13,4 +13,8 @@ if (existing) {
 }
 config.resolver.blockList = blockList;
 
+if (!config.resolver.assetExts.includes('tflite')) {
+  config.resolver.assetExts.push('tflite');
+}
+
 module.exports = config;

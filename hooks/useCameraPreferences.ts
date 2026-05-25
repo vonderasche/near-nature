@@ -4,10 +4,12 @@ import { useCallback } from 'react';
 import {
   CAMERA_PREF_HDR,
   CAMERA_PREF_LEVEL,
+  CAMERA_PREF_LIVE_CLASSIFIER,
   CAMERA_PREF_SHUTTER_SOUND,
   CAMERA_PREF_STABILIZATION,
   DEFAULT_CAMERA_HDR,
   DEFAULT_CAMERA_LEVEL,
+  DEFAULT_CAMERA_LIVE_CLASSIFIER,
   DEFAULT_CAMERA_SHUTTER_SOUND,
   DEFAULT_CAMERA_STABILIZATION,
 } from '@/constants/camera-preferences';
@@ -36,6 +38,11 @@ export function useCameraPreferences() {
     (r) => parseBool(r, DEFAULT_CAMERA_LEVEL),
     DEFAULT_CAMERA_LEVEL,
   );
+  const liveClassifier = usePersistedPreference(
+    CAMERA_PREF_LIVE_CLASSIFIER,
+    (r) => parseBool(r, DEFAULT_CAMERA_LIVE_CLASSIFIER),
+    DEFAULT_CAMERA_LIVE_CLASSIFIER,
+  );
 
   const hapticTap = useCallback(() => {
     try {
@@ -61,6 +68,10 @@ export function useCameraPreferences() {
     hapticTap();
     level.setValue(!level.value);
   }, [level, hapticTap]);
+  const toggleLiveClassifier = useCallback(() => {
+    hapticTap();
+    liveClassifier.setValue(!liveClassifier.value);
+  }, [hapticTap, liveClassifier]);
 
   return {
     hdrEnabled: hdr.value,
@@ -71,6 +82,8 @@ export function useCameraPreferences() {
     toggleShutterSound,
     levelEnabled: level.value,
     toggleLevel,
-    ready: hdr.ready && stabilization.ready && shutterSound.ready && level.ready,
+    liveClassifierEnabled: liveClassifier.value,
+    toggleLiveClassifier,
+    ready: hdr.ready && stabilization.ready && shutterSound.ready && level.ready && liveClassifier.ready,
   };
 }
