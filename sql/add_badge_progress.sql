@@ -145,7 +145,17 @@ definitions as (
 
   union all
 
-  select *
+  select
+    b.award_key::text,
+    b.badge_kind::text,
+    b.main_category::text,
+    b.subcategory::text,
+    b.tier::text,
+    b.label::text,
+    b.points::int,
+    b.required_unique_species::int,
+    b.active::boolean,
+    b.sort_order::int
   from (values
     (
       'badge:ends_of_the_earth',
