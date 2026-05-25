@@ -2,7 +2,7 @@ import { isLocalDetectionsMode } from '@/lib/config/isLocalDetectionsMode';
 import { loadLocalDetectionRows } from '@/lib/detections/localDetectionStore';
 import { buildMainCategoryProgress } from '@/lib/profile/buildCategoryProgress';
 import { buildLocalScoringSnapshot } from '@/lib/profile/buildLocalScoringSnapshot';
-import type { MainCategoryProgress } from '@/lib/profile/categoryProgressTypes';
+import type { BadgeProgress, MainCategoryProgress } from '@/lib/profile/categoryProgressTypes';
 import {
   getMainCategory,
   MAIN_CATEGORIES,
@@ -27,6 +27,7 @@ export type UserScoringSnapshot = {
   mains: MainCategoryProgress[];
   awards: PointAwardSnapshotRow[];
   awardKeys: Set<string>;
+  badgeProgress: BadgeProgress[];
   breakdown: UserScoreBreakdown;
 };
 
@@ -69,6 +70,28 @@ function buildBreakdown(rows: UserScoreByCategoryRow[]): UserScoreBreakdown {
   };
 }
 
+function parseNullableString(value: unknown): string | null {
+  if (value == null) return null;
+  const text = String(value).trim();
+  return text ? text : null;
+}
+
+function parseBadgeProgressRow(row: Record<string, unknown>): BadgeProgress {
+  return {
+    awardKey: String(row.award_key ?? ''),
+    badgeKind: String(row.badge_kind ?? ''),
+    mainCategory: parseNullableString(row.main_category) as BadgeProgress['mainCategory'],
+    subcategory: parseNullableString(row.subcategory) as BadgeProgress['subcategory'],
+    tier: parseNullableString(row.tier) as BadgeProgress['tier'],
+    label: String(row.label ?? ''),
+    points: Number(row.points ?? 0),
+    uniqueSpeciesCount: Number(row.unique_species_count ?? 0),
+    requiredUniqueSpecies:
+      row.required_unique_species == null ? null : Number(row.required_unique_species),
+    earned: Boolean(row.earned),
+  };
+}
+
 function parseSnapshotPayload(raw: unknown): UserScoringSnapshot {
   if (!raw || typeof raw !== 'object') {
     throw new Error('Invalid scoring snapshot response.');
@@ -106,10 +129,14 @@ function parseSnapshotPayload(raw: unknown): UserScoringSnapshot {
     };
   });
 
+  const badgeProgress = ((payload.badge_progress as unknown[]) ?? []).map((row) =>
+    parseBadgeProgressRow(row as Record<string, unknown>),
+  );
+
   const mains = buildMainCategoryProgress(subSpeciesCounts, mainSpeciesCounts);
   const awardKeys = new Set(awards.map((a) => a.awardKey).filter(Boolean));
 
-  return { mains, awards, awardKeys, breakdown };
+  return { mains, awards, awardKeys, badgeProgress, breakdown };
 }
 
 function isSnapshotRpcUnavailable(error: { code?: string; message?: string }): boolean {
@@ -153,7 +180,7 @@ async function fetchUserScoringSnapshotFallback(userId: string): Promise<UserSco
   const mains = buildMainCategoryProgress([], mainSpeciesCounts);
   const awardKeys = new Set(awards.map((a) => a.awardKey).filter(Boolean));
 
-  return { mains, awards, awardKeys, breakdown };
+  return { mains, awards, awardKeys, badgeProgress: [], breakdown };
 }
 
 /** Owner-only RPC: score breakdown, awards, and discipline species counts. */

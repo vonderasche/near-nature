@@ -31,10 +31,11 @@ export const ProfileScoringCollapsible = forwardRef<
     () => snapshot?.awardKeys ?? new Set<string>(),
     [snapshot?.awardKeys],
   );
+  const badgeProgress = snapshot?.badgeProgress ?? [];
 
   const previewBadges = useMemo(
-    () => buildProfileBadgePreviewRow(mains, awardKeys),
-    [awardKeys, mains],
+    () => buildProfileBadgePreviewRow(mains, awardKeys, badgeProgress),
+    [awardKeys, badgeProgress, mains],
   );
 
   useImperativeHandle(ref, () => ({ refetch }), [refetch]);
@@ -74,6 +75,7 @@ export const ProfileScoringCollapsible = forwardRef<
           <ProfileBadgeGrid
             mains={mains}
             awardKeys={awardKeys}
+            badgeProgress={badgeProgress}
             borderColor={borderColor}
             mutedColor={mutedColor}
           />

@@ -80,6 +80,27 @@ begin
           and public.discovery_canonical_main(d.category::text, d.subcategory, d.main_category) is not null
         group by 1
       ) agg
+    ), '[]'::jsonb),
+    'badge_progress', coalesce((
+      select jsonb_agg(
+        jsonb_build_object(
+          'award_key', ubp.award_key,
+          'badge_kind', bd.badge_kind,
+          'main_category', bd.main_category,
+          'subcategory', bd.subcategory,
+          'tier', bd.tier,
+          'label', bd.label,
+          'points', bd.points,
+          'unique_species_count', ubp.unique_species_count,
+          'required_unique_species', ubp.required_unique_species,
+          'earned', ubp.earned
+        )
+        order by bd.sort_order, ubp.award_key
+      )
+      from public.user_badge_progress ubp
+      inner join public.badge_definitions bd on bd.award_key = ubp.award_key
+      where ubp.user_id = p_user_id
+        and bd.active
     ), '[]'::jsonb)
   )
   into result;

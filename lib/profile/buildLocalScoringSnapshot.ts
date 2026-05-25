@@ -37,6 +37,7 @@ export function buildLocalScoringSnapshot(rows: readonly DetectionGalleryRow[]):
     mains,
     awards: [],
     awardKeys: new Set(),
+    badgeProgress: [],
     breakdown: {
       rows: [],
       totalDetectionPoints: 0,

@@ -24,10 +24,14 @@ export type ProfileEarnedBadgesSectionHandle = {
 export const ProfileEarnedBadgesSection = forwardRef<ProfileEarnedBadgesSectionHandle, Props>(
   function ProfileEarnedBadgesSection({ userId, borderColor, mutedColor }, ref) {
     const [open, setOpen] = useState(false);
-    const { awardKeys, earnedCount, loading, error, refetch } = usePublicUserAwards(userId);
+    const { awardKeys, badgeProgress, earnedCount, loading, error, refetch } =
+      usePublicUserAwards(userId);
     const { width: windowWidth } = useWindowDimensions();
 
-    const sections = useMemo(() => buildEarnedProfileBadgeSections(awardKeys), [awardKeys]);
+    const sections = useMemo(
+      () => buildEarnedProfileBadgeSections(awardKeys, badgeProgress),
+      [awardKeys, badgeProgress],
+    );
 
     const horizontalPadding = authSpacing.lg * 2;
     const gap = authSpacing.sm;

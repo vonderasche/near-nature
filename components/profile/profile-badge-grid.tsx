@@ -3,7 +3,7 @@ import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { ProfileBadgeGroupMenu } from '@/components/profile/profile-badge-group-menu';
 import { authSpacing } from '@/constants/auth-theme';
-import type { MainCategoryProgress } from '@/lib/profile/categoryProgressTypes';
+import type { BadgeProgress, MainCategoryProgress } from '@/lib/profile/categoryProgressTypes';
 import {
   buildProfileBadgeGroups,
   buildProfileBadgeSections,
@@ -14,6 +14,7 @@ import {
 type Props = {
   mains: readonly MainCategoryProgress[];
   awardKeys: ReadonlySet<string>;
+  badgeProgress?: readonly BadgeProgress[];
   borderColor: string;
   mutedColor: string;
   compact?: boolean;
@@ -55,14 +56,15 @@ function BadgeSectionGroups({
 export function ProfileBadgeGrid({
   mains,
   awardKeys,
+  badgeProgress,
   borderColor,
   mutedColor,
   compact: compactProp,
 }: Props) {
   const { width: windowWidth } = useWindowDimensions();
   const sections = useMemo(
-    () => buildProfileBadgeSections(mains, awardKeys),
-    [awardKeys, mains],
+    () => buildProfileBadgeSections(mains, awardKeys, badgeProgress),
+    [awardKeys, badgeProgress, mains],
   );
 
   const horizontalPadding = authSpacing.lg * 2;

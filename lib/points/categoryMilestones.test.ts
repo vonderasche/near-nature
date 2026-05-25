@@ -36,4 +36,15 @@ describe('categoryMilestones', () => {
     expect(awards.some((a) => a.awardKey === 'sub:wildflowers:explorer')).toBe(true);
     expect(awards.some((a) => a.awardKey === 'main:botanist:explorer')).toBe(false);
   });
+
+  it('requires three distinct subcategory species', () => {
+    const counts = buildSpeciesCounts([
+      { latin_name: 'Coreopsis leavenworthii', category: 'wildflowers' },
+      { latin_name: 'Coreopsis leavenworthii', category: 'wildflowers' },
+      { latin_name: 'Coreopsis leavenworthii', category: 'wildflowers' },
+    ]);
+
+    const awards = milestonesForNewCounts(counts, new Set());
+    expect(awards.some((a) => a.awardKey === 'sub:wildflowers:explorer')).toBe(false);
+  });
 });

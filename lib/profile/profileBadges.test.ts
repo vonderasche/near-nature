@@ -7,7 +7,7 @@ import {
   buildProfileBadgePreviewRow,
   buildProfileBadgeSections,
 } from '@/lib/profile/profileBadges';
-import type { MainCategoryProgress } from '@/lib/profile/categoryProgressTypes';
+import type { BadgeProgress, MainCategoryProgress } from '@/lib/profile/categoryProgressTypes';
 
 describe('buildProfileBadgeSections', () => {
   it('includes bonus, main tier, and sub tier sections with every badge listed', () => {
@@ -65,6 +65,52 @@ describe('buildProfileBadgeSections', () => {
     const subSection = sections.find((s) => s.id === 'sub-tiers')!;
     const wildflowers = subSection.badges.find((b) => b.id === 'sub:wildflowers:explorer')!;
     expect(wildflowers.earned).toBe(true);
+  });
+
+  it('uses DB-backed subcategory progress requirements when available', () => {
+    const progress: BadgeProgress[] = [
+      {
+        awardKey: 'sub:wildflowers:explorer',
+        badgeKind: 'sub',
+        mainCategory: 'botanist',
+        subcategory: 'wildflowers',
+        tier: 'explorer',
+        label: 'Wildflowers Explorer',
+        points: 25,
+        uniqueSpeciesCount: 2,
+        requiredUniqueSpecies: 5,
+        earned: false,
+      },
+    ];
+
+    const sections = buildProfileBadgeSections([], new Set(), progress);
+    const subSection = sections.find((s) => s.id === 'sub-tiers')!;
+    const wildflowers = subSection.badges.find((b) => b.id === 'sub:wildflowers:explorer')!;
+    expect(wildflowers.earned).toBe(false);
+    expect(wildflowers.requirement).toBe('5 species');
+  });
+
+  it('marks badges earned from DB-backed progress rows', () => {
+    const progress: BadgeProgress[] = [
+      {
+        awardKey: 'main:botanist:explorer',
+        badgeKind: 'main',
+        mainCategory: 'botanist',
+        subcategory: null,
+        tier: 'explorer',
+        label: 'Botanist Explorer',
+        points: 50,
+        uniqueSpeciesCount: 10,
+        requiredUniqueSpecies: 10,
+        earned: true,
+      },
+    ];
+
+    const sections = buildProfileBadgeSections([], new Set(), progress);
+    const mainSection = sections.find((s) => s.id === 'main-tiers')!;
+    const botanist = mainSection.badges.find((b) => b.id === 'main:botanist:explorer')!;
+    expect(botanist.earned).toBe(true);
+    expect(botanist.points).toBe(50);
   });
 
   it('groups bonus badges into a single trigger', () => {

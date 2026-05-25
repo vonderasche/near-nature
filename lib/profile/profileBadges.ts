@@ -18,7 +18,7 @@ import {
   type SubcategoryId,
 } from '@/constants/naturalist-categories';
 import type { HeroIconName } from '@/components/ui/hero-icon';
-import type { MainCategoryProgress } from '@/lib/profile/categoryProgressTypes';
+import type { BadgeProgress, MainCategoryProgress } from '@/lib/profile/categoryProgressTypes';
 
 export type ProfileBadgeItem = {
   id: string;
@@ -62,36 +62,63 @@ const VOYAGER_ICON_BY_MAIN: Record<MainCategoryId, HeroIconName> = {
   mammalogist: 'user',
 };
 
+function buildProgressByAward(
+  badgeProgress: readonly BadgeProgress[] | undefined,
+): ReadonlyMap<string, BadgeProgress> {
+  return new Map((badgeProgress ?? []).map((progress) => [progress.awardKey, progress]));
+}
+
+function progressSpeciesCount(progress: BadgeProgress | undefined, fallback: number): number {
+  return Math.max(0, progress?.uniqueSpeciesCount ?? fallback);
+}
+
+function progressRequirement(
+  progress: BadgeProgress | undefined,
+  fallback: number,
+): number {
+  return Math.max(1, progress?.requiredUniqueSpecies ?? fallback);
+}
+
 function tierEarned(
   awardKeys: ReadonlySet<string>,
   awardKey: string,
   speciesCount: number,
-  tier: CategoryTierId,
+  progress: BadgeProgress | undefined,
+  fallbackRequired: number,
 ): boolean {
-  return awardKeys.has(awardKey) || speciesCount >= TIER_SPECIES_THRESHOLDS[tier];
+  if (progress) {
+    return awardKeys.has(awardKey) || progress.earned;
+  }
+
+  return awardKeys.has(awardKey) || speciesCount >= fallbackRequired;
 }
 
-function buildBonusBadges(awardKeys: ReadonlySet<string>): ProfileBadgeItem[] {
+function buildBonusBadges(
+  awardKeys: ReadonlySet<string>,
+  progressByAward: ReadonlyMap<string, BadgeProgress>,
+): ProfileBadgeItem[] {
+  const featuredProgress = progressByAward.get(ENDS_OF_THE_EARTH_BADGE_KEY);
   const featured: ProfileBadgeItem = {
     id: ENDS_OF_THE_EARTH_BADGE_KEY,
-    label: 'Ends of the Earth',
+    label: featuredProgress?.label || 'Ends of the Earth',
     shortLabel: 'Ends of Earth',
     icon: 'trophy',
-    earned: awardKeys.has(ENDS_OF_THE_EARTH_BADGE_KEY),
-    points: BADGE_BONUS_POINTS.endsOfTheEarth,
+    earned: awardKeys.has(ENDS_OF_THE_EARTH_BADGE_KEY) || featuredProgress?.earned === true,
+    points: featuredProgress?.points ?? BADGE_BONUS_POINTS.endsOfTheEarth,
     requirement: 'Voyager in all 4 disciplines',
     featured: true,
   };
 
   const voyagers: ProfileBadgeItem[] = MAIN_CATEGORIES.map((main) => {
     const id = trueVoyagerBadgeKey(main.id);
+    const progress = progressByAward.get(id);
     return {
       id,
-      label: `True Voyager — ${main.label}`,
+      label: progress?.label || `True Voyager — ${main.label}`,
       shortLabel: main.label,
       icon: VOYAGER_ICON_BY_MAIN[main.id],
-      earned: awardKeys.has(id),
-      points: BADGE_BONUS_POINTS.trueVoyager,
+      earned: awardKeys.has(id) || progress?.earned === true,
+      points: progress?.points ?? BADGE_BONUS_POINTS.trueVoyager,
       requirement: 'Main + all sub Voyagers',
     };
   });
@@ -102,23 +129,27 @@ function buildBonusBadges(awardKeys: ReadonlySet<string>): ProfileBadgeItem[] {
 function buildMainTierBadges(
   mains: readonly MainCategoryProgress[],
   awardKeys: ReadonlySet<string>,
+  progressByAward: ReadonlyMap<string, BadgeProgress>,
 ): ProfileBadgeItem[] {
   const byId = new Map(mains.map((m) => [m.id, m]));
   const out: ProfileBadgeItem[] = [];
 
   for (const main of MAIN_CATEGORIES) {
     const progress = byId.get(main.id);
-    const speciesCount = progress?.speciesCount ?? 0;
+    const fallbackSpeciesCount = progress?.speciesCount ?? 0;
     for (const tier of TIER_ORDER) {
       const id = mainMilestoneAwardKey(main.id, tier);
+      const badgeProgress = progressByAward.get(id);
+      const speciesCount = progressSpeciesCount(badgeProgress, fallbackSpeciesCount);
+      const required = progressRequirement(badgeProgress, TIER_SPECIES_THRESHOLDS[tier]);
       out.push({
         id,
-        label: `${main.label} ${tierDisplayName(tier)}`,
+        label: badgeProgress?.label || `${main.label} ${tierDisplayName(tier)}`,
         shortLabel: `${main.label.slice(0, 4)} ${tierDisplayName(tier).slice(0, 3)}`,
         icon: TIER_ICON[tier],
-        earned: tierEarned(awardKeys, id, speciesCount, tier),
-        points: MAIN_TIER_POINTS[tier],
-        requirement: `${TIER_SPECIES_THRESHOLDS[tier]} species`,
+        earned: tierEarned(awardKeys, id, speciesCount, badgeProgress, required),
+        points: badgeProgress?.points ?? MAIN_TIER_POINTS[tier],
+        requirement: `${required} species`,
       });
     }
   }
@@ -130,11 +161,17 @@ function highestSubTierEarned(
   subId: SubcategoryId,
   speciesCount: number,
   awardKeys: ReadonlySet<string>,
+  progressByAward: ReadonlyMap<string, BadgeProgress>,
 ): CategoryTierId | null {
   let highest: CategoryTierId | null = null;
   for (const tier of TIER_ORDER) {
     const key = subMilestoneAwardKey(subId, tier);
-    if (awardKeys.has(key) || speciesCount >= SUB_TIER_SPECIES_THRESHOLDS[tier]) {
+    const progress = progressByAward.get(key);
+    const required = progressRequirement(progress, SUB_TIER_SPECIES_THRESHOLDS[tier]);
+    const earned = progress
+      ? awardKeys.has(key) || progress.earned
+      : awardKeys.has(key) || speciesCount >= required;
+    if (earned) {
       highest = tier;
     }
   }
@@ -145,6 +182,7 @@ function highestSubTierEarned(
 function buildSubTierBadges(
   mains: readonly MainCategoryProgress[],
   awardKeys: ReadonlySet<string>,
+  progressByAward: ReadonlyMap<string, BadgeProgress>,
 ): ProfileBadgeItem[] {
   const out: ProfileBadgeItem[] = [];
 
@@ -152,11 +190,18 @@ function buildSubTierBadges(
     const mainId = getSubcategory(subId).mainId;
     const mainProgress = mains.find((m) => m.id === mainId);
     const sub = mainProgress?.subcategories.find((s) => s.id === subId);
-    const speciesCount = sub?.speciesCount ?? 0;
+    const explorerProgress = progressByAward.get(subMilestoneAwardKey(subId, 'explorer'));
+    const fallbackSpeciesCount = sub?.speciesCount ?? 0;
+    const speciesCount = progressSpeciesCount(explorerProgress, fallbackSpeciesCount);
     const subLabel = getSubcategoryLabel(subId);
-    const highest = highestSubTierEarned(subId, speciesCount, awardKeys);
+    const highest = highestSubTierEarned(subId, speciesCount, awardKeys, progressByAward);
     const displayTier = highest ?? 'explorer';
     const id = subMilestoneAwardKey(subId, displayTier);
+    const displayProgress = progressByAward.get(id);
+    const explorerRequired = progressRequirement(
+      explorerProgress,
+      SUB_TIER_SPECIES_THRESHOLDS.explorer,
+    );
 
     out.push({
       id,
@@ -164,10 +209,8 @@ function buildSubTierBadges(
       shortLabel: subLabel,
       icon: VOYAGER_ICON_BY_MAIN[mainId],
       earned: highest !== null,
-      points: SUB_TIER_POINTS[displayTier],
-      requirement: highest
-        ? `${speciesCount} sp.`
-        : `${SUB_TIER_SPECIES_THRESHOLDS.explorer} detections`,
+      points: displayProgress?.points ?? SUB_TIER_POINTS[displayTier],
+      requirement: highest ? `${speciesCount} sp.` : `${explorerRequired} species`,
     });
   }
 
@@ -178,22 +221,25 @@ function buildSubTierBadges(
 export function buildProfileBadgeSections(
   mains: readonly MainCategoryProgress[],
   awardKeys: ReadonlySet<string>,
+  badgeProgress?: readonly BadgeProgress[],
 ): ProfileBadgeSection[] {
+  const progressByAward = buildProgressByAward(badgeProgress);
+
   return [
     {
       id: 'bonus',
       title: 'Bonus badges',
-      badges: buildBonusBadges(awardKeys),
+      badges: buildBonusBadges(awardKeys, progressByAward),
     },
     {
       id: 'main-tiers',
       title: 'Main discipline tiers',
-      badges: buildMainTierBadges(mains, awardKeys),
+      badges: buildMainTierBadges(mains, awardKeys, progressByAward),
     },
     {
       id: 'sub-tiers',
       title: 'Subcategory tiers',
-      badges: buildSubTierBadges(mains, awardKeys),
+      badges: buildSubTierBadges(mains, awardKeys, progressByAward),
     },
   ];
 }
@@ -258,8 +304,9 @@ export function buildProfileBadgeGroups(section: ProfileBadgeSection): ProfileBa
 export function buildProfileBadgePreviewRow(
   mains: readonly MainCategoryProgress[],
   awardKeys: ReadonlySet<string>,
+  badgeProgress?: readonly BadgeProgress[],
 ): ProfileBadgeItem[] {
-  const earned = buildProfileBadgeSections(mains, awardKeys)
+  const earned = buildProfileBadgeSections(mains, awardKeys, badgeProgress)
     .flatMap((section) => section.badges)
     .filter((badge) => badge.earned);
 
@@ -290,8 +337,9 @@ export function buildProfileBadgePreviewRow(
 /** Sections containing only badges present in `awardKeys` (for public profiles). */
 export function buildEarnedProfileBadgeSections(
   awardKeys: ReadonlySet<string>,
+  badgeProgress?: readonly BadgeProgress[],
 ): ProfileBadgeSection[] {
-  return buildProfileBadgeSections([], awardKeys)
+  return buildProfileBadgeSections([], awardKeys, badgeProgress)
     .map((section) => ({
       ...section,
       badges: section.badges.filter((badge) => badge.earned),
