@@ -27,6 +27,7 @@ export const ProfileScoringCollapsible = forwardRef<
   const { snapshot, loading, error, refetch } = useUserScoringSnapshot(userId);
 
   const mains = snapshot?.mains ?? [];
+  const hasSavedSpecies = (snapshot?.breakdown.totalSpecies ?? 0) > 0;
   const awardKeys = useMemo(
     () => snapshot?.awardKeys ?? new Set<string>(),
     [snapshot?.awardKeys],
@@ -69,7 +70,9 @@ export const ProfileScoringCollapsible = forwardRef<
       {open ? (
         <View style={styles.body}>
           <Text style={[styles.hint, { color: mutedColor }]}>
-            Tap a discipline icon to see its tiers · dimmed = not earned yet
+            {hasSavedSpecies
+              ? 'Tap a discipline icon to see its tiers · dimmed = not earned yet'
+              : 'Save your first identification to start earning badge progress.'}
           </Text>
 
           <ProfileBadgeGrid

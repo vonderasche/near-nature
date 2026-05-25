@@ -10,6 +10,7 @@ import { useResizePlugin } from 'vision-camera-resize-plugin';
 
 import modelAsset from '@/assets/tflite/mobilenetv3_small_top16_groups/tflite/species_classifier.tflite';
 import type { LiveClassifierModelState, LiveClassifierPrediction } from '@/lib/camera/liveClassifierTypes';
+import { formatMobileNetError } from '@/lib/camera/mobilenet/formatMobileNetError';
 import {
   MOBILENET_TOP16_INFERENCE_FPS,
   MOBILENET_TOP16_INPUT_SIZE,
@@ -46,7 +47,7 @@ export function useMobileNetTop16FrameProcessor(
   const [inferenceError, setInferenceError] = useState<string | null>(null);
 
   const model = tf.state === 'loaded' ? tf.model : undefined;
-  const modelError = tf.state === 'error' ? tf.error.message : inferenceError;
+  const modelError = tf.state === 'error' ? formatMobileNetError(tf.error) : inferenceError;
   const modelState =
     tf.state === 'error' || inferenceError
       ? 'error'
@@ -103,7 +104,7 @@ export function useMobileNetTop16FrameProcessor(
           const top3 = parseMobileNetTop3(raw);
           publishPredictions(top3);
         } catch (error) {
-          publishInferenceError(String(error));
+          publishInferenceError(formatMobileNetError(error));
         }
       });
     },
