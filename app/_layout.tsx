@@ -7,6 +7,7 @@ import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthGate } from '@/components/layout/auth-gate';
+import { FirstLoginWelcomeModal } from '@/components/welcome/first-login-welcome-modal';
 import { AuthProvider } from '@/context/AuthContext';
 
 export const unstable_settings = {
@@ -41,6 +42,7 @@ export default function RootLayout() {
                 <Stack.Screen name="user/[userId]" options={{ title: 'Member' }} />
               </Stack>
             </AuthGate>
+            <FirstLoginWelcomeModal />
             <StatusBar style="light" />
           </ThemeProvider>
         </AuthProvider>
