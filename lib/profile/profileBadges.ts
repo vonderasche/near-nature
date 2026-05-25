@@ -3,8 +3,10 @@ import {
   ENDS_OF_THE_EARTH_BADGE_KEY,
   MAIN_CATEGORIES,
   MAIN_TIER_POINTS,
+  SUB_TIER_BADGE_SUBCATEGORY_IDS,
   SUB_TIER_POINTS,
   TIER_SPECIES_THRESHOLDS,
+  getSubcategory,
   getSubcategoryLabel,
   mainMilestoneAwardKey,
   subMilestoneAwardKey,
@@ -123,31 +125,49 @@ function buildMainTierBadges(
   return out;
 }
 
+function highestSubTierEarned(
+  subId: SubcategoryId,
+  speciesCount: number,
+  awardKeys: ReadonlySet<string>,
+): CategoryTierId | null {
+  let highest: CategoryTierId | null = null;
+  for (const tier of TIER_ORDER) {
+    const key = subMilestoneAwardKey(subId, tier);
+    if (tierEarned(awardKeys, key, speciesCount, tier)) {
+      highest = tier;
+    }
+  }
+  return highest;
+}
+
+/** One catalog tile per subcategory (highest tier earned, or explorer as goal). */
 function buildSubTierBadges(
   mains: readonly MainCategoryProgress[],
   awardKeys: ReadonlySet<string>,
 ): ProfileBadgeItem[] {
   const out: ProfileBadgeItem[] = [];
 
-  for (const main of MAIN_CATEGORIES) {
-    const mainProgress = mains.find((m) => m.id === main.id);
-    for (const subId of main.subcategoryIds) {
-      const sub = mainProgress?.subcategories.find((s) => s.id === subId);
-      const speciesCount = sub?.speciesCount ?? 0;
-      for (const tier of TIER_ORDER) {
-        const id = subMilestoneAwardKey(subId as SubcategoryId, tier);
-        const subLabel = getSubcategoryLabel(subId);
-        out.push({
-          id,
-          label: `${subLabel} ${tierDisplayName(tier)}`,
-          shortLabel: subLabel.length > 12 ? `${subLabel.slice(0, 10)}…` : subLabel,
-          icon: TIER_ICON[tier],
-          earned: tierEarned(awardKeys, id, speciesCount, tier),
-          points: SUB_TIER_POINTS[tier],
-          requirement: `${TIER_SPECIES_THRESHOLDS[tier]} sp.`,
-        });
-      }
-    }
+  for (const subId of SUB_TIER_BADGE_SUBCATEGORY_IDS) {
+    const mainId = getSubcategory(subId).mainId;
+    const mainProgress = mains.find((m) => m.id === mainId);
+    const sub = mainProgress?.subcategories.find((s) => s.id === subId);
+    const speciesCount = sub?.speciesCount ?? 0;
+    const subLabel = getSubcategoryLabel(subId);
+    const highest = highestSubTierEarned(subId, speciesCount, awardKeys);
+    const displayTier = highest ?? 'explorer';
+    const id = subMilestoneAwardKey(subId, displayTier);
+
+    out.push({
+      id,
+      label: subLabel,
+      shortLabel: subLabel.length > 12 ? `${subLabel.slice(0, 10)}…` : subLabel,
+      icon: TIER_ICON[displayTier],
+      earned: highest !== null,
+      points: SUB_TIER_POINTS[displayTier],
+      requirement: highest
+        ? `${speciesCount} sp.`
+        : `${TIER_SPECIES_THRESHOLDS.explorer} sp. for Explorer`,
+    });
   }
 
   return out;
@@ -210,15 +230,14 @@ export function buildProfileBadgeGroups(section: ProfileBadgeSection): ProfileBa
   }
 
   if (section.id === 'sub-tiers') {
-    return MAIN_CATEGORIES.map((main) => {
-      const subIds = new Set(main.subcategoryIds);
-      const badges = section.badges.filter((b) => subIds.has(b.id.split(':')[1] as SubcategoryId));
+    return SUB_TIER_BADGE_SUBCATEGORY_IDS.map((subId) => {
+      const badge = section.badges.find((b) => b.id.startsWith(`sub:${subId}:`))!;
       return {
-        id: `sub:${main.id}`,
-        label: `${main.label} subcategories`,
-        shortLabel: shortLabelFrom(main.label),
-        triggerIcon: pickGroupTriggerIcon(badges, VOYAGER_ICON_BY_MAIN[main.id]),
-        badges,
+        id: subId,
+        label: badge.label,
+        shortLabel: badge.shortLabel,
+        triggerIcon: badge.icon,
+        badges: [badge],
       };
     });
   }

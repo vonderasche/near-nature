@@ -32,7 +32,7 @@ export type AnimalSubcategoryId = Extract<
 
 export type PlantSubcategoryId = Extract<
   SubcategoryId,
-  'wildflowers' | 'trees_shrubs' | 'ferns_mosses' | 'aquatic_plants' | 'cacti_succulents'
+  'wildflowers' | 'trees_shrubs' | 'ferns_mosses'
 >;
 
 export type SpeciesSubcategoryId = AnimalSubcategoryId | PlantSubcategoryId;

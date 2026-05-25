@@ -14,7 +14,7 @@ describe('buildProfileBadgeSections', () => {
     expect(sections.map((s) => s.id)).toEqual(['bonus', 'main-tiers', 'sub-tiers']);
     expect(sections[0].badges).toHaveLength(5);
     expect(sections[1].badges).toHaveLength(12);
-    expect(sections[2].badges).toHaveLength(60);
+    expect(sections[2].badges).toHaveLength(13);
     expect(sections.every((s) => s.badges.every((b) => b.earned === false))).toBe(true);
   });
 
@@ -28,13 +28,15 @@ describe('buildProfileBadgeSections', () => {
     expect(groups[0].id).toBe('botanist');
   });
 
-  it('groups sub tiers into one trigger per main discipline', () => {
+  it('groups sub tiers into one entry per subcategory', () => {
     const sections = buildProfileBadgeSections([], new Set());
     const subSection = sections.find((s) => s.id === 'sub-tiers')!;
     const groups = buildProfileBadgeGroups(subSection);
-    expect(groups).toHaveLength(4);
-    expect(groups[0].id).toBe('sub:botanist');
-    expect(groups[0].badges.length).toBe(15);
+    expect(groups).toHaveLength(13);
+    expect(groups.every((g) => g.badges.length === 1)).toBe(true);
+    expect(groups[0].label).toBe('Wildflowers');
+    expect(groups[3].label).toBe('Lizards');
+    expect(groups[8].label).toBe('Songbirds');
   });
 
   it('groups bonus badges into a single trigger', () => {

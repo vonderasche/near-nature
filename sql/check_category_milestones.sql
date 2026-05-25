@@ -200,8 +200,6 @@ begin
       ('wildflowers', 'Wildflowers', 'botanist'),
       ('trees_shrubs', 'Trees & Shrubs', 'botanist'),
       ('ferns_mosses', 'Ferns & Mosses', 'botanist'),
-      ('aquatic_plants', 'Aquatic Plants', 'botanist'),
-      ('cacti_succulents', 'Cacti & Succulents', 'botanist'),
       ('lizards', 'Lizards', 'herpetologist'),
       ('snakes', 'Snakes', 'herpetologist'),
       ('frogs_toads', 'Frogs & Toads', 'herpetologist'),
@@ -211,12 +209,7 @@ begin
       ('raptors', 'Raptors', 'ornithologist'),
       ('wading_birds', 'Wading Birds', 'ornithologist'),
       ('waterfowl', 'Waterfowl', 'ornithologist'),
-      ('shorebirds', 'Shorebirds', 'ornithologist'),
-      ('small_mammals', 'Small Mammals', 'mammalogist'),
-      ('deer_hoofed', 'Deer & Hoofed', 'mammalogist'),
-      ('bats', 'Bats', 'mammalogist'),
-      ('marine_mammals', 'Marine Mammals', 'mammalogist'),
-      ('carnivores', 'Carnivores', 'mammalogist')
+      ('shorebirds', 'Shorebirds', 'ornithologist')
     ) as t(sub_id, sub_lbl, main_id)
   loop
     select count(distinct d.latin_name)::int
@@ -285,7 +278,7 @@ begin
     all_subs_voyager := true;
     for sub in
       select unnest(case main_id
-        when 'botanist' then array['wildflowers','trees_shrubs','ferns_mosses','aquatic_plants','cacti_succulents']
+        when 'botanist' then array['wildflowers','trees_shrubs','ferns_mosses']
         when 'herpetologist' then array['lizards','snakes','frogs_toads','turtles_tortoises','salamanders']
         when 'ornithologist' then array['songbirds','raptors','wading_birds','waterfowl','shorebirds']
         when 'mammalogist' then array['small_mammals','deer_hoofed','bats','marine_mammals','carnivores']

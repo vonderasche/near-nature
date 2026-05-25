@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { ProfileBadgeGroupMenu } from '@/components/profile/profile-badge-group-menu';
+import { ProfileBadgeStatusTile } from '@/components/profile/profile-badge-status-tile';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import type { MainCategoryProgress } from '@/lib/profile/categoryProgressTypes';
 import {
@@ -39,19 +40,31 @@ function BadgeSectionGroups({
     <View style={styles.section}>
       <Text style={[styles.sectionTitle, { color: authColors.text }]}>{section.title}</Text>
       <Text style={[styles.sectionHint, { color: mutedColor }]}>
-        {earned} of {section.badges.length} earned · tap an icon for tiers
+        {section.id === 'sub-tiers'
+          ? `${earned} of ${section.badges.length} earned`
+          : `${earned} of ${section.badges.length} earned · tap an icon for tiers`}
       </Text>
       <View style={styles.grid}>
-        {groups.map((group) => (
-          <ProfileBadgeGroupMenu
-            key={group.id}
-            group={group}
-            size={tileSize}
-            borderColor={borderColor}
-            mutedColor={mutedColor}
-            compact={compact}
-          />
-        ))}
+        {section.id === 'sub-tiers'
+          ? section.badges.map((badge) => (
+              <ProfileBadgeStatusTile
+                key={badge.id}
+                badge={badge}
+                size={tileSize}
+                mutedColor={mutedColor}
+                compact={compact}
+              />
+            ))
+          : groups.map((group) => (
+              <ProfileBadgeGroupMenu
+                key={group.id}
+                group={group}
+                size={tileSize}
+                borderColor={borderColor}
+                mutedColor={mutedColor}
+                compact={compact}
+              />
+            ))}
       </View>
     </View>
   );

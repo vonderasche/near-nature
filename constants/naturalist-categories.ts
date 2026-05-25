@@ -76,27 +76,50 @@ export const ENDS_OF_THE_EARTH_MAIN_IDS: readonly MainCategoryId[] = [
   'mammalogist',
 ];
 
+export const BOTANIST_SUBCATEGORY_IDS: readonly SubcategoryId[] = [
+  'wildflowers',
+  'trees_shrubs',
+  'ferns_mosses',
+];
+
+export const HERPETOLOGIST_SUBCATEGORY_IDS: readonly SubcategoryId[] = [
+  'lizards',
+  'snakes',
+  'frogs_toads',
+  'turtles_tortoises',
+  'salamanders',
+];
+
+export const ORNITHOLOGIST_SUBCATEGORY_IDS: readonly SubcategoryId[] = [
+  'songbirds',
+  'raptors',
+  'wading_birds',
+  'waterfowl',
+  'shorebirds',
+];
+
+/** Subcategories that earn sub-tier milestone badges (profile “Subcategory tiers” section). */
+export const SUB_TIER_BADGE_SUBCATEGORY_IDS: readonly SubcategoryId[] = [
+  ...BOTANIST_SUBCATEGORY_IDS,
+  ...HERPETOLOGIST_SUBCATEGORY_IDS,
+  ...ORNITHOLOGIST_SUBCATEGORY_IDS,
+];
+
 export const MAIN_CATEGORIES: readonly MainCategoryDef[] = [
   {
     id: 'botanist',
     label: 'Botanist',
-    subcategoryIds: [
-      'wildflowers',
-      'trees_shrubs',
-      'ferns_mosses',
-      'aquatic_plants',
-      'cacti_succulents',
-    ],
+    subcategoryIds: BOTANIST_SUBCATEGORY_IDS,
   },
   {
     id: 'herpetologist',
     label: 'Herpetologist',
-    subcategoryIds: ['lizards', 'snakes', 'frogs_toads', 'turtles_tortoises', 'salamanders'],
+    subcategoryIds: HERPETOLOGIST_SUBCATEGORY_IDS,
   },
   {
     id: 'ornithologist',
     label: 'Ornithologist',
-    subcategoryIds: ['songbirds', 'raptors', 'wading_birds', 'waterfowl', 'shorebirds'],
+    subcategoryIds: ORNITHOLOGIST_SUBCATEGORY_IDS,
   },
   {
     id: 'mammalogist',
@@ -111,13 +134,24 @@ export const MAIN_CATEGORIES: readonly MainCategoryDef[] = [
   },
 ];
 
-export const SUBCATEGORIES: readonly SubcategoryDef[] = MAIN_CATEGORIES.flatMap((main) =>
+const ACTIVE_SUBCATEGORIES: readonly SubcategoryDef[] = MAIN_CATEGORIES.flatMap((main) =>
   main.subcategoryIds.map((id) => ({
     id,
     label: subcategoryLabel(id),
     mainId: main.id,
   })),
 );
+
+/** Legacy plant subs still stored on older rows; map to botanist but no sub-tier badges. */
+const LEGACY_SUBCATEGORIES: readonly SubcategoryDef[] = [
+  { id: 'aquatic_plants', label: 'Aquatic Plants', mainId: 'botanist' },
+  { id: 'cacti_succulents', label: 'Cacti & Succulents', mainId: 'botanist' },
+];
+
+export const SUBCATEGORIES: readonly SubcategoryDef[] = [
+  ...ACTIVE_SUBCATEGORIES,
+  ...LEGACY_SUBCATEGORIES,
+];
 
 const SUB_BY_ID = new Map(SUBCATEGORIES.map((s) => [s.id, s]));
 const MAIN_BY_ID = new Map(MAIN_CATEGORIES.map((m) => [m.id, m]));

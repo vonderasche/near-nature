@@ -10,7 +10,7 @@ const MODEL = Deno.env.get('GEMINI_MODEL') ?? 'gemini-2.0-flash';
 
 // Keep in sync with constants/naturalist-subcategory-prompts.ts
 const PLANT_SUBCATEGORIES =
-  'wildflowers | trees_shrubs | ferns_mosses | aquatic_plants | cacti_succulents';
+  'wildflowers | trees_shrubs | ferns_mosses';
 const BIRD_SUBCATEGORIES =
   'songbirds | raptors | wading_birds | waterfowl | shorebirds';
 const ANIMAL_SUBCATEGORIES =

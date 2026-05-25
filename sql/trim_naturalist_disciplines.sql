@@ -1,5 +1,6 @@
 -- Trim badge disciplines to 4 mains (botanist, herpetologist, ornithologist, mammalogist).
 -- Removes entomologist, arachnologist, ichthyologist, mycologist and their subcategories.
+-- Sub-tier milestone badges: botanist, herpetologist, and ornithologist subs (profile “Subcategory tiers”).
 --
 -- On hosted Supabase, run (in order):
 --   1. sql/check_category_milestones.sql

@@ -413,7 +413,7 @@ as $$
     when nullif(trim(coalesce(p_filter_group, '')), '') = 'plant' then
       trim(coalesce(p_main_category, '')) = 'botanist'
       or coalesce(nullif(trim(p_subcategory), ''), public.normalize_species_category_for_gallery(p_category)) in (
-        'wildflowers', 'trees_shrubs', 'ferns_mosses', 'aquatic_plants', 'cacti_succulents'
+        'wildflowers', 'trees_shrubs', 'ferns_mosses'
       )
       or trim(p_category) in (
         'plant_tree', 'plant_flower', 'plant_other', 'trees', 'shrubs', 'flowers',

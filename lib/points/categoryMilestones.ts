@@ -7,6 +7,7 @@ import {
   MAIN_TIER_POINTS,
   type MainCategoryId,
   mainMilestoneAwardKey,
+  SUB_TIER_BADGE_SUBCATEGORY_IDS,
   SUB_TIER_POINTS,
   type SubcategoryId,
   subMilestoneAwardKey,
@@ -78,23 +79,21 @@ export function milestonesForNewCounts(
     }
   }
 
-  for (const main of MAIN_CATEGORIES) {
-    for (const subId of main.subcategoryIds) {
-      const subCount = counts.bySub.get(subId) ?? 0;
-      const subTier = tierForSpeciesCount(subCount);
-      if (!subTier) continue;
-      const sub = getSubcategory(subId);
+  for (const subId of SUB_TIER_BADGE_SUBCATEGORY_IDS) {
+    const subCount = counts.bySub.get(subId) ?? 0;
+    const subTier = tierForSpeciesCount(subCount);
+    if (!subTier) continue;
+    const sub = getSubcategory(subId);
 
-      for (const tier of TIER_ORDER) {
-        if (TIER_ORDER.indexOf(tier) > TIER_ORDER.indexOf(subTier)) break;
-        const key = subMilestoneAwardKey(subId, tier);
-        if (existingAwardKeys.has(key)) continue;
-        awards.push({
-          awardKey: key,
-          points: SUB_TIER_POINTS[tier],
-          label: `${sub.label} ${tier.charAt(0).toUpperCase() + tier.slice(1)}`,
-        });
-      }
+    for (const tier of TIER_ORDER) {
+      if (TIER_ORDER.indexOf(tier) > TIER_ORDER.indexOf(subTier)) break;
+      const key = subMilestoneAwardKey(subId, tier);
+      if (existingAwardKeys.has(key)) continue;
+      awards.push({
+        awardKey: key,
+        points: SUB_TIER_POINTS[tier],
+        label: `${sub.label} ${tier.charAt(0).toUpperCase() + tier.slice(1)}`,
+      });
     }
   }
 
