@@ -27,7 +27,7 @@ export function formatGalleryNativeDetailHint(status: SpeciesStatus): string | n
   return null;
 }
 
-export function splitGalleryByNativeCategory(items: DetectionGalleryItem[]): {
+export function splitGalleryByNativeCategory(items: readonly DetectionGalleryItem[]): {
   native: DetectionGalleryItem[];
   nonNative: DetectionGalleryItem[];
 } {

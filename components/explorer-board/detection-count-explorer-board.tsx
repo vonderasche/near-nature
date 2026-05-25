@@ -18,8 +18,6 @@ import { routePublicUserProfile } from '@/lib/routing/routes';
 import { isSearchQueryActive } from '@/lib/search/normalizeSearchQuery';
 import type { ExplorerBoardMemberRow } from '@/services/explorerBoardService';
 
-const LIST_ROW_ESTIMATE = 96;
-
 type Props = {
   rows: ExplorerBoardMemberRow[];
   searchQuery: string;
@@ -66,8 +64,6 @@ export function DetectionCountExplorerBoard({
       Math.floor((inner - gap * (columnCount - 1)) / columnCount),
     );
   }, [windowWidth, columnCount]);
-
-  const gridRowEstimate = tileSize + (compact ? authSpacing.xs : tileSize * 0.35);
 
   const openMember = useCallback(
     (row: ExplorerBoardMemberRow) => {
@@ -132,8 +128,6 @@ export function DetectionCountExplorerBoard({
   }
 
   const isGrid = layoutMode === 'grid';
-  const estimatedItemSize = isGrid ? gridRowEstimate : LIST_ROW_ESTIMATE;
-
   return (
     <View accessibilityLabel="Explorer Board, ranked by native species discovered">
       <View style={styles.listWrap}>
@@ -143,7 +137,6 @@ export function DetectionCountExplorerBoard({
           numColumns={isGrid ? columnCount : 1}
           renderItem={isGrid ? renderGridItem : renderListItem}
           keyExtractor={(item) => item.userId}
-          estimatedItemSize={estimatedItemSize}
           scrollEnabled={false}
           extraData={{ tileSize, columnCount, compact, layoutMode }}
         />

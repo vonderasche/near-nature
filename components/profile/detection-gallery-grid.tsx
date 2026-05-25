@@ -117,8 +117,6 @@ export function DetectionGalleryGrid({
     [items, columnCount],
   );
 
-  const estimatedRowHeight = tileSize + tileGap;
-
   const renderItem = useCallback(
     ({ item }: { item: GalleryListEntry }) => {
       if (item.kind !== 'row') return null;
@@ -196,7 +194,6 @@ export function DetectionGalleryGrid({
           data={listData}
           renderItem={renderItem}
           keyExtractor={(entry) => entry.id}
-          estimatedItemSize={estimatedRowHeight}
           scrollEnabled={false}
           extraData={{ tileSize, columnCount, borderColor, deletable }}
         />

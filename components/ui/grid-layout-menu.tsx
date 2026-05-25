@@ -50,7 +50,7 @@ export function GridLayoutMenu({
 }: Props) {
   const [open, setOpen] = useState(false);
   const [menuTop, setMenuTop] = useState(0);
-  const [menuLeft, setMenuLeft] = useState(authSpacing.lg);
+  const [menuLeft, setMenuLeft] = useState<number>(authSpacing.lg);
   const triggerRef = useRef<View>(null);
 
   const close = useCallback(() => setOpen(false), []);

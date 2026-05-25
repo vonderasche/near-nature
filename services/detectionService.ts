@@ -63,7 +63,7 @@ export async function saveDetection(input: SaveDetectionInput): Promise<SaveDete
       latinName: species.latinName,
       commonName: species.commonName,
       status: species.status,
-      description: input.description,
+      description,
       inaturalistId: null,
     });
     devLog('[saveDetection] saved locally (device-only mode)', { detectionId });
@@ -210,7 +210,7 @@ export async function saveDetection(input: SaveDetectionInput): Promise<SaveDete
     latinName: species.latinName,
     commonName: species.commonName,
     status: species.status,
-    description: input.description,
+    description,
     inaturalistId: inaturalistId,
   });
 

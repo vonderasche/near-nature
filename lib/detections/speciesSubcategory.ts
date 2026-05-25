@@ -12,7 +12,7 @@ import type { SubcategoryId } from '@/constants/naturalist-categories';
 /** All values allowed in Postgres `species_category` (legacy + subcategories). */
 export type SpeciesCategoryDb = SubcategoryId | string;
 
-const LEGACY_TO_SUBCATEGORY: Partial<Record<string, SpeciesSubcategoryId>> = {
+const LEGACY_TO_SUBCATEGORY: Partial<Record<string, string>> = {
   mammal: 'small_mammals',
   reptile: 'lizards',
   bird: 'songbirds',

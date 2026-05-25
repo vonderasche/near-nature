@@ -43,5 +43,5 @@ export function detectionSearchFields(
     item.description,
     ...taxonomyTokens(item.category, item.subcategory, item.mainCategory),
     ...aliases,
-  ];
+  ].filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
 }

@@ -49,7 +49,7 @@ export async function fetchUserScoreByCategory(userId: string): Promise<UserScor
   });
   if (error) throw error;
 
-  const rows = (data ?? []).map((row) => mapRow(row as Record<string, unknown>));
+  const rows: UserScoreByCategoryRow[] = ((data ?? []) as Record<string, unknown>[]).map(mapRow);
   const totalDetectionPoints = rows.reduce((s, r) => s + r.detectionPoints, 0);
   const totalAwardPoints = rows.reduce((s, r) => s + r.awardPoints, 0);
   const totalPoints = rows.reduce((s, r) => s + r.totalPoints, 0);

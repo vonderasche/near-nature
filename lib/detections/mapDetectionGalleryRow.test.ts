@@ -13,6 +13,7 @@ describe('mapDetectionGalleryRows', () => {
           detected_at: '2026-01-01T00:00:00Z',
           common_name: 'Oak',
           latin_name: 'Quercus',
+          category: 'trees_shrubs',
           description: '  A tree. ',
           native_status: 'native',
         },
