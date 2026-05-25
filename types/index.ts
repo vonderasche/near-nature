@@ -22,6 +22,7 @@ export type Identification = {
   userId: string;
   timestamp: string;
   species: Species;
+  galleryItem?: DetectionGalleryItem;
 };
 
 /** Saved detection row for profile gallery (`detections.image_url`). */

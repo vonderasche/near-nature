@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 
@@ -14,6 +14,8 @@ export type ListDetailCardProps = {
   leading?: ReactNode;
   /** Top-right badge (e.g. Explorer Board rank). */
   cornerBadge?: string | null;
+  onPress?: () => void;
+  accessibilityLabel?: string;
   children?: ReactNode;
 };
 
@@ -21,7 +23,16 @@ export type ListDetailCardProps = {
  * Bordered list row used by identification results and other stacked summaries
  * (same look as the original {@link SpeciesResultCard}).
  */
-export function ListDetailCard({ title, subtitle, meta, leading, cornerBadge, children }: ListDetailCardProps) {
+export function ListDetailCard({
+  title,
+  subtitle,
+  meta,
+  leading,
+  cornerBadge,
+  onPress,
+  accessibilityLabel,
+  children,
+}: ListDetailCardProps) {
   const subtitleTrimmed = subtitle?.trim();
   const metaTrimmed = meta?.trim();
   const body = (
@@ -35,8 +46,8 @@ export function ListDetailCard({ title, subtitle, meta, leading, cornerBadge, ch
 
   const cornerTrimmed = cornerBadge?.trim();
 
-  return (
-    <View style={styles.card}>
+  const content = (
+    <>
       {cornerTrimmed ? <Text style={styles.cornerBadge}>{cornerTrimmed}</Text> : null}
       {leading ? (
         <View style={[styles.leaderRow, cornerTrimmed && styles.rowWithCornerBadge]}>
@@ -46,6 +57,24 @@ export function ListDetailCard({ title, subtitle, meta, leading, cornerBadge, ch
       ) : (
         <View style={cornerTrimmed ? styles.rowWithCornerBadge : undefined}>{body}</View>
       )}
+    </>
+  );
+
+  if (onPress) {
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel ?? title}
+        onPress={onPress}
+        style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}>
+        {content}
+      </Pressable>
+    );
+  }
+
+  return (
+    <View style={styles.card}>
+      {content}
     </View>
   );
 }
@@ -71,6 +100,9 @@ const styles = StyleSheet.create({
     borderColor: authColors.border,
     padding: authSpacing.md,
     marginBottom: authSpacing.sm,
+  },
+  cardPressed: {
+    opacity: 0.88,
   },
   cornerBadge: {
     position: 'absolute',
