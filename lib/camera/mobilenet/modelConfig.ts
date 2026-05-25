@@ -1,0 +1,5 @@
+export const MOBILENET_TOP16_INPUT_SIZE = 224;
+export const MOBILENET_TOP16_INFERENCE_FPS = 2;
+
+export const MOBILENET_TOP16_IMAGENET_MEAN = [0.485, 0.456, 0.406] as const;
+export const MOBILENET_TOP16_IMAGENET_STD = [0.229, 0.224, 0.225] as const;

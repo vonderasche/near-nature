@@ -9,26 +9,23 @@ import {
 import { useResizePlugin } from 'vision-camera-resize-plugin';
 
 import modelAsset from '@/assets/tflite/mobilenetv3_small_top16_groups/tflite/species_classifier.tflite';
+import type { LiveClassifierModelState, LiveClassifierPrediction } from '@/lib/camera/liveClassifierTypes';
+import {
+  MOBILENET_TOP16_INFERENCE_FPS,
+  MOBILENET_TOP16_INPUT_SIZE,
+} from '@/lib/camera/mobilenet/modelConfig';
+import { normalizeMobileNetInput } from '@/lib/camera/mobilenet/normalizeMobileNetInput';
 import { getMobileNetTop16GroupLabel } from '@/lib/camera/mobilenet/top16GroupLabels';
 import {
   parseMobileNetTop3,
   type MobileNetPredictionScore,
 } from '@/lib/camera/mobilenet/parseMobileNetOutput';
 
-const INPUT_SIZE = 224;
-const INFERENCE_FPS = 2;
-const IMAGENET_MEAN = [0.485, 0.456, 0.406] as const;
-const IMAGENET_STD = [0.229, 0.224, 0.225] as const;
-
-export type MobileNetLivePrediction = {
-  label: string;
-  confidence: number;
-  classIndex: number;
-};
+export type MobileNetLivePrediction = LiveClassifierPrediction;
 
 type UseMobileNetTop16FrameProcessorResult = {
   frameProcessor: ReturnType<typeof useFrameProcessor> | undefined;
-  modelState: 'loading' | 'loaded' | 'error';
+  modelState: Exclude<LiveClassifierModelState, 'unavailable'>;
   modelError: string | null;
   predictions: MobileNetLivePrediction[];
 };
@@ -84,25 +81,22 @@ export function useMobileNetTop16FrameProcessor(
       'worklet';
       if (!active || boxedModel == null) return;
 
-      runAtTargetFps(INFERENCE_FPS, () => {
+      runAtTargetFps(MOBILENET_TOP16_INFERENCE_FPS, () => {
         'worklet';
         try {
           const tflite = boxedModel.unbox();
           const resized = resize(frame, {
-            scale: { width: INPUT_SIZE, height: INPUT_SIZE },
+            scale: {
+              width: MOBILENET_TOP16_INPUT_SIZE,
+              height: MOBILENET_TOP16_INPUT_SIZE,
+            },
             pixelFormat: 'rgb',
             dataType: 'float32',
           });
 
-          const input = resized as Float32Array;
-          const normalized = new Float32Array(input.length);
-          for (let i = 0; i < input.length; i += 3) {
-            normalized[i] = ((input[i] ?? 0) - IMAGENET_MEAN[0]) / IMAGENET_STD[0];
-            normalized[i + 1] = ((input[i + 1] ?? 0) - IMAGENET_MEAN[1]) / IMAGENET_STD[1];
-            normalized[i + 2] = ((input[i + 2] ?? 0) - IMAGENET_MEAN[2]) / IMAGENET_STD[2];
-          }
+          const normalized = normalizeMobileNetInput(resized as Float32Array);
 
-          const outputs = tflite.runSync([normalized.buffer]);
+          const outputs = tflite.runSync([normalized.buffer as ArrayBuffer]);
           const raw = outputs[0];
           if (raw == null) return;
 

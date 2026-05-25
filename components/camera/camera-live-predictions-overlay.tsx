@@ -1,13 +1,16 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { authColors, authSpacing, authTypography, tint } from '@/constants/auth-theme';
-import type { MobileNetLivePrediction } from '@/hooks/useMobileNetTop16FrameProcessor';
+import type {
+  LiveClassifierModelState,
+  LiveClassifierPrediction,
+} from '@/lib/camera/liveClassifierTypes';
 
 type Props = {
   enabled: boolean;
-  modelState: 'loading' | 'loaded' | 'error' | 'unavailable';
+  modelState: LiveClassifierModelState;
   modelError: string | null;
-  predictions: readonly MobileNetLivePrediction[];
+  predictions: readonly LiveClassifierPrediction[];
 };
 
 export function CameraLivePredictionsOverlay({

@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import type { BadgeProgress } from '@/lib/profile/categoryProgressTypes';
+import { parseBadgeProgressRow } from '@/lib/profile/parseBadgeProgress';
 
 export type PublicUserAwardRow = {
   awardKey: string;
@@ -23,12 +24,6 @@ type RpcRow = {
   earned?: boolean | null;
 };
 
-function nullableString(value: unknown): string | null {
-  if (value == null) return null;
-  const text = String(value).trim();
-  return text ? text : null;
-}
-
 /** Any authenticated member can read another user's earned awards. */
 export async function fetchPublicUserAwards(userId: string): Promise<PublicUserAwardRow[]> {
   const { data, error } = await supabase.rpc('get_public_user_awards', { p_user_id: userId });
@@ -40,19 +35,7 @@ export async function fetchPublicUserAwards(userId: string): Promise<PublicUserA
     label: String(row.label ?? ''),
     awardedAt: String(row.awarded_at ?? ''),
     progress: row.badge_kind
-      ? {
-          awardKey: String(row.award_key ?? ''),
-          badgeKind: String(row.badge_kind ?? ''),
-          mainCategory: nullableString(row.main_category) as BadgeProgress['mainCategory'],
-          subcategory: nullableString(row.subcategory) as BadgeProgress['subcategory'],
-          tier: nullableString(row.tier) as BadgeProgress['tier'],
-          label: String(row.label ?? ''),
-          points: Number(row.points ?? 0),
-          uniqueSpeciesCount: Number(row.unique_species_count ?? 0),
-          requiredUniqueSpecies:
-            row.required_unique_species == null ? null : Number(row.required_unique_species),
-          earned: row.earned ?? true,
-        }
+      ? parseBadgeProgressRow(row as Record<string, unknown>, { defaultEarned: true })
       : null,
   }));
 }

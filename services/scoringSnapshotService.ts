@@ -3,6 +3,7 @@ import { loadLocalDetectionRows } from '@/lib/detections/localDetectionStore';
 import { buildMainCategoryProgress } from '@/lib/profile/buildCategoryProgress';
 import { buildLocalScoringSnapshot } from '@/lib/profile/buildLocalScoringSnapshot';
 import type { BadgeProgress, MainCategoryProgress } from '@/lib/profile/categoryProgressTypes';
+import { parseBadgeProgressRow } from '@/lib/profile/parseBadgeProgress';
 import {
   getMainCategory,
   MAIN_CATEGORIES,
@@ -67,28 +68,6 @@ function buildBreakdown(rows: UserScoreByCategoryRow[]): UserScoreBreakdown {
     totalAwardPoints,
     totalPoints,
     totalSpecies,
-  };
-}
-
-function parseNullableString(value: unknown): string | null {
-  if (value == null) return null;
-  const text = String(value).trim();
-  return text ? text : null;
-}
-
-function parseBadgeProgressRow(row: Record<string, unknown>): BadgeProgress {
-  return {
-    awardKey: String(row.award_key ?? ''),
-    badgeKind: String(row.badge_kind ?? ''),
-    mainCategory: parseNullableString(row.main_category) as BadgeProgress['mainCategory'],
-    subcategory: parseNullableString(row.subcategory) as BadgeProgress['subcategory'],
-    tier: parseNullableString(row.tier) as BadgeProgress['tier'],
-    label: String(row.label ?? ''),
-    points: Number(row.points ?? 0),
-    uniqueSpeciesCount: Number(row.unique_species_count ?? 0),
-    requiredUniqueSpecies:
-      row.required_unique_species == null ? null : Number(row.required_unique_species),
-    earned: Boolean(row.earned),
   };
 }
 
