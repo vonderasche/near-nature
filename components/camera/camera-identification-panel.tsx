@@ -50,7 +50,7 @@ export function CameraIdentificationPanel({
     isLoading: historyLoading,
     error: historyError,
     refetch,
-  } = useIdentifications({ userId: userId ?? undefined });
+  } = useIdentifications({ userId: userId ?? undefined, limit: 10 });
   const { saveInBackground } = useSaveDetection();
 
   const { species, classifications, wikiByLatinName, wikiError } = useIdentificationResultsState(
