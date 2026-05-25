@@ -1,6 +1,6 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { NitroModules } from 'react-native-nitro-modules';
-import { runOnJS } from 'react-native-reanimated';
+import { useRunOnJS } from 'react-native-worklets-core';
 import { useTensorflowModel } from 'react-native-fast-tflite';
 import {
   runAtTargetFps,
@@ -56,7 +56,7 @@ export function useMobileNetTop16FrameProcessor(
     [model],
   );
 
-  const publishPredictions = useCallback((scores: MobileNetPredictionScore[]) => {
+  const publishPredictions = useRunOnJS((scores: MobileNetPredictionScore[]) => {
     setPredictions(scores.map(labelPrediction));
   }, []);
 
@@ -77,9 +77,9 @@ export function useMobileNetTop16FrameProcessor(
         const input = resized as Float32Array;
         const normalized = new Float32Array(input.length);
         for (let i = 0; i < input.length; i += 3) {
-          normalized[i] = ((input[i] ?? 0) / 255 - IMAGENET_MEAN[0]) / IMAGENET_STD[0];
-          normalized[i + 1] = ((input[i + 1] ?? 0) / 255 - IMAGENET_MEAN[1]) / IMAGENET_STD[1];
-          normalized[i + 2] = ((input[i + 2] ?? 0) / 255 - IMAGENET_MEAN[2]) / IMAGENET_STD[2];
+          normalized[i] = ((input[i] ?? 0) - IMAGENET_MEAN[0]) / IMAGENET_STD[0];
+          normalized[i + 1] = ((input[i + 1] ?? 0) - IMAGENET_MEAN[1]) / IMAGENET_STD[1];
+          normalized[i + 2] = ((input[i + 2] ?? 0) - IMAGENET_MEAN[2]) / IMAGENET_STD[2];
         }
 
         const outputs = tflite.runSync([normalized.buffer]);
@@ -87,7 +87,7 @@ export function useMobileNetTop16FrameProcessor(
         if (raw == null) return;
 
         const top3 = parseMobileNetTop3(raw);
-        runOnJS(publishPredictions)(top3);
+        publishPredictions(top3);
       });
     },
     [active, boxedModel, publishPredictions, resize],
