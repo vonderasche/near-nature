@@ -39,7 +39,6 @@ export function ProfileBadgeTile({ badge, size, borderColor, compact = false }: 
       <Text style={styles.tileLabel} numberOfLines={2}>
         {badge.shortLabel}
       </Text>
-      <Text style={styles.points}>{badge.points} pts</Text>
     </View>
   );
 }
@@ -76,15 +75,9 @@ const styles = StyleSheet.create({
   },
   tileLabel: {
     ...authTypography.label,
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: 12,
+    lineHeight: 15,
     textAlign: 'center',
     color: authColors.text,
-  },
-  points: {
-    fontSize: 9,
-    lineHeight: 11,
-    textAlign: 'center',
-    color: authColors.textMuted,
   },
 });

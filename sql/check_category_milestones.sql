@@ -218,13 +218,18 @@ begin
     where d.user_id = p_user_id
       and public.discovery_canonical_subcategory(d.category::text, d.subcategory) = sub;
 
-    sub_tier := public.tier_for_species_count(sub_cnt);
+    sub_tier := case
+      when sub_cnt >= 50 then 'voyager'
+      when sub_cnt >= 25 then 'adventurer'
+      when sub_cnt >= 3 then 'explorer'
+      else null
+    end;
     if sub_tier is null then
       continue;
     end if;
 
     foreach main_tier in array array['explorer', 'adventurer', 'voyager'] loop
-      if (main_tier = 'explorer' and sub_cnt < 10)
+      if (main_tier = 'explorer' and sub_cnt < 3)
         or (main_tier = 'adventurer' and sub_cnt < 25)
         or (main_tier = 'voyager' and sub_cnt < 50) then
         continue;

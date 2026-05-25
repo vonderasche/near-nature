@@ -10,6 +10,7 @@ import {
   SUB_TIER_BADGE_SUBCATEGORY_IDS,
   SUB_TIER_POINTS,
   type SubcategoryId,
+  subTierForSpeciesCount,
   subMilestoneAwardKey,
   tierForSpeciesCount,
   trueVoyagerBadgeKey,
@@ -81,7 +82,7 @@ export function milestonesForNewCounts(
 
   for (const subId of SUB_TIER_BADGE_SUBCATEGORY_IDS) {
     const subCount = counts.bySub.get(subId) ?? 0;
-    const subTier = tierForSpeciesCount(subCount);
+    const subTier = subTierForSpeciesCount(subCount);
     if (!subTier) continue;
     const sub = getSubcategory(subId);
 
@@ -137,7 +138,7 @@ export function getMainTier(mainId: MainCategoryId, counts: SpeciesCounts): Cate
 }
 
 export function getSubTier(subId: SubcategoryId, counts: SpeciesCounts): CategoryTierId | null {
-  return tierForSpeciesCount(counts.bySub.get(subId) ?? 0);
+  return subTierForSpeciesCount(counts.bySub.get(subId) ?? 0);
 }
 
 export function progressPercent(count: number): number {

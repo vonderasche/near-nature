@@ -5,6 +5,7 @@ import {
   MAIN_TIER_POINTS,
   SUB_TIER_BADGE_SUBCATEGORY_IDS,
   SUB_TIER_POINTS,
+  SUB_TIER_SPECIES_THRESHOLDS,
   TIER_SPECIES_THRESHOLDS,
   getSubcategory,
   getSubcategoryLabel,
@@ -133,7 +134,7 @@ function highestSubTierEarned(
   let highest: CategoryTierId | null = null;
   for (const tier of TIER_ORDER) {
     const key = subMilestoneAwardKey(subId, tier);
-    if (tierEarned(awardKeys, key, speciesCount, tier)) {
+    if (awardKeys.has(key) || speciesCount >= SUB_TIER_SPECIES_THRESHOLDS[tier]) {
       highest = tier;
     }
   }
@@ -160,13 +161,13 @@ function buildSubTierBadges(
     out.push({
       id,
       label: subLabel,
-      shortLabel: subLabel.length > 12 ? `${subLabel.slice(0, 10)}…` : subLabel,
-      icon: TIER_ICON[displayTier],
+      shortLabel: subLabel,
+      icon: VOYAGER_ICON_BY_MAIN[mainId],
       earned: highest !== null,
       points: SUB_TIER_POINTS[displayTier],
       requirement: highest
         ? `${speciesCount} sp.`
-        : `${TIER_SPECIES_THRESHOLDS.explorer} sp. for Explorer`,
+        : `${SUB_TIER_SPECIES_THRESHOLDS.explorer} detections`,
     });
   }
 
@@ -222,7 +223,7 @@ export function buildProfileBadgeGroups(section: ProfileBadgeSection): ProfileBa
       return {
         id: main.id,
         label: main.label,
-        shortLabel: shortLabelFrom(main.label),
+        shortLabel: main.label,
         triggerIcon: pickGroupTriggerIcon(badges, VOYAGER_ICON_BY_MAIN[main.id]),
         badges,
       };

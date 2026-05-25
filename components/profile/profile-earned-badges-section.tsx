@@ -52,11 +52,6 @@ export const ProfileEarnedBadgesSection = forwardRef<ProfileEarnedBadgesSectionH
           <View style={styles.triggerLeft}>
             <HeroIcon name="trophy" size={20} color={authColors.text} />
             <Text style={styles.triggerTitle}>Badges</Text>
-            {!open && earnedCount > 0 ? (
-              <Text style={[styles.triggerMeta, { color: mutedColor }]}>
-                {earnedCount} earned
-              </Text>
-            ) : null}
           </View>
           <View style={open ? styles.chevronExpanded : undefined}>
             <HeroIcon name="chevron-down" size={20} color={mutedColor} />
@@ -83,9 +78,6 @@ export const ProfileEarnedBadgesSection = forwardRef<ProfileEarnedBadgesSectionH
             {!loading && !error
               ? sections.map((section) => (
                   <View key={section.id} style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: authColors.text }]}>
-                      {section.title}
-                    </Text>
                     <View style={[styles.grid, { gap }]}>
                       {section.badges.map((badge) =>
                         badge.featured ? (
@@ -145,10 +137,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: authColors.text,
   },
-  triggerMeta: {
-    ...authTypography.subtitle,
-    fontSize: 12,
-  },
   chevronExpanded: {
     transform: [{ rotate: '180deg' }],
   },
@@ -161,10 +149,6 @@ const styles = StyleSheet.create({
   },
   section: {
     gap: authSpacing.sm,
-  },
-  sectionTitle: {
-    ...authTypography.subtitle,
-    fontWeight: '700',
   },
   grid: {
     flexDirection: 'row',

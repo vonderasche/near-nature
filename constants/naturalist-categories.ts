@@ -51,6 +51,12 @@ export const TIER_SPECIES_THRESHOLDS: Record<CategoryTierId, number> = {
   voyager: 50,
 };
 
+export const SUB_TIER_SPECIES_THRESHOLDS: Record<CategoryTierId, number> = {
+  explorer: 3,
+  adventurer: 25,
+  voyager: 50,
+};
+
 export const MAIN_TIER_POINTS: Record<CategoryTierId, number> = {
   explorer: 50,
   adventurer: 150,
@@ -202,6 +208,13 @@ export function tierForSpeciesCount(count: number): CategoryTierId | null {
   if (count >= TIER_SPECIES_THRESHOLDS.voyager) return 'voyager';
   if (count >= TIER_SPECIES_THRESHOLDS.adventurer) return 'adventurer';
   if (count >= TIER_SPECIES_THRESHOLDS.explorer) return 'explorer';
+  return null;
+}
+
+export function subTierForSpeciesCount(count: number): CategoryTierId | null {
+  if (count >= SUB_TIER_SPECIES_THRESHOLDS.voyager) return 'voyager';
+  if (count >= SUB_TIER_SPECIES_THRESHOLDS.adventurer) return 'adventurer';
+  if (count >= SUB_TIER_SPECIES_THRESHOLDS.explorer) return 'explorer';
   return null;
 }
 

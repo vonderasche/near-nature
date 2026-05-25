@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { tierForSpeciesCount } from '@/constants/naturalist-categories';
+import { subTierForSpeciesCount, tierForSpeciesCount } from '@/constants/naturalist-categories';
 import { buildSpeciesCounts, milestonesForNewCounts } from '@/lib/points/categoryMilestones';
 
 describe('categoryMilestones', () => {
@@ -8,6 +8,8 @@ describe('categoryMilestones', () => {
     expect(tierForSpeciesCount(9)).toBeNull();
     expect(tierForSpeciesCount(10)).toBe('explorer');
     expect(tierForSpeciesCount(50)).toBe('voyager');
+    expect(subTierForSpeciesCount(2)).toBeNull();
+    expect(subTierForSpeciesCount(3)).toBe('explorer');
   });
 
   it('awards main explorer once', () => {
@@ -21,5 +23,17 @@ describe('categoryMilestones', () => {
     const awards = milestonesForNewCounts(counts, new Set());
     expect(awards.some((a) => a.awardKey === 'main:botanist:explorer')).toBe(true);
     expect(awards.find((a) => a.awardKey === 'main:botanist:explorer')?.points).toBe(50);
+  });
+
+  it('awards subcategory explorer at three species', () => {
+    const counts = buildSpeciesCounts([
+      { latin_name: 'Species 1', category: 'wildflowers' },
+      { latin_name: 'Species 2', category: 'wildflowers' },
+      { latin_name: 'Species 3', category: 'wildflowers' },
+    ]);
+
+    const awards = milestonesForNewCounts(counts, new Set());
+    expect(awards.some((a) => a.awardKey === 'sub:wildflowers:explorer')).toBe(true);
+    expect(awards.some((a) => a.awardKey === 'main:botanist:explorer')).toBe(false);
   });
 });

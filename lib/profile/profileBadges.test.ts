@@ -7,6 +7,7 @@ import {
   buildProfileBadgePreviewRow,
   buildProfileBadgeSections,
 } from '@/lib/profile/profileBadges';
+import type { MainCategoryProgress } from '@/lib/profile/categoryProgressTypes';
 
 describe('buildProfileBadgeSections', () => {
   it('includes bonus, main tier, and sub tier sections with every badge listed', () => {
@@ -35,8 +36,35 @@ describe('buildProfileBadgeSections', () => {
     expect(groups).toHaveLength(13);
     expect(groups.every((g) => g.badges.length === 1)).toBe(true);
     expect(groups[0].label).toBe('Wildflowers');
+    expect(groups[0].triggerIcon).toBe('sparkles');
     expect(groups[3].label).toBe('Lizards');
+    expect(groups[3].triggerIcon).toBe('bolt');
     expect(groups[8].label).toBe('Songbirds');
+    expect(groups[8].triggerIcon).toBe('eye');
+  });
+
+  it('marks subcategory badges earned at three species', () => {
+    const botanistProgress: MainCategoryProgress = {
+      id: 'botanist',
+      label: 'Botanist',
+      speciesCount: 3,
+      tier: null,
+      progressPct: 6,
+      subcategories: [
+        {
+          id: 'wildflowers',
+          label: 'Wildflowers',
+          speciesCount: 3,
+          tier: 'explorer',
+          progressPct: 6,
+        },
+      ],
+    };
+
+    const sections = buildProfileBadgeSections([botanistProgress], new Set());
+    const subSection = sections.find((s) => s.id === 'sub-tiers')!;
+    const wildflowers = subSection.badges.find((b) => b.id === 'sub:wildflowers:explorer')!;
+    expect(wildflowers.earned).toBe(true);
   });
 
   it('groups bonus badges into a single trigger', () => {

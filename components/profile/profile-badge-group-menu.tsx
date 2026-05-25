@@ -96,11 +96,10 @@ export function ProfileBadgeGroupMenu({
   const triggerRef = useRef<View>(null);
 
   const earnedCount = group.badges.filter((b) => b.earned).length;
-  const totalCount = group.badges.length;
   const anyEarned = earnedCount > 0;
   const wideMenu = group.badges.length > 3;
   const menuWidth = wideMenu ? MENU_WIDTH_WIDE : MENU_WIDTH;
-  const menuCols = wideMenu ? 3 : 2;
+  const menuCols = group.badges.length === 1 ? 1 : wideMenu ? 3 : 2;
   const cellSize = (menuWidth - authSpacing.sm * 2 - CELL_GAP * (menuCols - 1)) / menuCols;
 
   const featured = group.badges.find((b) => b.featured);
@@ -122,7 +121,7 @@ export function ProfileBadgeGroupMenu({
       <View ref={triggerRef} collapsable={false} style={{ width: size }}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`${group.label}, ${earnedCount} of ${totalCount} badges earned`}
+          accessibilityLabel={group.label}
           accessibilityHint="Opens tier badges menu"
           onPress={openMenu}
           style={({ pressed }) => [
@@ -138,11 +137,8 @@ export function ProfileBadgeGroupMenu({
           />
           <Text
             style={[styles.triggerLabel, { color: anyEarned ? authColors.text : mutedColor }]}
-            numberOfLines={1}>
+            numberOfLines={2}>
             {group.shortLabel}
-          </Text>
-          <Text style={[styles.triggerMeta, { color: mutedColor }]}>
-            {earnedCount}/{totalCount}
           </Text>
         </Pressable>
       </View>
@@ -161,9 +157,6 @@ export function ProfileBadgeGroupMenu({
             ]}
             accessibilityViewIsModal>
             <Text style={[styles.menuTitle, { color: mutedColor }]}>{group.label}</Text>
-            <Text style={[styles.menuHint, { color: mutedColor }]}>
-              {earnedCount} of {totalCount} earned
-            </Text>
             <ScrollView
               style={wideMenu ? styles.menuScroll : undefined}
               nestedScrollEnabled
@@ -224,13 +217,9 @@ const styles = StyleSheet.create({
   },
   triggerLabel: {
     ...authTypography.label,
-    fontSize: 10,
-    lineHeight: 12,
+    fontSize: 12,
+    lineHeight: 14,
     textAlign: 'center',
-  },
-  triggerMeta: {
-    fontSize: 9,
-    lineHeight: 11,
   },
   modalRoot: {
     flex: 1,
@@ -254,15 +243,9 @@ const styles = StyleSheet.create({
   },
   menuTitle: {
     ...authTypography.label,
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '600',
     textAlign: 'center',
-  },
-  menuHint: {
-    ...authTypography.subtitle,
-    fontSize: 11,
-    textAlign: 'center',
-    marginBottom: authSpacing.xs,
   },
   menuScroll: {
     maxHeight: 320,
@@ -290,16 +273,16 @@ const styles = StyleSheet.create({
   },
   menuCellLabel: {
     ...authTypography.label,
-    fontSize: 9,
-    lineHeight: 11,
+    fontSize: 11,
+    lineHeight: 13,
     textAlign: 'center',
   },
   menuCellLabelActive: {
     color: authColors.background,
   },
   menuCellMeta: {
-    fontSize: 8,
-    lineHeight: 10,
+    fontSize: 10,
+    lineHeight: 12,
     textAlign: 'center',
   },
   menuCheck: {

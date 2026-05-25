@@ -37,17 +37,9 @@ export const ProfileScoringCollapsible = forwardRef<
     [awardKeys, mains],
   );
 
-  const earnedCount = useMemo(
-    () => previewBadges.filter((b) => b.earned).length,
-    [previewBadges],
-  );
-
   useImperativeHandle(ref, () => ({ refetch }), [refetch]);
 
-  const accessibilityLabel =
-    earnedCount > 0
-      ? `${earnedCount} badge${earnedCount === 1 ? '' : 's'} earned. ${open ? 'Collapse' : 'Expand'} full badge list`
-      : `No badges earned yet. ${open ? 'Collapse' : 'Expand'} available badges`;
+  const accessibilityLabel = open ? 'Collapse badges' : 'Expand badges';
 
   return (
     <View style={styles.wrap}>

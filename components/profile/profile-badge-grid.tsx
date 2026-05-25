@@ -1,9 +1,8 @@
 import { useMemo } from 'react';
-import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { ProfileBadgeGroupMenu } from '@/components/profile/profile-badge-group-menu';
-import { ProfileBadgeStatusTile } from '@/components/profile/profile-badge-status-tile';
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { authSpacing } from '@/constants/auth-theme';
 import type { MainCategoryProgress } from '@/lib/profile/categoryProgressTypes';
 import {
   buildProfileBadgeGroups,
@@ -34,37 +33,20 @@ function BadgeSectionGroups({
   compact: boolean;
 }) {
   const groups = useMemo(() => buildProfileBadgeGroups(section), [section]);
-  const earned = section.badges.filter((b) => b.earned).length;
 
   return (
     <View style={styles.section}>
-      <Text style={[styles.sectionTitle, { color: authColors.text }]}>{section.title}</Text>
-      <Text style={[styles.sectionHint, { color: mutedColor }]}>
-        {section.id === 'sub-tiers'
-          ? `${earned} of ${section.badges.length} earned`
-          : `${earned} of ${section.badges.length} earned · tap an icon for tiers`}
-      </Text>
       <View style={styles.grid}>
-        {section.id === 'sub-tiers'
-          ? section.badges.map((badge) => (
-              <ProfileBadgeStatusTile
-                key={badge.id}
-                badge={badge}
-                size={tileSize}
-                mutedColor={mutedColor}
-                compact={compact}
-              />
-            ))
-          : groups.map((group) => (
-              <ProfileBadgeGroupMenu
-                key={group.id}
-                group={group}
-                size={tileSize}
-                borderColor={borderColor}
-                mutedColor={mutedColor}
-                compact={compact}
-              />
-            ))}
+        {groups.map((group) => (
+          <ProfileBadgeGroupMenu
+            key={group.id}
+            group={group}
+            size={tileSize}
+            borderColor={borderColor}
+            mutedColor={mutedColor}
+            compact={compact}
+          />
+        ))}
       </View>
     </View>
   );
@@ -111,14 +93,6 @@ const styles = StyleSheet.create({
   },
   section: {
     gap: authSpacing.sm,
-  },
-  sectionTitle: {
-    ...authTypography.subtitle,
-    fontWeight: '700',
-  },
-  sectionHint: {
-    ...authTypography.subtitle,
-    fontSize: 12,
   },
   grid: {
     flexDirection: 'row',
