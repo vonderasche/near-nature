@@ -1,0 +1,189 @@
+{
+  "architecture": "mobilenet_v3_large",
+  "checkpoint": "E:\\PROGRAMMING\\Portfolio\\near nature\\python\\models\\trained\\inat2021_specialists\\mammals_domestic\\best.pt",
+  "inputSize": 224,
+  "numClasses": 7,
+  "tfliteFile": "mammals_domestic_genus.tflite",
+  "inputLayout": "NHWC",
+  "inputDtype": "float32",
+  "normalization": {
+    "mean": [
+      0.485,
+      0.456,
+      0.406
+    ],
+    "std": [
+      0.229,
+      0.224,
+      0.225
+    ]
+  },
+  "reactNativeNote": "Resize 224x224 RGB, ImageNet normalize, input [1,224,224,3] float32, argmax logits.",
+  "val_acc": 0.5656565656565656,
+  "epoch": 9,
+  "trainingSummary": {
+    "model": "mobilenet_v3_large",
+    "dataset": "INAT2021_SPECIALISTS/mammals_domestic",
+    "target": "local_genus_label",
+    "num_classes": 7,
+    "class_names": [
+      "Bos",
+      "Bubalus",
+      "Canis",
+      "Capra",
+      "Equus",
+      "Felis",
+      "Ovis"
+    ],
+    "optimizer": "AdamW",
+    "lr": 0.0005,
+    "weight_decay": 0.0001,
+    "augmentation": "strong",
+    "image_size": 224,
+    "num_workers": 6,
+    "max_per_class": 0,
+    "train_samples": 561,
+    "val_samples": 99,
+    "epochs_target": 15,
+    "early_stop_patience": 4,
+    "early_stop_min_delta": 0.0,
+    "stopped_early": true,
+    "stop_epoch": 13,
+    "best_val_acc": 0.5656565656565656,
+    "history": [
+      {
+        "epoch": 1,
+        "train_loss": 1.654345172399293,
+        "train_acc": 0.3689839572192513,
+        "train_top5_acc": 0.8734402852049911,
+        "val_loss": 1.362201787004567,
+        "val_acc": 0.4444444444444444,
+        "val_top5_acc": 0.9595959595959596,
+        "elapsed_sec": 15.723867177963257
+      },
+      {
+        "epoch": 2,
+        "train_loss": 0.9285710181994447,
+        "train_acc": 0.6987522281639929,
+        "train_top5_acc": 0.9857397504456328,
+        "val_loss": 1.3766638750981803,
+        "val_acc": 0.46464646464646464,
+        "val_top5_acc": 0.9595959595959596,
+        "elapsed_sec": 1.0452427864074707
+      },
+      {
+        "epoch": 3,
+        "train_loss": 0.4961788447145472,
+        "train_acc": 0.8431372549019608,
+        "train_top5_acc": 0.9982174688057041,
+        "val_loss": 1.479249393699145,
+        "val_acc": 0.5252525252525253,
+        "val_top5_acc": 0.9595959595959596,
+        "elapsed_sec": 0.982370138168335
+      },
+      {
+        "epoch": 4,
+        "train_loss": 0.22200289990175218,
+        "train_acc": 0.948306595365419,
+        "train_top5_acc": 1.0,
+        "val_loss": 1.5192920686018587,
+        "val_acc": 0.5252525252525253,
+        "val_top5_acc": 0.9595959595959596,
+        "elapsed_sec": 1.0093436241149902
+      },
+      {
+        "epoch": 5,
+        "train_loss": 0.12775715872140705,
+        "train_acc": 0.9679144385026738,
+        "train_top5_acc": 1.0,
+        "val_loss": 1.7021962359096066,
+        "val_acc": 0.5050505050505051,
+        "val_top5_acc": 0.9696969696969697,
+        "elapsed_sec": 1.0207607746124268
+      },
+      {
+        "epoch": 6,
+        "train_loss": 0.11094201832956596,
+        "train_acc": 0.966131907308378,
+        "train_top5_acc": 1.0,
+        "val_loss": 1.85743190784647,
+        "val_acc": 0.5353535353535354,
+        "val_top5_acc": 0.9595959595959596,
+        "elapsed_sec": 1.0119163990020752
+      },
+      {
+        "epoch": 7,
+        "train_loss": 0.10023061437084076,
+        "train_acc": 0.9732620320855615,
+        "train_top5_acc": 1.0,
+        "val_loss": 2.22126258924754,
+        "val_acc": 0.5353535353535354,
+        "val_top5_acc": 0.9494949494949495,
+        "elapsed_sec": 0.9809670448303223
+      },
+      {
+        "epoch": 8,
+        "train_loss": 0.09565659844168792,
+        "train_acc": 0.9714795008912656,
+        "train_top5_acc": 1.0,
+        "val_loss": 2.5471465611698654,
+        "val_acc": 0.48484848484848486,
+        "val_top5_acc": 0.9191919191919192,
+        "elapsed_sec": 1.0361409187316895
+      },
+      {
+        "epoch": 9,
+        "train_loss": 0.11513375210677027,
+        "train_acc": 0.9625668449197861,
+        "train_top5_acc": 1.0,
+        "val_loss": 2.3240968308063468,
+        "val_acc": 0.5656565656565656,
+        "val_top5_acc": 0.9292929292929293,
+        "elapsed_sec": 1.0176115036010742
+      },
+      {
+        "epoch": 10,
+        "train_loss": 0.09756273947616312,
+        "train_acc": 0.9679144385026738,
+        "train_top5_acc": 1.0,
+        "val_loss": 2.1011803788368146,
+        "val_acc": 0.5050505050505051,
+        "val_top5_acc": 0.9393939393939394,
+        "elapsed_sec": 1.0110712051391602
+      },
+      {
+        "epoch": 11,
+        "train_loss": 0.09172280711817445,
+        "train_acc": 0.9714795008912656,
+        "train_top5_acc": 1.0,
+        "val_loss": 2.2046647541450732,
+        "val_acc": 0.45454545454545453,
+        "val_top5_acc": 0.9696969696969697,
+        "elapsed_sec": 0.971611738204956
+      },
+      {
+        "epoch": 12,
+        "train_loss": 0.14531885536384243,
+        "train_acc": 0.9696969696969697,
+        "train_top5_acc": 1.0,
+        "val_loss": 2.214325948195024,
+        "val_acc": 0.5656565656565656,
+        "val_top5_acc": 0.9494949494949495,
+        "elapsed_sec": 1.0053021907806396
+      },
+      {
+        "epoch": 13,
+        "train_loss": 0.17921904085366697,
+        "train_acc": 0.946524064171123,
+        "train_top5_acc": 1.0,
+        "val_loss": 2.9488442449858696,
+        "val_acc": 0.41414141414141414,
+        "val_top5_acc": 0.9595959595959596,
+        "elapsed_sec": 1.001296043395996
+      }
+    ],
+    "best_checkpoint": "E:\\PROGRAMMING\\Portfolio\\near nature\\python\\models\\trained\\inat2021_specialists\\mammals_domestic\\best.pt",
+    "last_checkpoint": "E:\\PROGRAMMING\\Portfolio\\near nature\\python\\models\\trained\\inat2021_specialists\\mammals_domestic\\last.pt",
+    "resumed_from": null
+  }
+}

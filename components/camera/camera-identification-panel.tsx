@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { IdentificationHistorySection } from '@/components/camera/identification/identification-history-section';
+import { IdentificationRoutingBanner } from '@/components/camera/identification/identification-routing-banner';
 import { IdentificationPhotoSection } from '@/components/camera/identification/identification-photo-section';
 import { IdentificationSpeciesResultsList } from '@/components/camera/identification/identification-species-results-list';
 import { UploadToDatabaseButton } from '@/components/camera/identification/upload-to-database-button';
@@ -53,12 +54,13 @@ export function CameraIdentificationPanel({
   } = useIdentifications({ userId: userId ?? undefined, limit: 10 });
   const { saveInBackground } = useSaveDetection();
 
-  const { species, classifications, wikiByLatinName, wikiError } = useIdentificationResultsState(
+  const { species, classifications, wikiByLatinName, wikiError, tfliteMeta } =
+    useIdentificationResultsState(
     photoUri,
     userState,
     userId ?? undefined,
-    identify,
-  );
+      identify,
+    );
 
   const handleSaveIdentification = useCallback(() => {
     if (!userId || species.length === 0 || classifications.length === 0) return;
@@ -126,7 +128,9 @@ export function CameraIdentificationPanel({
           marginBottom={authSpacing.md}
         />
 
-        {identifying ? <LoadingHintRow label="Identifying species…" /> : null}
+        {identifying ? <LoadingHintRow label="Running on-device models…" /> : null}
+
+        <IdentificationRoutingBanner meta={tfliteMeta} identifying={identifying} />
 
         {identifyError ? <InlineFormError>{identifyError}</InlineFormError> : null}
         {historyError ? <InlineFormError>{historyError}</InlineFormError> : null}

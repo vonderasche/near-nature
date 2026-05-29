@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 
 import type { SpeciesWikiData } from '@/api/wikipedia';
 import type { ClassificationResult, Species } from '@/types';
+import type { TfliteIdentificationMeta } from '@/types/tfliteIdentification';
 
 type IdentifyFn = (
   photoUri: string,
@@ -12,12 +13,13 @@ type IdentifyFn = (
   classifications: ClassificationResult[];
   wikiByLatinName: Record<string, SpeciesWikiData | null>;
   wikiError: string | null;
+  tfliteMeta: TfliteIdentificationMeta | null;
 }>;
 
 /**
  * Runs vision identification when `photoUri` / `userState` / `identify` change. Skips until
  * `userState` is a real two-letter code (not the empty placeholder while the profile loads).
- * Wiki and iNaturalist enrichment run inside {@link IdentifyFn} (parallel after Claude).
+ * Wiki and iNaturalist enrichment run inside {@link IdentifyFn}.
  */
 export function useIdentificationResultsState(
   photoUri: string | undefined,
@@ -29,11 +31,13 @@ export function useIdentificationResultsState(
   classifications: ClassificationResult[];
   wikiByLatinName: Record<string, SpeciesWikiData | null>;
   wikiError: string | null;
+  tfliteMeta: TfliteIdentificationMeta | null;
 } {
   const [species, setSpecies] = useState<Species[]>([]);
   const [classifications, setClassifications] = useState<ClassificationResult[]>([]);
   const [wikiByLatinName, setWikiByLatinName] = useState<Record<string, SpeciesWikiData | null>>({});
   const [wikiError, setWikiError] = useState<string | null>(null);
+  const [tfliteMeta, setTfliteMeta] = useState<TfliteIdentificationMeta | null>(null);
 
   useEffect(() => {
     if (!photoUri) return;
@@ -47,6 +51,7 @@ export function useIdentificationResultsState(
         setClassifications(results.classifications);
         setWikiByLatinName(results.wikiByLatinName);
         setWikiError(results.wikiError);
+        setTfliteMeta(results.tfliteMeta);
       }
     })();
     return () => {
@@ -54,5 +59,5 @@ export function useIdentificationResultsState(
     };
   }, [photoUri, userState, userId, identify]);
 
-  return { species, classifications, wikiByLatinName, wikiError };
+  return { species, classifications, wikiByLatinName, wikiError, tfliteMeta };
 }

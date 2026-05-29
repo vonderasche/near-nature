@@ -27,12 +27,16 @@ export function IdentificationSpeciesResultsList({
         <Text style={listSectionSupportingStyles.muted}>No species returned.</Text>
       ) : null}
 
-      {species.map((s) => (
+      {species.map((s, index) => (
         <SpeciesResultCard
           key={s.id}
           commonName={s.commonName}
           latinName={s.latinName}
-          meta={`${getSpeciesSubcategoryLabel(s.taxonGroup)} · ${s.status}`}>
+          meta={
+            index === 0
+              ? `Genus · ${getSpeciesSubcategoryLabel(s.taxonGroup)} · ${s.status}`
+              : `${getSpeciesSubcategoryLabel(s.taxonGroup)} · ${s.status}`
+          }>
           <IdentificationSpeciesWikiBody latinName={s.latinName} wikiByLatinName={wikiByLatinName} />
         </SpeciesResultCard>
       ))}
