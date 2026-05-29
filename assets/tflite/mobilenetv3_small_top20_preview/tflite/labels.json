@@ -1,0 +1,86 @@
+{
+  "model": "mobilenet_v3_small",
+  "classCount": 20,
+  "labels": [
+    {
+      "index": 0,
+      "name": "Tree"
+    },
+    {
+      "index": 1,
+      "name": "Shrub / Bush"
+    },
+    {
+      "index": 2,
+      "name": "Wildflower"
+    },
+    {
+      "index": 3,
+      "name": "Grass / Sedge"
+    },
+    {
+      "index": 4,
+      "name": "Fern"
+    },
+    {
+      "index": 5,
+      "name": "Cactus / Succulent"
+    },
+    {
+      "index": 6,
+      "name": "Bird"
+    },
+    {
+      "index": 7,
+      "name": "Reptile / Lizard"
+    },
+    {
+      "index": 8,
+      "name": "Snake"
+    },
+    {
+      "index": 9,
+      "name": "Turtle"
+    },
+    {
+      "index": 10,
+      "name": "Frog / Amphibian"
+    },
+    {
+      "index": 11,
+      "name": "Butterfly / Moth"
+    },
+    {
+      "index": 12,
+      "name": "Insect (other)"
+    },
+    {
+      "index": 13,
+      "name": "Freshwater Fish"
+    },
+    {
+      "index": 14,
+      "name": "Spider / Arachnid"
+    },
+    {
+      "index": 15,
+      "name": "Dog"
+    },
+    {
+      "index": 16,
+      "name": "Cat"
+    },
+    {
+      "index": 17,
+      "name": "Horse / Livestock"
+    },
+    {
+      "index": 18,
+      "name": "Fungi / Mushroom"
+    },
+    {
+      "index": 19,
+      "name": "No Plant or Animal"
+    }
+  ]
+}

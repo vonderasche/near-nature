@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  MOBILENET_TOP16_IMAGENET_MEAN,
-  MOBILENET_TOP16_IMAGENET_STD,
+  MOBILENET_PREVIEW_IMAGENET_MEAN,
+  MOBILENET_PREVIEW_IMAGENET_STD,
 } from '@/lib/camera/mobilenet/modelConfig';
 import { normalizeMobileNetInput } from '@/lib/camera/mobilenet/normalizeMobileNetInput';
 
@@ -14,8 +14,8 @@ describe('normalizeMobileNetInput', () => {
     expect(normalized[0]).toBeCloseTo(0);
     expect(normalized[1]).toBeCloseTo(0);
     expect(normalized[2]).toBeCloseTo(0);
-    expect(normalized[3]).toBeCloseTo((1 - MOBILENET_TOP16_IMAGENET_MEAN[0]) / MOBILENET_TOP16_IMAGENET_STD[0]);
-    expect(normalized[4]).toBeCloseTo((1 - MOBILENET_TOP16_IMAGENET_MEAN[1]) / MOBILENET_TOP16_IMAGENET_STD[1]);
-    expect(normalized[5]).toBeCloseTo((1 - MOBILENET_TOP16_IMAGENET_MEAN[2]) / MOBILENET_TOP16_IMAGENET_STD[2]);
+    expect(normalized[3]).toBeCloseTo((1 - MOBILENET_PREVIEW_IMAGENET_MEAN[0]) / MOBILENET_PREVIEW_IMAGENET_STD[0]);
+    expect(normalized[4]).toBeCloseTo((1 - MOBILENET_PREVIEW_IMAGENET_MEAN[1]) / MOBILENET_PREVIEW_IMAGENET_STD[1]);
+    expect(normalized[5]).toBeCloseTo((1 - MOBILENET_PREVIEW_IMAGENET_MEAN[2]) / MOBILENET_PREVIEW_IMAGENET_STD[2]);
   });
 });

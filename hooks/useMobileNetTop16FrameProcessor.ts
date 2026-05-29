@@ -8,15 +8,15 @@ import {
 } from 'react-native-vision-camera';
 import { useResizePlugin } from 'vision-camera-resize-plugin';
 
-import modelAsset from '@/assets/tflite/mobilenetv3_small_top16_groups/tflite/species_classifier.tflite';
+import modelAsset from '@/assets/tflite/mobilenetv3_small_top20_preview/tflite/species_classifier.tflite';
 import type { LiveClassifierModelState, LiveClassifierPrediction } from '@/lib/camera/liveClassifierTypes';
 import { formatMobileNetError } from '@/lib/camera/mobilenet/formatMobileNetError';
 import {
-  MOBILENET_TOP16_INFERENCE_FPS,
-  MOBILENET_TOP16_INPUT_SIZE,
+  MOBILENET_PREVIEW_INFERENCE_FPS,
+  MOBILENET_PREVIEW_INPUT_SIZE,
 } from '@/lib/camera/mobilenet/modelConfig';
 import { normalizeMobileNetInput } from '@/lib/camera/mobilenet/normalizeMobileNetInput';
-import { getMobileNetTop16GroupLabel } from '@/lib/camera/mobilenet/top16GroupLabels';
+import { getMobileNetTop20PreviewLabel } from '@/lib/camera/mobilenet/top20PreviewLabels';
 import {
   parseMobileNetTop3,
   type MobileNetPredictionScore,
@@ -34,7 +34,7 @@ type UseMobileNetTop16FrameProcessorResult = {
 function labelPrediction(prediction: MobileNetPredictionScore): MobileNetLivePrediction {
   return {
     ...prediction,
-    label: getMobileNetTop16GroupLabel(prediction.classIndex),
+    label: getMobileNetTop20PreviewLabel(prediction.classIndex),
   };
 }
 
@@ -82,14 +82,14 @@ export function useMobileNetTop16FrameProcessor(
       'worklet';
       if (!active || boxedModel == null) return;
 
-      runAtTargetFps(MOBILENET_TOP16_INFERENCE_FPS, () => {
+      runAtTargetFps(MOBILENET_PREVIEW_INFERENCE_FPS, () => {
         'worklet';
         try {
           const tflite = boxedModel.unbox();
           const resized = resize(frame, {
             scale: {
-              width: MOBILENET_TOP16_INPUT_SIZE,
-              height: MOBILENET_TOP16_INPUT_SIZE,
+              width: MOBILENET_PREVIEW_INPUT_SIZE,
+              height: MOBILENET_PREVIEW_INPUT_SIZE,
             },
             pixelFormat: 'rgb',
             dataType: 'float32',

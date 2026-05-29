@@ -2,8 +2,8 @@ import type { Session } from '@supabase/supabase-js';
 import * as Linking from 'expo-linking';
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
+import { completeSupabaseAuthSessionFromUrl } from '@/lib/auth/completeSupabaseAuthSessionFromUrl';
 import { clearOrphanAuthSession } from '@/lib/auth/orphanAuthSession';
-import { parseSupabaseAuthParamsFromUrl } from '@/lib/auth/parseAuthCallbackUrl';
 import { getSessionClearingStaleRefresh } from '@/lib/auth/recoverSupabaseSession';
 import { supabase } from '@/lib/supabase';
 import { resolveUserProfile } from '@/services/userService';
@@ -82,16 +82,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     async function applyAuthUrl(url: string | null) {
       if (!url || !mounted) return;
-      const params = parseSupabaseAuthParamsFromUrl(url);
-      if (!params) return;
-
-      const { data, error } = await supabase.auth.setSession({
-        access_token: params.access_token,
-        refresh_token: params.refresh_token,
-      });
+      const { data, error, type } = await completeSupabaseAuthSessionFromUrl(url);
       if (error || !mounted) return;
+      if (!data.session) return;
 
-      if (params.type === 'recovery') {
+      if (type === 'recovery') {
         setIsPasswordRecovery(true);
       }
       setSession(data.session);

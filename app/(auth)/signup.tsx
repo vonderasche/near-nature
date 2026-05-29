@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { AuthBirthDateField } from '@/components/auth/auth-birth-date-field';
 import { AuthButton } from '@/components/auth/auth-button';
 import { AuthField } from '@/components/auth/auth-field';
+import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
 import { AuthLegalConsent } from '@/components/auth/auth-legal-consent';
 import { AuthLinkRow } from '@/components/auth/auth-link-row';
 import { AuthMarketingOptIn } from '@/components/auth/auth-marketing-opt-in';
@@ -28,6 +29,7 @@ import { isSignupMinor, validateBirthDateParts } from '@/lib/auth/validateBirthD
 import { validateSignupEmail } from '@/lib/auth/validateSignupEmail';
 import { sanitizeUsernameInput, validateUsername } from '@/lib/auth/validateUsername';
 import { routes } from '@/lib/routing/routes';
+import { signInWithGoogle } from '@/services/authService';
 
 type InfoDialog = { title: string; message: string; goToLoginOnDismiss?: boolean } | null;
 
@@ -47,6 +49,7 @@ export default function SignUpScreen() {
   const [marketingOptIn, setMarketingOptIn] = useState(false);
   const [termsTouched, setTermsTouched] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
   const [info, setInfo] = useState<InfoDialog>(null);
 
   const {
@@ -200,6 +203,21 @@ export default function SignUpScreen() {
     }
   }
 
+  async function onGoogleSignIn() {
+    setBusy(false);
+    setGoogleBusy(true);
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      setInfo({
+        title: 'Google sign-in',
+        message: error instanceof Error ? error.message : 'Could not continue with Google.',
+      });
+    } finally {
+      setGoogleBusy(false);
+    }
+  }
+
   const emailHelper =
     emailMessage ??
     emailFormatError ??
@@ -315,7 +333,12 @@ export default function SignUpScreen() {
         title="Create account"
         onPress={onSubmit}
         loading={busy}
-        disabled={busy || formBlocked}
+        disabled={busy || googleBusy || formBlocked}
+      />
+      <GoogleSignInButton
+        onPress={onGoogleSignIn}
+        loading={googleBusy}
+        disabled={busy || googleBusy}
       />
 
       <AuthLinkRow prompt="Already have an account?" href={routes.login} linkText="Log in" />

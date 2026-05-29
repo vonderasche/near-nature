@@ -105,10 +105,38 @@ begin
         try_username,
         coalesce(
           nullif(trim(coalesce(au.raw_user_meta_data, '{}'::jsonb)->>'first_name'), ''),
+          nullif(
+            split_part(
+              trim(
+                coalesce(
+                  coalesce(au.raw_user_meta_data, '{}'::jsonb)->>'full_name',
+                  coalesce(au.raw_user_meta_data, '{}'::jsonb)->>'name',
+                  ''
+                )
+              ),
+              ' ',
+              1
+            ),
+            ''
+          ),
           'User'
         ),
         coalesce(
           nullif(trim(coalesce(au.raw_user_meta_data, '{}'::jsonb)->>'last_name'), ''),
+          nullif(
+            regexp_replace(
+              trim(
+                coalesce(
+                  coalesce(au.raw_user_meta_data, '{}'::jsonb)->>'full_name',
+                  coalesce(au.raw_user_meta_data, '{}'::jsonb)->>'name',
+                  ''
+                )
+              ),
+              '^\S+\s*',
+              ''
+            ),
+            ''
+          ),
           'Member'
         ),
         nullif(trim(coalesce(au.raw_user_meta_data, '{}'::jsonb)->>'motto'), ''),
