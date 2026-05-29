@@ -9,6 +9,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthGate } from '@/components/layout/auth-gate';
 import { FirstLoginWelcomeModal } from '@/components/welcome/first-login-welcome-modal';
 import { AuthProvider } from '@/context/AuthContext';
+import { LocalDatabaseProvider } from '@/context/LocalDatabaseContext';
 
 export const unstable_settings = {
   /** Guests land on Explorer Board; signed-in users are routed to Camera via tabs index. */
@@ -34,17 +35,19 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <SafeAreaProvider>
         <AuthProvider>
-          <ThemeProvider value={navigationTheme}>
-            <AuthGate>
-              <Stack>
-                <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="user/[userId]" options={{ title: 'Member' }} />
-              </Stack>
-            </AuthGate>
-            <FirstLoginWelcomeModal />
-            <StatusBar style="light" />
-          </ThemeProvider>
+          <LocalDatabaseProvider>
+            <ThemeProvider value={navigationTheme}>
+              <AuthGate>
+                <Stack>
+                  <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                  <Stack.Screen name="user/[userId]" options={{ title: 'Member' }} />
+                </Stack>
+              </AuthGate>
+              <FirstLoginWelcomeModal />
+              <StatusBar style="light" />
+            </ThemeProvider>
+          </LocalDatabaseProvider>
         </AuthProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

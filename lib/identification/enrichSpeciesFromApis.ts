@@ -5,7 +5,9 @@ import { classificationToSpeciesCategory } from '@/lib/detections/mapSpeciesCate
 import { devLog } from '@/lib/devLog';
 import { normalizeLatinName } from '@/lib/identification/normalizeLatinName';
 import { wikiFromSavedDescription } from '@/lib/identification/wikiFromSavedDescription';
+import { wikiFromSpeciesRecord } from '@/lib/identification/wikiFromSpeciesRecord';
 import { resolveSavedSpeciesForLatinNames } from '@/lib/identification/savedSpeciesSessionCache';
+import { getSpeciesByScientificName } from '@/lib/db/speciesRepository';
 import type { SavedSpeciesEnrichment } from '@/services/savedSpeciesEnrichmentService';
 import type { ClassificationResult, Species, SpeciesStatus } from '@/types';
 
@@ -53,8 +55,15 @@ async function resolveWiki(
   saved: SavedSpeciesEnrichment | undefined,
   onWikiError: (message: string) => void,
 ): Promise<SpeciesWikiData | null> {
-  const fromDb = wikiFromSavedDescription(saved?.description, classification.latinName);
-  if (fromDb) return fromDb;
+  const fromSaved = wikiFromSavedDescription(saved?.description, classification.latinName);
+  if (fromSaved) return fromSaved;
+
+  const catalogRecord = await getSpeciesByScientificName(classification.latinName);
+  const fromCatalog = catalogRecord ? wikiFromSpeciesRecord(catalogRecord) : null;
+  if (fromCatalog) {
+    devLog('[enrich] species catalog hit', { latinName: classification.latinName });
+    return fromCatalog;
+  }
 
   try {
     return await fetchWikiForClassification(classification.latinName, classification.commonName);

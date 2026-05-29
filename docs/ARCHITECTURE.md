@@ -136,11 +136,15 @@ Requires `sql/get_user_scoring_snapshot.sql` (or fallback RPCs) in Supabase.
 | **Explorer Board columns** | AsyncStorage preference | 2/3/4 column grid | Never (UI pref) |
 | **Gallery grid columns** | AsyncStorage preference | Column count | Never |
 | **expo-image** | OS disk | Rendered bitmaps | OS-managed |
+| **SQLite (`near_nature.db`)** | `expo-sqlite` on device | Species reference catalog (`species_records`); future user cache tables | Sign out clears user-scoped rows only (catalog kept) |
 
 Stale-while-revalidate: show cache immediately, refresh in background, then update cache.
 
+**SQLite notes:** Requires a native dev-client rebuild after installing `expo-sqlite`. Skipped on web. Bundled genus catalog (`assets/data/genus-profiles.enriched.min.json`, ~4.5k Florida iNat genera) seeds on first launch or when the catalog version changes. Identification enrichment looks up by genus (first word of the Latin name).
+
 **Implementation paths:**
 
+- Local DB: `lib/db/initLocalDatabase.ts`, `context/LocalDatabaseContext.tsx`, `lib/db/speciesRepository.ts`
 - Profile: `lib/profile/ownProfileCache.ts`, `hooks/useUser.ts`
 - Gallery: `lib/detections/galleryListCache.ts`, `hooks/useUserDetectionGallery.ts`
 - Scoring: `lib/profile/scoringSnapshotCache.ts`, `hooks/useUserScoringSnapshot.ts`

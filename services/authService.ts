@@ -1,17 +1,25 @@
 import * as Linking from 'expo-linking';
+import * as WebBrowser from 'expo-web-browser';
 
+import { completeSupabaseAuthSessionFromUrl } from '@/lib/auth/completeSupabaseAuthSessionFromUrl';
 import { signInWithEmail } from '@/lib/auth/email-auth';
 import { clearAllSignedDetectionUrlCaches } from '@/lib/detections/signedDetectionUrlCache';
 import { clearAllCachedGalleryLists } from '@/lib/detections/galleryListCache';
 import { clearAllPendingGalleryDetections } from '@/lib/detections/pendingGalleryDetection';
 import { clearAllCachedOwnProfiles } from '@/lib/profile/ownProfileCache';
 import { clearAllCachedScoringSnapshots } from '@/lib/profile/scoringSnapshotCache';
+import { clearUserScopedLocalData } from '@/lib/db/clearLocalDatabase';
 import { clearSavedSpeciesSession } from '@/lib/identification/savedSpeciesSessionCache';
 import { supabase } from '@/lib/supabase';
 
 /** Add this URL (and your dev `exp://` variant) under Supabase Auth → URL configuration → Redirect URLs. */
 export function getPasswordRecoveryRedirectUrl(): string {
   return Linking.createURL('/reset-password');
+}
+
+/** Add this URL under Supabase Auth -> URL configuration -> Redirect URLs. */
+export function getOAuthRedirectUrl(): string {
+  return Linking.createURL('/auth/callback');
 }
 
 export async function signUp(email: string, password: string, fullName: string) {
@@ -32,6 +40,31 @@ export async function signIn(emailOrUsername: string, password: string) {
   }
 }
 
+export async function signInWithGoogle() {
+  const redirectTo = getOAuthRedirectUrl();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo,
+      skipBrowserRedirect: true,
+    },
+  });
+
+  if (error) throw error;
+  if (!data.url) throw new Error('Could not start Google sign-in.');
+
+  const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+  if (result.type !== 'success') {
+    throw new Error('Google sign-in was cancelled.');
+  }
+
+  const completed = await completeSupabaseAuthSessionFromUrl(result.url);
+  if (completed.error) throw completed.error;
+  if (!completed.data.session) {
+    throw new Error('Google sign-in did not return a session.');
+  }
+}
+
 export async function signOut() {
   const { error } = await supabase.auth.signOut();
   await clearAllSignedDetectionUrlCaches();
@@ -40,6 +73,7 @@ export async function signOut() {
   await clearAllCachedScoringSnapshots();
   clearAllPendingGalleryDetections();
   clearSavedSpeciesSession();
+  await clearUserScopedLocalData();
   if (error) throw error;
 }
 
@@ -56,6 +90,7 @@ export async function signOutLocalOnly(): Promise<void> {
   await clearAllCachedScoringSnapshots();
   clearAllPendingGalleryDetections();
   clearSavedSpeciesSession();
+  await clearUserScopedLocalData();
 }
 
 export async function sendPasswordReset(email: string) {

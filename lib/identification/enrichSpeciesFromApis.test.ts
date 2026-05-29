@@ -18,8 +18,13 @@ vi.mock('@/lib/identification/savedSpeciesSessionCache', () => ({
   resolveSavedSpeciesForLatinNames: vi.fn(),
 }));
 
+vi.mock('@/lib/db/speciesRepository', () => ({
+  getSpeciesByScientificName: vi.fn(),
+}));
+
 import { lookupNativeStatus } from '@/api/inaturalist';
 import { fetchSpeciesWikiData } from '@/api/wikipedia';
+import { getSpeciesByScientificName } from '@/lib/db/speciesRepository';
 import { resolveSavedSpeciesForLatinNames } from '@/lib/identification/savedSpeciesSessionCache';
 
 import { enrichSpeciesFromApis } from './enrichSpeciesFromApis';
@@ -34,6 +39,7 @@ const classification: ClassificationResult = {
 describe('enrichSpeciesFromApis', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getSpeciesByScientificName).mockResolvedValue(null);
     vi.mocked(resolveSavedSpeciesForLatinNames).mockResolvedValue(new Map());
     vi.mocked(lookupNativeStatus).mockResolvedValue({
       status: 'native',
@@ -156,6 +162,27 @@ describe('enrichSpeciesFromApis', () => {
     expect(lookupNativeStatus).toHaveBeenCalledTimes(1);
     expect(lookupNativeStatus).toHaveBeenCalledWith('Danaus plexippus', 'FL');
     expect(result.species[1].status).toBe('unknown');
+  });
+
+  it('uses species catalog before Wikipedia when no saved description exists', async () => {
+    vi.mocked(getSpeciesByScientificName).mockResolvedValue({
+      id: '570',
+      scientificName: 'Danaus plexippus',
+      commonName: 'Monarch butterfly',
+      group: 'Insect',
+      floridaStatus: 'native',
+      taxonomy: {},
+      description: 'From local catalog.',
+      identificationTraits: [],
+      interestingFacts: [],
+      sourceUrls: {},
+      updatedAt: '2026-05-25',
+    });
+
+    const result = await enrichSpeciesFromApis([classification], 'VA', { wikiSpeciesLimit: 3 });
+
+    expect(fetchSpeciesWikiData).not.toHaveBeenCalled();
+    expect(result.wikiByLatinName['Danaus plexippus']?.description).toBe('From local catalog.');
   });
 
   it('still calls iNat when saved native status is unknown', async () => {
