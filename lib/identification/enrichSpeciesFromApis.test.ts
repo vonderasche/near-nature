@@ -22,9 +22,15 @@ vi.mock('@/lib/db/speciesRepository', () => ({
   getSpeciesByScientificName: vi.fn(),
 }));
 
+vi.mock('@/lib/db/wikiCacheRepository', () => ({
+  loadWikiCache: vi.fn(),
+  saveWikiCache: vi.fn(),
+}));
+
 import { lookupNativeStatus } from '@/api/inaturalist';
 import { fetchSpeciesWikiData } from '@/api/wikipedia';
 import { getSpeciesByScientificName } from '@/lib/db/speciesRepository';
+import { loadWikiCache, saveWikiCache } from '@/lib/db/wikiCacheRepository';
 import { resolveSavedSpeciesForLatinNames } from '@/lib/identification/savedSpeciesSessionCache';
 
 import { enrichSpeciesFromApis } from './enrichSpeciesFromApis';
@@ -40,6 +46,7 @@ describe('enrichSpeciesFromApis', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getSpeciesByScientificName).mockResolvedValue(null);
+    vi.mocked(loadWikiCache).mockResolvedValue(null);
     vi.mocked(resolveSavedSpeciesForLatinNames).mockResolvedValue(new Map());
     vi.mocked(lookupNativeStatus).mockResolvedValue({
       status: 'native',
@@ -181,8 +188,38 @@ describe('enrichSpeciesFromApis', () => {
 
     const result = await enrichSpeciesFromApis([classification], 'VA', { wikiSpeciesLimit: 3 });
 
+    expect(loadWikiCache).not.toHaveBeenCalled();
     expect(fetchSpeciesWikiData).not.toHaveBeenCalled();
     expect(result.wikiByLatinName['Danaus plexippus']?.description).toBe('From local catalog.');
+  });
+
+  it('uses wiki cache before calling Wikipedia', async () => {
+    vi.mocked(loadWikiCache).mockResolvedValue({
+      description: 'Cached wiki summary.',
+      fullDescription: 'Cached wiki summary.',
+      imageUrl: null,
+      funFacts: [],
+      pageUrl: 'https://en.wikipedia.org/wiki/Danaus_plexippus',
+    });
+
+    const result = await enrichSpeciesFromApis([classification], 'VA', { wikiSpeciesLimit: 3 });
+
+    expect(loadWikiCache).toHaveBeenCalledWith('Danaus plexippus');
+    expect(fetchSpeciesWikiData).not.toHaveBeenCalled();
+    expect(saveWikiCache).not.toHaveBeenCalled();
+    expect(result.wikiByLatinName['Danaus plexippus']?.description).toBe('Cached wiki summary.');
+  });
+
+  it('persists successful Wikipedia fetches to the local wiki cache', async () => {
+    await enrichSpeciesFromApis([classification], 'VA', { wikiSpeciesLimit: 3 });
+
+    expect(saveWikiCache).toHaveBeenCalledWith('Danaus plexippus', {
+      description: 'A butterfly.',
+      fullDescription: 'A butterfly with orange wings.',
+      imageUrl: null,
+      funFacts: [],
+      pageUrl: 'https://en.wikipedia.org/wiki/Monarch',
+    });
   });
 
   it('still calls iNat when saved native status is unknown', async () => {

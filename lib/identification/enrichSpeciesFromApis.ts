@@ -3,6 +3,7 @@ import { fetchSpeciesWikiData, type SpeciesWikiData } from '@/api/wikipedia';
 import { getSpeciesSubcategoryLabel } from '@/constants/species-subcategories';
 import { classificationToSpeciesCategory } from '@/lib/detections/mapSpeciesCategory';
 import { devLog } from '@/lib/devLog';
+import { loadWikiCache, saveWikiCache } from '@/lib/db/wikiCacheRepository';
 import { normalizeLatinName } from '@/lib/identification/normalizeLatinName';
 import { wikiFromSavedDescription } from '@/lib/identification/wikiFromSavedDescription';
 import { wikiFromSpeciesRecord } from '@/lib/identification/wikiFromSpeciesRecord';
@@ -12,6 +13,9 @@ import type { SavedSpeciesEnrichment } from '@/services/savedSpeciesEnrichmentSe
 import type { ClassificationResult, Species, SpeciesStatus } from '@/types';
 
 const DEFAULT_WIKI_SPECIES_LIMIT = 3;
+
+/** Where wiki-style description text came from for one candidate. */
+export type WikiEnrichmentSource = 'saved' | 'catalog' | 'wiki_cache' | 'wikipedia' | 'none';
 
 /** Wikipedia by latin name; missing key = not fetched, null = no article. */
 export type WikiByLatinName = Record<string, SpeciesWikiData | null>;
@@ -54,24 +58,34 @@ async function resolveWiki(
   classification: ClassificationResult,
   saved: SavedSpeciesEnrichment | undefined,
   onWikiError: (message: string) => void,
-): Promise<SpeciesWikiData | null> {
+): Promise<{ wiki: SpeciesWikiData | null; source: WikiEnrichmentSource }> {
   const fromSaved = wikiFromSavedDescription(saved?.description, classification.latinName);
-  if (fromSaved) return fromSaved;
+  if (fromSaved) return { wiki: fromSaved, source: 'saved' };
 
   const catalogRecord = await getSpeciesByScientificName(classification.latinName);
   const fromCatalog = catalogRecord ? wikiFromSpeciesRecord(catalogRecord) : null;
   if (fromCatalog) {
     devLog('[enrich] species catalog hit', { latinName: classification.latinName });
-    return fromCatalog;
+    return { wiki: fromCatalog, source: 'catalog' };
+  }
+
+  const fromCache = await loadWikiCache(classification.latinName);
+  if (fromCache) {
+    devLog('[enrich] wiki cache hit', { latinName: classification.latinName });
+    return { wiki: fromCache, source: 'wiki_cache' };
   }
 
   try {
-    return await fetchWikiForClassification(classification.latinName, classification.commonName);
+    const wiki = await fetchWikiForClassification(classification.latinName, classification.commonName);
+    if (wiki) {
+      void saveWikiCache(classification.latinName, wiki);
+    }
+    return { wiki, source: wiki ? 'wikipedia' : 'none' };
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Wikipedia request failed.';
     devLog('[enrich] wiki error', { latinName: classification.latinName, error: e });
     onWikiError(message);
-    return null;
+    return { wiki: null, source: 'none' };
   }
 }
 
@@ -135,16 +149,17 @@ export async function enrichSpeciesFromApis(
         ? resolveWiki(classification, saved, (message) => {
             if (!wikiError) wikiError = message;
           })
-        : Promise.resolve(null);
+        : Promise.resolve({ wiki: null, source: 'none' as const });
 
-      const [status, wiki] = await Promise.all([statusPromise, wikiPromise]);
+      const [status, resolvedWiki] = await Promise.all([statusPromise, wikiPromise]);
 
       if (fetchWiki) {
+        const { wiki, source } = resolvedWiki;
         wikiByLatinName[classification.latinName] = wiki;
         devLog('[enrich] wiki item', {
           latinName: classification.latinName,
           hasData: Boolean(wiki),
-          fromSaved: Boolean(saved?.description),
+          source,
         });
       }
 
