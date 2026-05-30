@@ -181,21 +181,25 @@ begin
       (
         main_voyager.required_unique_species is not null
         and coalesce(mc.unique_species_count, 0) >= main_voyager.required_unique_species
-        and exists (
-          select 1
-          from public.badge_definitions sub_voyager
-          where sub_voyager.badge_kind = 'sub'
-            and sub_voyager.main_category = bd.main_category
-            and sub_voyager.tier = 'voyager'
-        )
-        and not exists (
-          select 1
-          from public.badge_definitions sub_voyager
-          left join sub_counts sc on sc.subcategory = sub_voyager.subcategory
-          where sub_voyager.badge_kind = 'sub'
-            and sub_voyager.main_category = bd.main_category
-            and sub_voyager.tier = 'voyager'
-            and coalesce(sc.unique_species_count, 0) < sub_voyager.required_unique_species
+        and (
+          not exists (
+            select 1
+            from public.badge_definitions sub_voyager
+            where sub_voyager.badge_kind = 'sub'
+              and sub_voyager.main_category = bd.main_category
+              and sub_voyager.tier = 'voyager'
+              and sub_voyager.active
+          )
+          or not exists (
+            select 1
+            from public.badge_definitions sub_voyager
+            left join sub_counts sc on sc.subcategory = sub_voyager.subcategory
+            where sub_voyager.badge_kind = 'sub'
+              and sub_voyager.main_category = bd.main_category
+              and sub_voyager.tier = 'voyager'
+              and sub_voyager.active
+              and coalesce(sc.unique_species_count, 0) < sub_voyager.required_unique_species
+          )
         )
       ) as earned
     from public.badge_definitions bd

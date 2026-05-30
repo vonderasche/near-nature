@@ -115,7 +115,7 @@ If tables already exist and you only need to refresh objects:
 | Explorer Board | `get_detection_count_leaderboard.sql` |
 | Member profiles | `get_public_user_profile.sql` |
 | Member earned badges | `get_public_user_awards.sql` |
-| Profile scoring tab | `get_user_scoring_snapshot.sql`, `get_user_score_by_category.sql` |
+| Profile scoring tab | `get_user_scoring_snapshot.sql`, `get_user_score_by_category.sql`, `add_badge_progress.sql`, `deactivate_legacy_badge_definitions.sql` |
 | Naturalist taxonomy | `add_naturalist_category_enums.sql`, `add_detection_naturalist_columns.sql`, `check_category_milestones.sql` |
 | Username login | `resolve_login_email.sql` |
 | Missing profile after sign-in | `ensure_public_user_profile.sql` |

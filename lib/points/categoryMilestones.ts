@@ -5,10 +5,13 @@ import {
   type CategoryTierId,
   MAIN_CATEGORIES,
   MAIN_TIER_POINTS,
+  mainCategoryHasSubTierBadges,
   type MainCategoryId,
   mainMilestoneAwardKey,
   SUB_TIER_BADGE_SUBCATEGORY_IDS,
   SUB_TIER_POINTS,
+  SUB_TIER_SPECIES_THRESHOLDS,
+  TIER_SPECIES_THRESHOLDS,
   type SubcategoryId,
   subTierForSpeciesCount,
   subMilestoneAwardKey,
@@ -105,9 +108,14 @@ export function milestonesForNewCounts(
     const mainCount = counts.byMain.get(main.id) ?? 0;
     if (tierForSpeciesCount(mainCount) !== 'voyager') continue;
 
-    const allSubsVoyager = main.subcategoryIds.every(
-      (subId) => tierForSpeciesCount(counts.bySub.get(subId) ?? 0) === 'voyager',
+    const subBadgeIds = SUB_TIER_BADGE_SUBCATEGORY_IDS.filter(
+      (subId) => getSubcategory(subId).mainId === main.id,
     );
+    const allSubsVoyager =
+      subBadgeIds.length === 0 ||
+      subBadgeIds.every(
+        (subId) => subTierForSpeciesCount(counts.bySub.get(subId) ?? 0) === 'voyager',
+      );
     if (!allSubsVoyager) continue;
 
     awards.push({
@@ -141,7 +149,13 @@ export function getSubTier(subId: SubcategoryId, counts: SpeciesCounts): Categor
   return subTierForSpeciesCount(counts.bySub.get(subId) ?? 0);
 }
 
-export function progressPercent(count: number): number {
-  const max = 50;
+export function progressPercent(
+  count: number,
+  max: number = TIER_SPECIES_THRESHOLDS.voyager,
+): number {
   return Math.min(100, Math.round((count / max) * 100));
+}
+
+export function subProgressPercent(count: number): number {
+  return progressPercent(count, SUB_TIER_SPECIES_THRESHOLDS.voyager);
 }

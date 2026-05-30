@@ -9,6 +9,7 @@ import {
   getMainTier,
   getSubTier,
   progressPercent,
+  subProgressPercent,
   type SpeciesCounts,
 } from '@/lib/points/categoryMilestones';
 
@@ -57,7 +58,7 @@ export function buildMainCategoryProgress(
           label: getSubcategoryLabel(subId),
           speciesCount: subCount,
           tier: getSubTier(subId, counts),
-          progressPct: progressPercent(subCount),
+          progressPct: subProgressPercent(subCount),
         };
       }),
     };

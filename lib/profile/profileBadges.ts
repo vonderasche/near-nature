@@ -3,6 +3,7 @@ import {
   ENDS_OF_THE_EARTH_BADGE_KEY,
   MAIN_CATEGORIES,
   MAIN_TIER_POINTS,
+  mainCategoryHasSubTierBadges,
   SUB_TIER_BADGE_SUBCATEGORY_IDS,
   SUB_TIER_POINTS,
   SUB_TIER_SPECIES_THRESHOLDS,
@@ -119,7 +120,9 @@ function buildBonusBadges(
       icon: VOYAGER_ICON_BY_MAIN[main.id],
       earned: awardKeys.has(id) || progress?.earned === true,
       points: progress?.points ?? BADGE_BONUS_POINTS.trueVoyager,
-      requirement: 'Main + all sub Voyagers',
+      requirement: mainCategoryHasSubTierBadges(main.id)
+        ? 'Main Voyager + all sub Voyagers'
+        : 'Main discipline Voyager (50 species)',
     };
   });
 

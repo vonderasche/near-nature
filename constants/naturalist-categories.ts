@@ -200,6 +200,10 @@ export function getSubcategory(id: SubcategoryId): SubcategoryDef {
   return sub;
 }
 
+export function mainCategoryHasSubTierBadges(mainId: MainCategoryId): boolean {
+  return SUB_TIER_BADGE_SUBCATEGORY_IDS.some((subId) => getSubcategory(subId).mainId === mainId);
+}
+
 export function getSubcategoryLabel(id: string): string {
   return SUB_BY_ID.get(id as SubcategoryId)?.label ?? id.replace(/_/g, ' ');
 }

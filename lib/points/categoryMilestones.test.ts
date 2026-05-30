@@ -47,4 +47,14 @@ describe('categoryMilestones', () => {
     const awards = milestonesForNewCounts(counts, new Set());
     expect(awards.some((a) => a.awardKey === 'sub:wildflowers:explorer')).toBe(false);
   });
+
+  it('awards mammalogist true voyager at main discipline voyager only', () => {
+    const rows = Array.from({ length: 50 }, (_, i) => ({
+      latin_name: `Ursus ${i}`,
+      category: 'small_mammals',
+    }));
+
+    const awards = milestonesForNewCounts(buildSpeciesCounts(rows), new Set());
+    expect(awards.some((a) => a.awardKey === 'badge:true_voyager:mammalogist')).toBe(true);
+  });
 });

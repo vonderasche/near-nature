@@ -3,9 +3,10 @@
 -- Sub-tier milestone badges: botanist, herpetologist, and ornithologist subs (profile “Subcategory tiers”).
 --
 -- On hosted Supabase, run (in order):
---   1. sql/check_category_milestones.sql
---   2. sql/get_user_score_by_category.sql
---   3. sql/optimize_detection_gallery.sql   (gallery filters only; skip if already applied)
--- Or re-run sql/optimize_detection_gallery.sql + sql/add_detection_search.sql if gallery RPCs missing.
+--   1. sql/add_badge_progress.sql
+--   2. sql/deactivate_legacy_badge_definitions.sql
+--   3. sql/check_category_milestones.sql
+--   4. sql/backfill_badge_progress.sql
+--   5. sql/get_user_score_by_category.sql
 --
 -- Existing point_awards for removed disciplines are kept (historical). New awards use the trimmed taxonomy only.
