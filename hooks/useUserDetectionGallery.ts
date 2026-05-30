@@ -6,6 +6,8 @@ import {
   hydrateGalleryItemsFromRows,
 } from '@/lib/detections/hydrateGalleryItems';
 import type { GalleryCategoryFilter } from '@/lib/detections/filterDetectionGalleryItems';
+import { DEFAULT_CACHE_MAX_AGE_MS } from '@/constants/cache-ttl';
+import { isCacheEntryFresh } from '@/lib/cache/isCacheEntryFresh';
 import {
   invalidateCachedGalleryList,
   loadCachedGalleryList,
@@ -133,6 +135,7 @@ export function useUserDetectionGallery({
       const queryActive = isSearchQueryActive(searchQuery);
       const filterActive = categoryFilter.kind !== 'all';
       let showedCache = false;
+      let skipNetwork = false;
 
       if (mode === 'reset' && !force && !queryActive && !filterActive) {
         const cached = await loadCachedGalleryList(userId, publicOnly);
@@ -149,10 +152,12 @@ export function useUserDetectionGallery({
             setItems(galleryItemsPlaceholderFromRows(cached.rows));
           }
           setIsLoading(false);
-          setIsRefreshing(true);
+          const fresh = isCacheEntryFresh(cached.cachedAt, DEFAULT_CACHE_MAX_AGE_MS);
+          setIsRefreshing(!fresh);
           showedCache = true;
           hadCacheRef.current = true;
           void applyDisplayItems(cached.rows);
+          skipNetwork = fresh;
         } else if (showOptimisticPending) {
           const pending = getPendingGalleryItems(userId);
           if (pending.length > 0) {
@@ -171,6 +176,10 @@ export function useUserDetectionGallery({
       }
 
       setError(null);
+
+      if (skipNetwork) {
+        return;
+      }
 
       try {
         const requestSize =

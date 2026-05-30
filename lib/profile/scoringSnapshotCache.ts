@@ -57,8 +57,8 @@ function envelopeToSnapshot(envelope: CachedEnvelope | null): UserScoringSnapsho
   return envelope ? fromStored(envelope.snapshot) : null;
 }
 
-export async function loadCachedScoringSnapshot(userId: string): Promise<UserScoringSnapshot | null> {
-  const envelope = await loadDualStorageJson({
+async function loadCachedScoringSnapshotEnvelope(userId: string): Promise<CachedEnvelope | null> {
+  return loadDualStorageJson({
     loadSqliteJson: () => loadScoringSnapshotCacheJson(userId),
     asyncStorageKey: cacheKey(userId),
     parse: parseEnvelope,
@@ -73,7 +73,20 @@ export async function loadCachedScoringSnapshot(userId: string): Promise<UserSco
       );
     },
   });
+}
+
+export async function loadCachedScoringSnapshot(userId: string): Promise<UserScoringSnapshot | null> {
+  const envelope = await loadCachedScoringSnapshotEnvelope(userId);
   return envelopeToSnapshot(envelope);
+}
+
+export async function loadCachedScoringSnapshotEntry(
+  userId: string,
+): Promise<{ value: UserScoringSnapshot; cachedAt: number } | null> {
+  const envelope = await loadCachedScoringSnapshotEnvelope(userId);
+  const snapshot = envelopeToSnapshot(envelope);
+  if (!envelope || !snapshot) return null;
+  return { value: snapshot, cachedAt: envelope.cachedAt };
 }
 
 export async function saveCachedScoringSnapshot(

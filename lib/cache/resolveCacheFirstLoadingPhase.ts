@@ -8,6 +8,7 @@ export type CacheFirstLoadingPhase = {
 export function resolveCacheFirstLoadingPhase(
   force: boolean,
   cached: unknown,
+  options?: { cacheIsFresh?: boolean },
 ): CacheFirstLoadingPhase {
   if (force) {
     return {
@@ -17,6 +18,13 @@ export function resolveCacheFirstLoadingPhase(
     };
   }
   if (cached != null) {
+    if (options?.cacheIsFresh) {
+      return {
+        showedCache: true,
+        initialLoading: false,
+        backgroundRefreshing: false,
+      };
+    }
     return {
       showedCache: true,
       initialLoading: false,

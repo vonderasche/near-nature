@@ -3,11 +3,19 @@ import { describe, expect, it } from 'vitest';
 import { resolveCacheFirstLoadingPhase } from '@/lib/cache/resolveCacheFirstLoadingPhase';
 
 describe('resolveCacheFirstLoadingPhase', () => {
-  it('uses cache immediately and refreshes in the background', () => {
+  it('uses cache immediately and refreshes in the background when stale', () => {
     expect(resolveCacheFirstLoadingPhase(false, { id: '1' })).toEqual({
       showedCache: true,
       initialLoading: false,
       backgroundRefreshing: true,
+    });
+  });
+
+  it('uses cache only when still fresh', () => {
+    expect(resolveCacheFirstLoadingPhase(false, { id: '1' }, { cacheIsFresh: true })).toEqual({
+      showedCache: true,
+      initialLoading: false,
+      backgroundRefreshing: false,
     });
   });
 

@@ -63,13 +63,19 @@ export function useUser(): UseUserReturn {
     refetch,
   } = useCacheFirstFetch<ProfileBundle>({
     enabled: Boolean(userId),
-    loadCache: () => (userId ? loadCachedOwnProfile(userId) : Promise.resolve(null)),
+    loadCache: async () => {
+      if (!userId) return null;
+      const cached = await loadCachedOwnProfile(userId);
+      if (!cached) return null;
+      return {
+        value: { user: cached.user, stats: cached.stats },
+        cachedAt: cached.cachedAt,
+      };
+    },
     fetchFresh: () => fetchOwnProfileFromNetwork(userId!),
     saveCache: (bundle) => {
-      if (bundle.user) {
-        return saveCachedOwnProfile(userId!, bundle);
-      }
-      return Promise.resolve();
+      if (!bundle.user || !userId) return Promise.resolve();
+      return saveCachedOwnProfile(userId, { user: bundle.user, stats: bundle.stats });
     },
     onFresh: async (bundle) => {
       if (bundle.user && userId) {

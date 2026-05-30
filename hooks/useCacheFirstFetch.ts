@@ -1,18 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import type { CacheFirstEntry } from '@/lib/cache/cacheFirstEntry';
+import { isCacheEntryFresh } from '@/lib/cache/isCacheEntryFresh';
 import { resolveCacheFirstLoadingPhase } from '@/lib/cache/resolveCacheFirstLoadingPhase';
+import { DEFAULT_CACHE_MAX_AGE_MS } from '@/constants/cache-ttl';
 import { errorMessageFromUnknown } from '@/lib/errors/errorMessage';
+
+export type { CacheFirstEntry } from '@/lib/cache/cacheFirstEntry';
 
 export type UseCacheFirstFetchOptions<T> = {
   /** When false, clears data and skips network. */
   enabled: boolean;
-  loadCache: () => Promise<T | null>;
+  loadCache: () => Promise<CacheFirstEntry<T> | null>;
   fetchFresh: () => Promise<T>;
   saveCache?: (value: T) => Promise<void>;
   /** Runs after a successful network fetch (before cache write). */
   onFresh?: (value: T) => void | Promise<void>;
   /** When true, clears `data` on error if there was no cache. Default true. */
   clearDataOnErrorWithoutCache?: boolean;
+  /** Skip background refresh when cache age is within this window. */
+  maxAgeMs?: number;
   mapError?: (error: unknown) => string;
 };
 
@@ -28,7 +35,7 @@ export type UseCacheFirstFetchResult<T> = {
 
 /**
  * Stale-while-revalidate for a single cached resource (profile, scoring snapshot, etc.).
- * Paginated lists (gallery, explorer board) keep their own offset/cache logic.
+ * Paginated lists (gallery, explorer board) apply TTL in their own hooks.
  */
 export function useCacheFirstFetch<T>({
   enabled,
@@ -37,6 +44,7 @@ export function useCacheFirstFetch<T>({
   saveCache,
   onFresh,
   clearDataOnErrorWithoutCache = true,
+  maxAgeMs = DEFAULT_CACHE_MAX_AGE_MS,
   mapError = (e) => errorMessageFromUnknown(e, 'Failed to load'),
 }: UseCacheFirstFetchOptions<T>): UseCacheFirstFetchResult<T> {
   const [data, setData] = useState<T | null>(null);
@@ -58,17 +66,22 @@ export function useCacheFirstFetch<T>({
 
       const force = options?.force ?? false;
       const cached = force ? null : await loadCache();
-      const phase = resolveCacheFirstLoadingPhase(force, cached);
+      const cacheIsFresh =
+        cached != null && isCacheEntryFresh(cached.cachedAt, maxAgeMs);
+      const phase = resolveCacheFirstLoadingPhase(force, cached, { cacheIsFresh });
       const showedCache = phase.showedCache;
 
       if (cached != null) {
-        setData(cached);
+        setData(cached.value);
         hadCacheRef.current = true;
       }
       setLoading(phase.initialLoading);
       setRefreshing(phase.backgroundRefreshing);
-
       setError(null);
+
+      if (cacheIsFresh && !force) {
+        return;
+      }
 
       try {
         const fresh = await fetchFresh();
@@ -93,6 +106,7 @@ export function useCacheFirstFetch<T>({
       fetchFresh,
       loadCache,
       mapError,
+      maxAgeMs,
       onFresh,
       saveCache,
     ],

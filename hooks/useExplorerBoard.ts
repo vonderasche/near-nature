@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { DEFAULT_CACHE_MAX_AGE_MS } from '@/constants/cache-ttl';
+import { isCacheEntryFresh } from '@/lib/cache/isCacheEntryFresh';
 import {
   loadCachedExplorerBoardList,
   saveCachedExplorerBoardList,
@@ -44,7 +46,9 @@ export function useExplorerBoard(pageSize = EXPLORER_BOARD_PAGE_SIZE): {
   const hadCacheRef = useRef(false);
 
   const loadPage = useCallback(
-    async (mode: 'reset' | 'append') => {
+    async (mode: 'reset' | 'append', options?: { force?: boolean }) => {
+      const force = options?.force ?? false;
+
       if (mode === 'reset') {
         clearLegacyExplorerBoardCache();
         hadCacheRef.current = false;
@@ -54,8 +58,10 @@ export function useExplorerBoard(pageSize = EXPLORER_BOARD_PAGE_SIZE): {
       const isInitial = mode === 'reset' && !hasFetchedOnceRef.current;
 
       setError(null);
+      let skipNetwork = false;
+
       if (mode === 'reset') {
-        if (isInitial) {
+        if (isInitial && !force) {
           const cached = await loadCachedExplorerBoardList();
           if (cached && cached.rows.length > 0) {
             setRows(cached.rows);
@@ -63,7 +69,10 @@ export function useExplorerBoard(pageSize = EXPLORER_BOARD_PAGE_SIZE): {
             offsetRef.current = cached.rows.length;
             hadCacheRef.current = true;
             setIsLoading(false);
-            setIsRefreshing(true);
+            const fresh = isCacheEntryFresh(cached.cachedAt, DEFAULT_CACHE_MAX_AGE_MS);
+            setIsRefreshing(!fresh);
+            hasFetchedOnceRef.current = fresh;
+            skipNetwork = fresh;
           } else {
             setIsLoading(true);
           }
@@ -72,6 +81,10 @@ export function useExplorerBoard(pageSize = EXPLORER_BOARD_PAGE_SIZE): {
         }
       } else {
         setIsLoadingMore(true);
+      }
+
+      if (skipNetwork) {
+        return;
       }
 
       try {
@@ -103,8 +116,8 @@ export function useExplorerBoard(pageSize = EXPLORER_BOARD_PAGE_SIZE): {
     [pageSize],
   );
 
-  const refetch = useCallback(async () => {
-    await loadPage('reset');
+  const refetch = useCallback(async (options?: { force?: boolean }) => {
+    await loadPage('reset', { force: options?.force ?? true });
   }, [loadPage]);
 
   const loadMore = useCallback(async () => {
@@ -120,7 +133,7 @@ export function useExplorerBoard(pageSize = EXPLORER_BOARD_PAGE_SIZE): {
 
   useEffect(() => {
     return subscribeExplorerBoardRefresh(() => {
-      void loadPage('reset');
+      void loadPage('reset', { force: true });
     });
   }, [loadPage]);
 

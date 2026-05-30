@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 
 import { useCacheFirstFetch } from '@/hooks/useCacheFirstFetch';
 import {
-  loadCachedScoringSnapshot,
+  loadCachedScoringSnapshotEntry,
   saveCachedScoringSnapshot,
 } from '@/lib/profile/scoringSnapshotCache';
 import {
@@ -19,7 +19,8 @@ export function useUserScoringSnapshot(userId: string | undefined) {
     refetch,
   } = useCacheFirstFetch<UserScoringSnapshot>({
     enabled: Boolean(userId),
-    loadCache: () => (userId ? loadCachedScoringSnapshot(userId) : Promise.resolve(null)),
+    loadCache: () =>
+      userId ? loadCachedScoringSnapshotEntry(userId) : Promise.resolve(null),
     fetchFresh: () => fetchUserScoringSnapshot(userId!),
     saveCache: (fresh) => saveCachedScoringSnapshot(userId!, fresh),
     mapError: (e) => (e instanceof Error ? e.message : 'Could not load scoring data.'),
