@@ -7,6 +7,7 @@ import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthGate } from '@/components/layout/auth-gate';
+import { LocalDatabaseErrorBanner } from '@/components/layout/local-database-error-banner';
 import { FirstLoginWelcomeModal } from '@/components/welcome/first-login-welcome-modal';
 import { AuthProvider } from '@/context/AuthContext';
 import { LocalDatabaseProvider } from '@/context/LocalDatabaseContext';
@@ -38,6 +39,7 @@ export default function RootLayout() {
           <LocalDatabaseProvider>
             <ThemeProvider value={navigationTheme}>
               <AuthGate>
+                <LocalDatabaseErrorBanner />
                 <Stack>
                   <Stack.Screen name="(auth)" options={{ headerShown: false }} />
                   <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

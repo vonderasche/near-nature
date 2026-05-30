@@ -3,6 +3,7 @@ import { migration002SpeciesRecords } from '@/lib/db/migrations/002_species_reco
 import { migration003UserCache } from '@/lib/db/migrations/003_user_cache';
 import { migration004UserDetections } from '@/lib/db/migrations/004_user_detections';
 import { migration005WikiCache } from '@/lib/db/migrations/005_wiki_cache';
+import { migration006ExplorerBoardCache } from '@/lib/db/migrations/006_explorer_board_cache';
 import type { DbMigration } from '@/lib/db/migrations/types';
 
 export const DB_MIGRATIONS: readonly DbMigration[] = [
@@ -11,6 +12,7 @@ export const DB_MIGRATIONS: readonly DbMigration[] = [
   migration003UserCache,
   migration004UserDetections,
   migration005WikiCache,
+  migration006ExplorerBoardCache,
 ];
 
 export const LATEST_DB_MIGRATION_VERSION =

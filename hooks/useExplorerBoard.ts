@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import {
+  loadCachedExplorerBoardList,
+  saveCachedExplorerBoardList,
+} from '@/lib/explorerBoard/explorerBoardListCache';
 import { subscribeExplorerBoardRefresh } from '@/lib/explorerBoard/explorerBoardRefresh';
 import {
   clearLegacyExplorerBoardCache,
@@ -22,6 +26,7 @@ function rpcFailureMessage(e: unknown): string {
 export function useExplorerBoard(pageSize = EXPLORER_BOARD_PAGE_SIZE): {
   rows: ExplorerBoardMemberRow[];
   isLoading: boolean;
+  isRefreshing: boolean;
   isLoadingMore: boolean;
   hasMore: boolean;
   error: string | null;
@@ -30,23 +35,41 @@ export function useExplorerBoard(pageSize = EXPLORER_BOARD_PAGE_SIZE): {
 } {
   const [rows, setRows] = useState<ExplorerBoardMemberRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const offsetRef = useRef(0);
   const hasFetchedOnceRef = useRef(false);
+  const hadCacheRef = useRef(false);
 
   const loadPage = useCallback(
     async (mode: 'reset' | 'append') => {
       if (mode === 'reset') {
         clearLegacyExplorerBoardCache();
+        hadCacheRef.current = false;
       }
+
       const offset = mode === 'reset' ? 0 : offsetRef.current;
       const isInitial = mode === 'reset' && !hasFetchedOnceRef.current;
 
       setError(null);
       if (mode === 'reset') {
-        if (isInitial) setIsLoading(true);
+        if (isInitial) {
+          const cached = await loadCachedExplorerBoardList();
+          if (cached && cached.rows.length > 0) {
+            setRows(cached.rows);
+            setHasMore(cached.hasMore);
+            offsetRef.current = cached.rows.length;
+            hadCacheRef.current = true;
+            setIsLoading(false);
+            setIsRefreshing(true);
+          } else {
+            setIsLoading(true);
+          }
+        } else {
+          setIsRefreshing(true);
+        }
       } else {
         setIsLoadingMore(true);
       }
@@ -61,14 +84,19 @@ export function useExplorerBoard(pageSize = EXPLORER_BOARD_PAGE_SIZE): {
         setHasMore(more);
         setRows((prev) => (mode === 'reset' ? pageRows : [...prev, ...pageRows]));
         hasFetchedOnceRef.current = true;
+
+        if (mode === 'reset' && offset === 0) {
+          await saveCachedExplorerBoardList({ rows: pageRows, hasMore: more });
+        }
       } catch (e) {
-        if (mode === 'reset') {
+        if (mode === 'reset' && !hadCacheRef.current) {
           setRows([]);
           setHasMore(false);
         }
         setError(rpcFailureMessage(e));
       } finally {
         setIsLoading(false);
+        setIsRefreshing(false);
         setIsLoadingMore(false);
       }
     },
@@ -80,9 +108,9 @@ export function useExplorerBoard(pageSize = EXPLORER_BOARD_PAGE_SIZE): {
   }, [loadPage]);
 
   const loadMore = useCallback(async () => {
-    if (!hasMore || isLoadingMore || isLoading) return;
+    if (!hasMore || isLoadingMore || isLoading || isRefreshing) return;
     await loadPage('append');
-  }, [hasMore, isLoadingMore, isLoading, loadPage]);
+  }, [hasMore, isLoadingMore, isLoading, isRefreshing, loadPage]);
 
   useEffect(() => {
     hasFetchedOnceRef.current = false;
@@ -96,5 +124,5 @@ export function useExplorerBoard(pageSize = EXPLORER_BOARD_PAGE_SIZE): {
     });
   }, [loadPage]);
 
-  return { rows, isLoading, isLoadingMore, hasMore, error, loadMore, refetch };
+  return { rows, isLoading, isRefreshing, isLoadingMore, hasMore, error, loadMore, refetch };
 }

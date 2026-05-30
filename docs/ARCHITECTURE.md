@@ -72,12 +72,12 @@ AuthContext: check public.users row exists?
 ## Tab 2 — Explorer Board
 
 - Loads paginated Explorer Board via RPC **`get_detection_count_leaderboard`**.
+- **Device cache:** first page cached in SQLite (`explorer_board_cache`) or AsyncStorage on web — stale-while-revalidate on open; pull-to-refresh always hits the network.
 - Search is **client-side** on loaded rows (280ms debounced).
 - Member avatars/tiles use **signed URL** batch resolution (same pipeline as gallery).
 - **FlashList** virtualizes list/grid inside parent scroll.
 - Refresh on pull; `requestExplorerBoardRefresh()` after saves updates the board when revisited.
-
-**No device cache** for Explorer Board rows (always fresh from RPC). Column count preference is cached locally.
+- Column count and list/grid layout preferences are cached locally (AsyncStorage).
 
 ---
 
@@ -133,20 +133,22 @@ Requires `sql/get_user_scoring_snapshot.sql` (or fallback RPCs) in Supabase.
 | **Scoring snapshot** | `near_nature:scoring_snapshot:{userId}` | Mains, awards, score breakdown | Sign out, save, delete |
 | **Signed URLs** | Memory + `near_nature:signed_url:{path}` | Supabase signed image URLs | Sign out (+ memory on expiry) |
 | **Saved species session** | In-memory `Map` | Latest detection per latin name | Sign out; warmed on profile load |
+| **Explorer Board list** | `near_nature:explorer_board_list` | First page of leaderboard rows | Never (global); overwritten on fetch |
 | **Explorer Board columns** | AsyncStorage preference | 2/3/4 column grid | Never (UI pref) |
 | **Gallery grid columns** | AsyncStorage preference | Column count | Never |
 | **expo-image** | OS disk | Rendered bitmaps | OS-managed |
-| **SQLite (`near_nature.db`)** | `expo-sqlite` on device | Global: `species_records` genus catalog. User-scoped: profile, gallery list cache, scoring snapshot, saved-species map, signed URLs, **`user_detections`** | Sign out clears user-scoped SQLite rows; species catalog kept |
+| **SQLite (`near_nature.db`)** | `expo-sqlite` on device | Global: `species_records`, `wiki_cache`, `explorer_board_cache`. User-scoped: profile, gallery list cache, scoring snapshot, saved-species map, signed URLs, **`user_detections`** | Sign out clears user-scoped SQLite rows; global catalog + board cache kept |
 
 Stale-while-revalidate: show cache immediately, refresh in background, then update cache.
 
-**SQLite notes:** Requires a native dev-client rebuild after installing `expo-sqlite`. Skipped on web (cache modules fall back to AsyncStorage). Bundled genus catalog seeds on first launch or when the catalog version changes. On upgrade, legacy AsyncStorage cache keys are imported once into SQLite. User cache tables include `user_detections`: every save uploads to Supabase then upserts locally; gallery fetches sync pages into SQLite in the background.
+**SQLite notes:** Requires a native dev-client rebuild after installing `expo-sqlite` or adding migrations. Skipped on web (cache modules fall back to AsyncStorage). If SQLite init fails, a dismissible banner explains that caches fall back to network/AsyncStorage. Bundled genus catalog seeds on first launch or when the catalog version changes. On upgrade, legacy AsyncStorage cache keys are imported once into SQLite. **Sync model:** saves upload to Supabase then upsert locally; gallery/board/profile hooks show cached data immediately and refresh in the background.
 
 **Implementation paths:**
 
-- Local DB: `lib/db/initLocalDatabase.ts`, `context/LocalDatabaseContext.tsx`, `lib/db/speciesRepository.ts`, `lib/db/userCacheRepository.ts`, `lib/db/detectionRepository.ts`
+- Local DB: `lib/db/initLocalDatabase.ts`, `context/LocalDatabaseContext.tsx`, `lib/db/speciesRepository.ts`, `lib/db/userCacheRepository.ts`, `lib/db/globalCacheRepository.ts`, `lib/db/detectionRepository.ts`
 - Profile: `lib/profile/ownProfileCache.ts`, `hooks/useUser.ts`
 - Gallery: `lib/detections/galleryListCache.ts`, `hooks/useUserDetectionGallery.ts`
+- Explorer Board: `lib/explorerBoard/explorerBoardListCache.ts`, `hooks/useExplorerBoard.ts`
 - Scoring: `lib/profile/scoringSnapshotCache.ts`, `hooks/useUserScoringSnapshot.ts`
 - Signed URLs: `lib/detections/signedDetectionUrlCache.ts`, `signedDetectionUrlPersistentCache.ts`
 - Saved species: `lib/identification/savedSpeciesSessionCache.ts`

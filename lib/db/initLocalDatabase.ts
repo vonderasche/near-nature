@@ -26,6 +26,7 @@ export async function initLocalDatabase(): Promise<void> {
     devLog('[db] ready', { migrationVersion: LATEST_DB_MIGRATION_VERSION });
   })().catch((error) => {
     initPromise = null;
+    devLog('[db] init failed', error);
     throw error;
   });
 
