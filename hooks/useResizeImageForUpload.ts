@@ -14,7 +14,7 @@ export type UseResizeImageForUploadResult = {
 };
 
 /**
- * Prepares camera/library photos for APIs with strict image size limits (e.g. Claude ~5 MiB).
+ * Prepares camera/library photos for vision API upload with strict size limits (web Gemini fallback).
  * Uses stable options via deps — memoize options in the caller if you pass an inline object.
  */
 export function useResizeImageForUpload(

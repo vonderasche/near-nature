@@ -58,7 +58,7 @@ create table public.detections (
   image_url       text not null,
   detected_at     timestamptz default now() not null,
 
-  -- Claude API results
+  -- Vision / model identification results
   common_name     text not null,
   latin_name      text not null,
   confidence      numeric(5, 2) not null check (confidence >= 0 and confidence <= 100),

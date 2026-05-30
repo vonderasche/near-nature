@@ -93,11 +93,11 @@ Use for a **new** Supabase project or when you intentionally recreate the `publi
 | Need | Action |
 |------|--------|
 | Auth users without `public.users` | Run `ensure_public_user_profile.sql`, then `backfill_public_users_from_auth.sql` if many users are affected |
-| Species identification in app | `.\scripts\deploy-identify-species.ps1` and `ANTHROPIC_API_KEY` in Edge secrets |
+| Species identification in app | Native: bundled TFLite models (no Edge). Web: `.\scripts\deploy-identify-species.ps1` and `GEMINI_API_KEY` in Edge secrets |
 | Delete account in app | Deploy `delete-account` Edge Function (not SQL) |
 | Confirm RPCs | `npm run verify:supabase` |
 
-Do **not** put `EXPO_PUBLIC_ANTHROPIC_API_KEY` in production app `.env` — use the Edge Function only.
+Do **not** put `EXPO_PUBLIC_GEMINI_API_KEY` in production app `.env` for release builds — use the Edge Function on web only.
 
 ---
 

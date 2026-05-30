@@ -4,14 +4,14 @@ import { manipulateAsync, SaveFormat, type ImageResult } from 'expo-image-manipu
 export type ResizeImageForUploadOptions = {
   /** Initial cap on the longest edge in pixels (default 2048). */
   maxEdge?: number;
-  /** Target maximum JPEG file size on disk in bytes (default ~4.5 MiB, under Claude’s ~5 MiB image limit). */
+  /** Target maximum JPEG file size on disk in bytes (default ~4.5 MiB, under typical vision API limits). */
   maxBytes?: number;
   /** JPEG quality 0–1 (default 0.82). Reduced automatically if still too large. */
   compress?: number;
 };
 
 const DEFAULT_MAX_EDGE = 2048;
-/** Stay under Anthropic’s 5 MiB limit with margin (binary JPEG size ≈ decoded size for that limit). */
+/** Stay under typical vision API image limits with margin. */
 const DEFAULT_MAX_BYTES = Math.floor(4.5 * 1024 * 1024);
 const DEFAULT_COMPRESS = 0.82;
 
@@ -24,7 +24,7 @@ async function getDimensions(uri: string): Promise<{ width: number; height: numb
 }
 
 /**
- * Resizes and recompresses a local image so API uploads stay within typical vision limits (e.g. Claude ~5 MiB).
+ * Resizes and recompresses a local image so vision API uploads stay within typical size limits.
  * Iteratively shrinks dimensions and/or quality until the JPEG is under `maxBytes`.
  */
 export async function resizeImageForUpload(

@@ -36,6 +36,9 @@ yarn-error.*
 .env.backup
 .env*.local
 
+# local Supabase scratch queries
+supabase/snippets/
+
 # typescript
 *.tsbuildinfo
 

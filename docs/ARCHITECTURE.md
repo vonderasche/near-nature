@@ -14,7 +14,7 @@ For SQL setup order, see [`sql/README.md`](../sql/README.md).
 | **Auth** | Supabase Auth session in AsyncStorage; `AuthGate` routes signed-in users to tabs only if `public.users` exists |
 | **Postgres** | Users, detections, discoveries, point awards, streaks — mostly via RPCs and RLS |
 | **Storage** | Private `detections` bucket; images shown via **signed URLs** |
-| **Edge** | `identify-species` — Claude vision (not direct DB) |
+| **Edge** | `identify-species` — Gemini vision fallback (web / unsigned dev; not direct DB) |
 | **External** | iNaturalist (native status), Wikipedia (descriptions) — only when needed |
 | **Device cache** | Profile, gallery metadata, scoring snapshot, signed URLs, saved-species map, layout prefs |
 
@@ -44,18 +44,31 @@ AuthContext: check public.users row exists?
 
 ## Tab 1 — Camera (identify → save)
 
-### Identify flow (network-heavy)
+### Identify flow
+
+**Native (iOS / Android)** — on-device TFLite, no network for classification:
 
 1. User captures or picks a photo (full resolution kept for save).
-2. Image resized for vision (**max edge 1280**) → base64.
-3. **Supabase Edge** `identify-species` (or dev-only direct Anthropic API) → list of classifications (latin/common names, confidence).
-4. **Enrichment** (`enrichSpeciesFromApis`):
-   - **Saved species session** (in-memory map, warmed on profile load): if the user already saved this latin name, reuse status + description — **no iNat/wiki**.
-   - Otherwise: **iNaturalist only for the primary (first) candidate**; alternates get `unknown` unless saved data exists.
-   - **Wikipedia** for up to 3 candidates (parallel with status for primary).
-5. UI shows species list, wiki snippets, save button.
+2. **Preview model** (`near_nature_app_bundle/preview`) → top taxon group (20 classes).
+3. **Routing** (`routing.json`) selects a bundled **specialist** model when available (birds roll up species → genus; others predict genus directly).
+4. Top genus candidates become `ClassificationResult[]` (latin name = genus, confidence from model).
 
-**DB during identify:** optional `detections` read only if session cache misses a latin name. **No write** until save.
+**Web / non-native fallback** — Gemini via Edge or dev direct API:
+
+1. Image resized for vision (**max edge 1280**) → base64.
+2. **Supabase Edge** `identify-species` (or dev-only `EXPO_PUBLIC_GEMINI_API_KEY`) → classifications.
+
+**Enrichment** (`enrichSpeciesFromApis`) — both paths:
+
+- **Saved species session** (SQLite map, warmed on profile load): reuse prior status + description when the user already saved this latin name.
+- **Bundled genus catalog** (`species_records`): offline descriptions when the latin name matches seeded catalog data.
+- **Wiki cache** (`wiki_cache` SQLite table): reuse prior Wikipedia fetches across sessions.
+- **iNaturalist** for the **primary (first) candidate only**; alternates get `unknown` unless saved data exists.
+- **Wikipedia** for up to 3 candidates (parallel with status for primary); successful fetches are written to `wiki_cache`.
+
+5. UI shows genus/species list, wiki snippets, routing banner (TFLite meta), save button.
+
+**DB during identify:** optional reads from saved-species map, `species_records`, or `wiki_cache`. **No write** until save.
 
 ### Save flow
 
@@ -165,7 +178,8 @@ Stale-while-revalidate: show cache immediately, refresh in background, then upda
 | Open Profile | Cache hit → then `users` + `get_public_user_profile` |
 | Open gallery (profile) | Cache → `detections` SELECT (paged) |
 | Expand Scoring & badges | Cache → `get_user_scoring_snapshot` RPC |
-| Identify photo | Edge function only (+ optional `detections` read for saved species) |
+| Identify photo (native) | On-device TFLite only (+ optional SQLite reads for enrichment) |
+| Identify photo (web) | Edge `identify-species` or dev Gemini (+ optional SQLite reads for enrichment) |
 | Save identification | Storage upload + `INSERT detections` (+ triggers) |
 | Delete photo | `DELETE detections` + storage |
 | Explorer Board | `get_detection_count_leaderboard` RPC (paged) |
@@ -197,15 +211,16 @@ Postgres triggers on `detections` insert handle points, streaks, discoveries, an
    │   Auth   │              │              │  │   BOARD    │  │             │
    └────┬─────┘              └──────┬───────┘  └─────┬──────┘  └──────┬──────┘
         │                           │                │                 │
-        │                    ┌──────▼───────┐        │          ┌──────┴──────┐
-        │                    │ Resize 1280  │        │          │ Badges│Gallery│
-        │                    │ Edge: Claude │        │          └──────┬──────┘
-        │                    └──────┬───────┘        │                 │
-        │                           │                │                 │
-        │              ┌────────────┼────────────┐   │                 │
-        │              ▼            ▼            ▼   │                 │
-        │         [Session]    [iNat #0]    [Wiki≤3] │                 │
-        │         species map  primary only          │                 │
+        │              ┌──────▼───────┐              │          ┌──────┴──────┐
+        │              │ TFLite bundle│              │          │ Badges│Gallery│
+        │              │ preview→spec │              │          └──────┬──────┘
+        │              └──────┬───────┘              │                 │
+        │         (web only)  │  Resize→Gemini edge  │                 │
+        │                     │                      │                 │
+        │              ┌──────┼────────────┐        │                 │
+        │              ▼      ▼            ▼        │                 │
+        │         [Saved] [Catalog]   [Wiki cache]  │                 │
+        │         [iNat #0]  [Wiki≤3 live fetch]    │                 │
         │              │            │            │   │                 │
         │              └────────────┼────────────┘   │                 │
         │                           │ SAVE            │                 │
@@ -214,7 +229,7 @@ Postgres triggers on `detections` insert handle points, streaks, discoveries, an
 │                              SUPABASE BACKEND                                 │
 │  ┌─────────────┐   ┌──────────────────┐   ┌─────────────────────────────┐     │
 │  │   Storage   │   │  Edge: identify- │   │  Postgres (RLS)             │     │
-│  │ detections/ │   │  species (vision)│   │  users · detections         │     │
+│  │ detections/ │   │  species (Gemini)│   │  users · detections         │     │
 │  │   bucket    │   └──────────────────┘   │  discoveries · point_awards │     │
 │  └──────▲──────┘                          │  streaks · triggers         │     │
 │         │ upload                          └───────────┬─────────────────┘     │
@@ -245,23 +260,24 @@ Postgres triggers on `detections` insert handle points, streaks, discoveries, an
 ```
                     [Photo captured]
                            │
-                           ▼
-                  ┌────────────────┐
-                  │ Claude (edge)  │
-                  └────────┬───────┘
+              ┌────────────┴────────────┐
+              ▼                         ▼
+     [Native: TFLite preview      [Web: resize 1280 →
+      → specialist → genus]         Gemini edge / dev API]
+              │                         │
+              └────────────┬────────────┘
                            │ classifications[]
                            ▼
               ┌────────────────────────────┐
               │ For each candidate (i):   │
               └────────────┬───────────────┘
                            │
-         ┌─────────────────┼─────────────────┐
-         ▼                 ▼                 ▼
-   saved session?     i == 0 ?          i < wikiLimit?
-         │                 │                 │
-    yes ─┴─ skip APIs   yes ─┴─ iNat      yes ─┴─ Wikipedia
-    no  ─── fetch DB    no  ─── status=unknown   no  ─── skip wiki
-         for missings       (unless saved)
+    ┌──────────┬───────────┼───────────┬──────────┐
+    ▼          ▼           ▼           ▼          ▼
+ saved?    catalog?   wiki_cache?  i==0?    i<wikiLimit?
+    │          │           │           │          │
+ skip iNat   use desc   use desc    iNat      Wikipedia
+ & wiki     offline    offline     primary   (→ cache write)
 ```
 
 ---
@@ -271,7 +287,7 @@ Postgres triggers on `detections` insert handle points, streaks, discoveries, an
 1. Run SQL patches in order (`add_naturalist_*`, `create_point_awards`, `check_category_milestones`, `get_user_score_by_category`, `get_user_scoring_snapshot`, `get_public_user_awards`).
 2. Reload Supabase schema cache (Settings → API).
 3. `npm run verify:supabase`
-4. Deploy `identify-species` edge function.
+4. Deploy `identify-species` edge function; set `GEMINI_API_KEY` in Supabase secrets (required for web identification).
 5. Physical Android dev: `npm run start:dev` then `npm run android:install` (see `.env.example`).
 6. Rebuild native app after native dependency changes (e.g. FlashList).
 
