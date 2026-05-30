@@ -16,6 +16,14 @@ type IdentifyFn = (
   tfliteMeta: TfliteIdentificationMeta | null;
 }>;
 
+export const emptyIdentificationResults = {
+  species: [] as Species[],
+  classifications: [] as ClassificationResult[],
+  wikiByLatinName: {} as Record<string, SpeciesWikiData | null>,
+  wikiError: null as string | null,
+  tfliteMeta: null as TfliteIdentificationMeta | null,
+};
+
 /**
  * Runs vision identification when `photoUri` / `userState` / `identify` change. Skips until
  * `userState` is a real two-letter code (not the empty placeholder while the profile loads).
@@ -33,18 +41,37 @@ export function useIdentificationResultsState(
   wikiError: string | null;
   tfliteMeta: TfliteIdentificationMeta | null;
 } {
-  const [species, setSpecies] = useState<Species[]>([]);
-  const [classifications, setClassifications] = useState<ClassificationResult[]>([]);
-  const [wikiByLatinName, setWikiByLatinName] = useState<Record<string, SpeciesWikiData | null>>({});
-  const [wikiError, setWikiError] = useState<string | null>(null);
-  const [tfliteMeta, setTfliteMeta] = useState<TfliteIdentificationMeta | null>(null);
+  const [species, setSpecies] = useState<Species[]>(emptyIdentificationResults.species);
+  const [classifications, setClassifications] = useState<ClassificationResult[]>(
+    emptyIdentificationResults.classifications,
+  );
+  const [wikiByLatinName, setWikiByLatinName] = useState<Record<string, SpeciesWikiData | null>>(
+    emptyIdentificationResults.wikiByLatinName,
+  );
+  const [wikiError, setWikiError] = useState<string | null>(emptyIdentificationResults.wikiError);
+  const [tfliteMeta, setTfliteMeta] = useState<TfliteIdentificationMeta | null>(
+    emptyIdentificationResults.tfliteMeta,
+  );
 
   useEffect(() => {
-    if (!photoUri) return;
-    // Wait for profile home state (`useUserHomeState` is '' until `getUser` finishes).
+    if (!photoUri) {
+      setSpecies(emptyIdentificationResults.species);
+      setClassifications(emptyIdentificationResults.classifications);
+      setWikiByLatinName(emptyIdentificationResults.wikiByLatinName);
+      setWikiError(emptyIdentificationResults.wikiError);
+      setTfliteMeta(emptyIdentificationResults.tfliteMeta);
+      return;
+    }
     if (userState.trim().length < 2) return;
+
+    setSpecies(emptyIdentificationResults.species);
+    setClassifications(emptyIdentificationResults.classifications);
+    setWikiByLatinName(emptyIdentificationResults.wikiByLatinName);
+    setWikiError(emptyIdentificationResults.wikiError);
+    setTfliteMeta(emptyIdentificationResults.tfliteMeta);
+
     let cancelled = false;
-    (async () => {
+    void (async () => {
       const results = await identify(photoUri, userState, userId);
       if (!cancelled) {
         setSpecies(results.species);

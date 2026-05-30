@@ -26,10 +26,6 @@ export default function CameraScreen() {
   const { isAuthenticated, isLoading } = useAuthContext();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-
-  if (!isLoading && !isAuthenticated) {
-    return <Redirect href={routes.login} />;
-  }
   const [capturedPhotoUri, setCapturedPhotoUri] = useState<string | null>(null);
   const [pickerNotice, setPickerNotice] = useState<{ title: string; message: string } | null>(null);
   const [backgroundSaveError, setBackgroundSaveError] = useState<{
@@ -104,6 +100,10 @@ export default function CameraScreen() {
     { hdrEnabled, stabilizationEnabled },
   );
   const { zoom, setZoom, chips, activeChipId, selectChip } = useCameraZoom(device ?? undefined);
+
+  if (!isLoading && !isAuthenticated) {
+    return <Redirect href={routes.login} />;
+  }
 
   const messageModal = (
     <>

@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { detectionCategoryMatchesTaxonGroup } from '@/lib/detections/detectionCategoryTaxonFilter';
+import { mapGalleryItemsToIdentifications } from '@/lib/detections/mapGalleryItemsToIdentifications';
 import { hydrateGalleryItemsFromRows } from '@/lib/detections/hydrateGalleryItems';
 import type { DetectionGalleryRow } from '@/lib/detections/mapDetectionGalleryRow';
-import { supabase } from '@/lib/supabase';
+import { fetchUserDetectionGalleryRowsPage } from '@/services/detectionGalleryService';
 import type { Identification, TaxonGroup } from '@/types';
 
 interface UseIdentificationsOptions {
@@ -16,7 +17,7 @@ interface UseIdentificationsResult {
   identifications: Identification[];
   isLoading: boolean;
   error: string | null;
-  refetch: () => void;
+  refetch: () => Promise<void>;
 }
 
 export function useIdentifications({
@@ -39,37 +40,20 @@ export function useIdentifications({
     setError(null);
 
     try {
-      const { data, error: queryError } = await supabase
-        .from('detections')
-        .select(
-          'id, user_id, image_url, detected_at, common_name, latin_name, category, subcategory, main_category, description, native_status',
-        )
-        .eq('user_id', userId)
-        .order('detected_at', { ascending: false })
-        .limit(limit);
+      const { rows: pageRows } = await fetchUserDetectionGalleryRowsPage({
+        userId,
+        publicOnly: false,
+        offset: 0,
+        pageSize: limit,
+        query: '',
+        categoryFilter: { kind: 'all' },
+      });
 
-      if (queryError) throw queryError;
-
-      const rows = ((data ?? []) as DetectionGalleryRow[]).filter((row) =>
+      const rows = (pageRows as DetectionGalleryRow[]).filter((row) =>
         detectionCategoryMatchesTaxonGroup(String(row.category), taxonGroup),
       );
       const galleryItems = await hydrateGalleryItemsFromRows(rows);
-
-      const mapped: Identification[] = galleryItems.map((item) => ({
-        id: item.id,
-        userId,
-        timestamp: item.detectedAt,
-        species: {
-          id: item.id,
-          latinName: item.latinName,
-          commonName: item.commonName,
-          taxonGroup: item.category,
-          status: item.nativeStatus,
-        },
-        galleryItem: item,
-      }));
-
-      setIdentifications(mapped);
+      setIdentifications(mapGalleryItemsToIdentifications(userId, galleryItems));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load identifications.');
       setIdentifications([]);
@@ -79,7 +63,7 @@ export function useIdentifications({
   }, [userId, taxonGroup, limit]);
 
   useEffect(() => {
-    fetch();
+    void fetch();
   }, [fetch]);
 
   return { identifications, isLoading, error, refetch: fetch };
