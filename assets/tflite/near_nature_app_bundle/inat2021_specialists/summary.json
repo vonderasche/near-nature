@@ -1,0 +1,83 @@
+{
+  "bundle": "inat2021_specialists_v1",
+  "specialistCount": 9,
+  "speciesRollupSpecialists": [
+    "birds"
+  ],
+  "specialists": [
+    {
+      "id": "trees",
+      "mode": "genus",
+      "architecture": "large",
+      "tfliteFile": "trees_genus.tflite",
+      "classCount": 198,
+      "outputLabelType": "genus"
+    },
+    {
+      "id": "woody_plants",
+      "mode": "genus",
+      "architecture": "large",
+      "tfliteFile": "woody_plants_genus.tflite",
+      "classCount": 89,
+      "outputLabelType": "genus"
+    },
+    {
+      "id": "herbaceous_plants",
+      "mode": "genus",
+      "architecture": "large",
+      "tfliteFile": "herbaceous_plants_genus.tflite",
+      "classCount": 1473,
+      "outputLabelType": "genus"
+    },
+    {
+      "id": "herps",
+      "mode": "genus",
+      "architecture": "large",
+      "tfliteFile": "herps_genus.tflite",
+      "classCount": 226,
+      "outputLabelType": "genus"
+    },
+    {
+      "id": "insects_arachnids",
+      "mode": "genus",
+      "architecture": "large",
+      "tfliteFile": "insects_arachnids_genus.tflite",
+      "classCount": 1569,
+      "outputLabelType": "genus"
+    },
+    {
+      "id": "fish",
+      "mode": "genus",
+      "architecture": "large",
+      "tfliteFile": "fish_genus.tflite",
+      "classCount": 146,
+      "outputLabelType": "genus"
+    },
+    {
+      "id": "fungi",
+      "mode": "genus",
+      "architecture": "large",
+      "tfliteFile": "fungi_genus.tflite",
+      "classCount": 210,
+      "outputLabelType": "genus"
+    },
+    {
+      "id": "mammals_domestic",
+      "mode": "genus",
+      "architecture": "large",
+      "tfliteFile": "mammals_domestic_genus.tflite",
+      "classCount": 7,
+      "outputLabelType": "genus"
+    },
+    {
+      "id": "birds",
+      "mode": "species_rollup",
+      "architecture": "large",
+      "tfliteFile": "birds_species.tflite",
+      "speciesClassCount": 1486,
+      "genusClassCount": 648,
+      "outputLabelType": "genus",
+      "rollupFile": "rollup.json"
+    }
+  ]
+}

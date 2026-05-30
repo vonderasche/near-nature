@@ -1,15 +1,13 @@
-import previewModelAsset from '@/assets/tflite/mobilenetv3_small_top20_preview/tflite/species_classifier.tflite';
+import previewModelAsset from '@/assets/tflite/near_nature_app_bundle/preview/preview_classifier.tflite';
 
-import { getMobileNetTop20PreviewLabel } from '@/lib/camera/mobilenet/top20PreviewLabels';
+import { rollupSpeciesScoresToGenusTop3 } from '@/lib/camera/mobilenet/birdsSpeciesRollup';
+import { getLabelAtIndex } from '@/lib/camera/mobilenet/parseModelLabels';
 import { preprocessImageForMobileNet } from '@/lib/camera/mobilenet/preprocessImageForMobileNet';
 import { previewLabelToTaxonGroup } from '@/lib/camera/mobilenet/previewLabelTaxonomy';
-import {
-  resolveSpecialistForPreviewLabel,
-  SPECIALIST_DISPLAY_NAMES,
-} from '@/lib/camera/mobilenet/previewToSpecialist';
-import { getLabelAtIndex } from '@/lib/camera/mobilenet/parseModelLabels';
+import { resolveSpecialistForPreviewLabel } from '@/lib/camera/mobilenet/tfliteRouting';
 import { getSpecialistDefinition } from '@/lib/camera/mobilenet/specialistModelRegistry';
 import { getCachedTfliteModel, runTfliteTop3 } from '@/lib/camera/mobilenet/tfliteModelRunner';
+import { TFLITE_ROUTING } from '@/lib/camera/mobilenet/tfliteRouting';
 import type { ClassificationResult } from '@/types';
 import type {
   GenusPrediction,
@@ -18,13 +16,17 @@ import type {
   TfliteIdentificationResult,
 } from '@/types/tfliteIdentification';
 
+function previewLabelAtIndex(classIndex: number): string {
+  return TFLITE_ROUTING.preview_groups[classIndex] ?? `Class ${classIndex}`;
+}
+
 function toPreviewPredictions(
   scores: { classIndex: number; confidence: number }[],
 ): PreviewPrediction[] {
   return scores.map((score) => ({
     classIndex: score.classIndex,
     confidence: score.confidence,
-    label: getMobileNetTop20PreviewLabel(score.classIndex),
+    label: previewLabelAtIndex(score.classIndex),
   }));
 }
 
@@ -43,7 +45,6 @@ function genusToClassification(
   genus: string,
   confidence: number,
   previewLabel: string,
-  index: number,
 ): ClassificationResult {
   return {
     latinName: genus,
@@ -53,6 +54,30 @@ function genusToClassification(
   };
 }
 
+async function runSpecialistGenusTop3(
+  input: Float32Array,
+  specialist: NonNullable<ReturnType<typeof getSpecialistDefinition>>,
+): Promise<{ classIndex: number; confidence: number }[]> {
+  const specialistModel = await getCachedTfliteModel(specialist.model);
+
+  if (specialist.inferenceMode === 'species_rollup' && specialist.rollup) {
+    const outputs = await specialistModel.run([input.buffer as ArrayBuffer]);
+    const raw = outputs[0];
+    if (raw == null) {
+      throw new Error('The bird species model returned no output.');
+    }
+    return rollupSpeciesScoresToGenusTop3(raw, specialist.rollup);
+  }
+
+  return runTfliteTop3(specialistModel, input);
+}
+
+/**
+ * On-device identification for camera capture and gallery picks:
+ * 1) top-20 preview model (near_nature_app_bundle/preview)
+ * 2) route top preview class via routing.json
+ * 3) run the matching specialist model for genus predictions
+ */
 export async function identifyPhotoWithTflite(
   photoUri: string,
 ): Promise<TfliteIdentificationResult> {
@@ -92,43 +117,35 @@ export async function identifyPhotoWithTflite(
     };
   }
 
-  const specialistId = resolveSpecialistForPreviewLabel(topPreview.label);
-  const herpLabels = new Set([
-    'Reptile / Lizard',
-    'Snake',
-    'Turtle',
-    'Frog / Amphibian',
-  ]);
+  const routing = resolveSpecialistForPreviewLabel(topPreview.label);
 
-  if (!specialistId) {
-    const notice = herpLabels.has(topPreview.label)
-      ? 'Reptile and amphibian genus models are not bundled yet. Try a clearer photo or check back after the herps model is added.'
-      : 'No specialist genus model is available for this category yet.';
+  if (!routing.assetFolder) {
     return {
       classifications: [],
       meta: {
         previewTop,
         routedPreviewLabel: topPreview.label,
-        specialistId: null,
-        specialistDisplayName: null,
+        specialistId: routing.routingId,
+        specialistDisplayName: routing.displayName,
         genusTop: [],
         usedSpecialist: false,
-        notice,
+        notice: routing.routingId
+          ? `${routing.displayName ?? 'This category'} does not have a bundled on-device model.`
+          : 'No specialist model is available for this category.',
       },
     };
   }
 
-  const specialist = getSpecialistDefinition(specialistId);
+  const specialist = getSpecialistDefinition(routing.assetFolder);
   if (!specialist) {
-    throw new Error(`Missing specialist model configuration for ${specialistId}.`);
+    throw new Error(`Missing specialist model configuration for ${routing.assetFolder}.`);
   }
 
-  const specialistModel = await getCachedTfliteModel(specialist.model);
-  const genusScores = await runTfliteTop3(specialistModel, input);
+  const genusScores = await runSpecialistGenusTop3(input, specialist);
   const genusTop = toGenusPredictions(genusScores, specialist.labelLookup);
 
-  const classifications = genusTop.map((row, index) =>
-    genusToClassification(row.genus, row.confidence, topPreview.label, index),
+  const classifications = genusTop.map((row) =>
+    genusToClassification(row.genus, row.confidence, topPreview.label),
   );
 
   return {
@@ -136,8 +153,8 @@ export async function identifyPhotoWithTflite(
     meta: {
       previewTop,
       routedPreviewLabel: topPreview.label,
-      specialistId,
-      specialistDisplayName: SPECIALIST_DISPLAY_NAMES[specialistId],
+      specialistId: routing.routingId,
+      specialistDisplayName: routing.displayName,
       genusTop,
       usedSpecialist: true,
       notice: null,

@@ -1,0 +1,164 @@
+{
+  "bundle": "near_nature_inat2021_v1",
+  "builtAt": "2026-05-29",
+  "fileCount": 39,
+  "totalSizeMb": 189.3,
+  "files": [
+    {
+      "path": "genus_info/genus_profiles.enriched.min.json",
+      "sizeBytes": 1966422
+    },
+    {
+      "path": "inat2021_specialists/birds/birds_species.tflite",
+      "sizeBytes": 24427276
+    },
+    {
+      "path": "inat2021_specialists/birds/genus_labels.json",
+      "sizeBytes": 40751
+    },
+    {
+      "path": "inat2021_specialists/birds/model_info.json",
+      "sizeBytes": 48845
+    },
+    {
+      "path": "inat2021_specialists/birds/rollup.json",
+      "sizeBytes": 14954
+    },
+    {
+      "path": "inat2021_specialists/birds/species_labels.json",
+      "sizeBytes": 107826
+    },
+    {
+      "path": "inat2021_specialists/fish/fish_genus.tflite",
+      "sizeBytes": 17561116
+    },
+    {
+      "path": "inat2021_specialists/fish/labels.json",
+      "sizeBytes": 9230
+    },
+    {
+      "path": "inat2021_specialists/fish/model_info.json",
+      "sizeBytes": 8349
+    },
+    {
+      "path": "inat2021_specialists/fungi/fungi_genus.tflite",
+      "sizeBytes": 17889052
+    },
+    {
+      "path": "inat2021_specialists/fungi/labels.json",
+      "sizeBytes": 13320
+    },
+    {
+      "path": "inat2021_specialists/fungi/model_info.json",
+      "sizeBytes": 9354
+    },
+    {
+      "path": "inat2021_specialists/herbaceous_plants/herbaceous_plants_genus.tflite",
+      "sizeBytes": 24360664
+    },
+    {
+      "path": "inat2021_specialists/herbaceous_plants/labels.json",
+      "sizeBytes": 93165
+    },
+    {
+      "path": "inat2021_specialists/herbaceous_plants/model_info.json",
+      "sizeBytes": 36189
+    },
+    {
+      "path": "inat2021_specialists/herps/herps_genus.tflite",
+      "sizeBytes": 17971036
+    },
+    {
+      "path": "inat2021_specialists/herps/labels.json",
+      "sizeBytes": 14225
+    },
+    {
+      "path": "inat2021_specialists/herps/model_info.json",
+      "sizeBytes": 10932
+    },
+    {
+      "path": "inat2021_specialists/insects_arachnids/insects_arachnids_genus.tflite",
+      "sizeBytes": 24852568
+    },
+    {
+      "path": "inat2021_specialists/insects_arachnids/labels.json",
+      "sizeBytes": 99206
+    },
+    {
+      "path": "inat2021_specialists/insects_arachnids/model_info.json",
+      "sizeBytes": 36987
+    },
+    {
+      "path": "inat2021_specialists/mammals_domestic/labels.json",
+      "sizeBytes": 475
+    },
+    {
+      "path": "inat2021_specialists/mammals_domestic/mammals_domestic_genus.tflite",
+      "sizeBytes": 16848880
+    },
+    {
+      "path": "inat2021_specialists/mammals_domestic/model_info.json",
+      "sizeBytes": 6088
+    },
+    {
+      "path": "inat2021_specialists/README.md",
+      "sizeBytes": 896
+    },
+    {
+      "path": "inat2021_specialists/routing.json",
+      "sizeBytes": 5495
+    },
+    {
+      "path": "inat2021_specialists/summary.json",
+      "sizeBytes": 2076
+    },
+    {
+      "path": "inat2021_specialists/trees/labels.json",
+      "sizeBytes": 12291
+    },
+    {
+      "path": "inat2021_specialists/trees/model_info.json",
+      "sizeBytes": 9511
+    },
+    {
+      "path": "inat2021_specialists/trees/trees_genus.tflite",
+      "sizeBytes": 17827564
+    },
+    {
+      "path": "inat2021_specialists/woody_plants/labels.json",
+      "sizeBytes": 5554
+    },
+    {
+      "path": "inat2021_specialists/woody_plants/model_info.json",
+      "sizeBytes": 8542
+    },
+    {
+      "path": "inat2021_specialists/woody_plants/woody_plants_genus.tflite",
+      "sizeBytes": 17269048
+    },
+    {
+      "path": "preview/labels.json",
+      "sizeBytes": 1355
+    },
+    {
+      "path": "preview/model_info.json",
+      "sizeBytes": 7706
+    },
+    {
+      "path": "preview/preview_classifier.tflite",
+      "sizeBytes": 16915492
+    },
+    {
+      "path": "preview/preview_to_specialist.json",
+      "sizeBytes": 670
+    },
+    {
+      "path": "README.md",
+      "sizeBytes": 1084
+    },
+    {
+      "path": "routing.json",
+      "sizeBytes": 8217
+    }
+  ]
+}

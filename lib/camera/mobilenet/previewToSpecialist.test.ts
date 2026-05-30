@@ -6,17 +6,16 @@ import {
 } from '@/lib/camera/mobilenet/previewToSpecialist';
 
 describe('previewToSpecialist', () => {
-  it('routes bird preview to birds_species', () => {
-    expect(resolveSpecialistForPreviewLabel('Bird')).toBe('birds_species');
-    expect(SPECIALIST_DISPLAY_NAMES.birds_species).toBe('Birds');
+  it('routes bird preview to birds asset folder', () => {
+    expect(resolveSpecialistForPreviewLabel('Bird')).toBe('birds');
+    expect(SPECIALIST_DISPLAY_NAMES.birds).toBe('Birds');
   });
 
   it('routes wildflower preview to herbaceous_plants', () => {
     expect(resolveSpecialistForPreviewLabel('Wildflower')).toBe('herbaceous_plants');
   });
 
-  it('returns null for herps and non-organism previews', () => {
-    expect(resolveSpecialistForPreviewLabel('Snake')).toBeNull();
+  it('returns null for non-organism previews', () => {
     expect(resolveSpecialistForPreviewLabel('No Plant or Animal')).toBeNull();
   });
 });

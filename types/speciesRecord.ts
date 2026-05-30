@@ -31,7 +31,7 @@ export type SpeciesRecord = {
   inatTaxonId?: number | null;
 };
 
-/** Entry shape in `assets/data/genus-profiles.enriched.min.json`. */
+/** Entry shape in `near_nature_app_bundle/genus_info/genus_profiles.enriched.min.json`. */
 export type GenusProfileJsonEntry = {
   genus?: string;
   commonName?: string;

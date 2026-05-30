@@ -1,83 +1,109 @@
+import type { BirdsRollupManifest } from '@/lib/camera/mobilenet/birdsSpeciesRollup';
 import type { ModelLabelsJson } from '@/lib/camera/mobilenet/parseModelLabels';
 import { buildLabelLookup } from '@/lib/camera/mobilenet/parseModelLabels';
-import type { SpecialistModelId } from '@/lib/camera/mobilenet/previewToSpecialist';
-import { SPECIALIST_DISPLAY_NAMES } from '@/lib/camera/mobilenet/previewToSpecialist';
+import type { SpecialistAssetFolder, SpecialistInferenceMode } from '@/lib/camera/mobilenet/tfliteRouting';
+import { TFLITE_ROUTING } from '@/lib/camera/mobilenet/tfliteRouting';
 
-import birdsLabels from '@/assets/tflite/models/birds_species/tflite/labels.json';
-import fishLabels from '@/assets/tflite/models/fish/tflite/labels.json';
-import fungiLabels from '@/assets/tflite/models/fungi/tflite/labels.json';
-import herbaceousLabels from '@/assets/tflite/models/herbaceous_plants/tflite/labels.json';
-import insectsLabels from '@/assets/tflite/models/insects_arachnids/tflite/labels.json';
-import mammalsLabels from '@/assets/tflite/models/mammals_domestic/tflite/labels.json';
-import treesLabels from '@/assets/tflite/models/trees/tflite/labels.json';
-import woodyLabels from '@/assets/tflite/models/woody_plants/tflite/labels.json';
+import birdsGenusLabels from '@/assets/tflite/near_nature_app_bundle/inat2021_specialists/birds/genus_labels.json';
+import birdsRollup from '@/assets/tflite/near_nature_app_bundle/inat2021_specialists/birds/rollup.json';
+import fishLabels from '@/assets/tflite/near_nature_app_bundle/inat2021_specialists/fish/labels.json';
+import fungiLabels from '@/assets/tflite/near_nature_app_bundle/inat2021_specialists/fungi/labels.json';
+import herbaceousLabels from '@/assets/tflite/near_nature_app_bundle/inat2021_specialists/herbaceous_plants/labels.json';
+import herpsLabels from '@/assets/tflite/near_nature_app_bundle/inat2021_specialists/herps/labels.json';
+import insectsLabels from '@/assets/tflite/near_nature_app_bundle/inat2021_specialists/insects_arachnids/labels.json';
+import mammalsLabels from '@/assets/tflite/near_nature_app_bundle/inat2021_specialists/mammals_domestic/labels.json';
+import treesLabels from '@/assets/tflite/near_nature_app_bundle/inat2021_specialists/trees/labels.json';
+import woodyLabels from '@/assets/tflite/near_nature_app_bundle/inat2021_specialists/woody_plants/labels.json';
 
 export type SpecialistModelDefinition = {
-  id: SpecialistModelId;
+  assetFolder: SpecialistAssetFolder;
   displayName: string;
   model: number;
   labelLookup: readonly string[];
+  inferenceMode: SpecialistInferenceMode;
+  rollup?: BirdsRollupManifest;
 };
 
 const specialistEntries: SpecialistModelDefinition[] = [
   {
-    id: 'birds_species',
-    displayName: SPECIALIST_DISPLAY_NAMES.birds_species,
-    model: require('@/assets/tflite/models/birds_species/tflite/birds_species.tflite'),
-    labelLookup: buildLabelLookup(birdsLabels as ModelLabelsJson),
+    assetFolder: 'birds',
+    displayName: 'Birds',
+    model: require('@/assets/tflite/near_nature_app_bundle/inat2021_specialists/birds/birds_species.tflite'),
+    labelLookup: buildLabelLookup(birdsGenusLabels as ModelLabelsJson),
+    inferenceMode: 'species_rollup',
+    rollup: birdsRollup as BirdsRollupManifest,
   },
   {
-    id: 'fish',
-    displayName: SPECIALIST_DISPLAY_NAMES.fish,
-    model: require('@/assets/tflite/models/fish/tflite/fish_genus.tflite'),
+    assetFolder: 'fish',
+    displayName: 'Fish',
+    model: require('@/assets/tflite/near_nature_app_bundle/inat2021_specialists/fish/fish_genus.tflite'),
     labelLookup: buildLabelLookup(fishLabels as ModelLabelsJson),
+    inferenceMode: 'genus_direct',
   },
   {
-    id: 'fungi',
-    displayName: SPECIALIST_DISPLAY_NAMES.fungi,
-    model: require('@/assets/tflite/models/fungi/tflite/fungi_genus.tflite'),
+    assetFolder: 'fungi',
+    displayName: 'Fungi',
+    model: require('@/assets/tflite/near_nature_app_bundle/inat2021_specialists/fungi/fungi_genus.tflite'),
     labelLookup: buildLabelLookup(fungiLabels as ModelLabelsJson),
+    inferenceMode: 'genus_direct',
   },
   {
-    id: 'herbaceous_plants',
-    displayName: SPECIALIST_DISPLAY_NAMES.herbaceous_plants,
-    model: require('@/assets/tflite/models/herbaceous_plants/tflite/herbaceous_plants_genus.tflite'),
+    assetFolder: 'herbaceous_plants',
+    displayName: 'Herbaceous plants',
+    model: require('@/assets/tflite/near_nature_app_bundle/inat2021_specialists/herbaceous_plants/herbaceous_plants_genus.tflite'),
     labelLookup: buildLabelLookup(herbaceousLabels as ModelLabelsJson),
+    inferenceMode: 'genus_direct',
   },
   {
-    id: 'insects_arachnids',
-    displayName: SPECIALIST_DISPLAY_NAMES.insects_arachnids,
-    model: require('@/assets/tflite/models/insects_arachnids/tflite/insects_arachnids_genus.tflite'),
+    assetFolder: 'herps',
+    displayName: 'Reptiles & amphibians',
+    model: require('@/assets/tflite/near_nature_app_bundle/inat2021_specialists/herps/herps_genus.tflite'),
+    labelLookup: buildLabelLookup(herpsLabels as ModelLabelsJson),
+    inferenceMode: 'genus_direct',
+  },
+  {
+    assetFolder: 'insects_arachnids',
+    displayName: 'Insects & arachnids',
+    model: require('@/assets/tflite/near_nature_app_bundle/inat2021_specialists/insects_arachnids/insects_arachnids_genus.tflite'),
     labelLookup: buildLabelLookup(insectsLabels as ModelLabelsJson),
+    inferenceMode: 'genus_direct',
   },
   {
-    id: 'mammals_domestic',
-    displayName: SPECIALIST_DISPLAY_NAMES.mammals_domestic,
-    model: require('@/assets/tflite/models/mammals_domestic/tflite/mammals_domestic_genus.tflite'),
+    assetFolder: 'mammals_domestic',
+    displayName: 'Domestic mammals',
+    model: require('@/assets/tflite/near_nature_app_bundle/inat2021_specialists/mammals_domestic/mammals_domestic_genus.tflite'),
     labelLookup: buildLabelLookup(mammalsLabels as ModelLabelsJson),
+    inferenceMode: 'genus_direct',
   },
   {
-    id: 'trees',
-    displayName: SPECIALIST_DISPLAY_NAMES.trees,
-    model: require('@/assets/tflite/models/trees/tflite/trees_genus.tflite'),
+    assetFolder: 'trees',
+    displayName: 'Trees',
+    model: require('@/assets/tflite/near_nature_app_bundle/inat2021_specialists/trees/trees_genus.tflite'),
     labelLookup: buildLabelLookup(treesLabels as ModelLabelsJson),
+    inferenceMode: 'genus_direct',
   },
   {
-    id: 'woody_plants',
-    displayName: SPECIALIST_DISPLAY_NAMES.woody_plants,
-    model: require('@/assets/tflite/models/woody_plants/tflite/woody_plants_genus.tflite'),
+    assetFolder: 'woody_plants',
+    displayName: 'Shrubs & woody plants',
+    model: require('@/assets/tflite/near_nature_app_bundle/inat2021_specialists/woody_plants/woody_plants_genus.tflite'),
     labelLookup: buildLabelLookup(woodyLabels as ModelLabelsJson),
+    inferenceMode: 'genus_direct',
   },
 ];
 
-export const SPECIALIST_MODELS: Record<SpecialistModelId, SpecialistModelDefinition> =
-  Object.fromEntries(specialistEntries.map((entry) => [entry.id, entry])) as Record<
-    SpecialistModelId,
+for (const specialist of TFLITE_ROUTING.specialists) {
+  const entry = specialistEntries.find((row) => row.assetFolder === specialist.id);
+  if (entry) entry.displayName = specialist.title;
+}
+
+export const SPECIALIST_MODELS: Record<SpecialistAssetFolder, SpecialistModelDefinition> =
+  Object.fromEntries(specialistEntries.map((entry) => [entry.assetFolder, entry])) as Record<
+    SpecialistAssetFolder,
     SpecialistModelDefinition
   >;
 
 export function getSpecialistDefinition(
-  id: SpecialistModelId,
+  assetFolder: SpecialistAssetFolder,
 ): SpecialistModelDefinition | undefined {
-  return SPECIALIST_MODELS[id];
+  return SPECIALIST_MODELS[assetFolder];
 }

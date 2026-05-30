@@ -140,7 +140,7 @@ Requires `sql/get_user_scoring_snapshot.sql` (or fallback RPCs) in Supabase.
 
 Stale-while-revalidate: show cache immediately, refresh in background, then update cache.
 
-**SQLite notes:** Requires a native dev-client rebuild after installing `expo-sqlite`. Skipped on web. Bundled genus catalog (`assets/data/genus-profiles.enriched.min.json`, ~4.5k Florida iNat genera) seeds on first launch or when the catalog version changes. Identification enrichment looks up by genus (first word of the Latin name).
+**SQLite notes:** Requires a native dev-client rebuild after installing `expo-sqlite`. Skipped on web. Bundled genus catalog (`assets/tflite/near_nature_app_bundle/genus_info/genus_profiles.enriched.min.json`, ~4.5k Florida iNat genera) seeds on first launch or when the catalog version changes. Identification enrichment looks up by genus (first word of the Latin name).
 
 **Implementation paths:**
 

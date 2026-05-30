@@ -8,7 +8,7 @@ import {
 } from 'react-native-vision-camera';
 import { useResizePlugin } from 'vision-camera-resize-plugin';
 
-import modelAsset from '@/assets/tflite/mobilenetv3_small_top20_preview/tflite/species_classifier.tflite';
+import modelAsset from '@/assets/tflite/near_nature_app_bundle/preview/preview_classifier.tflite';
 import type { LiveClassifierModelState, LiveClassifierPrediction } from '@/lib/camera/liveClassifierTypes';
 import { formatMobileNetError } from '@/lib/camera/mobilenet/formatMobileNetError';
 import {
@@ -16,7 +16,7 @@ import {
   MOBILENET_PREVIEW_INPUT_SIZE,
 } from '@/lib/camera/mobilenet/modelConfig';
 import { normalizeMobileNetInput } from '@/lib/camera/mobilenet/normalizeMobileNetInput';
-import { getMobileNetTop20PreviewLabel } from '@/lib/camera/mobilenet/top20PreviewLabels';
+import { TFLITE_ROUTING } from '@/lib/camera/mobilenet/tfliteRouting';
 import {
   parseMobileNetTop3,
   type MobileNetPredictionScore,
@@ -34,7 +34,7 @@ type UseMobileNetTop16FrameProcessorResult = {
 function labelPrediction(prediction: MobileNetPredictionScore): MobileNetLivePrediction {
   return {
     ...prediction,
-    label: getMobileNetTop20PreviewLabel(prediction.classIndex),
+    label: TFLITE_ROUTING.preview_groups[prediction.classIndex] ?? `Class ${prediction.classIndex}`,
   };
 }
 

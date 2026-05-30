@@ -13,7 +13,7 @@ describe('MOBILENET_TOP20_PREVIEW_LABELS', () => {
   it('matches the bundled TFLite labels metadata', () => {
     const labelsPath = join(
       process.cwd(),
-      'assets/tflite/mobilenetv3_small_top20_preview/tflite/labels.json',
+      'assets/tflite/near_nature_app_bundle/preview/labels.json',
     );
     const labelsFile = JSON.parse(readFileSync(labelsPath, 'utf8')) as LabelsFile;
     const labels = labelsFile.labels

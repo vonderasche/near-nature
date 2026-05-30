@@ -1,4 +1,4 @@
-import catalog from '@/assets/data/genus-profiles.enriched.min.json';
+import catalog from '@/assets/tflite/near_nature_app_bundle/genus_info/genus_profiles.enriched.min.json';
 
 import { getAppMeta, setAppMeta } from '@/lib/db/appMeta';
 import { isLocalDatabaseSupported, getLocalDatabase } from '@/lib/db/database';
@@ -13,8 +13,8 @@ import type { GenusProfilesJson } from '@/types/speciesRecord';
 export const SPECIES_CATALOG_SEEDED_META_KEY = 'species_catalog_seeded';
 export const SPECIES_CATALOG_VERSION_META_KEY = 'species_catalog_version';
 
-/** Bump when replacing `assets/data/genus-profiles.enriched.min.json`. */
-export const SPECIES_CATALOG_VERSION = 'genus_profiles.enriched.min@2026-05-29';
+/** Bump when replacing the bundled genus catalog under `near_nature_app_bundle/genus_info/`. */
+export const SPECIES_CATALOG_VERSION = 'near_nature_app_bundle/genus_profiles.enriched.min@2026-05-29';
 
 const EXPECTED_GENUS_COUNT = 4000;
 

@@ -1,25 +1,7 @@
-export const MOBILENET_TOP20_PREVIEW_LABELS = [
-  'Tree',
-  'Shrub / Bush',
-  'Wildflower',
-  'Grass / Sedge',
-  'Fern',
-  'Cactus / Succulent',
-  'Bird',
-  'Reptile / Lizard',
-  'Snake',
-  'Turtle',
-  'Frog / Amphibian',
-  'Butterfly / Moth',
-  'Insect (other)',
-  'Freshwater Fish',
-  'Spider / Arachnid',
-  'Dog',
-  'Cat',
-  'Horse / Livestock',
-  'Fungi / Mushroom',
-  'No Plant or Animal',
-] as const;
+import { TFLITE_ROUTING } from '@/lib/camera/mobilenet/tfliteRouting';
+
+/** Preview class names aligned with app bundle routing.json / preview_classifier.tflite. */
+export const MOBILENET_TOP20_PREVIEW_LABELS = TFLITE_ROUTING.preview_groups;
 
 export function getMobileNetTop20PreviewLabel(classIndex: number): string {
   return MOBILENET_TOP20_PREVIEW_LABELS[classIndex] ?? `Class ${classIndex}`;
