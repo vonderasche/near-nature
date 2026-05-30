@@ -26,7 +26,7 @@ export function clearSignedDetectionUrlCache(): void {
   inFlight.clear();
 }
 
-/** Clears memory + AsyncStorage signed URLs (e.g. sign-out). */
+/** Clears memory + persisted signed URLs (e.g. sign-out). */
 export async function clearAllSignedDetectionUrlCaches(): Promise<void> {
   clearSignedDetectionUrlCache();
   await clearPersistedSignedUrls();
@@ -45,7 +45,7 @@ export function seedSignedDetectionUrlCache(
 
 /**
  * Returns a signed display URL for a detections bucket object path.
- * Memory cache → AsyncStorage → sign. Persists successful signs to disk.
+ * Memory cache → SQLite/AsyncStorage → sign. Persists successful signs to disk.
  */
 export async function resolveSignedDetectionDisplayUrl(
   objectPath: string,

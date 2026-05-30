@@ -1,10 +1,13 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
 import {
   SCORING_SNAPSHOT_CACHE_KEY_PREFIX,
   SCORING_SNAPSHOT_CACHE_VERSION,
 } from '@/constants/scoring-cache';
-import { isSqliteUserCacheAvailable } from '@/lib/db/sqliteCacheSupport';
+import {
+  clearAllDualStorageByPrefix,
+  clearDualStorageEntry,
+  loadDualStorageJson,
+  saveDualStorageJson,
+} from '@/lib/db/dualStorageJsonCache';
 import {
   clearAllScoringSnapshotCaches,
   deleteScoringSnapshotCache,
@@ -50,33 +53,27 @@ function parseEnvelope(raw: string | null): CachedEnvelope | null {
   }
 }
 
-async function loadFromAsyncStorage(userId: string): Promise<UserScoringSnapshot | null> {
-  const envelope = parseEnvelope(await AsyncStorage.getItem(cacheKey(userId)));
+function envelopeToSnapshot(envelope: CachedEnvelope | null): UserScoringSnapshot | null {
   return envelope ? fromStored(envelope.snapshot) : null;
 }
 
 export async function loadCachedScoringSnapshot(userId: string): Promise<UserScoringSnapshot | null> {
-  if (isSqliteUserCacheAvailable()) {
-    const envelope = parseEnvelope(await loadScoringSnapshotCacheJson(userId));
-    if (envelope) return fromStored(envelope.snapshot);
-  }
-
-  const fromAsync = await loadFromAsyncStorage(userId);
-  if (fromAsync && isSqliteUserCacheAvailable()) {
-    const entry: CachedEnvelope = {
-      v: SCORING_SNAPSHOT_CACHE_VERSION,
-      snapshot: toStored(fromAsync),
-      cachedAt: Date.now(),
-    };
-    await saveScoringSnapshotCacheJson(
-      userId,
-      JSON.stringify(entry),
-      entry.cachedAt,
-      SCORING_SNAPSHOT_CACHE_VERSION,
-    );
-    await AsyncStorage.removeItem(cacheKey(userId)).catch(() => {});
-  }
-  return fromAsync;
+  const envelope = await loadDualStorageJson({
+    loadSqliteJson: () => loadScoringSnapshotCacheJson(userId),
+    asyncStorageKey: cacheKey(userId),
+    parse: parseEnvelope,
+    migrateSqlite: (json) => {
+      const parsed = parseEnvelope(json);
+      if (!parsed) return Promise.resolve();
+      return saveScoringSnapshotCacheJson(
+        userId,
+        json,
+        parsed.cachedAt,
+        SCORING_SNAPSHOT_CACHE_VERSION,
+      );
+    },
+  });
+  return envelopeToSnapshot(envelope);
 }
 
 export async function saveCachedScoringSnapshot(
@@ -90,25 +87,24 @@ export async function saveCachedScoringSnapshot(
   };
   const json = JSON.stringify(entry);
 
-  if (isSqliteUserCacheAvailable()) {
-    await saveScoringSnapshotCacheJson(
-      userId,
-      json,
-      entry.cachedAt,
-      SCORING_SNAPSHOT_CACHE_VERSION,
-    );
-    await AsyncStorage.removeItem(cacheKey(userId)).catch(() => {});
-    return;
-  }
-
-  await AsyncStorage.setItem(cacheKey(userId), json);
+  await saveDualStorageJson({
+    asyncStorageKey: cacheKey(userId),
+    json,
+    saveSqlite: () =>
+      saveScoringSnapshotCacheJson(
+        userId,
+        json,
+        entry.cachedAt,
+        SCORING_SNAPSHOT_CACHE_VERSION,
+      ),
+  });
 }
 
 export async function clearCachedScoringSnapshot(userId: string): Promise<void> {
-  await Promise.all([
-    deleteScoringSnapshotCache(userId),
-    AsyncStorage.removeItem(cacheKey(userId)),
-  ]);
+  await clearDualStorageEntry({
+    asyncStorageKey: cacheKey(userId),
+    clearSqlite: () => deleteScoringSnapshotCache(userId),
+  });
 }
 
 /** Drops device cache so the next scoring load refetches (e.g. after save/delete). */
@@ -117,11 +113,5 @@ export async function invalidateCachedScoringSnapshot(userId: string): Promise<v
 }
 
 export async function clearAllCachedScoringSnapshots(): Promise<void> {
-  await Promise.all([
-    clearAllScoringSnapshotCaches(),
-    AsyncStorage.getAllKeys().then((keys) => {
-      const ours = keys.filter((k) => k.startsWith(SCORING_SNAPSHOT_CACHE_KEY_PREFIX));
-      return ours.length > 0 ? AsyncStorage.multiRemove(ours) : undefined;
-    }),
-  ]);
+  await clearAllDualStorageByPrefix(SCORING_SNAPSHOT_CACHE_KEY_PREFIX, clearAllScoringSnapshotCaches);
 }

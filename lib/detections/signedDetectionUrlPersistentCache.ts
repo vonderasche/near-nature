@@ -4,6 +4,10 @@ import {
   SIGNED_URL_CACHE_KEY_PREFIX,
   SIGNED_URL_PERSISTED_VERSION,
 } from '@/constants/signed-url-cache';
+import {
+  clearAllDualStorageByPrefix,
+  removeAsyncStorageKey,
+} from '@/lib/db/dualStorageJsonCache';
 import { isSqliteUserCacheAvailable } from '@/lib/db/sqliteCacheSupport';
 import {
   clearAllSignedUrlCaches,
@@ -43,6 +47,11 @@ function isFresh(expiresAtMs: number, now: number): boolean {
   return expiresAtMs - REFRESH_BUFFER_MS > now;
 }
 
+async function migrateAsyncSignedUrl(objectPath: string, entry: PersistedSignedUrl): Promise<void> {
+  await saveSignedUrlToCache(objectPath, entry.signedUrl, entry.expiresAtMs, SIGNED_URL_PERSISTED_VERSION);
+  await removeAsyncStorageKey(storageKey(objectPath));
+}
+
 export async function loadPersistedSignedUrl(objectPath: string): Promise<string | null> {
   const trimmed = objectPath.trim();
   if (!trimmed) return null;
@@ -59,18 +68,14 @@ export async function loadPersistedSignedUrl(objectPath: string): Promise<string
     }
   }
 
-  const raw = await AsyncStorage.getItem(storageKey(trimmed));
-  const entry = parseEntry(raw);
+  const entry = parseEntry(await AsyncStorage.getItem(storageKey(trimmed)));
   if (!entry || !isFresh(entry.expiresAtMs, now)) {
-    if (entry) {
-      await AsyncStorage.removeItem(storageKey(trimmed)).catch(() => {});
-    }
+    if (entry) await removeAsyncStorageKey(storageKey(trimmed));
     return null;
   }
 
   if (isSqliteUserCacheAvailable()) {
-    await saveSignedUrlToCache(trimmed, entry.signedUrl, entry.expiresAtMs, SIGNED_URL_PERSISTED_VERSION);
-    await AsyncStorage.removeItem(storageKey(trimmed)).catch(() => {});
+    await migrateAsyncSignedUrl(trimmed, entry);
   }
 
   return entry.signedUrl;
@@ -86,21 +91,15 @@ export async function loadPersistedSignedUrlMap(
   const out = new Map<string, string>();
   const stalePaths: string[] = [];
   const staleAsyncKeys: string[] = [];
+  const missingFromSqlite = new Set(trimmed);
 
   if (isSqliteUserCacheAvailable()) {
-    const rows = await loadSignedUrlsFromCache(trimmed);
-    const found = new Set<string>();
-    for (const row of rows) {
-      found.add(row.object_path);
+    for (const row of await loadSignedUrlsFromCache(trimmed)) {
+      missingFromSqlite.delete(row.object_path);
       if (isFresh(row.expires_at_ms, now)) {
         out.set(row.object_path, row.signed_url);
       } else {
         stalePaths.push(row.object_path);
-      }
-    }
-    for (const path of trimmed) {
-      if (!found.has(path)) {
-        // fall through to AsyncStorage below per path
       }
     }
     if (stalePaths.length > 0) {
@@ -108,22 +107,22 @@ export async function loadPersistedSignedUrlMap(
     }
   }
 
-  const missingFromSqlite = trimmed.filter((p) => !out.has(p));
-  if (missingFromSqlite.length > 0) {
-    const keys = missingFromSqlite.map(storageKey);
-    const pairs = await AsyncStorage.multiGet(keys);
+  if (missingFromSqlite.size > 0) {
+    const missing = [...missingFromSqlite];
+    const pairs = await AsyncStorage.multiGet(missing.map(storageKey));
 
-    for (let i = 0; i < missingFromSqlite.length; i++) {
-      const path = missingFromSqlite[i]!;
+    for (let i = 0; i < missing.length; i++) {
+      const path = missing[i]!;
       const entry = parseEntry(pairs[i]?.[1] ?? null);
       if (!entry || !isFresh(entry.expiresAtMs, now)) {
-        if (entry) staleAsyncKeys.push(keys[i]!);
+        if (entry) staleAsyncKeys.push(storageKey(path));
         continue;
       }
       out.set(path, entry.signedUrl);
       if (isSqliteUserCacheAvailable()) {
-        await saveSignedUrlToCache(path, entry.signedUrl, entry.expiresAtMs, SIGNED_URL_PERSISTED_VERSION);
-        staleAsyncKeys.push(keys[i]!);
+        await migrateAsyncSignedUrl(path, entry);
+      } else {
+        staleAsyncKeys.push(storageKey(path));
       }
     }
   }
@@ -145,7 +144,7 @@ export async function persistSignedUrl(
 
   if (isSqliteUserCacheAvailable()) {
     await saveSignedUrlToCache(trimmed, signedUrl.trim(), expiresAtMs, SIGNED_URL_PERSISTED_VERSION);
-    await AsyncStorage.removeItem(storageKey(trimmed)).catch(() => {});
+    await removeAsyncStorageKey(storageKey(trimmed));
     return;
   }
 
@@ -158,11 +157,5 @@ export async function persistSignedUrl(
 }
 
 export async function clearPersistedSignedUrls(): Promise<void> {
-  await Promise.all([
-    clearAllSignedUrlCaches(),
-    AsyncStorage.getAllKeys().then((keys) => {
-      const ours = keys.filter((k) => k.startsWith(SIGNED_URL_CACHE_KEY_PREFIX));
-      return ours.length > 0 ? AsyncStorage.multiRemove(ours) : undefined;
-    }),
-  ]);
+  await clearAllDualStorageByPrefix(SIGNED_URL_CACHE_KEY_PREFIX, clearAllSignedUrlCaches);
 }

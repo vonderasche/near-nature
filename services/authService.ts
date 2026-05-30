@@ -3,13 +3,7 @@ import * as WebBrowser from 'expo-web-browser';
 
 import { completeSupabaseAuthSessionFromUrl } from '@/lib/auth/completeSupabaseAuthSessionFromUrl';
 import { signInWithEmail } from '@/lib/auth/email-auth';
-import { clearAllSignedDetectionUrlCaches } from '@/lib/detections/signedDetectionUrlCache';
-import { clearAllCachedGalleryLists } from '@/lib/detections/galleryListCache';
-import { clearAllPendingGalleryDetections } from '@/lib/detections/pendingGalleryDetection';
-import { clearAllCachedOwnProfiles } from '@/lib/profile/ownProfileCache';
-import { clearAllCachedScoringSnapshots } from '@/lib/profile/scoringSnapshotCache';
-import { clearUserScopedLocalData } from '@/lib/db/clearLocalDatabase';
-import { clearSavedSpeciesSession } from '@/lib/identification/savedSpeciesSessionCache';
+import { clearLocalUserDataOnSignOut } from '@/lib/db/clearLocalUserDataOnSignOut';
 import { supabase } from '@/lib/supabase';
 
 /** Add this URL (and your dev `exp://` variant) under Supabase Auth → URL configuration → Redirect URLs. */
@@ -67,13 +61,7 @@ export async function signInWithGoogle() {
 
 export async function signOut() {
   const { error } = await supabase.auth.signOut();
-  await clearAllSignedDetectionUrlCaches();
-  await clearAllCachedOwnProfiles();
-  await clearAllCachedGalleryLists();
-  await clearAllCachedScoringSnapshots();
-  clearAllPendingGalleryDetections();
-  clearSavedSpeciesSession();
-  await clearUserScopedLocalData();
+  await clearLocalUserDataOnSignOut();
   if (error) throw error;
 }
 
@@ -84,13 +72,7 @@ export async function signOut() {
  */
 export async function signOutLocalOnly(): Promise<void> {
   await supabase.auth.signOut({ scope: 'local' });
-  await clearAllSignedDetectionUrlCaches();
-  await clearAllCachedOwnProfiles();
-  await clearAllCachedGalleryLists();
-  await clearAllCachedScoringSnapshots();
-  clearAllPendingGalleryDetections();
-  clearSavedSpeciesSession();
-  await clearUserScopedLocalData();
+  await clearLocalUserDataOnSignOut();
 }
 
 export async function sendPasswordReset(email: string) {

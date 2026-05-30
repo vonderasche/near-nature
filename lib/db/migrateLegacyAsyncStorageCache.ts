@@ -16,7 +16,9 @@ import {
   SIGNED_URL_CACHE_KEY_PREFIX,
   SIGNED_URL_PERSISTED_VERSION,
 } from '@/constants/signed-url-cache';
+import { LOCAL_DETECTIONS_STORAGE_KEY_PREFIX } from '@/constants/local-detections';
 import { getAppMeta, setAppMeta } from '@/lib/db/appMeta';
+import { upsertUserDetection } from '@/lib/db/detectionRepository';
 import { getLocalDatabase, isLocalDatabaseSupported } from '@/lib/db/database';
 import {
   saveGalleryListCacheJson,
@@ -24,12 +26,13 @@ import {
   saveSignedUrlToCache,
   saveUserProfileCacheJson,
 } from '@/lib/db/userCacheRepository';
+import { parseLocalDetectionRows } from '@/lib/detections/parseLocalDetectionRows';
 
 export const LEGACY_ASYNC_CACHE_MIGRATED_META_KEY = 'legacy_async_cache_migrated_v1';
 
 /**
- * One-time import of device caches from AsyncStorage into SQLite after upgrading.
- * Web and tests skip this (no SQLite).
+ * One-time import of legacy AsyncStorage caches into SQLite after upgrading.
+ * Skipped on web and in tests (no SQLite).
  */
 export async function migrateLegacyAsyncStorageCacheIfNeeded(): Promise<void> {
   if (!isLocalDatabaseSupported() || !getLocalDatabase()) return;
@@ -143,6 +146,19 @@ export async function migrateLegacyAsyncStorageCacheIfNeeded(): Promise<void> {
         } catch {
           // skip
         }
+      }
+      continue;
+    }
+
+    if (key.startsWith(LOCAL_DETECTIONS_STORAGE_KEY_PREFIX)) {
+      const raw = await AsyncStorage.getItem(key);
+      const userId = key.slice(LOCAL_DETECTIONS_STORAGE_KEY_PREFIX.length);
+      if (raw && userId) {
+        const rows = parseLocalDetectionRows(raw);
+        for (const row of rows) {
+          await upsertUserDetection(userId, row, { isSensitive: false });
+        }
+        if (rows.length > 0) keysToRemove.push(key);
       }
     }
   }

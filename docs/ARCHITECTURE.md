@@ -150,6 +150,7 @@ Stale-while-revalidate: show cache immediately, refresh in background, then upda
 - Scoring: `lib/profile/scoringSnapshotCache.ts`, `hooks/useUserScoringSnapshot.ts`
 - Signed URLs: `lib/detections/signedDetectionUrlCache.ts`, `signedDetectionUrlPersistentCache.ts`
 - Saved species: `lib/identification/savedSpeciesSessionCache.ts`
+- Sign-out local wipe: `lib/db/clearLocalUserDataOnSignOut.ts`
 
 ---
 

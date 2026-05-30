@@ -1,16 +1,19 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
 import {
   OWN_PROFILE_CACHE_KEY_PREFIX,
   OWN_PROFILE_CACHE_VERSION,
 } from '@/constants/profile-cache';
+import {
+  clearAllDualStorageByPrefix,
+  clearDualStorageEntry,
+  loadDualStorageJson,
+  saveDualStorageJson,
+} from '@/lib/db/dualStorageJsonCache';
 import {
   clearAllUserProfileCaches,
   deleteUserProfileCache,
   loadUserProfileCacheJson,
   saveUserProfileCacheJson,
 } from '@/lib/db/userCacheRepository';
-import { isSqliteUserCacheAvailable } from '@/lib/db/sqliteCacheSupport';
 import type { PublicUserProfile, User } from '@/services/userService';
 
 export type CachedOwnProfile = {
@@ -56,35 +59,24 @@ function parseCachedOwnProfile(raw: string | null): CachedOwnProfile | null {
   }
 }
 
-async function loadFromAsyncStorage(userId: string): Promise<CachedOwnProfile | null> {
-  const raw = await AsyncStorage.getItem(cacheKey(userId));
-  const cached = parseCachedOwnProfile(raw);
+function validateCachedOwnProfile(userId: string, cached: CachedOwnProfile | null): CachedOwnProfile | null {
   if (!cached || cached.user.id !== userId) return null;
   if (cached.stats && cached.stats.id !== userId) return null;
   return cached;
 }
 
 export async function loadCachedOwnProfile(userId: string): Promise<CachedOwnProfile | null> {
-  if (isSqliteUserCacheAvailable()) {
-    const raw = await loadUserProfileCacheJson(userId);
-    const cached = parseCachedOwnProfile(raw);
-    if (cached && cached.user.id === userId) {
-      if (cached.stats && cached.stats.id !== userId) return null;
-      return cached;
-    }
-  }
-
-  const fromAsync = await loadFromAsyncStorage(userId);
-  if (fromAsync && isSqliteUserCacheAvailable()) {
-    await saveUserProfileCacheJson(
-      userId,
-      JSON.stringify(fromAsync),
-      fromAsync.cachedAt,
-      OWN_PROFILE_CACHE_VERSION,
-    );
-    await AsyncStorage.removeItem(cacheKey(userId)).catch(() => {});
-  }
-  return fromAsync;
+  const cached = await loadDualStorageJson({
+    loadSqliteJson: () => loadUserProfileCacheJson(userId),
+    asyncStorageKey: cacheKey(userId),
+    parse: parseCachedOwnProfile,
+    migrateSqlite: (json) => {
+      const parsed = parseCachedOwnProfile(json);
+      if (!parsed) return Promise.resolve();
+      return saveUserProfileCacheJson(userId, json, parsed.cachedAt, OWN_PROFILE_CACHE_VERSION);
+    },
+  });
+  return validateCachedOwnProfile(userId, cached);
 }
 
 export async function saveCachedOwnProfile(
@@ -99,29 +91,22 @@ export async function saveCachedOwnProfile(
   };
   const json = JSON.stringify(entry);
 
-  if (isSqliteUserCacheAvailable()) {
-    await saveUserProfileCacheJson(userId, json, entry.cachedAt, OWN_PROFILE_CACHE_VERSION);
-    await AsyncStorage.removeItem(cacheKey(userId)).catch(() => {});
-    return;
-  }
-
-  await AsyncStorage.setItem(cacheKey(userId), json);
+  await saveDualStorageJson({
+    asyncStorageKey: cacheKey(userId),
+    json,
+    saveSqlite: () =>
+      saveUserProfileCacheJson(userId, json, entry.cachedAt, OWN_PROFILE_CACHE_VERSION),
+  });
 }
 
 export async function clearCachedOwnProfile(userId: string): Promise<void> {
-  await Promise.all([
-    deleteUserProfileCache(userId),
-    AsyncStorage.removeItem(cacheKey(userId)),
-  ]);
+  await clearDualStorageEntry({
+    asyncStorageKey: cacheKey(userId),
+    clearSqlite: () => deleteUserProfileCache(userId),
+  });
 }
 
 /** Clears all cached own-profile entries (e.g. on sign-out). */
 export async function clearAllCachedOwnProfiles(): Promise<void> {
-  await Promise.all([
-    clearAllUserProfileCaches(),
-    AsyncStorage.getAllKeys().then((keys) => {
-      const ours = keys.filter((k) => k.startsWith(OWN_PROFILE_CACHE_KEY_PREFIX));
-      return ours.length > 0 ? AsyncStorage.multiRemove(ours) : undefined;
-    }),
-  ]);
+  await clearAllDualStorageByPrefix(OWN_PROFILE_CACHE_KEY_PREFIX, clearAllUserProfileCaches);
 }

@@ -1,17 +1,21 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
 import {
   GALLERY_LIST_CACHE_KEY_PREFIX,
   GALLERY_LIST_CACHE_VERSION,
 } from '@/constants/gallery-cache';
-import type { DetectionGalleryRow } from '@/lib/detections/mapDetectionGalleryRow';
-import { isSqliteUserCacheAvailable } from '@/lib/db/sqliteCacheSupport';
+import {
+  clearAllDualStorageByPrefix,
+  clearDualStorageEntry,
+  loadDualStorageJson,
+  removeAsyncStorageKey,
+  saveDualStorageJson,
+} from '@/lib/db/dualStorageJsonCache';
 import {
   clearAllGalleryListCaches,
   deleteGalleryListCache,
   loadGalleryListCacheJson,
   saveGalleryListCacheJson,
 } from '@/lib/db/userCacheRepository';
+import type { DetectionGalleryRow } from '@/lib/detections/mapDetectionGalleryRow';
 
 export type CachedGalleryList = {
   v: typeof GALLERY_LIST_CACHE_VERSION;
@@ -54,6 +58,15 @@ function parseCachedGalleryList(raw: string | null): CachedGalleryList | null {
   }
 }
 
+function validateCachedGalleryList(
+  userId: string,
+  publicOnly: boolean,
+  cached: CachedGalleryList | null,
+): CachedGalleryList | null {
+  if (!cached || cached.userId !== userId || cached.publicOnly !== publicOnly) return null;
+  return cached;
+}
+
 function dedupeRowsById(rows: readonly DetectionGalleryRow[]): DetectionGalleryRow[] {
   const seen = new Set<string>();
   const out: DetectionGalleryRow[] = [];
@@ -65,40 +78,27 @@ function dedupeRowsById(rows: readonly DetectionGalleryRow[]): DetectionGalleryR
   return out;
 }
 
-async function loadFromAsyncStorage(
-  userId: string,
-  publicOnly: boolean,
-): Promise<CachedGalleryList | null> {
-  const raw = await AsyncStorage.getItem(cacheKey(userId, publicOnly));
-  const cached = parseCachedGalleryList(raw);
-  if (!cached || cached.userId !== userId || cached.publicOnly !== publicOnly) return null;
-  return cached;
-}
-
 export async function loadCachedGalleryList(
   userId: string,
   publicOnly: boolean,
 ): Promise<CachedGalleryList | null> {
-  if (isSqliteUserCacheAvailable()) {
-    const raw = await loadGalleryListCacheJson(userId, publicOnly);
-    const cached = parseCachedGalleryList(raw);
-    if (cached && cached.userId === userId && cached.publicOnly === publicOnly) {
-      return cached;
-    }
-  }
-
-  const fromAsync = await loadFromAsyncStorage(userId, publicOnly);
-  if (fromAsync && isSqliteUserCacheAvailable()) {
-    await saveGalleryListCacheJson(
-      userId,
-      publicOnly,
-      JSON.stringify(fromAsync),
-      fromAsync.cachedAt,
-      GALLERY_LIST_CACHE_VERSION,
-    );
-    await AsyncStorage.removeItem(cacheKey(userId, publicOnly)).catch(() => {});
-  }
-  return fromAsync;
+  const cached = await loadDualStorageJson({
+    loadSqliteJson: () => loadGalleryListCacheJson(userId, publicOnly),
+    asyncStorageKey: cacheKey(userId, publicOnly),
+    parse: parseCachedGalleryList,
+    migrateSqlite: (json) => {
+      const parsed = parseCachedGalleryList(json);
+      if (!parsed) return Promise.resolve();
+      return saveGalleryListCacheJson(
+        userId,
+        publicOnly,
+        json,
+        parsed.cachedAt,
+        GALLERY_LIST_CACHE_VERSION,
+      );
+    },
+  });
+  return validateCachedGalleryList(userId, publicOnly, cached);
 }
 
 export async function saveCachedGalleryList(
@@ -116,19 +116,18 @@ export async function saveCachedGalleryList(
   };
   const json = JSON.stringify(entry);
 
-  if (isSqliteUserCacheAvailable()) {
-    await saveGalleryListCacheJson(
-      userId,
-      publicOnly,
-      json,
-      entry.cachedAt,
-      GALLERY_LIST_CACHE_VERSION,
-    );
-    await AsyncStorage.removeItem(cacheKey(userId, publicOnly)).catch(() => {});
-    return;
-  }
-
-  await AsyncStorage.setItem(cacheKey(userId, publicOnly), json);
+  await saveDualStorageJson({
+    asyncStorageKey: cacheKey(userId, publicOnly),
+    json,
+    saveSqlite: () =>
+      saveGalleryListCacheJson(
+        userId,
+        publicOnly,
+        json,
+        entry.cachedAt,
+        GALLERY_LIST_CACHE_VERSION,
+      ),
+  });
 }
 
 /** Prepends a saved row after upload (keeps existing cache entries below). */
@@ -153,24 +152,18 @@ export async function invalidateCachedGalleryList(
   if (publicOnly === undefined) {
     await Promise.all([
       deleteGalleryListCache(userId),
-      AsyncStorage.removeItem(cacheKey(userId, false)),
-      AsyncStorage.removeItem(cacheKey(userId, true)),
+      removeAsyncStorageKey(cacheKey(userId, false)),
+      removeAsyncStorageKey(cacheKey(userId, true)),
     ]);
     return;
   }
 
-  await Promise.all([
-    deleteGalleryListCache(userId, publicOnly),
-    AsyncStorage.removeItem(cacheKey(userId, publicOnly)),
-  ]);
+  await clearDualStorageEntry({
+    asyncStorageKey: cacheKey(userId, publicOnly),
+    clearSqlite: () => deleteGalleryListCache(userId, publicOnly),
+  });
 }
 
 export async function clearAllCachedGalleryLists(): Promise<void> {
-  await Promise.all([
-    clearAllGalleryListCaches(),
-    AsyncStorage.getAllKeys().then((keys) => {
-      const ours = keys.filter((k) => k.startsWith(GALLERY_LIST_CACHE_KEY_PREFIX));
-      return ours.length > 0 ? AsyncStorage.multiRemove(ours) : undefined;
-    }),
-  ]);
+  await clearAllDualStorageByPrefix(GALLERY_LIST_CACHE_KEY_PREFIX, clearAllGalleryListCaches);
 }
