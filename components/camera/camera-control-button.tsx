@@ -31,7 +31,7 @@ export function CameraControlButton({
         accessibilityState={{ disabled, selected: active }}
         onPress={onPress}
         disabled={disabled}
-        android_ripple={{ color: 'rgba(255,255,255,0.2)', borderless: true }}
+        android_ripple={{ color: authColors.rippleOnDark, borderless: true }}
         style={({ pressed }) => [
           styles.btn,
           active && styles.btnActive,
@@ -64,10 +64,10 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: authColors.overlayScrim,
   },
   btnActive: {
-    backgroundColor: 'rgba(10,126,164,0.55)',
+    backgroundColor: authColors.cameraControlActive,
   },
   btnDisabled: {
     opacity: 0.45,

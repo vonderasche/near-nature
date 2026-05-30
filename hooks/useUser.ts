@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useAuthContext } from '@/context/AuthContext';
+import { useCacheFirstFetch } from '@/hooks/useCacheFirstFetch';
 import {
   clearCachedOwnProfile,
   loadCachedOwnProfile,
@@ -26,110 +27,67 @@ import {
 export type RemoveUserResult = UserFacingResult;
 export type UpdateUserResult = UserFacingResult;
 
+type ProfileBundle = {
+  user: User | null;
+  stats: PublicUserProfile | null;
+};
+
 type UseUserReturn = {
   user: User | null;
-  /** Points, streaks, species counts (from `get_public_user_profile`). */
   stats: PublicUserProfile | null;
   loading: boolean;
-  /** True while a background refresh is in flight after showing cache. */
   refreshing: boolean;
   deleting: boolean;
   error: string | null;
   update: (payload: UpdateUserPayload) => Promise<UpdateUserResult>;
   remove: () => Promise<RemoveUserResult>;
-  /** Re-fetch from Supabase and update device cache. */
   refresh: () => Promise<void>;
 };
 
-async function fetchOwnProfileFromNetwork(userId: string): Promise<{
-  user: User | null;
-  stats: PublicUserProfile | null;
-}> {
+async function fetchOwnProfileFromNetwork(userId: string): Promise<ProfileBundle> {
   const [user, stats] = await Promise.all([getUser(userId), getPublicUserProfile(userId)]);
   return { user, stats };
 }
 
 export function useUser(): UseUserReturn {
   const { userId } = useAuthContext();
-  const [user, setUser] = useState<User | null>(null);
-  const [stats, setStats] = useState<PublicUserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const hadCacheRef = useRef(false);
 
-  const applyCache = useCallback((cached: Awaited<ReturnType<typeof loadCachedOwnProfile>>) => {
-    if (!cached) return false;
-    setUser(cached.user);
-    setStats(cached.stats);
-    hadCacheRef.current = true;
-    return true;
-  }, []);
-
-  const persistCache = useCallback(async (uid: string, profile: User, profileStats: PublicUserProfile | null) => {
-    await saveCachedOwnProfile(uid, { user: profile, stats: profileStats });
-  }, []);
-
-  const fetchUser = useCallback(
-    async (options?: { force?: boolean }) => {
-      if (!userId) {
-        setUser(null);
-        setStats(null);
+  const {
+    data,
+    setData,
+    loading,
+    refreshing,
+    error,
+    setError,
+    refetch,
+  } = useCacheFirstFetch<ProfileBundle>({
+    enabled: Boolean(userId),
+    loadCache: () => (userId ? loadCachedOwnProfile(userId) : Promise.resolve(null)),
+    fetchFresh: () => fetchOwnProfileFromNetwork(userId!),
+    saveCache: (bundle) => {
+      if (bundle.user) {
+        return saveCachedOwnProfile(userId!, bundle);
+      }
+      return Promise.resolve();
+    },
+    onFresh: async (bundle) => {
+      if (bundle.user && userId) {
+        await warmSavedSpeciesSession(userId);
         setError(null);
-        setLoading(false);
-        setRefreshing(false);
-        hadCacheRef.current = false;
         return;
       }
-
-      const force = options?.force ?? false;
-      let showedCache = false;
-
-      if (!force) {
-        const cached = await loadCachedOwnProfile(userId);
-        showedCache = applyCache(cached);
-        if (showedCache) {
-          setLoading(false);
-          setRefreshing(true);
-        } else {
-          setLoading(true);
-        }
-      } else {
-        setRefreshing(true);
-      }
-
-      setError(null);
-
-      try {
-        const { user: profile, stats: profileStats } = await fetchOwnProfileFromNetwork(userId);
-        setUser(profile);
-        setStats(profileStats);
-        if (profile) {
-          await persistCache(userId, profile, profileStats);
-          void warmSavedSpeciesSession(userId);
-        }
-        if (!profile) {
-          setError('No profile row found. Try signing out and back in, or check your database trigger.');
-        }
-      } catch (err: unknown) {
-        if (!showedCache && !hadCacheRef.current) {
-          setUser(null);
-          setStats(null);
-        }
-        setError(userFacingFromUnknown(err, 'Failed to fetch user').message);
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
+      if (!bundle.user) {
+        setError(
+          'No profile row found. Try signing out and back in, or check your database trigger.',
+        );
       }
     },
-    [applyCache, persistCache, userId],
-  );
+    mapError: (e) => userFacingFromUnknown(e, 'Failed to fetch user').message,
+  });
 
-  useEffect(() => {
-    hadCacheRef.current = false;
-    void fetchUser();
-  }, [fetchUser]);
+  const user = data?.user ?? null;
+  const stats = data?.stats ?? null;
 
   const update = useCallback(
     async (payload: UpdateUserPayload): Promise<UpdateUserResult> => {
@@ -139,7 +97,6 @@ export function useUser(): UseUserReturn {
       setError(null);
       try {
         const updated = await updateUser(user.id, payload);
-        setUser(updated);
         const nextStats =
           stats && stats.id === updated.id
             ? {
@@ -150,8 +107,9 @@ export function useUser(): UseUserReturn {
                 avatar_url: updated.avatar_url,
               }
             : stats;
-        setStats(nextStats);
-        await persistCache(updated.id, updated, nextStats);
+        const bundle = { user: updated, stats: nextStats };
+        setData(bundle);
+        await saveCachedOwnProfile(updated.id, bundle);
         return userFacingOk();
       } catch (err: unknown) {
         const failure = userFacingFromUnknown(err, 'Failed to update user');
@@ -159,7 +117,7 @@ export function useUser(): UseUserReturn {
         return failure;
       }
     },
-    [persistCache, stats, user],
+    [setData, setError, stats, user],
   );
 
   const remove = useCallback(async (): Promise<RemoveUserResult> => {
@@ -172,8 +130,7 @@ export function useUser(): UseUserReturn {
     try {
       await deleteAccount();
       await clearCachedOwnProfile(uid);
-      setUser(null);
-      setStats(null);
+      setData(null);
       await signOutLocalOnly();
       return userFacingOk();
     } catch (err: unknown) {
@@ -183,11 +140,11 @@ export function useUser(): UseUserReturn {
     } finally {
       setDeleting(false);
     }
-  }, [user]);
+  }, [setData, setError, user]);
 
   const refresh = useCallback(async () => {
-    await fetchUser({ force: true });
-  }, [fetchUser]);
+    await refetch({ force: true });
+  }, [refetch]);
 
   return { user, stats, loading, refreshing, deleting, error, update, remove, refresh };
 }

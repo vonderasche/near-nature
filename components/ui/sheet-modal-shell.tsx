@@ -26,7 +26,7 @@ export const sheetModalShellStyles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: authColors.overlayScrim,
   },
   sheet: {
     maxWidth: SHEET_MODAL_MAX_WIDTH,
@@ -38,7 +38,7 @@ export const sheetModalShellStyles = StyleSheet.create({
     padding: authSpacing.md,
     gap: authSpacing.md,
     elevation: 8,
-    shadowColor: '#000',
+    shadowColor: authColors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 8,

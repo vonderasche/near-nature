@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { RefreshControl, StyleSheet, View } from 'react-native';
+import { RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { TabScreenWithLogout } from '@/components/layout/tab-screen-with-logout';
@@ -22,6 +22,7 @@ import {
   isExplorerBoardColumns,
 } from '@/lib/explorerBoard/explorerBoardColumns';
 import type { GalleryGridColumns } from '@/lib/detections/galleryGridColumns';
+import { isSearchQueryActive } from '@/lib/search/normalizeSearchQuery';
 
 export default function ExplorerBoardScreen() {
   const { isAuthenticated } = useAuthContext();
@@ -35,6 +36,7 @@ export default function ExplorerBoardScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 280);
+  const searchActive = isSearchQueryActive(debouncedSearchQuery);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -88,9 +90,16 @@ export default function ExplorerBoardScreen() {
       <ScreenSearchField
         value={searchQuery}
         onChangeText={setSearchQuery}
-        placeholder="Search username or motto…"
+        placeholder="Search loaded members…"
         accessibilityLabel="Search Explorer Board members"
+        accessibilityHint="Filters members already loaded on this device. Scroll or pull to refresh to load more."
       />
+      {searchActive ? (
+        <Text style={styles.searchHint}>
+          Search only includes members already loaded. Pull to refresh or scroll down to load more,
+          then search again.
+        </Text>
+      ) : null}
       <DetectionCountExplorerBoard
         rows={rows}
         searchQuery={debouncedSearchQuery}
@@ -118,5 +127,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: authSpacing.xs,
+  },
+  searchHint: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: authColors.textMuted,
   },
 });

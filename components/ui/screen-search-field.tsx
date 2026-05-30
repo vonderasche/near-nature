@@ -8,6 +8,7 @@ type Props = {
   onChangeText: (text: string) => void;
   placeholder: string;
   accessibilityLabel: string;
+  accessibilityHint?: string;
   /** When true, no outline (e.g. inline toolbar next to icon buttons). */
   borderless?: boolean;
   /** Merged onto the outer row (e.g. `{ flex: 1 }` in a toolbar). */
@@ -19,6 +20,7 @@ export function ScreenSearchField({
   onChangeText,
   placeholder,
   accessibilityLabel,
+  accessibilityHint = 'Filters the list below',
   borderless = false,
   containerStyle,
 }: Props) {
@@ -40,7 +42,7 @@ export function ScreenSearchField({
         clearButtonMode="never"
         style={styles.input}
         accessibilityLabel={accessibilityLabel}
-        accessibilityHint="Filters the list below"
+        accessibilityHint={accessibilityHint}
       />
       {showClear ? (
         <Pressable

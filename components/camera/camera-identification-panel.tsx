@@ -1,12 +1,5 @@
 import { useCallback } from 'react';
 
-import { classificationToSpeciesCategory } from '@/lib/detections/mapSpeciesCategory';
-import {
-  addPendingGalleryDetection,
-  createPendingGalleryDetectionId,
-  removePendingGalleryDetection,
-} from '@/lib/detections/pendingGalleryDetection';
-import { resolveNaturalistCategoryFromClassification } from '@/lib/points/resolveNaturalistCategory';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -24,9 +17,8 @@ import { useAuthContext } from '@/context/AuthContext';
 import { useUserHomeState } from '@/hooks/useUserHomeState';
 import { useIdentificationResultsState } from '@/hooks/useIdentificationResultsState';
 import { useIdentifications } from '@/hooks/useIdentifications';
-import { useSaveDetection } from '@/hooks/useSaveDetection';
+import { useOptimisticIdentificationSave } from '@/hooks/useOptimisticIdentificationSave';
 import { useSpeciesIdentification } from '@/hooks/useSpeciesIdentification';
-import { requestExplorerBoardRefresh } from '@/lib/explorerBoard/explorerBoardRefresh';
 import { contentInsetsPadding } from '@/lib/screen/contentInsets';
 type Props = {
   photoUri: string;
@@ -52,7 +44,14 @@ export function CameraIdentificationPanel({
     error: historyError,
     refetch,
   } = useIdentifications({ userId: userId ?? undefined, limit: 10 });
-  const { saveInBackground } = useSaveDetection();
+  const { saveIdentification } = useOptimisticIdentificationSave({
+    userId: userId ?? undefined,
+    photoUri,
+    userState,
+    onRetake,
+    onBackgroundSaveError,
+    refetchHistory: refetch,
+  });
 
   const { species, classifications, wikiByLatinName, wikiError, tfliteMeta } =
     useIdentificationResultsState(
@@ -63,61 +62,8 @@ export function CameraIdentificationPanel({
     );
 
   const handleSaveIdentification = useCallback(() => {
-    if (!userId || species.length === 0 || classifications.length === 0) return;
-
-    const primary = species[0];
-    const wiki = wikiByLatinName[primary.latinName];
-    const classification = classifications[0];
-    const naturalist = resolveNaturalistCategoryFromClassification(classification);
-    const category = classificationToSpeciesCategory(classification);
-
-    const input = {
-      localImageUri: photoUri,
-      userId,
-      species: primary,
-      classification,
-      stateCode: userState,
-      description: wiki?.description ?? null,
-    };
-
-    const pendingId = createPendingGalleryDetectionId();
-    addPendingGalleryDetection(pendingId, {
-      userId,
-      localImageUri: photoUri,
-      commonName: primary.commonName,
-      latinName: primary.latinName,
-      category,
-      subcategory: naturalist?.subcategory ?? null,
-      mainCategory: naturalist?.mainCategory ?? null,
-      description: wiki?.description ?? null,
-      nativeStatus: primary.status,
-    });
-
-    onRetake();
-
-    saveInBackground(input, (result) => {
-      removePendingGalleryDetection(pendingId, userId);
-      if (!result.ok) {
-        onBackgroundSaveError?.(result.message);
-        return;
-      }
-      void refetch();
-      if (result.result.newSpeciesDiscovery) {
-        requestExplorerBoardRefresh();
-      }
-    });
-  }, [
-    photoUri,
-    userId,
-    species,
-    classifications,
-    wikiByLatinName,
-    userState,
-    onRetake,
-    saveInBackground,
-    onBackgroundSaveError,
-    refetch,
-  ]);
+    saveIdentification({ species, classifications, wikiByLatinName });
+  }, [classifications, saveIdentification, species, wikiByLatinName]);
 
   return (
     <>

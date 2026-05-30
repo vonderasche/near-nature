@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: authSpacing.sm,
     paddingHorizontal: authSpacing.xs,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: authColors.surfaceRaised,
     gap: 2,
   },
   tileFeatured: {

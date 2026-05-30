@@ -57,6 +57,3 @@ export function useSaveDetection() {
 
   return { save, saveInBackground, saving, saveError, clearSaveError };
 }
-
-/** Same hook — uploads image + detection row to the database. */
-export { useSaveDetection as useDetectionUpload };

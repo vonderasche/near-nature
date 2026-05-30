@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     paddingHorizontal: authSpacing.xs,
     paddingVertical: authSpacing.xs,
-    backgroundColor: 'rgba(0,0,0,0.55)',
+    backgroundColor: authColors.overlayScrimStrong,
   },
   username: {
     ...authTypography.body,

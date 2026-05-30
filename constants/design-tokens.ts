@@ -22,6 +22,16 @@ export const colors = {
   danger: '#ff453a',
   /** Semi-transparent scrim (e.g. camera bottom toolbar over the preview). */
   overlayScrim: 'rgba(0,0,0,0.45)',
+  /** Darker scrim for text overlays on photos (e.g. explorer board tiles). */
+  overlayScrimStrong: 'rgba(0,0,0,0.55)',
+  /** Press ripple on dark camera controls (Android). */
+  rippleOnDark: 'rgba(255,255,255,0.2)',
+  /** Active camera control fill (tint at partial opacity). */
+  cameraControlActive: 'rgba(10,126,164,0.55)',
+  /** Subtle elevated surface on dark backgrounds (badge tiles). */
+  surfaceRaised: 'rgba(255,255,255,0.06)',
+  /** Modal drop shadow color. */
+  shadow: '#000000',
 } as const;
 
 export const spacing = {
