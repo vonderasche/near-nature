@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { ScreenHeading } from '@/components/shared/screen-heading';
+import { SubtleRefreshIndicator } from '@/components/layout/subtle-refresh-indicator';
 import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { authColors, authSpacing } from '@/constants/auth-theme';
 import { useLogout } from '@/hooks/useLogout';
@@ -15,6 +16,8 @@ type TabScreenWithLogoutProps = {
   subtitle?: string;
   children?: ReactNode;
   refreshControl?: ComponentProps<typeof ScrollView>['refreshControl'];
+  /** Small header spinner while cached data is revalidated in the background. */
+  backgroundRefreshing?: boolean;
   /** When true, the default “Log out” button is omitted (e.g. profile uses an overflow menu). */
   hideLogout?: boolean;
   /** Rendered on the title row (e.g. profile hamburger menu). */
@@ -26,6 +29,7 @@ export function TabScreenWithLogout({
   subtitle,
   children,
   refreshControl,
+  backgroundRefreshing = false,
   hideLogout = false,
   titleAccessory,
 }: TabScreenWithLogoutProps) {
@@ -37,12 +41,18 @@ export function TabScreenWithLogout({
   const headingBlock = titleAccessory ? (
     <View style={styles.titleRow}>
       <View style={styles.titleText}>
-        <ScreenHeading title={title} subtitle={subtitle} marginBottom={0} />
+        <View style={styles.titleWithIndicator}>
+          <ScreenHeading title={title} subtitle={subtitle} marginBottom={0} />
+          <SubtleRefreshIndicator visible={backgroundRefreshing} />
+        </View>
       </View>
       {titleAccessory}
     </View>
   ) : (
-    <ScreenHeading title={title} subtitle={subtitle} marginBottom={authSpacing.md} />
+    <View style={styles.titleWithIndicatorStandalone}>
+      <ScreenHeading title={title} subtitle={subtitle} marginBottom={0} />
+      <SubtleRefreshIndicator visible={backgroundRefreshing} />
+    </View>
   );
 
   const logoutErrorModal = (
@@ -140,6 +150,18 @@ const styles = StyleSheet.create({
   titleText: {
     flex: 1,
     minWidth: 0,
+  },
+  titleWithIndicator: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: authSpacing.sm,
+  },
+  titleWithIndicatorStandalone: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: authSpacing.sm,
+    marginBottom: authSpacing.md,
   },
   centeredShell: {
     alignItems: 'center',

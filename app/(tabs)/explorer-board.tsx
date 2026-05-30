@@ -28,7 +28,7 @@ export default function ExplorerBoardScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme() ?? 'light';
   const tint = Colors[colorScheme].tint;
-  const { rows, isLoading, isLoadingMore, hasMore, error, loadMore, refetch } =
+  const { rows, isLoading, isRefreshing, isLoadingMore, hasMore, error, loadMore, refetch } =
     useExplorerBoard();
   const { layoutMode, setLayout } = useExplorerBoardLayout();
   const { columns, setColumnCount } = useExplorerBoardColumns();
@@ -83,7 +83,8 @@ export default function ExplorerBoardScreen() {
           tintColor={tint}
           colors={[tint]}
         />
-      }>
+      }
+      backgroundRefreshing={isRefreshing && !refreshing}>
       <ScreenSearchField
         value={searchQuery}
         onChangeText={setSearchQuery}

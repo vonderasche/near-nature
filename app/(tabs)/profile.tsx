@@ -129,12 +129,13 @@ export default function ProfileScreen() {
       }
       refreshControl={
         <RefreshControl
-          refreshing={pullRefreshing || profileRefreshing}
+          refreshing={pullRefreshing}
           onRefresh={onRefresh}
           tintColor={authColors.text}
           colors={[authColors.text]}
         />
-      }>
+      }
+      backgroundRefreshing={profileRefreshing && !pullRefreshing}>
       {loading && !user ? (
         <CenteredActivityIndicator color={authColors.text} accessibilityLabel="Loading profile" />
       ) : null}

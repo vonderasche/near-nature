@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { useCallback } from 'react';
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { HeroIcon, type HeroIconName } from '@/components/ui/hero-icon';
@@ -39,11 +40,14 @@ export function FirstLoginWelcomeModal() {
     isPasswordRecovery,
     profileGateResolved,
     hasProfile,
+    freshSignIn,
+    clearFreshSignIn,
   } = useAuthContext();
 
   const { visible, dismiss } = useFirstLoginWelcome({
     userId,
     enabled:
+      freshSignIn &&
       isAuthenticated &&
       !isLoading &&
       !isPasswordRecovery &&
@@ -51,8 +55,13 @@ export function FirstLoginWelcomeModal() {
       hasProfile,
   });
 
+  const handleDismiss = useCallback(async () => {
+    await dismiss();
+    clearFreshSignIn();
+  }, [clearFreshSignIn, dismiss]);
+
   return (
-    <SheetModalShell visible={visible} onRequestClose={() => void dismiss()} backdropDisabled>
+    <SheetModalShell visible={visible} onRequestClose={() => void handleDismiss()} backdropDisabled>
       <View style={styles.header}>
         <HeroIcon name="sparkles" size={26} color={authColors.text} />
         <Text style={sheetModalShellStyles.sheetTitle}>Welcome to Near Nature</Text>
@@ -76,7 +85,7 @@ export function FirstLoginWelcomeModal() {
         ))}
       </View>
 
-      <AuthButton title="Start exploring" fillParent onPress={() => void dismiss()} />
+      <AuthButton title="Start exploring" fillParent onPress={() => void handleDismiss()} />
     </SheetModalShell>
   );
 }

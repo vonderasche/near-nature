@@ -20,6 +20,10 @@ type AuthContextType = {
   profileGateResolved: boolean;
   /** Whether `public.users` has a row for `userId`. Meaningless when not authenticated (false). */
   hasProfile: boolean;
+  /** True after a fresh sign-in in this app session (not session restore). */
+  freshSignIn: boolean;
+  /** Clears {@link freshSignIn} after welcome or other post-login UX. */
+  clearFreshSignIn: () => void;
   /** Re-query `public.users` after backfill / trigger fixes (e.g. from needs-profile screen). */
   refreshProfile: () => Promise<void>;
 };
@@ -33,6 +37,8 @@ const AuthContext = createContext<AuthContextType>({
   clearPasswordRecovery: () => {},
   profileGateResolved: true,
   hasProfile: false,
+  freshSignIn: false,
+  clearFreshSignIn: () => {},
   refreshProfile: async () => {},
 });
 
@@ -42,6 +48,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
   const [profileGateResolved, setProfileGateResolved] = useState(true);
   const [hasProfile, setHasProfile] = useState(false);
+  const [freshSignIn, setFreshSignIn] = useState(false);
+
+  const clearFreshSignIn = useCallback(() => {
+    setFreshSignIn(false);
+  }, []);
 
   const clearPasswordRecovery = useCallback(() => {
     setIsPasswordRecovery(false);
@@ -111,8 +122,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } = supabase.auth.onAuthStateChange((event, newSession) => {
       if (!mounted) return;
       setSession(newSession);
+      if (event === 'SIGNED_IN') {
+        setFreshSignIn(true);
+      }
       if (event === 'SIGNED_OUT') {
         setIsPasswordRecovery(false);
+        setFreshSignIn(false);
       }
       if (event === 'PASSWORD_RECOVERY') {
         setIsPasswordRecovery(true);
@@ -184,6 +199,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearPasswordRecovery,
       profileGateResolved,
       hasProfile,
+      freshSignIn,
+      clearFreshSignIn,
       refreshProfile,
     }),
     [
@@ -193,6 +210,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearPasswordRecovery,
       profileGateResolved,
       hasProfile,
+      freshSignIn,
+      clearFreshSignIn,
       refreshProfile,
     ]
   );

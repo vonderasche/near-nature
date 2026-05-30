@@ -1,4 +1,4 @@
-import { Redirect } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,7 +16,7 @@ import { useCameraPreferences } from '@/hooks/useCameraPreferences';
 import { useCameraZoom } from '@/hooks/useCameraZoom';
 import { CameraIdentificationPanel } from '@/components/camera/camera-identification-panel';
 import { ScreenCenter } from '@/components/shared/screen-center';
-import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
+import { ThemedConfirmModal, ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import { useCameraScreen } from '@/hooks/useCameraScreen';
 import { usePickPhotoFromGallery } from '@/hooks/usePickPhotoFromGallery';
@@ -24,6 +24,7 @@ import { contentInsetsPadding } from '@/lib/screen/contentInsets';
 
 export default function CameraScreen() {
   const { isAuthenticated, isLoading } = useAuthContext();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
 
   if (!isLoading && !isAuthenticated) {
@@ -118,11 +119,22 @@ export default function CameraScreen() {
         message={pickerNotice?.message ?? ''}
         onDismiss={() => setPickerNotice(null)}
       />
-      <ThemedMessageModal
+      <ThemedConfirmModal
         visible={backgroundSaveError !== null}
-        title={backgroundSaveError?.title ?? ''}
-        message={backgroundSaveError?.message ?? ''}
-        onDismiss={() => setBackgroundSaveError(null)}
+        title={backgroundSaveError?.title ?? 'Save failed'}
+        message={
+          backgroundSaveError?.message
+            ? `${backgroundSaveError.message} Open your profile to check your gallery or try saving again.`
+            : 'Your identification could not be saved. Open your profile to check your gallery or try again.'
+        }
+        cancelLabel="Dismiss"
+        confirmLabel="Open profile"
+        confirmDestructive={false}
+        onCancel={() => setBackgroundSaveError(null)}
+        onConfirm={() => {
+          setBackgroundSaveError(null);
+          router.push(routes.profileTab);
+        }}
       />
     </>
   );
