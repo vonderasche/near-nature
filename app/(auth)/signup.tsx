@@ -19,6 +19,7 @@ import {
   SIGNUP_USERNAME_TAKEN_MESSAGE,
   useSignupAvailability,
 } from '@/hooks/useSignupAvailability';
+import { usePostSignInNavigation } from '@/hooks/usePostSignInNavigation';
 import { signUpWithEmail } from '@/lib/auth/email-auth';
 import {
   SIGNUP_PASSWORD_HINT,
@@ -50,7 +51,14 @@ export default function SignUpScreen() {
   const [termsTouched, setTermsTouched] = useState(false);
   const [busy, setBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
+  const [signInPending, setSignInPending] = useState(false);
   const [info, setInfo] = useState<InfoDialog>(null);
+  const { completingSignIn, buttonTitle } = usePostSignInNavigation(signInPending, {
+    idle: 'Create account',
+    completing: 'Signing you in…',
+  });
+
+  const signingIn = busy || completingSignIn;
 
   const {
     emailTaken,
@@ -197,17 +205,19 @@ export default function SignUpScreen() {
             'If confirmations are disabled, you can log in immediately after this screen.',
           goToLoginOnDismiss: true,
         });
+        return;
       }
+      setSignInPending(true);
     } finally {
       setBusy(false);
     }
   }
 
   async function onGoogleSignIn() {
-    setBusy(false);
     setGoogleBusy(true);
     try {
       await signInWithGoogle();
+      setSignInPending(true);
     } catch (error) {
       setInfo({
         title: 'Google sign-in',
@@ -330,15 +340,15 @@ export default function SignUpScreen() {
       <AuthMarketingOptIn optedIn={marketingOptIn} onOptedInChange={setMarketingOptIn} />
 
       <AuthButton
-        title="Create account"
+        title={buttonTitle}
         onPress={onSubmit}
-        loading={busy}
-        disabled={busy || googleBusy || formBlocked}
+        loading={signingIn}
+        disabled={signingIn || googleBusy || formBlocked}
       />
       <GoogleSignInButton
         onPress={onGoogleSignIn}
-        loading={googleBusy}
-        disabled={busy || googleBusy}
+        loading={googleBusy || completingSignIn}
+        disabled={signingIn || googleBusy}
       />
 
       <AuthLinkRow prompt="Already have an account?" href={routes.login} linkText="Log in" />

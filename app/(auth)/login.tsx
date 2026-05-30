@@ -9,6 +9,7 @@ import { AuthScreenHeader } from '@/components/auth/auth-screen-header';
 import { AuthTextLink } from '@/components/auth/auth-text-link';
 import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { authSpacing } from '@/constants/auth-theme';
+import { usePostSignInNavigation } from '@/hooks/usePostSignInNavigation';
 import { signInWithEmail } from '@/lib/auth/email-auth';
 import { routes } from '@/lib/routing/routes';
 import { signInWithGoogle } from '@/services/authService';
@@ -20,7 +21,14 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
+  const [signInPending, setSignInPending] = useState(false);
   const [info, setInfo] = useState<InfoDialog>(null);
+  const { completingSignIn, buttonTitle } = usePostSignInNavigation(signInPending, {
+    idle: 'Sign in',
+    completing: 'Signing you in…',
+  });
+
+  const signingIn = busy || completingSignIn;
 
   async function onSubmit() {
     setBusy(true);
@@ -30,7 +38,7 @@ export default function LoginScreen() {
         setInfo({ title: 'Sign in', message: result.message });
         return;
       }
-      // Navigation: AuthGate sends you to (tabs) or needs-profile once session + profile are resolved.
+      setSignInPending(true);
     } finally {
       setBusy(false);
     }
@@ -40,6 +48,7 @@ export default function LoginScreen() {
     setGoogleBusy(true);
     try {
       await signInWithGoogle();
+      setSignInPending(true);
     } catch (error) {
       setInfo({
         title: 'Google sign-in',
@@ -73,11 +82,16 @@ export default function LoginScreen() {
         textContentType="password"
       />
 
-      <AuthButton title="Sign in" onPress={onSubmit} loading={busy} disabled={busy} />
+      <AuthButton
+        title={buttonTitle}
+        onPress={onSubmit}
+        loading={signingIn}
+        disabled={signingIn || googleBusy}
+      />
       <GoogleSignInButton
         onPress={onGoogleSignIn}
-        loading={googleBusy}
-        disabled={busy || googleBusy}
+        loading={googleBusy || completingSignIn}
+        disabled={signingIn || googleBusy}
       />
 
       <AuthTextLink href={routes.forgotPassword} variant="muted" style={{ marginTop: authSpacing.sm }}>

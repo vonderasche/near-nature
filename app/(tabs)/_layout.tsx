@@ -1,5 +1,6 @@
 import { Tabs, useRouter } from 'expo-router';
 import React from 'react';
+import { Alert } from 'react-native';
 import type { EventArg } from '@react-navigation/native';
 
 import { HapticTab } from '@/components/layout/haptic-tab';
@@ -10,17 +11,26 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { routes } from '@/lib/routing/routes';
 
 type TabPressEvent = EventArg<'tabPress', true, undefined>;
+type AuthRequiredTab = 'camera' | 'profile';
+
+const AUTH_TAB_MESSAGES: Record<AuthRequiredTab, string> = {
+  camera: 'Sign in to identify and save species with the camera.',
+  profile: 'Sign in to view your profile, gallery, and badges.',
+};
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const { isAuthenticated } = useAuthContext();
   const router = useRouter();
 
-  const requireAuthOnTabPress = (event: TabPressEvent) => {
-    if (!isAuthenticated) {
-      event.preventDefault();
-      router.push(routes.login);
-    }
+  const requireAuthOnTabPress = (tab: AuthRequiredTab) => (event: TabPressEvent) => {
+    if (isAuthenticated) return;
+
+    event.preventDefault();
+    Alert.alert('Sign in required', AUTH_TAB_MESSAGES[tab], [
+      { text: 'Not now', style: 'cancel' },
+      { text: 'Log in', onPress: () => router.push(routes.login) },
+    ]);
   };
 
   return (
@@ -39,7 +49,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="camera"
         listeners={{
-          tabPress: requireAuthOnTabPress,
+          tabPress: requireAuthOnTabPress('camera'),
         }}
         options={{
           title: 'Camera',
@@ -56,7 +66,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         listeners={{
-          tabPress: requireAuthOnTabPress,
+          tabPress: requireAuthOnTabPress('profile'),
         }}
         options={{
           title: 'Profile',

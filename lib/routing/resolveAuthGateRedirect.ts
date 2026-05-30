@@ -51,11 +51,8 @@ export function resolveAuthGateRedirect(input: AuthGateRedirectInput): Href | nu
   if (isAuthenticated && !isPasswordRecovery) {
     if (!profileGateResolved) return null;
     if (!hasProfile && !onNeedsProfile) return routes.needsProfile;
+    if (hasProfile && inAuth && !onResetPassword && !onNeedsProfile) return routes.tabs;
     return null;
-  }
-
-  if (isAuthenticated && hasProfile && inAuth && !onResetPassword && !onNeedsProfile) {
-    return routes.tabs;
   }
 
   return null;

@@ -5,6 +5,7 @@ import { createContext, type ReactNode, useCallback, useContext, useEffect, useM
 import { completeSupabaseAuthSessionFromUrl } from '@/lib/auth/completeSupabaseAuthSessionFromUrl';
 import { clearOrphanAuthSession } from '@/lib/auth/orphanAuthSession';
 import { getSessionClearingStaleRefresh } from '@/lib/auth/recoverSupabaseSession';
+import { warmAuthUserCaches } from '@/lib/auth/warmAuthUserCaches';
 import { supabase } from '@/lib/supabase';
 import { resolveUserProfile } from '@/services/userService';
 
@@ -166,6 +167,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, [session?.user?.id, isPasswordRecovery]);
+
+  useEffect(() => {
+    const uid = session?.user?.id;
+    if (!uid || isPasswordRecovery || !profileGateResolved || !hasProfile) return;
+    void warmAuthUserCaches(uid);
+  }, [session?.user?.id, isPasswordRecovery, profileGateResolved, hasProfile]);
 
   const value = useMemo(
     () => ({
