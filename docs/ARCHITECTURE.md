@@ -4,6 +4,15 @@ Nature-identification app built with **Expo Router**, **Supabase** (Auth, Postgr
 
 For SQL setup order, see [`sql/README.md`](../sql/README.md).
 
+**Diagrams in this doc**
+
+| Section | Covers |
+|---------|--------|
+| [Startup and routing](#startup-and-routing) | AuthGate, guest vs signed-in paths |
+| [App flow](#app-flow-tabs-and-data) | Tabs, caches, stale-while-revalidate sequence |
+| [Image pipeline](#image-pipeline-capture--identify--enrich--save) | Capture → classify → enrich → save (TFLite, Gemini, enrichment waterfall) |
+| [System overview](#system-overview) | App ↔ Supabase ↔ device ↔ external APIs |
+
 ---
 
 ## High-level shape
@@ -22,63 +31,262 @@ For SQL setup order, see [`sql/README.md`](../sql/README.md).
 
 ## Startup and routing
 
-```
-App launch
-    │
-    ▼
-Supabase client restores session (AsyncStorage: auth tokens)
-    │
-    ▼
-AuthContext: check public.users row exists?
-    │
-    ├─ No session ──► (auth): login / signup / forgot password
-    ├─ Session, no profile ──► needs-profile
-    └─ Session + profile ──► (tabs): Camera | Explorer Board | Profile
+```mermaid
+flowchart TD
+  Launch([App launch]) --> Restore[Supabase restores session<br/>AsyncStorage JWT]
+  Restore --> Gate{AuthGate}
+
+  Gate -->|loading| Spinner[Full-screen spinner]
+  Gate -->|no session| AuthScreens["(auth): login · signup · forgot password"]
+  Gate -->|session + no public.users| NeedsProfile[needs-profile]
+  Gate -->|session + profile| Tabs["(tabs): Camera · Explorer Board · Profile"]
+  Gate -->|password recovery| ResetPw[reset-password]
+
+  AuthScreens -->|sign-in success| ProfileCheck[Check public.users row]
+  ProfileCheck -->|row exists| Tabs
+  ProfileCheck -->|missing row| NeedsProfile
+
+  subgraph guest["Guest browsing (no session)"]
+    GuestBoard[Explorer Board tab ✓]
+    GuestMember[Public member profiles ✓]
+    GuestCam[Camera tab → login]
+    GuestProf[Profile tab → login]
+  end
+
+  Tabs --> GuestBoard
 ```
 
 `AuthGate` enforces this on every navigation. Password recovery can use `reset-password` without a full profile row.
+
+**Post-login:** `usePostSignInNavigation` calls `router.replace` as a backup to `AuthGate`. Fresh sign-in sets `freshSignIn` → welcome modal once. `warmAuthUserCaches` runs after profile gate resolves.
 
 **DB on startup:** `users` existence check, optional `ensure_public_user_profile` RPC. No gallery/scoring until those screens open.
 
 ---
 
-## Tab 1 — Camera (identify → save)
+## App flow (tabs and data)
 
-### Identify flow
+```mermaid
+flowchart LR
+  subgraph tabs["Signed-in tabs"]
+    Cam[Camera<br/>identify → save]
+    Board[Explorer Board<br/>leaderboard]
+    Prof[Profile<br/>badges + gallery]
+  end
 
-**Native (iOS / Android)** — on-device TFLite, no network for classification:
+  Cam -->|save| Supa[(Supabase)]
+  Board -->|RPC + cache| Supa
+  Prof -->|RPC + cache| Supa
 
-1. User captures or picks a photo (full resolution kept for save).
-2. **Preview model** (`near_nature_app_bundle/preview`) → top taxon group (20 classes).
-3. **Routing** (`routing.json`) selects a bundled **specialist** model when available (birds roll up species → genus; others predict genus directly).
-4. Top genus candidates become `ClassificationResult[]` (latin name = genus, confidence from model).
+  subgraph device["Device cache (SQLite / AsyncStorage)"]
+    ProfileC[own profile]
+    GalleryC[gallery rows]
+    ScoreC[scoring snapshot]
+    BoardC[board page 1]
+    WikiC[wiki_cache]
+    CatalogC[species_records]
+    SavedC[saved-species map]
+  end
 
-**Web / non-native fallback** — Gemini via Edge or dev direct API:
+  Prof --> ProfileC
+  Prof --> GalleryC
+  Prof --> ScoreC
+  Board --> BoardC
+  Cam --> SavedC
+  Cam --> WikiC
+  Cam --> CatalogC
 
-1. Image resized for vision (**max edge 1280**) → base64.
-2. **Supabase Edge** `identify-species` (or dev-only `EXPO_PUBLIC_GEMINI_API_KEY`) → classifications.
+  Supa -->|signed URLs| Display[expo-image display]
+  device -->|stale-while-revalidate| Supa
+```
 
-**Enrichment** (`enrichSpeciesFromApis`) — both paths:
+**Stale-while-revalidate:** cached data paints immediately; a subtle header spinner shows during background refresh. Pull-to-refresh forces network.
 
-- **Saved species session** (SQLite map, warmed on profile load): reuse prior status + description when the user already saved this latin name.
-- **Bundled genus catalog** (`species_records`): offline descriptions when the latin name matches seeded catalog data.
-- **Wiki cache** (`wiki_cache` SQLite table): reuse prior Wikipedia fetches across sessions.
-- **iNaturalist** for the **primary (first) candidate only**; alternates get `unknown` unless saved data exists.
-- **Wikipedia** for up to 3 candidates (parallel with status for primary); successful fetches are written to `wiki_cache`.
+```mermaid
+sequenceDiagram
+  participant User
+  participant Screen as Profile / Board
+  participant Cache as SQLite cache
+  participant API as Supabase RPC
 
-5. UI shows genus/species list, wiki snippets, routing banner (TFLite meta), save button.
+  User->>Screen: Open screen
+  Screen->>Cache: loadCached*
+  Cache-->>Screen: cached rows (instant UI)
+  Screen->>API: background fetch
+  API-->>Screen: fresh data
+  Screen->>Cache: saveCached*
+  Screen-->>User: UI updates silently
+```
 
-**DB during identify:** optional reads from saved-species map, `species_records`, or `wiki_cache`. **No write** until save.
+---
 
-### Save flow
+## Image pipeline (capture → identify → enrich → save)
 
-1. User taps save → UI returns to camera; upload runs in background.
-2. **iNat** again at save time (for DB `native_status` / `inaturalist_id`).
-3. **Storage:** image → `detections/{userId}/{uuid}.jpg`.
-4. **Postgres:** `INSERT detections` (category, subcategory, main_category, points, etc.).
-5. **DB triggers** (server-side, no extra app calls): points, streaks, first-species `discoveries` row, milestone checks (`check_category_milestones`).
-6. **Cache invalidation:** gallery list cache, scoring snapshot cache; **session map** updated for that species.
-7. Identification **history** refetches (camera panel only after save, not on every identify).
+End-to-end path for a camera or gallery photo. **Full-resolution URI** is kept for save; classification uses a separate prepared image.
+
+```mermaid
+flowchart TB
+  subgraph input["1 · Input"]
+    Capture[Camera capture or gallery pick]
+    FullUri["local file:// URI<br/>(full resolution kept)"]
+    Capture --> FullUri
+  end
+
+  subgraph classify["2 · Classify"]
+    Platform{Platform?}
+    FullUri --> Platform
+
+    Platform -->|iOS / Android| TflitePath[TFLite pipeline]
+    Platform -->|web| GeminiPath[Gemini pipeline]
+
+    TflitePath --> ClassOut["ClassificationResult[]<br/>latin · common · confidence"]
+    GeminiPath --> ClassOut
+  end
+
+  subgraph enrich["3 · Enrich (enrichSpeciesFromApis)"]
+    ClassOut --> PerCandidate[For each candidate]
+    PerCandidate --> WikiTier{Description source}
+    WikiTier -->|saved detection| SavedHit[SQLite saved-species map]
+    WikiTier -->|catalog hit| CatalogHit[species_records]
+    WikiTier -->|prior fetch| WikiHit[wiki_cache]
+    WikiTier -->|miss| LiveWiki[Wikipedia API → write wiki_cache]
+
+    PerCandidate --> StatusTier{Native status}
+    StatusTier -->|primary only| INat[iNaturalist lookup]
+    StatusTier -->|alternates| UnknownOrSaved[unknown or saved status]
+  end
+
+  subgraph ui["4 · Results UI"]
+    SavedHit --> Results[Species list + wiki snippets<br/>+ TFLite routing banner]
+    CatalogHit --> Results
+    WikiHit --> Results
+    LiveWiki --> Results
+    INat --> Results
+    UnknownOrSaved --> Results
+  end
+
+  subgraph save["5 · Save (background)"]
+    Results --> SaveTap[User taps Save]
+    SaveTap --> Retake[Return to live camera]
+    SaveTap --> BG[saveInBackground]
+    BG --> Upload[Storage: detections/userId/uuid.jpg]
+    Upload --> Insert[INSERT detections]
+    Insert --> Triggers[DB triggers: points · streaks · badges]
+    Triggers --> Invalidate[Invalidate gallery + scoring cache<br/>update saved-species map]
+  end
+```
+
+### TFLite path (native)
+
+Bundled assets under `assets/tflite/near_nature_app_bundle/`.
+
+```mermaid
+flowchart LR
+  Photo[photoUri] --> Pre["preprocessImageForMobileNet<br/>224×224 RGB · ImageNet norm"]
+  Pre --> Float["Float32Array input"]
+
+  Float --> Preview["Preview model<br/>20 taxon groups"]
+  Preview --> Route["routing.json → specialist id"]
+  Route -->|no bundled model| Empty[Empty result + notice]
+  Route -->|specialist found| Spec["Specialist TFLite"]
+
+  Spec --> Birds{birds?}
+  Birds -->|yes| Rollup["species scores → genus top-3"]
+  Birds -->|no| Genus["genus top-3"]
+
+  Rollup --> Out["ClassificationResult[]<br/>latinName = genus"]
+  Genus --> Out
+```
+
+| Stage | Model | Output |
+|-------|--------|--------|
+| Preview | `preview/preview_classifier.tflite` | Top taxon group (e.g. Bird, Butterfly) |
+| Route | `routing.json` | Specialist folder or “no model” notice |
+| Specialist | `inat2021_specialists/*/` | Top genus candidates (+ bird species rollup) |
+
+### Gemini path (web fallback)
+
+```mermaid
+flowchart LR
+  Photo[photoUri] --> Resize["resizeImageForUpload<br/>max edge 1280 · JPEG"]
+  Resize --> B64[base64]
+  B64 --> Edge{Signed in?}
+  Edge -->|yes| Fn["Edge: identify-species<br/>GEMINI_API_KEY on server"]
+  Edge -->|dev only| Dev["Direct API<br/>EXPO_PUBLIC_GEMINI_API_KEY"]
+  Fn --> Parse[parseIdentificationResponse]
+  Dev --> Parse
+  Parse --> Filter[filterClassifications]
+  Filter --> Out["ClassificationResult[]"]
+```
+
+### Enrichment waterfall (per candidate)
+
+Wiki description resolves in strict order; first hit wins. iNaturalist runs for **candidate 0 only** (unless saved data exists).
+
+```mermaid
+flowchart TD
+  Start([Candidate i]) --> Saved{Saved detection<br/>for latin name?}
+  Saved -->|yes| UseSaved[Reuse status + description<br/>skip iNat/wiki network]
+  Saved -->|no| WikiQ{i less than wikiLimit?}
+
+  WikiQ -->|no| StatusOnly[Status only]
+  WikiQ -->|yes| Cat{species_records?}
+  Cat -->|hit| CatDesc[catalog description]
+  Cat -->|miss| WC{wiki_cache?}
+  WC -->|hit| CacheDesc[cached Wikipedia]
+  WC -->|miss| WikiLive[Fetch Wikipedia<br/>persist to wiki_cache]
+
+  Start --> Primary{i equals 0?}
+  Primary -->|yes| INat[iNaturalist native status]
+  Primary -->|no| AltStatus[status unknown unless saved]
+
+  CatDesc --> Done([Species row])
+  CacheDesc --> Done
+  WikiLive --> Done
+  UseSaved --> Done
+  StatusOnly --> Done
+  INat --> Done
+  AltStatus --> Done
+```
+
+### Save pipeline (image bytes)
+
+```mermaid
+flowchart TD
+  Save([Save tap]) --> Pending[Optimistic pending gallery tile]
+  Pending --> Camera[UI returns to camera]
+
+  Camera --> Read["readLocalFileAsBase64(full photoUri)"]
+  Read --> INat2[iNaturalist at save time]
+  INat2 --> Upload["uploadDetectionsObject<br/>detections/userId/uuid.jpg"]
+  Upload --> Row["INSERT detections<br/>image_url · names · category · native_status"]
+  Row --> Meta[upsertSpeciesMetadata + alternate names]
+  Meta --> Local["SQLite user_detections + gallery cache prepend"]
+  Row --> Trig[Postgres triggers]
+
+  Trig --> Points[point_awards]
+  Trig --> Streak[streaks]
+  Trig --> Disc[discoveries first-species]
+  Trig --> Mile[check_category_milestones]
+
+  Local --> Done([Gallery + scoring refresh on revisit])
+  Mile --> Done
+
+  Upload -->|failure| Err[Modal: Dismiss or Open profile]
+```
+
+**DB during identify:** read-only from saved-species map, `species_records`, `wiki_cache`. **No write** until save.
+
+### Camera tab — key modules
+
+| Step | Primary modules |
+|------|-----------------|
+| Capture | `hooks/useCameraScreen.ts`, `hooks/usePickPhotoFromGallery.ts` |
+| Classify (native) | `lib/camera/mobilenet/identifyPhotoWithTflite.ts`, `preprocessImageForMobileNet.ts` |
+| Classify (web) | `hooks/useSpeciesIdentification.ts`, `api/gemini.ts`, Edge `identify-species` |
+| Enrich | `lib/identification/enrichSpeciesFromApis.ts` |
+| UI | `components/camera/camera-identification-panel.tsx` |
+| Save | `hooks/useSaveDetection.ts`, `services/detectionService.ts` |
 
 ---
 
@@ -196,88 +404,59 @@ Postgres triggers on `detections` insert handle points, streaks, discoveries, an
 
 ---
 
-## System diagram
+## System overview
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           NEAR NATURE (Expo App)                            │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  AuthGate ──► (auth) login/signup    OR    (tabs) Camera | Board | Profile  │
-└─────────────────────────────────────────────────────────────────────────────┘
-         │                              │              │              │
-         ▼                              ▼              ▼              ▼
-   ┌──────────┐              ┌──────────────┐  ┌────────────┐  ┌─────────────┐
-   │ Supabase │              │    CAMERA    │  │  EXPLORER  │  │   PROFILE   │
-   │   Auth   │              │              │  │   BOARD    │  │             │
-   └────┬─────┘              └──────┬───────┘  └─────┬──────┘  └──────┬──────┘
-        │                           │                │                 │
-        │              ┌──────▼───────┐              │          ┌──────┴──────┐
-        │              │ TFLite bundle│              │          │ Badges│Gallery│
-        │              │ preview→spec │              │          └──────┬──────┘
-        │              └──────┬───────┘              │                 │
-        │         (web only)  │  Resize→Gemini edge  │                 │
-        │                     │                      │                 │
-        │              ┌──────┼────────────┐        │                 │
-        │              ▼      ▼            ▼        │                 │
-        │         [Saved] [Catalog]   [Wiki cache]  │                 │
-        │         [iNat #0]  [Wiki≤3 live fetch]    │                 │
-        │              │            │            │   │                 │
-        │              └────────────┼────────────┘   │                 │
-        │                           │ SAVE            │                 │
-        ▼                           ▼                 ▼                 ▼
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                              SUPABASE BACKEND                                 │
-│  ┌─────────────┐   ┌──────────────────┐   ┌─────────────────────────────┐     │
-│  │   Storage   │   │  Edge: identify- │   │  Postgres (RLS)             │     │
-│  │ detections/ │   │  species (Gemini)│   │  users · detections         │     │
-│  │   bucket    │   └──────────────────┘   │  discoveries · point_awards │     │
-│  └──────▲──────┘                          │  streaks · triggers         │     │
-│         │ upload                          └───────────┬─────────────────┘     │
-│         │                                             │ RPCs                  │
-│         │                              get_detection_count_leaderboard        │
-│         │                              get_public_user_profile              │
-│         │                              get_user_scoring_snapshot            │
-│         │                              get_public_user_awards               │
-│         └──────── signed URLs ◄────────────────────────────────────────────   │
-└───────────────────────────────────────────────────────────────────────────────┘
-         ▲                           ▲                           ▲
-         │                           │                           │
-┌────────┴───────────────────────────┴───────────────────────────┴──────────────┐
-│                         DEVICE CACHE (AsyncStorage + RAM)                     │
-│  auth tokens │ own profile │ gallery rows │ scoring JSON │ signed URLs      │
-│              │             │              │              │ saved-species Map │
-│              │             │              │              │ layout prefs       │
-└───────────────────────────────────────────────────────────────────────────────┘
-         ▲
-         │  iNaturalist / Wikipedia (only when not in saved-species map)
-         └──────────────────────────────────────────────────────────────────────
-```
+High-level view of the app, backend, caches, and external APIs. For detail see **App flow** and **Image pipeline** above.
 
----
+```mermaid
+flowchart TB
+  subgraph app["Expo app"]
+    AuthGate[AuthGate]
+    AuthGate --> AuthUI["(auth) login · signup"]
+    AuthGate --> Tabs["(tabs) Camera · Board · Profile"]
 
-## Identification + cache decision flow
+    Tabs --> Cam[Camera<br/>TFLite / Gemini]
+    Tabs --> Board[Explorer Board]
+    Tabs --> Prof[Profile]
 
-```
-                    [Photo captured]
-                           │
-              ┌────────────┴────────────┐
-              ▼                         ▼
-     [Native: TFLite preview      [Web: resize 1280 →
-      → specialist → genus]         Gemini edge / dev API]
-              │                         │
-              └────────────┬────────────┘
-                           │ classifications[]
-                           ▼
-              ┌────────────────────────────┐
-              │ For each candidate (i):   │
-              └────────────┬───────────────┘
-                           │
-    ┌──────────┬───────────┼───────────┬──────────┐
-    ▼          ▼           ▼           ▼          ▼
- saved?    catalog?   wiki_cache?  i==0?    i<wikiLimit?
-    │          │           │           │          │
- skip iNat   use desc   use desc    iNat      Wikipedia
- & wiki     offline    offline     primary   (→ cache write)
+    Cam --> Enrich[Enrichment tiers]
+  end
+
+  subgraph device["Device (SQLite + AsyncStorage)"]
+    D1[profile · gallery · scoring caches]
+    D2[species_records · wiki_cache]
+    D3[explorer_board_cache · signed URLs]
+  end
+
+  subgraph supabase["Supabase"]
+    SA[Auth]
+    ST[Storage detections/]
+    PG[(Postgres + RLS + triggers)]
+    EF[Edge identify-species]
+    RPC[get_* RPCs]
+  end
+
+  subgraph external["External APIs"]
+    INat[iNaturalist]
+    Wiki[Wikipedia]
+  end
+
+  AuthGate --> SA
+  Cam --> EF
+  Cam --> D2
+  Enrich --> D2
+  Enrich --> INat
+  Enrich --> Wiki
+  Cam -->|save| ST
+  Cam -->|save| PG
+  Board --> RPC
+  Prof --> RPC
+  RPC --> PG
+  ST -->|signed URLs| Prof
+  ST -->|signed URLs| Board
+  PG --> D1
+  RPC --> D1
+  RPC --> D3
 ```
 
 ---
