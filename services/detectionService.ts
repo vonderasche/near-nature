@@ -5,6 +5,7 @@ import { readLocalFileAsBase64 } from '@/lib/fs/legacyFileSystem';
 import { fetchTaxonAlternateNames, lookupNativeStatus } from '@/api/inaturalist';
 import { isLocalDetectionsMode } from '@/lib/config/isLocalDetectionsMode';
 import { DETECTIONS_BUCKET } from '@/lib/detections/detectionsBucket';
+import { deleteUserDetection, upsertUserDetection } from '@/lib/db/detectionRepository';
 import { appendLocalDetection, removeLocalDetection } from '@/lib/detections/localDetectionStore';
 import {
   getDetectionsObjectPublicUrl,
@@ -206,6 +207,16 @@ export async function saveDetection(input: SaveDetectionInput): Promise<SaveDete
   await prependCachedGalleryRow(userId, false, galleryRow);
   await invalidateCachedScoringSnapshot(userId);
 
+  await upsertUserDetection(userId, galleryRow, {
+    confidence: confidencePct,
+    state: stateCode.trim().toUpperCase().slice(0, 2),
+    inaturalistId,
+    isSensitive: false,
+    points: 0,
+  });
+
+  devLog('[saveDetection] saved to local SQLite', { detectionId });
+
   upsertSavedSpeciesInSession(userId, {
     latinName: species.latinName,
     commonName: species.commonName,
@@ -255,6 +266,7 @@ export async function deleteSavedDetection(detectionId: string): Promise<void> {
     const uid = String(row.user_id);
     await invalidateCachedGalleryList(uid);
     await invalidateCachedScoringSnapshot(uid);
+    await deleteUserDetection(uid, detectionId);
   }
 
   if (storagePath) {

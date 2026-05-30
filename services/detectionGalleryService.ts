@@ -1,4 +1,7 @@
 import { isLocalDetectionsMode } from '@/lib/config/isLocalDetectionsMode';
+import { devLog } from '@/lib/devLog';
+import { upsertUserDetections } from '@/lib/db/detectionRepository';
+import { isSqliteUserCacheAvailable } from '@/lib/db/sqliteCacheSupport';
 import { filterDetectionGalleryRows } from '@/lib/detections/filterDetectionGalleryItems';
 import {
   toGalleryListFilterParams,
@@ -142,6 +145,13 @@ async function fetchGalleryRowsViaRpc(
   return { rows, hasMore, totalCount };
 }
 
+function syncGalleryRowsToLocalDb(userId: string, rows: readonly DetectionGalleryRow[]): void {
+  if (!isSqliteUserCacheAvailable() || rows.length === 0) return;
+  void upsertUserDetections(userId, rows).catch((error) => {
+    devLog('[gallery] local detection sync failed', error);
+  });
+}
+
 /**
  * Fetches one page of gallery rows (browse, search, and category filter).
  * Uses `search_user_detections` when available; falls back to PostgREST + in-app filter.
@@ -157,31 +167,36 @@ export async function fetchUserDetectionGalleryRowsPage({
   const trimmed = query.trim();
   const listFilter = toGalleryListFilterParams(categoryFilter);
 
+  let result: FetchUserDetectionGalleryRowsPageResult;
+
   if (isLocalDetectionsMode()) {
     const all = await loadLocalDetectionRows(userId);
-    return applyLocalGalleryPage(all, trimmed, categoryFilter, offset, pageSize);
-  }
+    result = applyLocalGalleryPage(all, trimmed, categoryFilter, offset, pageSize);
+  } else {
+    try {
+      result = await fetchGalleryRowsViaRpc(
+        userId,
+        trimmed,
+        publicOnly,
+        offset,
+        pageSize,
+        listFilter,
+      );
+    } catch (error) {
+      const err = error as { code?: string; message?: string };
+      if (!isGalleryRpcUnavailable(err)) throw error;
 
-  try {
-    return await fetchGalleryRowsViaRpc(
-      userId,
-      trimmed,
-      publicOnly,
-      offset,
-      pageSize,
-      listFilter,
-    );
-  } catch (error) {
-    const err = error as { code?: string; message?: string };
-    if (!isGalleryRpcUnavailable(err)) throw error;
-
-    if (isSearchQueryActive(trimmed) || categoryFilter.kind !== 'all') {
-      const { rows: allRows } = await fetchGalleryRowsViaPostgrest(userId, publicOnly, 0, 500);
-      return applyLocalGalleryPage(allRows, trimmed, categoryFilter, offset, pageSize);
+      if (isSearchQueryActive(trimmed) || categoryFilter.kind !== 'all') {
+        const { rows: allRows } = await fetchGalleryRowsViaPostgrest(userId, publicOnly, 0, 500);
+        result = applyLocalGalleryPage(allRows, trimmed, categoryFilter, offset, pageSize);
+      } else {
+        result = await fetchGalleryRowsViaPostgrest(userId, publicOnly, offset, pageSize);
+      }
     }
-
-    return fetchGalleryRowsViaPostgrest(userId, publicOnly, offset, pageSize);
   }
+
+  syncGalleryRowsToLocalDb(userId, result.rows);
+  return result;
 }
 
 /** @deprecated Use `fetchUserDetectionGalleryRowsPage` with `query` set. */

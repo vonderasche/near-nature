@@ -2,6 +2,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { randomUUID } from 'expo-crypto';
 
 import { LOCAL_DETECTIONS_STORAGE_KEY_PREFIX } from '@/constants/local-detections';
+import {
+  deleteUserDetection,
+  listUserDetectionGalleryRows,
+  upsertUserDetection,
+} from '@/lib/db/detectionRepository';
+import { isSqliteUserCacheAvailable } from '@/lib/db/sqliteCacheSupport';
 import type { DetectionGalleryRow } from '@/lib/detections/mapDetectionGalleryRow';
 import { classificationToSpeciesCategory } from '@/lib/detections/mapSpeciesCategory';
 import { speciesStatusToNativeColumn } from '@/lib/detections/mapNativeStatusDb';
@@ -29,13 +35,29 @@ function parseRows(raw: string | null): DetectionGalleryRow[] {
   }
 }
 
-export async function loadLocalDetectionRows(userId: string): Promise<DetectionGalleryRow[]> {
+async function loadFromAsyncStorage(userId: string): Promise<DetectionGalleryRow[]> {
   const raw = await AsyncStorage.getItem(storageKey(userId));
   return parseRows(raw);
 }
 
-async function persistLocalDetectionRows(userId: string, rows: DetectionGalleryRow[]): Promise<void> {
+async function persistToAsyncStorage(userId: string, rows: DetectionGalleryRow[]): Promise<void> {
   await AsyncStorage.setItem(storageKey(userId), JSON.stringify(rows));
+}
+
+export async function loadLocalDetectionRows(userId: string): Promise<DetectionGalleryRow[]> {
+  if (isSqliteUserCacheAvailable()) {
+    const rows = await listUserDetectionGalleryRows(userId);
+    if (rows.length > 0) return rows;
+  }
+
+  const fromAsync = await loadFromAsyncStorage(userId);
+  if (fromAsync.length > 0 && isSqliteUserCacheAvailable()) {
+    for (const row of fromAsync) {
+      await upsertUserDetection(userId, row, { isSensitive: false });
+    }
+    await AsyncStorage.removeItem(storageKey(userId)).catch(() => {});
+  }
+  return fromAsync;
 }
 
 export type AppendLocalDetectionInput = {
@@ -70,15 +92,27 @@ export async function appendLocalDetection(
     native_status: nativeStatus,
   };
 
-  const existing = await loadLocalDetectionRows(userId);
-  await persistLocalDetectionRows(userId, [row, ...existing]);
+  if (isSqliteUserCacheAvailable()) {
+    await upsertUserDetection(userId, row, {
+      confidence: Math.round(Number(classification.confidence) * 10000) / 100,
+      isSensitive: false,
+    });
+    return { detectionId, row };
+  }
 
+  const existing = await loadFromAsyncStorage(userId);
+  await persistToAsyncStorage(userId, [row, ...existing]);
   return { detectionId, row };
 }
 
 export async function removeLocalDetection(userId: string, detectionId: string): Promise<void> {
-  const existing = await loadLocalDetectionRows(userId);
-  await persistLocalDetectionRows(
+  if (isSqliteUserCacheAvailable()) {
+    await deleteUserDetection(userId, detectionId);
+    return;
+  }
+
+  const existing = await loadFromAsyncStorage(userId);
+  await persistToAsyncStorage(
     userId,
     existing.filter((row) => row.id !== detectionId),
   );

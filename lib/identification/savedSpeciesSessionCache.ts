@@ -1,4 +1,10 @@
 import { normalizeLatinName } from '@/lib/identification/normalizeLatinName';
+import { isSqliteUserCacheAvailable } from '@/lib/db/sqliteCacheSupport';
+import {
+  loadSavedSpeciesCacheMap,
+  replaceSavedSpeciesCacheMap,
+  upsertSavedSpeciesCacheEntry,
+} from '@/lib/db/userCacheRepository';
 import {
   fetchAllSavedSpeciesEnrichment,
   fetchSavedSpeciesEnrichmentByLatinNames,
@@ -15,6 +21,19 @@ export function clearSavedSpeciesSession(): void {
   warmPromise = null;
 }
 
+async function loadSavedSpeciesMap(userId: string): Promise<Map<string, SavedSpeciesEnrichment>> {
+  if (isSqliteUserCacheAvailable()) {
+    const fromDb = await loadSavedSpeciesCacheMap(userId);
+    if (fromDb.size > 0) return fromDb;
+  }
+
+  const fromNetwork = await fetchAllSavedSpeciesEnrichment(userId);
+  if (isSqliteUserCacheAvailable() && fromNetwork.size > 0) {
+    await replaceSavedSpeciesCacheMap(userId, fromNetwork);
+  }
+  return fromNetwork;
+}
+
 /** Loads latest detection metadata per latin name for the signed-in user (once per session). */
 export async function warmSavedSpeciesSession(
   userId: string,
@@ -27,7 +46,7 @@ export async function warmSavedSpeciesSession(
   }
 
   sessionUserId = userId;
-  warmPromise = fetchAllSavedSpeciesEnrichment(userId)
+  warmPromise = loadSavedSpeciesMap(userId)
     .then((map) => {
       sessionMap = map;
       return map;
@@ -46,6 +65,9 @@ export function upsertSavedSpeciesInSession(
   if (sessionUserId !== userId) return;
   if (!sessionMap) sessionMap = new Map();
   sessionMap.set(normalizeLatinName(enrichment.latinName), enrichment);
+  if (isSqliteUserCacheAvailable()) {
+    void upsertSavedSpeciesCacheEntry(userId, enrichment);
+  }
 }
 
 /**
@@ -86,6 +108,9 @@ export async function resolveSavedSpeciesForLatinNames(
   for (const [key, value] of fetched) {
     out.set(key, value);
     sessionMap.set(key, value);
+    if (isSqliteUserCacheAvailable()) {
+      await upsertSavedSpeciesCacheEntry(userId, value);
+    }
   }
 
   return out;

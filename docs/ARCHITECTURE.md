@@ -136,15 +136,15 @@ Requires `sql/get_user_scoring_snapshot.sql` (or fallback RPCs) in Supabase.
 | **Explorer Board columns** | AsyncStorage preference | 2/3/4 column grid | Never (UI pref) |
 | **Gallery grid columns** | AsyncStorage preference | Column count | Never |
 | **expo-image** | OS disk | Rendered bitmaps | OS-managed |
-| **SQLite (`near_nature.db`)** | `expo-sqlite` on device | Species reference catalog (`species_records`); future user cache tables | Sign out clears user-scoped rows only (catalog kept) |
+| **SQLite (`near_nature.db`)** | `expo-sqlite` on device | Global: `species_records` genus catalog. User-scoped: profile, gallery list cache, scoring snapshot, saved-species map, signed URLs, **`user_detections`** | Sign out clears user-scoped SQLite rows; species catalog kept |
 
 Stale-while-revalidate: show cache immediately, refresh in background, then update cache.
 
-**SQLite notes:** Requires a native dev-client rebuild after installing `expo-sqlite`. Skipped on web. Bundled genus catalog (`assets/tflite/near_nature_app_bundle/genus_info/genus_profiles.enriched.min.json`, ~4.5k Florida iNat genera) seeds on first launch or when the catalog version changes. Identification enrichment looks up by genus (first word of the Latin name).
+**SQLite notes:** Requires a native dev-client rebuild after installing `expo-sqlite`. Skipped on web (cache modules fall back to AsyncStorage). Bundled genus catalog seeds on first launch or when the catalog version changes. On upgrade, legacy AsyncStorage cache keys are imported once into SQLite. User cache tables include `user_detections`: every save uploads to Supabase then upserts locally; gallery fetches sync pages into SQLite in the background.
 
 **Implementation paths:**
 
-- Local DB: `lib/db/initLocalDatabase.ts`, `context/LocalDatabaseContext.tsx`, `lib/db/speciesRepository.ts`
+- Local DB: `lib/db/initLocalDatabase.ts`, `context/LocalDatabaseContext.tsx`, `lib/db/speciesRepository.ts`, `lib/db/userCacheRepository.ts`, `lib/db/detectionRepository.ts`
 - Profile: `lib/profile/ownProfileCache.ts`, `hooks/useUser.ts`
 - Gallery: `lib/detections/galleryListCache.ts`, `hooks/useUserDetectionGallery.ts`
 - Scoring: `lib/profile/scoringSnapshotCache.ts`, `hooks/useUserScoringSnapshot.ts`

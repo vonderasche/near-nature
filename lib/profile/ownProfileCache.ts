@@ -4,6 +4,13 @@ import {
   OWN_PROFILE_CACHE_KEY_PREFIX,
   OWN_PROFILE_CACHE_VERSION,
 } from '@/constants/profile-cache';
+import {
+  clearAllUserProfileCaches,
+  deleteUserProfileCache,
+  loadUserProfileCacheJson,
+  saveUserProfileCacheJson,
+} from '@/lib/db/userCacheRepository';
+import { isSqliteUserCacheAvailable } from '@/lib/db/sqliteCacheSupport';
 import type { PublicUserProfile, User } from '@/services/userService';
 
 export type CachedOwnProfile = {
@@ -49,12 +56,35 @@ function parseCachedOwnProfile(raw: string | null): CachedOwnProfile | null {
   }
 }
 
-export async function loadCachedOwnProfile(userId: string): Promise<CachedOwnProfile | null> {
+async function loadFromAsyncStorage(userId: string): Promise<CachedOwnProfile | null> {
   const raw = await AsyncStorage.getItem(cacheKey(userId));
   const cached = parseCachedOwnProfile(raw);
   if (!cached || cached.user.id !== userId) return null;
   if (cached.stats && cached.stats.id !== userId) return null;
   return cached;
+}
+
+export async function loadCachedOwnProfile(userId: string): Promise<CachedOwnProfile | null> {
+  if (isSqliteUserCacheAvailable()) {
+    const raw = await loadUserProfileCacheJson(userId);
+    const cached = parseCachedOwnProfile(raw);
+    if (cached && cached.user.id === userId) {
+      if (cached.stats && cached.stats.id !== userId) return null;
+      return cached;
+    }
+  }
+
+  const fromAsync = await loadFromAsyncStorage(userId);
+  if (fromAsync && isSqliteUserCacheAvailable()) {
+    await saveUserProfileCacheJson(
+      userId,
+      JSON.stringify(fromAsync),
+      fromAsync.cachedAt,
+      OWN_PROFILE_CACHE_VERSION,
+    );
+    await AsyncStorage.removeItem(cacheKey(userId)).catch(() => {});
+  }
+  return fromAsync;
 }
 
 export async function saveCachedOwnProfile(
@@ -67,18 +97,31 @@ export async function saveCachedOwnProfile(
     stats: payload.stats,
     cachedAt: Date.now(),
   };
-  await AsyncStorage.setItem(cacheKey(userId), JSON.stringify(entry));
+  const json = JSON.stringify(entry);
+
+  if (isSqliteUserCacheAvailable()) {
+    await saveUserProfileCacheJson(userId, json, entry.cachedAt, OWN_PROFILE_CACHE_VERSION);
+    await AsyncStorage.removeItem(cacheKey(userId)).catch(() => {});
+    return;
+  }
+
+  await AsyncStorage.setItem(cacheKey(userId), json);
 }
 
 export async function clearCachedOwnProfile(userId: string): Promise<void> {
-  await AsyncStorage.removeItem(cacheKey(userId));
+  await Promise.all([
+    deleteUserProfileCache(userId),
+    AsyncStorage.removeItem(cacheKey(userId)),
+  ]);
 }
 
 /** Clears all cached own-profile entries (e.g. on sign-out). */
 export async function clearAllCachedOwnProfiles(): Promise<void> {
-  const keys = await AsyncStorage.getAllKeys();
-  const ours = keys.filter((k) => k.startsWith(OWN_PROFILE_CACHE_KEY_PREFIX));
-  if (ours.length > 0) {
-    await AsyncStorage.multiRemove(ours);
-  }
+  await Promise.all([
+    clearAllUserProfileCaches(),
+    AsyncStorage.getAllKeys().then((keys) => {
+      const ours = keys.filter((k) => k.startsWith(OWN_PROFILE_CACHE_KEY_PREFIX));
+      return ours.length > 0 ? AsyncStorage.multiRemove(ours) : undefined;
+    }),
+  ]);
 }

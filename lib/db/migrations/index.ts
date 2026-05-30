@@ -1,10 +1,14 @@
 import { migration001Init } from '@/lib/db/migrations/001_init';
 import { migration002SpeciesRecords } from '@/lib/db/migrations/002_species_records';
+import { migration003UserCache } from '@/lib/db/migrations/003_user_cache';
+import { migration004UserDetections } from '@/lib/db/migrations/004_user_detections';
 import type { DbMigration } from '@/lib/db/migrations/types';
 
 export const DB_MIGRATIONS: readonly DbMigration[] = [
   migration001Init,
   migration002SpeciesRecords,
+  migration003UserCache,
+  migration004UserDetections,
 ];
 
 export const LATEST_DB_MIGRATION_VERSION =
