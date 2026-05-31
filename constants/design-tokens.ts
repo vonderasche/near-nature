@@ -32,6 +32,8 @@ export const colors = {
   surfaceRaised: 'rgba(255,255,255,0.06)',
   /** Modal drop shadow color. */
   shadow: '#000000',
+  /** Default inactive tab icon on dark tab bar. */
+  tabIconDefault: '#8e8e93',
 } as const;
 
 export const spacing = {
@@ -71,7 +73,7 @@ export const Colors = {
     background: colors.background,
     tint,
     icon: '#ebebf5',
-    tabIconDefault: '#8e8e93',
+    tabIconDefault: colors.tabIconDefault,
     tabIconSelected: tint,
   },
   dark: {
@@ -79,7 +81,7 @@ export const Colors = {
     background: colors.background,
     tint,
     icon: '#ebebf5',
-    tabIconDefault: '#8e8e93',
+    tabIconDefault: colors.tabIconDefault,
     tabIconSelected: tint,
   },
 } as const;

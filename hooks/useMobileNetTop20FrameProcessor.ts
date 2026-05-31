@@ -16,15 +16,15 @@ import {
   MOBILENET_PREVIEW_INPUT_SIZE,
 } from '@/lib/camera/mobilenet/modelConfig';
 import { normalizeMobileNetInput } from '@/lib/camera/mobilenet/normalizeMobileNetInput';
-import { TFLITE_ROUTING } from '@/lib/camera/mobilenet/tfliteRouting';
 import {
   parseMobileNetTop3,
   type MobileNetPredictionScore,
 } from '@/lib/camera/mobilenet/parseMobileNetOutput';
+import { getMobileNetTop20PreviewLabel } from '@/lib/camera/mobilenet/top20PreviewLabels';
 
 export type MobileNetLivePrediction = LiveClassifierPrediction;
 
-type UseMobileNetTop16FrameProcessorResult = {
+type UseMobileNetTop20FrameProcessorResult = {
   frameProcessor: ReturnType<typeof useFrameProcessor> | undefined;
   modelState: Exclude<LiveClassifierModelState, 'unavailable'>;
   modelError: string | null;
@@ -34,13 +34,13 @@ type UseMobileNetTop16FrameProcessorResult = {
 function labelPrediction(prediction: MobileNetPredictionScore): MobileNetLivePrediction {
   return {
     ...prediction,
-    label: TFLITE_ROUTING.preview_groups[prediction.classIndex] ?? `Class ${prediction.classIndex}`,
+    label: getMobileNetTop20PreviewLabel(prediction.classIndex),
   };
 }
 
-export function useMobileNetTop16FrameProcessor(
+export function useMobileNetTop20FrameProcessor(
   active: boolean,
-): UseMobileNetTop16FrameProcessorResult {
+): UseMobileNetTop20FrameProcessorResult {
   const tf = useTensorflowModel(modelAsset, []);
   const { resize } = useResizePlugin();
   const [predictions, setPredictions] = useState<MobileNetLivePrediction[]>([]);

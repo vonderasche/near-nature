@@ -2,7 +2,7 @@ import type { ComponentProps } from 'react';
 
 import { CameraLivePredictionsOverlay } from '@/components/camera/camera-live-predictions-overlay';
 import { CameraLivePreview } from '@/components/camera/camera-live-preview';
-import { useMobileNetTop16FrameProcessor } from '@/hooks/useMobileNetTop16FrameProcessor';
+import { useMobileNetTop20FrameProcessor } from '@/hooks/useMobileNetTop20FrameProcessor';
 import { areFrameProcessorsAvailable } from '@/lib/camera/areFrameProcessorsAvailable';
 
 type Props = ComponentProps<typeof CameraLivePreview> & {
@@ -47,7 +47,7 @@ function CameraLivePreviewWithMobileNetActive({
   ...previewProps
 }: Props) {
   const { frameProcessor, modelState, modelError, predictions } =
-    useMobileNetTop16FrameProcessor(previewProps.isActive && liveClassifierEnabled);
+    useMobileNetTop20FrameProcessor(previewProps.isActive && liveClassifierEnabled);
 
   return (
     <>

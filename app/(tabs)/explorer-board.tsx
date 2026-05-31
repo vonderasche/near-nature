@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { AuthButton } from '@/components/auth/auth-button';
 import { TabScreenWithLogout } from '@/components/layout/tab-screen-with-logout';
 import { DetectionCountExplorerBoard } from '@/components/explorer-board/detection-count-explorer-board';
+import { ExplorerBoardDiscoveryGrid } from '@/components/explorer-board/explorer-board-discovery-grid';
 import { ExplorerBoardViewModeToggle } from '@/components/explorer-board/explorer-board-view-mode-toggle';
 import { GridLayoutMenu } from '@/components/ui/grid-layout-menu';
 import { ScreenSearchField } from '@/components/ui/screen-search-field';
@@ -14,6 +15,7 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useExplorerBoard } from '@/hooks/useExplorerBoard';
 import { useExplorerBoardColumns } from '@/hooks/useExplorerBoardColumns';
 import { useExplorerBoardLayout } from '@/hooks/useExplorerBoardLayout';
+import { usePublicDetectionExplore } from '@/hooks/usePublicDetectionExplore';
 import {
   EXPLORER_BOARD_COLUMN_OPTIONS,
   isExplorerBoardColumns,
@@ -29,22 +31,45 @@ export default function ExplorerBoardScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 280);
   const searchActive = isSearchQueryActive(debouncedSearchQuery);
-  const { rows, isLoading, isRefreshing, isLoadingMore, hasMore, error, loadMore, refetch } =
-    useExplorerBoard(undefined, debouncedSearchQuery);
+  const {
+    rows,
+    isLoading: boardLoading,
+    isRefreshing,
+    isLoadingMore: boardLoadingMore,
+    hasMore: boardHasMore,
+    error: boardError,
+    loadMore: loadMoreBoard,
+    refetch: refetchBoard,
+  } = useExplorerBoard();
+  const {
+    items: exploreItems,
+    isLoading: exploreLoading,
+    isLoadingMore: exploreLoadingMore,
+    hasMore: exploreHasMore,
+    totalCount: exploreTotalCount,
+    error: exploreError,
+    loadMore: loadMoreExplore,
+    refetch: refetchExplore,
+  } = usePublicDetectionExplore(debouncedSearchQuery);
   const { layoutMode, setLayout } = useExplorerBoardLayout();
   const { columns, setColumnCount } = useExplorerBoardColumns();
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      await refetch();
+      if (searchActive) {
+        await refetchExplore();
+      } else {
+        await refetchBoard();
+      }
     } finally {
       setRefreshing(false);
     }
-  }, [refetch]);
+  }, [refetchBoard, refetchExplore, searchActive]);
 
-  const subtitle =
-    layoutMode === 'grid'
+  const subtitle = searchActive
+    ? 'Public identifications from the community matching your search.'
+    : layoutMode === 'grid'
       ? "Ranked by native species discovered. Each tile shows a member's latest identification."
       : 'Ranked by native species discovered. Points and species counts per member.';
 
@@ -54,19 +79,21 @@ export default function ExplorerBoardScreen() {
       subtitle={subtitle}
       hideLogout
       titleAccessory={
-        <View style={styles.toolbar}>
-          <ExplorerBoardViewModeToggle value={layoutMode} onChange={setLayout} />
-          {layoutMode === 'grid' ? (
-            <GridLayoutMenu
-              value={columns}
-              onChange={(n: GalleryGridColumns) => {
-                if (isExplorerBoardColumns(n)) setColumnCount(n);
-              }}
-              columnOptions={EXPLORER_BOARD_COLUMN_OPTIONS}
-              context="explorer board"
-            />
-          ) : null}
-        </View>
+        searchActive ? null : (
+          <View style={styles.toolbar}>
+            <ExplorerBoardViewModeToggle value={layoutMode} onChange={setLayout} />
+            {layoutMode === 'grid' ? (
+              <GridLayoutMenu
+                value={columns}
+                onChange={(n: GalleryGridColumns) => {
+                  if (isExplorerBoardColumns(n)) setColumnCount(n);
+                }}
+                columnOptions={EXPLORER_BOARD_COLUMN_OPTIONS}
+                context="explorer board"
+              />
+            ) : null}
+          </View>
+        )
       }
       refreshControl={
         <RefreshControl
@@ -76,28 +103,43 @@ export default function ExplorerBoardScreen() {
           colors={[authColors.text]}
         />
       }
-      backgroundRefreshing={isRefreshing && !refreshing}>
+      backgroundRefreshing={isRefreshing && !refreshing && !searchActive}>
       <ScreenSearchField
         value={searchQuery}
         onChangeText={setSearchQuery}
-        placeholder="Search by username or motto…"
-        accessibilityLabel="Search Explorer Board members"
-        accessibilityHint="Matches username and motto across ranked members when search SQL is deployed."
+        placeholder="Search species, descriptions, or members…"
+        accessibilityLabel="Search Explorer Board"
+        accessibilityHint="When you type a species or keyword, shows matching public identifications. Leave empty for the rankings."
       />
-      {searchActive && isLoading ? (
-        <Text style={styles.searchHint}>Searching members…</Text>
-      ) : null}
-      <DetectionCountExplorerBoard
-        rows={rows}
-        searchQuery={debouncedSearchQuery}
-        layoutMode={layoutMode}
-        columnCount={columns}
-        loading={isLoading}
-        isLoadingMore={isLoadingMore}
-        hasMore={hasMore}
-        onLoadMore={() => void loadMore()}
-        error={error}
-      />
+      {searchActive ? (
+        <>
+          {exploreLoading ? (
+            <Text style={styles.searchHint}>Searching community identifications…</Text>
+          ) : null}
+          <ExplorerBoardDiscoveryGrid
+            items={exploreItems}
+            loading={exploreLoading}
+            isLoadingMore={exploreLoadingMore}
+            hasMore={exploreHasMore}
+            totalCount={exploreTotalCount}
+            searchQuery={debouncedSearchQuery}
+            error={exploreError}
+            onRetry={() => void refetchExplore()}
+            onLoadMore={() => void loadMoreExplore()}
+          />
+        </>
+      ) : (
+        <DetectionCountExplorerBoard
+          rows={rows}
+          layoutMode={layoutMode}
+          columnCount={columns}
+          loading={boardLoading}
+          isLoadingMore={boardLoadingMore}
+          hasMore={boardHasMore}
+          onLoadMore={() => void loadMoreBoard()}
+          error={boardError}
+        />
+      )}
 
       {!isAuthenticated ? (
         <AuthButton title="Log in to identify species" onPress={() => router.push(routes.login)} />

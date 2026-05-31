@@ -283,6 +283,7 @@ flowchart TD
 |------|-----------------|
 | Capture | `hooks/useCameraScreen.ts`, `hooks/usePickPhotoFromGallery.ts` |
 | Classify (native) | `lib/camera/mobilenet/identifyPhotoWithTflite.ts`, `preprocessImageForMobileNet.ts` |
+| Live preview (native) | `hooks/useMobileNetTop20FrameProcessor.ts` — 20-class preview model |
 | Classify (web) | `hooks/useSpeciesIdentification.ts`, `api/gemini.ts`, Edge `identify-species` |
 | Enrich | `lib/identification/enrichSpeciesFromApis.ts` — iNat for all candidates; wiki capped to top N; saved detection / catalog / wiki_cache tiers |
 | UI | `components/camera/camera-identification-panel.tsx` |
@@ -292,11 +293,11 @@ flowchart TD
 
 ## Tab 2 — Explorer Board
 
-- Loads paginated Explorer Board via RPC **`get_detection_count_leaderboard(p_limit, p_offset, p_search)`**.
-- **Device cache:** accumulated scroll pages cached in SQLite (`explorer_board_cache`, capped at 120 rows) — stale-while-revalidate on open when not searching; pull-to-refresh always hits the network.
-- **Search:** debounced (280ms) `p_search` filters username and motto server-side when the updated SQL is deployed; legacy no-arg RPC falls back to in-memory filter over the full cached leaderboard.
+- Loads paginated Explorer Board via RPC **`get_detection_count_leaderboard(p_limit, p_offset)`**.
+- **Device cache:** accumulated scroll pages cached in SQLite (`explorer_board_cache`, capped at 120 rows) — stale-while-revalidate on open; pull-to-refresh always hits the network.
+- **Search (discovery lens):** when the search field is non-empty, the board switches to a community **photo grid** via **`search_public_detections(p_query, p_offset, p_limit)`** — same FTS/trigram matching as profile gallery search, across all public non-sensitive identifications. Tap a photo for details; **View member profile** opens their public profile. Empty search restores the leaderboard.
 - Member avatars/tiles use **signed URL** batch resolution (same pipeline as gallery).
-- **FlashList** virtualizes list/grid inside parent scroll.
+- **FlashList** virtualizes list/grid inside parent scroll (`drawDistance`, fixed row heights via `overrideItemLayout`).
 - Refresh on pull; `requestExplorerBoardRefresh()` after saves updates the board when revisited.
 - Column count and list/grid layout preferences are cached locally (AsyncStorage).
 - Loading states use shared **`CenteredActivityIndicator`** with accessibility labels.
@@ -326,6 +327,7 @@ Requires `sql/get_user_scoring_snapshot.sql` (or fallback RPCs) in Supabase.
 | Open / mount | **Gallery list cache** → instant grid |
 | Toolbar | Category filter icon + grid-size menu + search (no section title) |
 | Background | `detections` paginated SELECT → signed URLs → cache update |
+| Grid | Memoized tile rows in **FlashList** (`DetectionGalleryRow`, stable press handlers, `drawDistance`) |
 | Delete | `DELETE detections` + invalidate gallery + scoring caches |
 
 ### Profile header

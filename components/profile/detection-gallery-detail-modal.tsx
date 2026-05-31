@@ -21,6 +21,8 @@ export type DetectionGalleryDetailModalProps = {
   deletable?: boolean;
   onRequestDelete?: (item: DetectionGalleryItem) => Promise<UserFacingResult>;
   deleteBusy?: boolean;
+  /** Community explore: open the member who saved this identification. */
+  onViewMemberProfile?: (userId: string) => void;
 };
 
 function formatDetectedAt(iso: string): string {
@@ -47,6 +49,7 @@ export function DetectionGalleryDetailModal({
   deletable = false,
   onRequestDelete,
   deleteBusy = false,
+  onViewMemberProfile,
 }: DetectionGalleryDetailModalProps) {
   const { height: windowHeight } = useWindowDimensions();
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -124,8 +127,23 @@ export function DetectionGalleryDetailModal({
               </Text>
             ) : null}
             <Text style={styles.meta}>{`Saved ${formatDetectedAt(galleryItem.detectedAt)}`}</Text>
+            {galleryItem.ownerUsername ? (
+              <Text style={styles.meta}>{`By @${galleryItem.ownerUsername}`}</Text>
+            ) : null}
 
             <ButtonStack>
+              {galleryItem.ownerUserId && onViewMemberProfile ? (
+                <AuthButton
+                  title="View member profile"
+                  variant="primary"
+                  fillParent
+                  onPress={() => {
+                    onViewMemberProfile(galleryItem.ownerUserId!);
+                    onClose();
+                  }}
+                  accessibilityLabel={`View ${galleryItem.ownerUsername ?? 'member'} profile`}
+                />
+              ) : null}
               {deletable && onRequestDelete ? (
                 <AuthButton
                   title="Delete from gallery"

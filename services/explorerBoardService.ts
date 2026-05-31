@@ -12,8 +12,6 @@ export const EXPLORER_BOARD_PAGE_SIZE = 20;
 export type FetchExplorerBoardPageParams = {
   offset: number;
   pageSize?: number;
-  /** When set, RPC filters by username / motto (requires deployed search SQL). */
-  searchQuery?: string;
 };
 
 export type FetchExplorerBoardPageResult = {
@@ -33,15 +31,11 @@ export function clearLegacyExplorerBoardCache(): void {
 function buildExplorerBoardRpcParams(
   offset: number,
   pageSize: number,
-  searchQuery?: string,
 ): Record<string, unknown> {
-  const params: Record<string, unknown> = {
+  return {
     p_limit: pageSize + 1,
     p_offset: offset,
   };
-  const trimmed = searchQuery?.trim();
-  if (trimmed) params.p_search = trimmed;
-  return params;
 }
 
 function pageFromRawRows(raw: unknown[], pageSize: number): FetchExplorerBoardPageResult {
@@ -57,17 +51,8 @@ function filterLegacyExplorerBoardPage(
   all: ExplorerBoardMemberRow[],
   offset: number,
   pageSize: number,
-  searchQuery?: string,
 ): FetchExplorerBoardPageResult {
-  const trimmed = searchQuery?.trim();
-  const source = trimmed
-    ? all.filter(
-        (row) =>
-          row.username.toLowerCase().includes(trimmed.toLowerCase()) ||
-          (row.motto ?? '').toLowerCase().includes(trimmed.toLowerCase()),
-      )
-    : all;
-  const rawSlice = source.slice(offset, offset + pageSize + 1);
+  const rawSlice = all.slice(offset, offset + pageSize + 1);
   const hasMore = rawSlice.length > pageSize;
   const page = hasMore ? rawSlice.slice(0, pageSize) : rawSlice;
   return { rows: page, hasMore };
@@ -101,26 +86,24 @@ async function fetchLegacyExplorerBoardAll(): Promise<ExplorerBoardMemberRow[]> 
 async function fetchExplorerBoardPageLegacy({
   offset,
   pageSize = EXPLORER_BOARD_PAGE_SIZE,
-  searchQuery,
 }: FetchExplorerBoardPageParams): Promise<FetchExplorerBoardPageResult> {
   const all = await fetchLegacyExplorerBoardAll();
-  return filterLegacyExplorerBoardPage(all, offset, pageSize, searchQuery);
+  return filterLegacyExplorerBoardPage(all, offset, pageSize);
 }
 
 /**
  * One page of the Explorer Board (native species rank).
- * Uses `get_detection_count_leaderboard(p_limit, p_offset, p_search)` when deployed; otherwise
+ * Uses `get_detection_count_leaderboard(p_limit, p_offset)` when deployed; otherwise
  * falls back to the legacy no-arg RPC and paginates in memory.
  */
 export async function fetchExplorerBoardPage({
   offset,
   pageSize = EXPLORER_BOARD_PAGE_SIZE,
-  searchQuery,
 }: FetchExplorerBoardPageParams): Promise<FetchExplorerBoardPageResult> {
   if (explorerBoardPaginationMode !== 'legacy') {
     const { data, error } = await supabase.rpc(
       'get_detection_count_leaderboard',
-      buildExplorerBoardRpcParams(offset, pageSize, searchQuery),
+      buildExplorerBoardRpcParams(offset, pageSize),
     );
 
     if (!error) {
@@ -134,5 +117,5 @@ export async function fetchExplorerBoardPage({
     explorerBoardPaginationMode = 'legacy';
   }
 
-  return fetchExplorerBoardPageLegacy({ offset, pageSize, searchQuery });
+  return fetchExplorerBoardPageLegacy({ offset, pageSize });
 }

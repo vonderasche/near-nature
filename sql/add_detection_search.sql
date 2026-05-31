@@ -1,10 +1,71 @@
 -- Detection search: normalized Latin names, denormalized search_text, FTS, trigram, species aliases.
 -- Requires: create_detections.sql, add_detection_naturalist_columns.sql
+-- If trigram index creation fails, run sql/pg_trgm_bootstrap.sql first (or enable pg_trgm in Dashboard).
 -- Safe to re-run.
 
+-- ── pg_trgm (Supabase may install in `extensions` or `public`) ────────────────
+
 create schema if not exists extensions;
-create extension if not exists pg_trgm with schema extensions;
 grant usage on schema extensions to postgres, anon, authenticated, service_role;
+
+do $$
+begin
+  if not exists (select 1 from pg_extension where extname = 'pg_trgm') then
+    create extension pg_trgm with schema extensions;
+  end if;
+end $$;
+
+create or replace function public._gin_trgm_opclass_for_index()
+returns text
+language plpgsql
+stable
+security invoker
+set search_path = pg_catalog, public, extensions
+as $$
+declare
+  v_ops text;
+begin
+  select n.nspname || '.' || oc.opcname
+  into v_ops
+  from pg_opclass oc
+  join pg_namespace n on n.oid = oc.opcnamespace
+  join pg_am am on am.oid = oc.opcmethod
+  where oc.opcname = 'gin_trgm_ops'
+    and am.amname = 'gin'
+  order by case n.nspname when 'extensions' then 0 when 'public' then 1 else 2 end
+  limit 1;
+
+  if v_ops is null then
+    raise exception
+      'pg_trgm is not installed. In Supabase: Database → Extensions → enable pg_trgm, then re-run.';
+  end if;
+
+  return v_ops;
+end;
+$$;
+
+create or replace function public._create_gin_trgm_index(
+  p_index name,
+  p_table regclass,
+  p_column name
+)
+returns void
+language plpgsql
+security invoker
+set search_path = pg_catalog, public, extensions
+as $$
+declare
+  v_ops text := public._gin_trgm_opclass_for_index();
+begin
+  execute format(
+    'create index if not exists %I on %s using gin (%I %s)',
+    p_index,
+    p_table,
+    p_column,
+    v_ops
+  );
+end;
+$$;
 
 -- ── Shared species aliases (synonyms / alternate common names) ───────────────
 
@@ -16,8 +77,11 @@ create table if not exists public.species_metadata (
   updated_at              timestamptz not null default now()
 );
 
-create index if not exists species_metadata_latin_norm_trgm_idx
-  on public.species_metadata using gin (latin_name_normalized extensions.gin_trgm_ops);
+select public._create_gin_trgm_index(
+  'species_metadata_latin_norm_trgm_idx',
+  'public.species_metadata'::regclass,
+  'latin_name_normalized'
+);
 
 alter table public.species_metadata enable row level security;
 
@@ -363,8 +427,11 @@ create index if not exists detections_public_gallery_idx
 create index if not exists detections_search_vector_idx
   on public.detections using gin (search_vector);
 
-create index if not exists detections_search_text_trgm_idx
-  on public.detections using gin (search_text extensions.gin_trgm_ops);
+select public._create_gin_trgm_index(
+  'detections_search_text_trgm_idx',
+  'public.detections'::regclass,
+  'search_text'
+);
 
 -- ── Gallery category + search helpers ────────────────────────────────────────
 

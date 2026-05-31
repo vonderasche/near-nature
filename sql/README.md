@@ -28,7 +28,8 @@ All `.sql` scripts here are written to be **safe to re-run** (they drop/recreate
 | `create_streaks.sql` | `public.streaks`, streak trigger on insert |
 | `create_discoveries.sql` | `public.discoveries`, first-species bonus trigger |
 | `storage_bucket_detections.sql` | Storage bucket + policies |
-| `get_detection_count_leaderboard.sql` | RPC: Explorer Board rankings (paginated; optional `p_search` on username/motto) |
+| `get_detection_count_leaderboard.sql` | RPC: Explorer Board rankings (paginated) |
+| `search_public_detections.sql` | RPC: community identification search for Explorer Board discovery lens |
 | `get_public_user_profile.sql` | RPC: public profile + stats |
 | `drop_streak_client_update_policy.sql` | Removes obsolete streak `UPDATE` policy |
 | `ensure_public_user_profile.sql` | RPC: create missing `public.users` row for signed-in user; hardens signup trigger |
@@ -42,6 +43,7 @@ All `.sql` scripts here are written to be **safe to re-run** (they drop/recreate
 | `get_user_scoring_snapshot.sql` | RPC: one JSON payload — score rows, awards, sub/main species counts (profile scoring) |
 | `get_public_user_awards.sql` | RPC: earned badge rows for any member (public profile) |
 | `add_detection_search.sql` | `species_metadata`, search columns/indexes on detections, `search_user_detections` RPC |
+| `pg_trgm_bootstrap.sql` | Enable `pg_trgm` + helpers for trigram GIN indexes (run before search SQL if index creation fails) |
 | `optimize_detection_gallery.sql` | Gallery indexes, faster search RPC, SQL category filter, alias refresh trigger |
 | `check_category_milestones.sql` | Milestone / badge awards after first species discovery (trigger calls this) |
 | `create_point_awards.sql` | `public.point_awards` table (tier bonuses) |
@@ -121,10 +123,22 @@ If tables already exist and you only need to refresh objects:
 | Missing profile after sign-in | `ensure_public_user_profile.sql` |
 | Points on save | `create_leaderboard.sql` |
 | Gallery search | `add_detection_search.sql` |
+| Explorer Board discovery search | `search_public_detections.sql` (after `add_detection_search.sql`) |
 | Gallery search slow / filter incomplete | `optimize_detection_gallery.sql` (after `add_detection_search.sql`) |
 | Supabase Dashboard security linter warnings | `harden_security_linter.sql` |
 
 Then reload the schema cache and run `npm run verify:supabase`.
+
+### `extensions.gin_trgm_ops does not exist`
+
+Supabase may install **pg_trgm** in the `extensions` schema or **`public`**, depending on how it was enabled. Older scripts hard-coded `extensions.gin_trgm_ops`, which fails when the extension lives in `public`.
+
+1. **Dashboard → Database → Extensions → enable `pg_trgm`** (if not already on).
+2. Run **`pg_trgm_bootstrap.sql`** in the SQL Editor.
+3. Re-run **`add_detection_search.sql`** (safe to re-run) or continue from where it failed.
+4. Then **`search_public_detections.sql`**.
+
+Updated `add_detection_search.sql` resolves the correct opclass automatically via `_create_gin_trgm_index`.
 
 ---
 

@@ -12,16 +12,16 @@ import { useExplorerBoardDisplayUrls } from '@/hooks/useExplorerBoardDisplayUrls
 import { listSectionSupportingStyles } from '@/components/shared/list-detail-card';
 import { authColors, authSpacing } from '@/constants/auth-theme';
 import type { ExplorerBoardColumns } from '@/lib/explorerBoard/explorerBoardColumns';
-import { minExplorerBoardTileSize } from '@/lib/explorerBoard/explorerBoardColumns';
+import {
+  EXPLORER_BOARD_FLASH_LIST_DRAW_DISTANCE,
+  minExplorerBoardTileSize,
+} from '@/lib/explorerBoard/explorerBoardColumns';
 import type { ExplorerBoardLayoutMode } from '@/lib/explorerBoard/explorerBoardLayout';
-import { filterExplorerBoardRows } from '@/lib/explorerBoard/filterExplorerBoardRows';
 import { routePublicUserProfile } from '@/lib/routing/routes';
-import { isSearchQueryActive } from '@/lib/search/normalizeSearchQuery';
 import type { ExplorerBoardMemberRow } from '@/services/explorerBoardService';
 
 type Props = {
   rows: ExplorerBoardMemberRow[];
-  searchQuery: string;
   layoutMode: ExplorerBoardLayoutMode;
   columnCount: ExplorerBoardColumns;
   loading: boolean;
@@ -36,7 +36,6 @@ type Props = {
  */
 export function DetectionCountExplorerBoard({
   rows,
-  searchQuery,
   layoutMode,
   columnCount,
   loading,
@@ -47,12 +46,8 @@ export function DetectionCountExplorerBoard({
 }: Props) {
   const router = useRouter();
   const { width: windowWidth } = useWindowDimensions();
-  const filteredRows = useMemo(
-    () => filterExplorerBoardRows(rows, searchQuery),
-    [rows, searchQuery],
-  );
   const { resolveDisplayUrl } = useExplorerBoardDisplayUrls(
-    loading && rows.length === 0 ? [] : filteredRows,
+    loading && rows.length === 0 ? [] : rows,
   );
 
   const compact = columnCount >= 4;
@@ -98,6 +93,18 @@ export function DetectionCountExplorerBoard({
     [columnCount, compact, openMember, resolveDisplayUrl, tileSize],
   );
 
+  const isGrid = layoutMode === 'grid';
+  const gridRowHeight = tileSize + authSpacing.sm;
+
+  const overrideGridItemLayout = useCallback(
+    (layout: { span?: number; size?: number }) => {
+      if (isGrid) {
+        layout.size = gridRowHeight;
+      }
+    },
+    [gridRowHeight, isGrid],
+  );
+
   if (error) {
     return <InlineFormError>{error}</InlineFormError>;
   }
@@ -119,26 +126,18 @@ export function DetectionCountExplorerBoard({
     );
   }
 
-  if (filteredRows.length === 0 && isSearchQueryActive(searchQuery)) {
-    return (
-      <Text style={listSectionSupportingStyles.muted}>
-        {`No members match "${searchQuery.trim()}". Try another username or motto.`}
-      </Text>
-    );
-  }
-
-  const isGrid = layoutMode === 'grid';
   return (
     <View accessibilityLabel="Explorer Board, ranked by native species discovered">
       <View style={styles.listWrap}>
         <FlashList
-          data={filteredRows}
+          data={rows}
           key={isGrid ? `grid-${columnCount}` : 'list'}
           numColumns={isGrid ? columnCount : 1}
           renderItem={isGrid ? renderGridItem : renderListItem}
           keyExtractor={(item) => item.userId}
           scrollEnabled={false}
-          extraData={{ tileSize, columnCount, compact, layoutMode }}
+          drawDistance={EXPLORER_BOARD_FLASH_LIST_DRAW_DISTANCE}
+          overrideItemLayout={isGrid ? overrideGridItemLayout : undefined}
         />
       </View>
 

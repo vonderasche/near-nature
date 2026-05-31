@@ -1,8 +1,8 @@
 import { Image } from 'expo-image';
-import { memo } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { memo, useCallback } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { authColors } from '@/constants/auth-theme';
+import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import { formatGalleryNativeCategoryLabel } from '@/lib/detections/galleryNativeCategory';
 import type { DetectionGalleryItem, GalleryNativeCategory } from '@/types';
 
@@ -11,8 +11,8 @@ type Props = {
   category: GalleryNativeCategory;
   size: number;
   deletable: boolean;
-  onPress: () => void;
-  onLongPress?: () => void;
+  onPressItemId: (itemId: string) => void;
+  onLongPressItemId?: (itemId: string) => void;
 };
 
 function DetectionGalleryTileComponent({
@@ -20,18 +20,28 @@ function DetectionGalleryTileComponent({
   category,
   size,
   deletable,
-  onPress,
-  onLongPress,
+  onPressItemId,
+  onLongPressItemId,
 }: Props) {
+  const onPress = useCallback(() => onPressItemId(item.id), [item.id, onPressItemId]);
+  const onLongPress = useCallback(
+    () => onLongPressItemId?.(item.id),
+    [item.id, onLongPressItemId],
+  );
+
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityHint={
-        deletable && onLongPress ? 'Opens details. Long press to delete.' : 'Opens details'
+        deletable && onLongPressItemId ? 'Opens details. Long press to delete.' : 'Opens details'
       }
-      accessibilityLabel={`${item.commonName}, ${item.latinName}, ${formatGalleryNativeCategoryLabel(category)}`}
+      accessibilityLabel={
+        item.ownerUsername
+          ? `${item.commonName}, ${item.latinName}, by ${item.ownerUsername}, ${formatGalleryNativeCategoryLabel(category)}`
+          : `${item.commonName}, ${item.latinName}, ${formatGalleryNativeCategoryLabel(category)}`
+      }
       onPress={onPress}
-      onLongPress={onLongPress}
+      onLongPress={onLongPressItemId ? onLongPress : undefined}
       delayLongPress={450}
       style={({ pressed }) => [
         styles.tile,
@@ -50,6 +60,13 @@ function DetectionGalleryTileComponent({
         recyclingKey={item.id}
         transition={200}
       />
+      {item.ownerUsername ? (
+        <View style={styles.ownerBadge} pointerEvents="none">
+          <Text style={styles.ownerText} numberOfLines={1}>
+            {item.ownerUsername}
+          </Text>
+        </View>
+      ) : null}
     </Pressable>
   );
 }
@@ -62,5 +79,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     overflow: 'hidden',
     backgroundColor: authColors.background,
+  },
+  ownerBadge: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: authSpacing.xs,
+    paddingVertical: 4,
+    backgroundColor: authColors.overlayScrimStrong,
+  },
+  ownerText: {
+    ...authTypography.label,
+    fontSize: 11,
+    color: authColors.text,
   },
 });

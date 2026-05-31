@@ -4,15 +4,20 @@ import { ActivityIndicator, Pressable, StyleSheet, useWindowDimensions, View } f
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { DetectionGalleryDetailModal } from '@/components/profile/detection-gallery-detail-modal';
-import { DetectionGalleryTile } from '@/components/profile/detection-gallery-tile';
+import { DetectionGalleryRow } from '@/components/profile/detection-gallery-row';
 import { CenteredActivityIndicator } from '@/components/shared/centered-activity-indicator';
 import { ThemedConfirmModal, ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { ThemedText } from '@/components/themed-text';
 import { authColors, authSpacing } from '@/constants/auth-theme';
-import { buildGalleryListEntries, type GalleryListEntry } from '@/lib/detections/buildGalleryListEntries';
-import { minGalleryTileSize, type GalleryGridColumns } from '@/lib/detections/galleryGridColumns';
+import { buildGalleryListEntries, type GalleryListRowEntry } from '@/lib/detections/buildGalleryListEntries';
+import {
+  GALLERY_FLASH_LIST_DRAW_DISTANCE,
+  galleryFlashListRowHeight,
+  minGalleryTileSize,
+  type GalleryGridColumns,
+} from '@/lib/detections/galleryGridColumns';
 import { isSearchQueryActive } from '@/lib/search/normalizeSearchQuery';
-import type { DetectionGalleryItem, GalleryNativeCategory } from '@/types';
+import type { DetectionGalleryItem } from '@/types';
 import { userFacingErr, type UserFacingResult } from '@/types/user-facing-result';
 
 type DetectionGalleryGridProps = {
@@ -30,6 +35,7 @@ type DetectionGalleryGridProps = {
   deletable?: boolean;
   onDeleteItem?: (item: DetectionGalleryItem) => Promise<UserFacingResult>;
   deletingId?: string | null;
+  onViewMemberProfile?: (userId: string) => void;
 };
 
 /**
@@ -50,6 +56,7 @@ export function DetectionGalleryGrid({
   deletable = false,
   onDeleteItem,
   deletingId = null,
+  onViewMemberProfile,
 }: DetectionGalleryGridProps) {
   const { width: windowWidth } = useWindowDimensions();
   const [selected, setSelected] = useState<DetectionGalleryItem | null>(null);
@@ -64,6 +71,8 @@ export function DetectionGalleryGrid({
       setDeleteLoading(false);
     }
   }, [deletable, onDeleteItem]);
+
+  const itemsById = useMemo(() => new Map(items.map((item) => [item.id, item])), [items]);
 
   const requestDelete = useCallback(
     async (it: DetectionGalleryItem): Promise<UserFacingResult> => {
@@ -89,12 +98,21 @@ export function DetectionGalleryGrid({
     }
   }, [pendingDelete, requestDelete]);
 
-  const confirmAndDelete = useCallback(
-    (it: DetectionGalleryItem) => {
-      if (!onDeleteItem) return;
-      setPendingDelete(it);
+  const handlePressItemId = useCallback(
+    (itemId: string) => {
+      const item = itemsById.get(itemId);
+      if (item) setSelected(item);
     },
-    [onDeleteItem],
+    [itemsById],
+  );
+
+  const handleLongPressItemId = useCallback(
+    (itemId: string) => {
+      if (!onDeleteItem) return;
+      const item = itemsById.get(itemId);
+      if (item) setPendingDelete(item);
+    },
+    [itemsById, onDeleteItem],
   );
 
   const tileGap = authSpacing.sm;
@@ -112,30 +130,27 @@ export function DetectionGalleryGrid({
     [items, columnCount],
   );
 
+  const rowHeight = galleryFlashListRowHeight(tileSize, tileGap);
+
   const renderItem = useCallback(
-    ({ item }: { item: GalleryListEntry }) => {
-      if (item.kind !== 'row') return null;
+    ({ item }: { item: GalleryListRowEntry }) => (
+      <DetectionGalleryRow
+        row={item}
+        tileSize={tileSize}
+        tileGap={tileGap}
+        deletable={deletable}
+        onPressItemId={handlePressItemId}
+        onLongPressItemId={deletable && onDeleteItem ? handleLongPressItemId : undefined}
+      />
+    ),
+    [deletable, handleLongPressItemId, handlePressItemId, onDeleteItem, tileGap, tileSize],
+  );
 
-      const category: GalleryNativeCategory =
-        item.items[0]?.nativeCategory === 'native' ? 'native' : 'non-native';
-
-      return (
-        <View style={[styles.row, { gap: tileGap, marginBottom: tileGap, height: tileSize }]}>
-          {item.items.map((tile) => (
-            <DetectionGalleryTile
-              key={tile.id}
-              item={tile}
-              category={category}
-              size={tileSize}
-              deletable={deletable}
-              onPress={() => setSelected(tile)}
-              onLongPress={deletable && onDeleteItem ? () => confirmAndDelete(tile) : undefined}
-            />
-          ))}
-        </View>
-      );
+  const overrideItemLayout = useCallback(
+    (layout: { span?: number; size?: number }) => {
+      layout.size = rowHeight;
     },
-    [confirmAndDelete, deletable, onDeleteItem, tileGap, tileSize],
+    [rowHeight],
   );
 
   if (error) {
@@ -177,7 +192,8 @@ export function DetectionGalleryGrid({
           renderItem={renderItem}
           keyExtractor={(entry) => entry.id}
           scrollEnabled={false}
-          extraData={{ tileSize, columnCount, deletable }}
+          drawDistance={GALLERY_FLASH_LIST_DRAW_DISTANCE}
+          overrideItemLayout={overrideItemLayout}
         />
       </View>
 
@@ -207,6 +223,7 @@ export function DetectionGalleryGrid({
         deletable={Boolean(deletable && onDeleteItem)}
         onRequestDelete={deletable && onDeleteItem ? requestDelete : undefined}
         deleteBusy={Boolean(selected && deletingId === selected.id)}
+        onViewMemberProfile={onViewMemberProfile}
       />
 
       <ThemedConfirmModal
@@ -231,10 +248,6 @@ export function DetectionGalleryGrid({
 const styles = StyleSheet.create({
   listWrap: {
     minHeight: 2,
-  },
-  row: {
-    flexDirection: 'row',
-    flexWrap: 'nowrap',
   },
   messageBlock: {
     gap: authSpacing.sm,

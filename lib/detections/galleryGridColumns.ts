@@ -37,3 +37,10 @@ export function gridLayoutAccessibilityLabel(columns: GalleryGridColumns): strin
 }
 
 export const GRID_LAYOUT_MENU_TITLE = 'Grid size';
+
+/** Off-screen draw distance (dp) for nested profile gallery FlashList rows. */
+export const GALLERY_FLASH_LIST_DRAW_DISTANCE = 480;
+
+export function galleryFlashListRowHeight(tileSize: number, tileGap: number): number {
+  return tileSize + tileGap;
+}

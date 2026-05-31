@@ -2,19 +2,13 @@ import { splitGalleryByNativeCategory } from '@/lib/detections/galleryNativeCate
 import type { GalleryGridColumns } from '@/lib/detections/galleryGridColumns';
 import type { DetectionGalleryItem, GalleryNativeCategory } from '@/types';
 
-export type GalleryListSectionEntry = {
-  kind: 'section';
-  id: string;
-  category: GalleryNativeCategory;
-};
-
 export type GalleryListRowEntry = {
   kind: 'row';
   id: string;
   items: DetectionGalleryItem[];
 };
 
-export type GalleryListEntry = GalleryListSectionEntry | GalleryListRowEntry;
+export type GalleryListEntry = GalleryListRowEntry;
 
 function chunkRow<T>(items: readonly T[], columnCount: number): T[][] {
   const rows: T[][] = [];
@@ -24,7 +18,7 @@ function chunkRow<T>(items: readonly T[], columnCount: number): T[][] {
   return rows;
 }
 
-/** Flatten native / non-native sections into FlashList rows (section header + tile rows). */
+/** Flatten native / non-native sections into FlashList tile rows. */
 export function buildGalleryListEntries(
   items: readonly DetectionGalleryItem[],
   columnCount: GalleryGridColumns,

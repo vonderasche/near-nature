@@ -2,10 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { DEFAULT_CACHE_MAX_AGE_MS } from '@/constants/cache-ttl';
 import { isCacheEntryFresh } from '@/lib/cache/isCacheEntryFresh';
-import {
-  shouldLoadExplorerBoardFromCache,
-  shouldPersistExplorerBoardCache,
-} from '@/lib/explorerBoard/explorerBoardCachePolicy';
+import { shouldLoadExplorerBoardFromCache } from '@/lib/explorerBoard/explorerBoardCachePolicy';
 import {
   loadCachedExplorerBoardList,
   saveCachedExplorerBoardList,
@@ -30,10 +27,7 @@ function rpcFailureMessage(e: unknown): string {
   return 'Could not load Explorer Board. In Supabase → SQL Editor, run sql/get_detection_count_leaderboard.sql (paginated RPC), then pull to refresh.';
 }
 
-export function useExplorerBoard(
-  pageSize = EXPLORER_BOARD_PAGE_SIZE,
-  searchQuery = '',
-): {
+export function useExplorerBoard(pageSize = EXPLORER_BOARD_PAGE_SIZE): {
   rows: ExplorerBoardMemberRow[];
   isLoading: boolean;
   isRefreshing: boolean;
@@ -53,18 +47,15 @@ export function useExplorerBoard(
   const rowsRef = useRef<ExplorerBoardMemberRow[]>([]);
   const hasFetchedOnceRef = useRef(false);
   const hadCacheRef = useRef(false);
-  const searchQueryRef = useRef(searchQuery);
 
   const persistRows = useCallback(async (merged: ExplorerBoardMemberRow[], more: boolean) => {
     rowsRef.current = merged;
-    if (!shouldPersistExplorerBoardCache(searchQueryRef.current)) return;
     await saveCachedExplorerBoardList({ rows: merged, hasMore: more });
   }, []);
 
   const loadPage = useCallback(
     async (mode: 'reset' | 'append', options?: { force?: boolean }) => {
       const force = options?.force ?? false;
-      const activeSearch = searchQueryRef.current;
 
       if (mode === 'reset') {
         clearLegacyExplorerBoardCache();
@@ -85,7 +76,6 @@ export function useExplorerBoard(
           mode,
           force,
           isInitial,
-          searchQuery: activeSearch,
         })
       ) {
         const cached = await loadCachedExplorerBoardList();
@@ -120,7 +110,6 @@ export function useExplorerBoard(
         const { rows: pageRows, hasMore: more } = await fetchExplorerBoardPage({
           offset,
           pageSize,
-          searchQuery: activeSearch,
         });
 
         const merged =
@@ -159,12 +148,8 @@ export function useExplorerBoard(
   }, [hasMore, isLoadingMore, isLoading, isRefreshing, loadPage]);
 
   useEffect(() => {
-    searchQueryRef.current = searchQuery;
-    hasFetchedOnceRef.current = false;
-    offsetRef.current = 0;
-    rowsRef.current = [];
     void loadPage('reset');
-  }, [loadPage, searchQuery]);
+  }, [loadPage]);
 
   useEffect(() => {
     return subscribeExplorerBoardRefresh(() => {

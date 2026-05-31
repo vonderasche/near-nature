@@ -146,7 +146,8 @@ create policy "Users can view their own discoveries"
   on public.discoveries for select
   using ((select auth.uid()) = user_id);
 
--- ── 6. pg_trgm in extensions schema + tighten RPC / species_metadata exposure ─
+-- ── 6. pg_trgm trigram indexes + tighten RPC / species_metadata exposure ─────
+-- Requires public._create_gin_trgm_index (from add_detection_search.sql or pg_trgm_bootstrap.sql).
 
 create schema if not exists extensions;
 grant usage on schema extensions to postgres, anon, authenticated, service_role;
@@ -156,19 +157,38 @@ drop index if exists public.detections_search_text_trgm_idx;
 drop index if exists public.detections_latin_normalized_trgm_idx;
 drop index if exists public.detections_common_name_trgm_idx;
 
-alter extension pg_trgm set schema extensions;
+do $$
+begin
+  if exists (select 1 from pg_extension where extname = 'pg_trgm') then
+    begin
+      alter extension pg_trgm set schema extensions;
+    exception
+      when others then
+        null;
+    end;
+  end if;
+end $$;
 
-create index if not exists species_metadata_latin_norm_trgm_idx
-  on public.species_metadata using gin (latin_name_normalized extensions.gin_trgm_ops);
-
-create index if not exists detections_search_text_trgm_idx
-  on public.detections using gin (search_text extensions.gin_trgm_ops);
-
-create index if not exists detections_latin_normalized_trgm_idx
-  on public.detections using gin (latin_name_normalized extensions.gin_trgm_ops);
-
-create index if not exists detections_common_name_trgm_idx
-  on public.detections using gin (common_name extensions.gin_trgm_ops);
+select public._create_gin_trgm_index(
+  'species_metadata_latin_norm_trgm_idx',
+  'public.species_metadata'::regclass,
+  'latin_name_normalized'
+);
+select public._create_gin_trgm_index(
+  'detections_search_text_trgm_idx',
+  'public.detections'::regclass,
+  'search_text'
+);
+select public._create_gin_trgm_index(
+  'detections_latin_normalized_trgm_idx',
+  'public.detections'::regclass,
+  'latin_name_normalized'
+);
+select public._create_gin_trgm_index(
+  'detections_common_name_trgm_idx',
+  'public.detections'::regclass,
+  'common_name'
+);
 
 -- species_metadata: no direct PostgREST reads (search/upsert use SECURITY DEFINER RPCs)
 revoke select on table public.species_metadata from authenticated;

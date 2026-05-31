@@ -31,3 +31,6 @@ export function minExplorerBoardTileSize(columns: ExplorerBoardColumns): number 
       return 120;
   }
 }
+
+/** Off-screen draw distance (dp) for nested Explorer Board FlashList. */
+export const EXPLORER_BOARD_FLASH_LIST_DRAW_DISTANCE = 560;

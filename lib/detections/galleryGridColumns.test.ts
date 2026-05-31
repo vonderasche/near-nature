@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   DEFAULT_GALLERY_GRID_COLUMNS,
+  galleryFlashListRowHeight,
   parseGalleryGridColumns,
 } from '@/lib/detections/galleryGridColumns';
 
@@ -14,5 +15,11 @@ describe('parseGalleryGridColumns', () => {
   it('falls back to default for invalid values', () => {
     expect(parseGalleryGridColumns('3')).toBe(DEFAULT_GALLERY_GRID_COLUMNS);
     expect(parseGalleryGridColumns(null)).toBe(DEFAULT_GALLERY_GRID_COLUMNS);
+  });
+});
+
+describe('galleryFlashListRowHeight', () => {
+  it('includes tile gap in row height', () => {
+    expect(galleryFlashListRowHeight(80, 12)).toBe(92);
   });
 });

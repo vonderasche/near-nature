@@ -47,6 +47,9 @@ export type DetectionGalleryItem = {
   nativeStatus: SpeciesStatus;
   /** Native vs non-native section in the gallery. */
   nativeCategory: GalleryNativeCategory;
+  /** Member who saved this identification (community explore). */
+  ownerUserId?: string;
+  ownerUsername?: string;
   /** Optimistic tile while Storage + DB save is in flight. */
   uploadStatus?: 'pending';
 };
