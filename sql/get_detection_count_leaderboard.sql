@@ -18,13 +18,17 @@ drop function if exists public.get_detection_count_leaderboard();
 
 drop function if exists public.get_detection_count_leaderboard(int, int);
 
+drop function if exists public.get_detection_count_leaderboard(int, int, text);
+
 
 
 create or replace function public.get_detection_count_leaderboard(
 
   p_limit int default 20,
 
-  p_offset int default 0
+  p_offset int default 0,
+
+  p_search text default null
 
 )
 
@@ -179,6 +183,12 @@ as $$
 
   from ordered
 
+  where coalesce(nullif(trim(p_search), ''), null) is null
+
+     or username ilike '%' || trim(p_search) || '%'
+
+     or coalesce(motto, '') ilike '%' || trim(p_search) || '%'
+
   order by leaderboard_rank asc
 
   limit greatest(coalesce(p_limit, 20), 0)
@@ -189,7 +199,7 @@ $$;
 
 
 
-revoke all on function public.get_detection_count_leaderboard(int, int) from public;
+revoke all on function public.get_detection_count_leaderboard(int, int, text) from public;
 
-grant execute on function public.get_detection_count_leaderboard(int, int) to authenticated;
-grant execute on function public.get_detection_count_leaderboard(int, int) to anon;
+grant execute on function public.get_detection_count_leaderboard(int, int, text) to authenticated;
+grant execute on function public.get_detection_count_leaderboard(int, int, text) to anon;

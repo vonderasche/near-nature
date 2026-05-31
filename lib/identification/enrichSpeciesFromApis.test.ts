@@ -157,18 +157,55 @@ describe('enrichSpeciesFromApis', () => {
     );
   });
 
-  it('does not call iNat for alternate classifications', async () => {
+  it('calls iNat for alternate classifications when not saved', async () => {
     const second: ClassificationResult = {
       ...classification,
       latinName: 'Apis mellifera',
       commonName: 'Honey bee',
     };
+    vi.mocked(lookupNativeStatus).mockImplementation(async (latinName) => ({
+      status: latinName === 'Apis mellifera' ? 'non-native' : 'native',
+      taxonId: 1,
+      establishmentMeans: 'introduced',
+    }));
 
     const result = await enrichSpeciesFromApis([classification, second], 'FL');
 
+    expect(lookupNativeStatus).toHaveBeenCalledTimes(2);
+    expect(lookupNativeStatus).toHaveBeenCalledWith('Danaus plexippus', 'FL');
+    expect(lookupNativeStatus).toHaveBeenCalledWith('Apis mellifera', 'FL');
+    expect(result.species[0].status).toBe('native');
+    expect(result.species[1].status).toBe('non-native');
+  });
+
+  it('reuses saved status for alternates without calling iNat', async () => {
+    const second: ClassificationResult = {
+      ...classification,
+      latinName: 'Apis mellifera',
+      commonName: 'Honey bee',
+    };
+    vi.mocked(resolveSavedSpeciesForLatinNames).mockResolvedValue(
+      new Map([
+        [
+          'apis mellifera',
+          {
+            latinName: 'Apis mellifera',
+            commonName: 'Honey bee',
+            status: 'native',
+            description: null,
+            inaturalistId: null,
+          },
+        ],
+      ]),
+    );
+
+    const result = await enrichSpeciesFromApis([classification, second], 'FL', {
+      userId: 'user-1',
+    });
+
     expect(lookupNativeStatus).toHaveBeenCalledTimes(1);
     expect(lookupNativeStatus).toHaveBeenCalledWith('Danaus plexippus', 'FL');
-    expect(result.species[1].status).toBe('unknown');
+    expect(result.species[1].status).toBe('native');
   });
 
   it('uses species catalog before Wikipedia when no saved description exists', async () => {

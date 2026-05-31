@@ -1,5 +1,6 @@
 import catalog from '@/assets/tflite/near_nature_app_bundle/genus_info/genus_profiles.enriched.min.json';
 
+import { devLog } from '@/lib/devLog';
 import { getAppMeta, setAppMeta } from '@/lib/db/appMeta';
 import { isLocalDatabaseSupported, getLocalDatabase } from '@/lib/db/database';
 import { parseGenusProfiles } from '@/lib/db/parseGenusProfiles';
@@ -35,4 +36,5 @@ export async function seedSpeciesCatalogIfNeeded(): Promise<void> {
   await upsertSpeciesRecords(records);
   await setAppMeta(SPECIES_CATALOG_VERSION_META_KEY, SPECIES_CATALOG_VERSION);
   await setAppMeta(SPECIES_CATALOG_SEEDED_META_KEY, String(records.length));
+  devLog('[db] species catalog seeded', { count: records.length, version: SPECIES_CATALOG_VERSION });
 }

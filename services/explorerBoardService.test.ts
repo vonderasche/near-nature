@@ -29,6 +29,22 @@ describe('isPaginatedExplorerBoardRpcMissing', () => {
 });
 
 describe('fetchExplorerBoardPage', () => {
+  it('passes p_search when searchQuery is set', async () => {
+    vi.mocked(supabase.rpc).mockResolvedValue({ data: [], error: null } as never);
+
+    await fetchExplorerBoardPage({
+      offset: 0,
+      pageSize: 20,
+      searchQuery: 'plant',
+    });
+
+    expect(supabase.rpc).toHaveBeenCalledWith('get_detection_count_leaderboard', {
+      p_limit: 21,
+      p_offset: 0,
+      p_search: 'plant',
+    });
+  });
+
   it('requests pageSize + 1 and trims the extra row when hasMore', async () => {
     const extraRank = EXPLORER_BOARD_PAGE_SIZE + 1;
     vi.mocked(supabase.rpc).mockResolvedValue({

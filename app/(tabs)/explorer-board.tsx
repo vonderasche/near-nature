@@ -25,14 +25,14 @@ import { isSearchQueryActive } from '@/lib/search/normalizeSearchQuery';
 export default function ExplorerBoardScreen() {
   const { isAuthenticated } = useAuthContext();
   const router = useRouter();
-  const { rows, isLoading, isRefreshing, isLoadingMore, hasMore, error, loadMore, refetch } =
-    useExplorerBoard();
-  const { layoutMode, setLayout } = useExplorerBoardLayout();
-  const { columns, setColumnCount } = useExplorerBoardColumns();
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 280);
   const searchActive = isSearchQueryActive(debouncedSearchQuery);
+  const { rows, isLoading, isRefreshing, isLoadingMore, hasMore, error, loadMore, refetch } =
+    useExplorerBoard(undefined, debouncedSearchQuery);
+  const { layoutMode, setLayout } = useExplorerBoardLayout();
+  const { columns, setColumnCount } = useExplorerBoardColumns();
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -80,15 +80,12 @@ export default function ExplorerBoardScreen() {
       <ScreenSearchField
         value={searchQuery}
         onChangeText={setSearchQuery}
-        placeholder="Search loaded members…"
+        placeholder="Search by username or motto…"
         accessibilityLabel="Search Explorer Board members"
-        accessibilityHint="Filters members already loaded on this device. Scroll or pull to refresh to load more."
+        accessibilityHint="Matches username and motto across ranked members when search SQL is deployed."
       />
-      {searchActive ? (
-        <Text style={styles.searchHint}>
-          Search only includes members already loaded. Pull to refresh or scroll down to load more,
-          then search again.
-        </Text>
+      {searchActive && isLoading ? (
+        <Text style={styles.searchHint}>Searching members…</Text>
       ) : null}
       <DetectionCountExplorerBoard
         rows={rows}

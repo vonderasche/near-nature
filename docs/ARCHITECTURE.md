@@ -284,7 +284,7 @@ flowchart TD
 | Capture | `hooks/useCameraScreen.ts`, `hooks/usePickPhotoFromGallery.ts` |
 | Classify (native) | `lib/camera/mobilenet/identifyPhotoWithTflite.ts`, `preprocessImageForMobileNet.ts` |
 | Classify (web) | `hooks/useSpeciesIdentification.ts`, `api/gemini.ts`, Edge `identify-species` |
-| Enrich | `lib/identification/enrichSpeciesFromApis.ts` |
+| Enrich | `lib/identification/enrichSpeciesFromApis.ts` — iNat for all candidates; wiki capped to top N; saved detection / catalog / wiki_cache tiers |
 | UI | `components/camera/camera-identification-panel.tsx` |
 | Save | `hooks/useSaveDetection.ts`, `services/detectionService.ts` |
 
@@ -292,13 +292,14 @@ flowchart TD
 
 ## Tab 2 — Explorer Board
 
-- Loads paginated Explorer Board via RPC **`get_detection_count_leaderboard`**.
-- **Device cache:** first page cached in SQLite (`explorer_board_cache`) or AsyncStorage on web — stale-while-revalidate on open; pull-to-refresh always hits the network.
-- Search is **client-side** on loaded rows (280ms debounced).
+- Loads paginated Explorer Board via RPC **`get_detection_count_leaderboard(p_limit, p_offset, p_search)`**.
+- **Device cache:** accumulated scroll pages cached in SQLite (`explorer_board_cache`, capped at 120 rows) — stale-while-revalidate on open when not searching; pull-to-refresh always hits the network.
+- **Search:** debounced (280ms) `p_search` filters username and motto server-side when the updated SQL is deployed; legacy no-arg RPC falls back to in-memory filter over the full cached leaderboard.
 - Member avatars/tiles use **signed URL** batch resolution (same pipeline as gallery).
 - **FlashList** virtualizes list/grid inside parent scroll.
 - Refresh on pull; `requestExplorerBoardRefresh()` after saves updates the board when revisited.
 - Column count and list/grid layout preferences are cached locally (AsyncStorage).
+- Loading states use shared **`CenteredActivityIndicator`** with accessibility labels.
 
 ---
 
@@ -354,15 +355,17 @@ Requires `sql/get_user_scoring_snapshot.sql` (or fallback RPCs) in Supabase.
 | **Scoring snapshot** | `near_nature:scoring_snapshot:{userId}` | Mains, awards, score breakdown | Sign out, save, delete |
 | **Signed URLs** | Memory + `near_nature:signed_url:{path}` | Supabase signed image URLs | Sign out (+ memory on expiry) |
 | **Saved species session** | In-memory `Map` | Latest detection per latin name | Sign out; warmed on profile load |
-| **Explorer Board list** | `near_nature:explorer_board_list` | First page of leaderboard rows | Never (global); overwritten on fetch |
+| **Explorer Board list** | `near_nature:explorer_board_list` | Accumulated leaderboard rows (scroll pages, max 120) | Never (global); skipped while searching |
 | **Explorer Board columns** | AsyncStorage preference | 2/3/4 column grid | Never (UI pref) |
 | **Gallery grid columns** | AsyncStorage preference | Column count | Never |
 | **expo-image** | OS disk | Rendered bitmaps | OS-managed |
 | **SQLite (`near_nature.db`)** | `expo-sqlite` on device | Global: `species_records`, `wiki_cache`, `explorer_board_cache`. User-scoped: profile, gallery list cache, scoring snapshot, saved-species map, signed URLs, **`user_detections`** | Sign out clears user-scoped SQLite rows; global catalog + board cache kept |
 
-Stale-while-revalidate: show cache immediately, refresh in background when stale, then update cache. Device caches include `cachedAt`; entries younger than **15 minutes** skip background network unless pull-to-refresh or `force` refetch (save/delete still invalidates).
+Stale-while-revalidate: show cache immediately, refresh in background when stale, then update cache. Device caches include `cachedAt`; entries younger than **15 minutes** skip background network unless pull-to-refresh or `force` refetch (save/delete still invalidates). Explorer Board and gallery caches are not read while a search query is active.
 
-**SQLite notes:** Requires a native dev-client rebuild after installing `expo-sqlite` or adding migrations. Skipped on web (cache modules fall back to AsyncStorage). If SQLite init fails, a dismissible banner explains that caches fall back to network/AsyncStorage. Bundled genus catalog seeds on first launch or when the catalog version changes. On upgrade, legacy AsyncStorage cache keys are imported once into SQLite. **Sync model:** saves upload to Supabase then upsert locally; gallery/board/profile hooks show cached data immediately and refresh in the background.
+**UI tokens:** profile, gallery, and Explorer Board leaf components read **`authColors`** from `constants/auth-theme.ts` directly instead of drilling `mutedColor` / `borderColor` through screen props.
+
+**SQLite notes:** Requires a native dev-client rebuild after installing `expo-sqlite` or adding migrations. Skipped on web (cache modules fall back to AsyncStorage). If SQLite init fails, a dismissible banner explains that caches fall back to network/AsyncStorage. Bundled genus catalog (`genus_profiles.enriched.min.json`) seeds `species_records` on first launch or when the catalog version changes — Metro logs `[db] species catalog seeded` in dev. On upgrade, legacy AsyncStorage cache keys are imported once into SQLite. **Sync model:** saves upload to Supabase then upsert locally; gallery/board/profile hooks show cached data immediately and refresh in the background.
 
 **Implementation paths:**
 

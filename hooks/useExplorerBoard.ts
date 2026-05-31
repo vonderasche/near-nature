@@ -3,6 +3,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { DEFAULT_CACHE_MAX_AGE_MS } from '@/constants/cache-ttl';
 import { isCacheEntryFresh } from '@/lib/cache/isCacheEntryFresh';
 import {
+  shouldLoadExplorerBoardFromCache,
+  shouldPersistExplorerBoardCache,
+} from '@/lib/explorerBoard/explorerBoardCachePolicy';
+import {
   loadCachedExplorerBoardList,
   saveCachedExplorerBoardList,
 } from '@/lib/explorerBoard/explorerBoardListCache';
@@ -26,7 +30,10 @@ function rpcFailureMessage(e: unknown): string {
   return 'Could not load Explorer Board. In Supabase → SQL Editor, run sql/get_detection_count_leaderboard.sql (paginated RPC), then pull to refresh.';
 }
 
-export function useExplorerBoard(pageSize = EXPLORER_BOARD_PAGE_SIZE): {
+export function useExplorerBoard(
+  pageSize = EXPLORER_BOARD_PAGE_SIZE,
+  searchQuery = '',
+): {
   rows: ExplorerBoardMemberRow[];
   isLoading: boolean;
   isRefreshing: boolean;
@@ -46,15 +53,18 @@ export function useExplorerBoard(pageSize = EXPLORER_BOARD_PAGE_SIZE): {
   const rowsRef = useRef<ExplorerBoardMemberRow[]>([]);
   const hasFetchedOnceRef = useRef(false);
   const hadCacheRef = useRef(false);
+  const searchQueryRef = useRef(searchQuery);
 
   const persistRows = useCallback(async (merged: ExplorerBoardMemberRow[], more: boolean) => {
     rowsRef.current = merged;
+    if (!shouldPersistExplorerBoardCache(searchQueryRef.current)) return;
     await saveCachedExplorerBoardList({ rows: merged, hasMore: more });
   }, []);
 
   const loadPage = useCallback(
     async (mode: 'reset' | 'append', options?: { force?: boolean }) => {
       const force = options?.force ?? false;
+      const activeSearch = searchQueryRef.current;
 
       if (mode === 'reset') {
         clearLegacyExplorerBoardCache();
@@ -70,26 +80,34 @@ export function useExplorerBoard(pageSize = EXPLORER_BOARD_PAGE_SIZE): {
       setError(null);
       let skipNetwork = false;
 
-      if (mode === 'reset') {
-        if (isInitial && !force) {
-          const cached = await loadCachedExplorerBoardList();
-          if (cached && cached.rows.length > 0) {
-            rowsRef.current = cached.rows;
-            setRows(cached.rows);
-            setHasMore(cached.hasMore);
-            offsetRef.current = cached.rows.length;
-            hadCacheRef.current = true;
-            setIsLoading(false);
-            const fresh = isCacheEntryFresh(cached.cachedAt, DEFAULT_CACHE_MAX_AGE_MS);
-            setIsRefreshing(!fresh);
-            hasFetchedOnceRef.current = fresh;
-            skipNetwork = fresh;
-          } else {
-            setIsLoading(true);
-          }
+      if (
+        shouldLoadExplorerBoardFromCache({
+          mode,
+          force,
+          isInitial,
+          searchQuery: activeSearch,
+        })
+      ) {
+        const cached = await loadCachedExplorerBoardList();
+        if (cached && cached.rows.length > 0) {
+          rowsRef.current = cached.rows;
+          setRows(cached.rows);
+          setHasMore(cached.hasMore);
+          offsetRef.current = cached.rows.length;
+          hadCacheRef.current = true;
+          setIsLoading(false);
+          const fresh = isCacheEntryFresh(cached.cachedAt, DEFAULT_CACHE_MAX_AGE_MS);
+          setIsRefreshing(!fresh);
+          hasFetchedOnceRef.current = fresh;
+          skipNetwork = fresh;
         } else {
-          setIsRefreshing(true);
+          setIsLoading(true);
         }
+      } else if (mode === 'reset') {
+        if (!hadCacheRef.current) {
+          setIsLoading(true);
+        }
+        setIsRefreshing(true);
       } else {
         setIsLoadingMore(true);
       }
@@ -102,6 +120,7 @@ export function useExplorerBoard(pageSize = EXPLORER_BOARD_PAGE_SIZE): {
         const { rows: pageRows, hasMore: more } = await fetchExplorerBoardPage({
           offset,
           pageSize,
+          searchQuery: activeSearch,
         });
 
         const merged =
@@ -140,11 +159,12 @@ export function useExplorerBoard(pageSize = EXPLORER_BOARD_PAGE_SIZE): {
   }, [hasMore, isLoadingMore, isLoading, isRefreshing, loadPage]);
 
   useEffect(() => {
+    searchQueryRef.current = searchQuery;
     hasFetchedOnceRef.current = false;
     offsetRef.current = 0;
     rowsRef.current = [];
     void loadPage('reset');
-  }, [loadPage]);
+  }, [loadPage, searchQuery]);
 
   useEffect(() => {
     return subscribeExplorerBoardRefresh(() => {

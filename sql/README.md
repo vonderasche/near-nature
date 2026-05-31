@@ -28,7 +28,7 @@ All `.sql` scripts here are written to be **safe to re-run** (they drop/recreate
 | `create_streaks.sql` | `public.streaks`, streak trigger on insert |
 | `create_discoveries.sql` | `public.discoveries`, first-species bonus trigger |
 | `storage_bucket_detections.sql` | Storage bucket + policies |
-| `get_detection_count_leaderboard.sql` | RPC: Explorer Board rankings (paginated; legacy SQL name) |
+| `get_detection_count_leaderboard.sql` | RPC: Explorer Board rankings (paginated; optional `p_search` on username/motto) |
 | `get_public_user_profile.sql` | RPC: public profile + stats |
 | `drop_streak_client_update_policy.sql` | Removes obsolete streak `UPDATE` policy |
 | `ensure_public_user_profile.sql` | RPC: create missing `public.users` row for signed-in user; hardens signup trigger |
