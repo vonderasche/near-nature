@@ -199,18 +199,6 @@ export async function fetchUserDetectionGalleryRowsPage({
   return result;
 }
 
-/** @deprecated Use `fetchUserDetectionGalleryRowsPage` with `query` set. */
-export type SearchUserDetectionGalleryRowsPageParams = Omit<
-  FetchUserDetectionGalleryPageParams,
-  'query'
-> & { query: string };
-
-export async function searchUserDetectionGalleryRowsPage(
-  params: SearchUserDetectionGalleryRowsPageParams,
-): Promise<FetchUserDetectionGalleryRowsPageResult> {
-  return fetchUserDetectionGalleryRowsPage(params);
-}
-
 /**
  * Fetches one page and resolves signed image URLs for display.
  */

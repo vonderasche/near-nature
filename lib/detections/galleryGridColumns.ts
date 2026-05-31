@@ -36,7 +36,4 @@ export function gridLayoutAccessibilityLabel(columns: GalleryGridColumns): strin
   return columns === 1 ? '1 column' : `${columns} columns`;
 }
 
-/** @deprecated Use {@link gridLayoutAccessibilityLabel} */
-export const galleryGridColumnsLabel = gridLayoutAccessibilityLabel;
-
 export const GRID_LAYOUT_MENU_TITLE = 'Grid size';

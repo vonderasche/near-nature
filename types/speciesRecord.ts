@@ -57,21 +57,3 @@ export type GenusProfileJsonEntry = {
 };
 
 export type GenusProfilesJson = Record<string, GenusProfileJsonEntry>;
-
-/** @deprecated Sample species-level catalog; use {@link GenusProfilesJson}. */
-export type SpeciesCatalogJsonEntry = {
-  speciesLabel?: number;
-  scientificName?: string;
-  commonName?: string;
-  group?: string;
-  floridaStatus?: string;
-  taxonomy?: { family?: string; genus?: string };
-  description?: string;
-  identificationTraits?: string[];
-  interestingFacts?: string[];
-  sourceUrls?: SpeciesRecordSourceUrls;
-  updatedAt?: string;
-};
-
-/** @deprecated Use {@link GenusProfilesJson}. */
-export type SpeciesCatalogJson = Record<string, SpeciesCatalogJsonEntry>;

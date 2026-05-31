@@ -351,8 +351,3 @@ export function buildEarnedProfileBadgeSections(
 }
 
 export const PROFILE_BADGE_GRID_COLUMNS = 4;
-
-/** @deprecated Use {@link buildProfileBadgeSections} */
-export function buildProfileBadgeItems(awardKeys: ReadonlySet<string>): ProfileBadgeItem[] {
-  return buildProfileBadgeSections([], awardKeys).flatMap((s) => s.badges);
-}

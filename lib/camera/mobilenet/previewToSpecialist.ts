@@ -4,9 +4,6 @@ import {
   TFLITE_ROUTING,
 } from '@/lib/camera/mobilenet/tfliteRouting';
 
-/** @deprecated Use {@link SpecialistAssetFolder}. */
-export type SpecialistModelId = SpecialistAssetFolder;
-
 /** Resolves preview label → specialist asset folder (`null` when unrouted). */
 export function resolveSpecialistForPreviewLabel(previewLabel: string): SpecialistAssetFolder | null {
   return resolveRouting(previewLabel).assetFolder;

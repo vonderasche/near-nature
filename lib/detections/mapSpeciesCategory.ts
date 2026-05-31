@@ -1,4 +1,3 @@
-import type { SubcategoryId } from '@/constants/naturalist-categories';
 import { mapDbCategoryToSubcategory } from '@/lib/points/mapDbCategoryToSubcategory';
 import { resolveNaturalistCategoryFromClassification } from '@/lib/points/resolveNaturalistCategory';
 import type { ClassificationResult } from '@/types';
@@ -24,6 +23,3 @@ export function classificationToSpeciesCategory(c: ClassificationResult): string
   if (c.taxonGroup === 'plants') return 'wildflowers';
   return 'small_mammals';
 }
-
-/** @deprecated Prefer string return from {@link classificationToSpeciesCategory}. */
-export type SpeciesCategoryFromClassification = SubcategoryId | string;
