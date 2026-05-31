@@ -26,8 +26,6 @@ import { clampPopoverLeft } from '@/lib/ui/clampPopoverLeft';
 type Props = {
   value: GalleryGridColumns;
   onChange: (columns: GalleryGridColumns) => void;
-  mutedColor: string;
-  borderColor: string;
   /** Distinguishes gallery vs Explorer Board in the trigger accessibility label. */
   context?: 'gallery' | 'explorer board';
   /** Defaults to gallery options (1, 2, 4, 8). Explorer Board passes [1, 2, 4]. */
@@ -43,8 +41,6 @@ const CELL_GAP = 6;
 export function GridLayoutMenu({
   value,
   onChange,
-  mutedColor,
-  borderColor,
   context = 'gallery',
   columnOptions = GALLERY_GRID_COLUMN_OPTIONS,
 }: Props) {
@@ -96,7 +92,7 @@ export function GridLayoutMenu({
           hitSlop={10}
           onPress={openMenu}
           style={({ pressed }) => [styles.trigger, pressed && styles.triggerPressed]}>
-          <IconSymbol name="square.grid.2x2" size={22} color={mutedColor} />
+          <IconSymbol name="square.grid.2x2" size={22} color={authColors.textMuted} />
         </Pressable>
       </View>
 
@@ -109,12 +105,11 @@ export function GridLayoutMenu({
               {
                 top: menuTop,
                 left: menuLeft,
-                borderColor,
                 width: MENU_WIDTH,
               },
             ]}
             accessibilityViewIsModal>
-            <Text style={[styles.menuTitle, { color: mutedColor }]}>{menuTitle}</Text>
+            <Text style={styles.menuTitle}>{menuTitle}</Text>
             <View style={[styles.grid, { gap: CELL_GAP, width: cellSize * 2 + CELL_GAP }]}>
               {columnOptions.map((n) => {
                 const active = n === value;
@@ -127,7 +122,6 @@ export function GridLayoutMenu({
                     onPress={() => select(n)}
                     style={({ pressed }) => [
                       styles.cell,
-                      { borderColor },
                       active && styles.cellActive,
                       pressed && !active && styles.cellPressed,
                     ]}>
@@ -171,6 +165,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     backgroundColor: authColors.background,
     borderWidth: 1,
+    borderColor: authColors.border,
     padding: authSpacing.sm,
     elevation: 6,
     shadowColor: '#000',
@@ -185,6 +180,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
     marginBottom: authSpacing.sm,
+    color: authColors.textMuted,
   },
   grid: {
     flexDirection: 'row',
@@ -198,6 +194,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
+    borderColor: authColors.border,
     borderRadius: 0,
     backgroundColor: authColors.background,
   },

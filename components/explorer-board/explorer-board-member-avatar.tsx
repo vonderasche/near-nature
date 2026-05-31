@@ -16,8 +16,6 @@ type ExplorerBoardMemberAvatarProps = {
    * When set, local signing is skipped; `null` shows the fallback icon.
    */
   displayUri?: string | null;
-  borderColor: string;
-  mutedColor: string;
   /** Shown when there is no image or load fails. */
   fallbackIcon?: HeroIconName;
 };
@@ -28,8 +26,6 @@ type ExplorerBoardMemberAvatarProps = {
 export function ExplorerBoardMemberAvatar({
   storedUrl,
   displayUri: displayUriProp,
-  borderColor,
-  mutedColor,
   fallbackIcon = 'user',
 }: ExplorerBoardMemberAvatarProps) {
   const signedLocally = useStoredImageDisplayUrl(displayUriProp === undefined ? storedUrl : null);
@@ -43,7 +39,7 @@ export function ExplorerBoardMemberAvatar({
   const showImage = Boolean(displayUri?.trim()) && !failed;
 
   return (
-    <View style={[styles.ring, { borderColor }]} accessibilityLabel="Member avatar">
+    <View style={styles.ring} accessibilityLabel="Member avatar">
       {showImage ? (
         <Image
           key={displayUri}
@@ -54,7 +50,7 @@ export function ExplorerBoardMemberAvatar({
           onError={() => setFailed(true)}
         />
       ) : (
-        <HeroIcon name={fallbackIcon ?? 'user'} size={24} color={mutedColor} />
+        <HeroIcon name={fallbackIcon ?? 'user'} size={24} color={authColors.textMuted} />
       )}
     </View>
   );
@@ -66,6 +62,7 @@ const styles = StyleSheet.create({
     height: SIZE,
     borderRadius: 0,
     borderWidth: 1,
+    borderColor: authColors.border,
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',

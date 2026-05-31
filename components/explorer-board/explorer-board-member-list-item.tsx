@@ -2,7 +2,6 @@ import { Pressable, StyleSheet } from 'react-native';
 
 import { ExplorerBoardMemberAvatar } from '@/components/explorer-board/explorer-board-member-avatar';
 import { ListDetailCard } from '@/components/shared/list-detail-card';
-import { authColors } from '@/constants/auth-theme';
 import {
   formatExplorerBoardAccessibilityCounts,
   formatExplorerBoardSpeciesMeta,
@@ -41,8 +40,6 @@ export function ExplorerBoardMemberListItem({ row, resolveDisplayUrl, onPressMem
           <ExplorerBoardMemberAvatar
             storedUrl={row.avatarUrl}
             displayUri={resolveDisplayUrl(row.avatarUrl)}
-            borderColor={authColors.border}
-            mutedColor={authColors.textMuted}
           />
         }
         cornerBadge={rankBadge(row)}

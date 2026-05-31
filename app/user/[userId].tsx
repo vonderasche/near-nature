@@ -1,6 +1,7 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CenteredActivityIndicator } from '@/components/shared/centered-activity-indicator';
 import {
@@ -16,22 +17,14 @@ import { PublicUserProfileSummary } from '@/components/profile/public-user-profi
 import { ProfileStatStrip } from '@/components/profile/profile-stat-strip';
 import { profileStatStripPropsFromPublicProfile } from '@/lib/profile/profileStatStripFromPublicProfile';
 import { UserAvatar } from '@/components/profile/user-avatar';
-import { Colors } from '@/constants/auth-theme';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { usePublicUserProfile } from '@/hooks/usePublicUserProfile';
 import { paramToString } from '@/lib/routing/searchParams';
 import { contentInsetsPadding } from '@/lib/screen/contentInsets';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function PublicUserProfileScreen() {
   const raw = useLocalSearchParams<{ userId?: string | string[] }>().userId;
   const userId = paramToString(raw);
-
-  const colorScheme = useColorScheme() ?? 'light';
-  const muted = Colors[colorScheme].icon;
-  const border = Colors[colorScheme].tabIconDefault;
-  const tint = Colors[colorScheme].tint;
 
   const insets = useSafeAreaInsets();
   const edge = contentInsetsPadding(insets);
@@ -59,7 +52,7 @@ export default function PublicUserProfileScreen() {
       <>
         <Stack.Screen options={{ title: 'Profile' }} />
         <View style={[styles.fill, edge, styles.padH]}>
-          <Text style={[styles.missing, { color: muted }]}>Missing member id.</Text>
+          <Text style={styles.missing}>Missing member id.</Text>
         </View>
       </>
     );
@@ -85,52 +78,31 @@ export default function PublicUserProfileScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor={tint}
-              colors={[tint]}
+              tintColor={authColors.text}
+              colors={[authColors.text]}
             />
           }>
           {isLoading && !profile ? (
-            <CenteredActivityIndicator color={tint} accessibilityLabel="Loading profile" />
+            <CenteredActivityIndicator accessibilityLabel="Loading profile" />
           ) : null}
 
           {error ? (
-            <ErrorRetryBlock
-              message={error}
-              onRetry={() => void refetch()}
-              borderColor={border}
-              retryLabel="Try again"
-            />
+            <ErrorRetryBlock message={error} onRetry={() => void refetch()} retryLabel="Try again" />
           ) : null}
 
           {profile ? (
             <>
               <View style={styles.profileHero}>
-                <UserAvatar
-                  storedUrl={profile.avatar_url}
-                  mutedIconColor={authColors.textMuted}
-                  borderColor={authColors.border}
-                />
-                <ProfileStatStrip
-                  {...profileStatStripPropsFromPublicProfile(
-                    profile,
-                    authColors.textMuted,
-                    authColors.text,
-                  )}
-                />
+                <UserAvatar storedUrl={profile.avatar_url} />
+                <ProfileStatStrip {...profileStatStripPropsFromPublicProfile(profile)} />
                 <PublicUserProfileSummary
                   username={profile.username}
                   motto={profile.motto}
                   state={profile.state}
-                  mutedColor={authColors.textMuted}
                 />
               </View>
 
-              <ProfileEarnedBadgesSection
-                ref={badgesRef}
-                userId={userId}
-                borderColor={border}
-                mutedColor={muted}
-              />
+              <ProfileEarnedBadgesSection ref={badgesRef} userId={userId} />
 
               <UserDetectionGallerySection
                 ref={galleryRef}
@@ -167,5 +139,6 @@ const styles = StyleSheet.create({
     ...authTypography.subtitle,
     textAlign: 'center',
     paddingVertical: authSpacing.md,
+    color: authColors.textMuted,
   },
 });

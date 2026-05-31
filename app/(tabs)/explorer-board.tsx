@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { TabScreenWithLogout } from '@/components/layout/tab-screen-with-logout';
@@ -8,27 +9,22 @@ import { ExplorerBoardViewModeToggle } from '@/components/explorer-board/explore
 import { GridLayoutMenu } from '@/components/ui/grid-layout-menu';
 import { ScreenSearchField } from '@/components/ui/screen-search-field';
 import { authColors, authSpacing } from '@/constants/auth-theme';
-import { Colors } from '@/constants/auth-theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useAuthContext } from '@/context/AuthContext';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useExplorerBoard } from '@/hooks/useExplorerBoard';
 import { useExplorerBoardColumns } from '@/hooks/useExplorerBoardColumns';
-import { useAuthContext } from '@/context/AuthContext';
 import { useExplorerBoardLayout } from '@/hooks/useExplorerBoardLayout';
-import { routes } from '@/lib/routing/routes';
-import { useRouter } from 'expo-router';
 import {
   EXPLORER_BOARD_COLUMN_OPTIONS,
   isExplorerBoardColumns,
 } from '@/lib/explorerBoard/explorerBoardColumns';
 import type { GalleryGridColumns } from '@/lib/detections/galleryGridColumns';
+import { routes } from '@/lib/routing/routes';
 import { isSearchQueryActive } from '@/lib/search/normalizeSearchQuery';
 
 export default function ExplorerBoardScreen() {
   const { isAuthenticated } = useAuthContext();
   const router = useRouter();
-  const colorScheme = useColorScheme() ?? 'light';
-  const tint = Colors[colorScheme].tint;
   const { rows, isLoading, isRefreshing, isLoadingMore, hasMore, error, loadMore, refetch } =
     useExplorerBoard();
   const { layoutMode, setLayout } = useExplorerBoardLayout();
@@ -59,11 +55,7 @@ export default function ExplorerBoardScreen() {
       hideLogout
       titleAccessory={
         <View style={styles.toolbar}>
-          <ExplorerBoardViewModeToggle
-            value={layoutMode}
-            onChange={setLayout}
-            mutedColor={authColors.textMuted}
-          />
+          <ExplorerBoardViewModeToggle value={layoutMode} onChange={setLayout} />
           {layoutMode === 'grid' ? (
             <GridLayoutMenu
               value={columns}
@@ -71,8 +63,6 @@ export default function ExplorerBoardScreen() {
                 if (isExplorerBoardColumns(n)) setColumnCount(n);
               }}
               columnOptions={EXPLORER_BOARD_COLUMN_OPTIONS}
-              mutedColor={authColors.textMuted}
-              borderColor={authColors.border}
               context="explorer board"
             />
           ) : null}
@@ -82,8 +72,8 @@ export default function ExplorerBoardScreen() {
         <RefreshControl
           refreshing={refreshing}
           onRefresh={onRefresh}
-          tintColor={tint}
-          colors={[tint]}
+          tintColor={authColors.text}
+          colors={[authColors.text]}
         />
       }
       backgroundRefreshing={isRefreshing && !refreshing}>
@@ -113,10 +103,7 @@ export default function ExplorerBoardScreen() {
       />
 
       {!isAuthenticated ? (
-        <AuthButton
-          title="Log in to identify species"
-          onPress={() => router.push(routes.login)}
-        />
+        <AuthButton title="Log in to identify species" onPress={() => router.push(routes.login)} />
       ) : null}
     </TabScreenWithLogout>
   );

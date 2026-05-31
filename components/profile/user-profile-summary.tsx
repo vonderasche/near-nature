@@ -1,8 +1,6 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { authSpacing } from '@/constants/auth-theme';
-
 type UserProfileSummaryProps = {
   /** Rendered below the identity block (e.g. stat strip). */
   statsSlot?: ReactNode;

@@ -7,11 +7,10 @@ import type { ProfileBadgeItem } from '@/lib/profile/profileBadges';
 type Props = {
   badge: ProfileBadgeItem;
   size: number;
-  borderColor: string;
   compact?: boolean;
 };
 
-export function ProfileBadgeTile({ badge, size, borderColor, compact = false }: Props) {
+export function ProfileBadgeTile({ badge, size, compact = false }: Props) {
   const iconName: HeroIconName = badge.icon;
   const useSolid =
     iconName === 'trophy' || iconName === 'user' || iconName === 'camera';

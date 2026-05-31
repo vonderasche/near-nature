@@ -7,7 +7,6 @@ type PublicUserProfileSummaryProps = {
   username: string;
   motto: string | null | undefined;
   state: string | null | undefined;
-  mutedColor: string;
   mottoPlaceholder?: string;
 };
 
@@ -18,7 +17,6 @@ export function PublicUserProfileSummary({
   username,
   motto,
   state,
-  mutedColor,
   mottoPlaceholder = 'No motto set.',
 }: PublicUserProfileSummaryProps) {
   const mottoTrimmed = motto?.trim();
@@ -27,8 +25,8 @@ export function PublicUserProfileSummary({
   return (
     <View style={styles.block}>
       <Text style={styles.username}>{username}</Text>
-      {stateTrimmed ? <Text style={[styles.meta, { color: mutedColor }]}>{usStateLabel(stateTrimmed)}</Text> : null}
-      <Text style={[mottoTrimmed ? styles.motto : styles.mottoPlaceholder, { color: mutedColor }]}>
+      {stateTrimmed ? <Text style={styles.meta}>{usStateLabel(stateTrimmed)}</Text> : null}
+      <Text style={mottoTrimmed ? styles.motto : styles.mottoPlaceholder}>
         {mottoTrimmed ?? mottoPlaceholder}
       </Text>
     </View>
@@ -52,16 +50,19 @@ const styles = StyleSheet.create({
   meta: {
     ...authTypography.subtitle,
     textAlign: 'center',
+    color: authColors.textMuted,
   },
   motto: {
     ...authTypography.body,
     textAlign: 'center',
     lineHeight: 22,
+    color: authColors.textMuted,
   },
   mottoPlaceholder: {
     ...authTypography.subtitle,
     fontStyle: 'italic',
     textAlign: 'center',
     lineHeight: 22,
+    color: authColors.textMuted,
   },
 });

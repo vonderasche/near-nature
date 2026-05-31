@@ -11,21 +11,13 @@ const RING_SIZE = 112;
 type UserAvatarProps = {
   /** Raw `users.avatar_url` (signed automatically for the private detections bucket). */
   storedUrl: string | null | undefined;
-  mutedIconColor: string;
-  borderColor: string;
   /** When set, the avatar is tappable (e.g. open photo library on profile). */
   onPress?: () => void;
   /** Shows a blocking spinner over the avatar (e.g. while uploading). */
   busy?: boolean;
 };
 
-export function UserAvatar({
-  storedUrl,
-  mutedIconColor,
-  borderColor,
-  onPress,
-  busy = false,
-}: UserAvatarProps) {
+export function UserAvatar({ storedUrl, onPress, busy = false }: UserAvatarProps) {
   const displayUri = useStoredImageDisplayUrl(storedUrl);
   const [failed, setFailed] = useState(false);
 
@@ -36,7 +28,7 @@ export function UserAvatar({
   const showImage = Boolean(displayUri?.trim()) && !failed;
 
   const body = (
-    <View style={[styles.ring, { borderColor }]}>
+    <View style={styles.ring}>
       <View style={styles.inner}>
         {showImage ? (
           <Image
@@ -48,7 +40,7 @@ export function UserAvatar({
             onLoad={() => setFailed(false)}
           />
         ) : (
-          <HeroIcon name="user" size={48} color={mutedIconColor} />
+          <HeroIcon name="user" size={48} color={authColors.textMuted} />
         )}
         {busy ? (
           <View style={styles.busyOverlay} pointerEvents="none" accessibilityLabel="Updating profile photo">
@@ -84,6 +76,7 @@ const styles = StyleSheet.create({
     height: RING_SIZE,
     borderRadius: RING_SIZE / 2,
     borderWidth: 2,
+    borderColor: authColors.border,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: authSpacing.sm,

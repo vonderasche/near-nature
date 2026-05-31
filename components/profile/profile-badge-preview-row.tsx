@@ -6,17 +6,9 @@ import type { ProfileBadgeItem } from '@/lib/profile/profileBadges';
 
 type Props = {
   badges: readonly ProfileBadgeItem[];
-  borderColor: string;
-  mutedColor: string;
 };
 
-function PreviewChip({
-  badge,
-  mutedColor,
-}: {
-  badge: ProfileBadgeItem;
-  mutedColor: string;
-}) {
+function PreviewChip({ badge }: { badge: ProfileBadgeItem }) {
   const iconName: HeroIconName = badge.icon;
   const useSolid =
     badge.earned && (iconName === 'trophy' || iconName === 'user' || iconName === 'camera');
@@ -29,7 +21,7 @@ function PreviewChip({
       <HeroIcon
         name={iconName}
         size={22}
-        color={badge.earned ? authColors.text : mutedColor}
+        color={badge.earned ? authColors.text : authColors.textMuted}
         variant={useSolid ? 'solid' : 'outline'}
       />
       {badge.earned ? (
@@ -42,7 +34,7 @@ function PreviewChip({
 }
 
 /** Horizontal strip of badge icons for the scoring collapsible trigger. */
-export function ProfileBadgePreviewRow({ badges, borderColor, mutedColor }: Props) {
+export function ProfileBadgePreviewRow({ badges }: Props) {
   return (
     <ScrollView
       horizontal
@@ -50,7 +42,7 @@ export function ProfileBadgePreviewRow({ badges, borderColor, mutedColor }: Prop
       contentContainerStyle={styles.scrollContent}
       style={styles.scroll}>
       {badges.map((badge) => (
-        <PreviewChip key={badge.id} badge={badge} mutedColor={mutedColor} />
+        <PreviewChip key={badge.id} badge={badge} />
       ))}
     </ScrollView>
   );

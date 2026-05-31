@@ -4,8 +4,6 @@ import type { PublicUserProfile } from '@/services/userService';
 /** Maps RPC profile row to {@link ProfileStatStrip} props (owner vs public points). */
 export function profileStatStripPropsFromPublicProfile(
   profile: PublicUserProfile,
-  mutedColor: string,
-  accentColor: string
 ): ProfileStatStripProps {
   const ownerPoints = profile.ownerPoints;
   const ownerSpec = profile.ownerSpeciesCount;
@@ -17,7 +15,5 @@ export function profileStatStripPropsFromPublicProfile(
     pointsTotal: isOwnerView ? ownerPoints : profile.publicPoints,
     speciesCount: isOwnerView ? ownerSpec : profile.publicSpeciesCount,
     pointsCaption: isOwnerView ? 'All saves' : 'Public saves',
-    mutedColor,
-    accentColor,
   };
 }

@@ -12,8 +12,6 @@ export type ProfileStatStripProps = {
   speciesCount: number;
   /** e.g. "All saves" vs "Public saves" */
   pointsCaption?: string;
-  mutedColor: string;
-  accentColor: string;
 };
 
 function formatCount(n: number): string {
@@ -25,23 +23,19 @@ function StatCell({
   value,
   label,
   sublabel,
-  mutedColor,
-  accentColor,
 }: {
   value: string;
   label: string;
   sublabel?: string;
-  mutedColor: string;
-  accentColor: string;
 }) {
   return (
     <View style={styles.cell}>
-      <ThemedText type="defaultSemiBold" style={[styles.value, { color: accentColor }]}>
+      <ThemedText type="defaultSemiBold" style={styles.value}>
         {value}
       </ThemedText>
-      <ThemedText style={[styles.label, { color: mutedColor }]}>{label}</ThemedText>
+      <ThemedText style={styles.label}>{label}</ThemedText>
       {sublabel ? (
-        <ThemedText style={[styles.sublabel, { color: mutedColor }]} numberOfLines={1}>
+        <ThemedText style={styles.sublabel} numberOfLines={1}>
           {sublabel}
         </ThemedText>
       ) : null}
@@ -58,8 +52,6 @@ export function ProfileStatStrip({
   pointsTotal,
   speciesCount,
   pointsCaption,
-  mutedColor,
-  accentColor,
 }: ProfileStatStripProps) {
   return (
     <View style={styles.row}>
@@ -67,24 +59,11 @@ export function ProfileStatStrip({
         value={formatCount(currentStreak)}
         label="Streak"
         sublabel={longestStreak > 0 ? `Best ${formatCount(longestStreak)}` : undefined}
-        mutedColor={mutedColor}
-        accentColor={accentColor}
       />
       <View style={styles.divider} />
-      <StatCell
-        value={formatCount(pointsTotal)}
-        label="Points"
-        sublabel={pointsCaption}
-        mutedColor={mutedColor}
-        accentColor={accentColor}
-      />
+      <StatCell value={formatCount(pointsTotal)} label="Points" sublabel={pointsCaption} />
       <View style={styles.divider} />
-      <StatCell
-        value={formatCount(speciesCount)}
-        label="Species"
-        mutedColor={mutedColor}
-        accentColor={accentColor}
-      />
+      <StatCell value={formatCount(speciesCount)} label="Species" />
     </View>
   );
 }
@@ -111,17 +90,20 @@ const styles = StyleSheet.create({
     ...authTypography.body,
     fontSize: 20,
     fontWeight: '700',
+    color: authColors.text,
   },
   label: {
     fontSize: 12,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
+    color: authColors.textMuted,
   },
   sublabel: {
     fontSize: 11,
     marginTop: 2,
     textAlign: 'center',
+    color: authColors.textMuted,
   },
   divider: {
     width: StyleSheet.hairlineWidth,

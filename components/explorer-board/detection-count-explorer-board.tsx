@@ -91,8 +91,6 @@ export function DetectionCountExplorerBoard({
         tileSize={tileSize}
         compact={compact}
         columnCount={columnCount}
-        borderColor={authColors.border}
-        mutedColor={authColors.textMuted}
         resolveDisplayUrl={resolveDisplayUrl}
         onPressMember={openMember}
       />

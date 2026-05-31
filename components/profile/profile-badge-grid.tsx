@@ -15,22 +15,16 @@ type Props = {
   mains: readonly MainCategoryProgress[];
   awardKeys: ReadonlySet<string>;
   badgeProgress?: readonly BadgeProgress[];
-  borderColor: string;
-  mutedColor: string;
   compact?: boolean;
 };
 
 function BadgeSectionGroups({
   section,
   tileSize,
-  borderColor,
-  mutedColor,
   compact,
 }: {
   section: ProfileBadgeSection;
   tileSize: number;
-  borderColor: string;
-  mutedColor: string;
   compact: boolean;
 }) {
   const groups = useMemo(() => buildProfileBadgeGroups(section), [section]);
@@ -43,8 +37,6 @@ function BadgeSectionGroups({
             key={group.id}
             group={group}
             size={tileSize}
-            borderColor={borderColor}
-            mutedColor={mutedColor}
             compact={compact}
           />
         ))}
@@ -57,8 +49,6 @@ export function ProfileBadgeGrid({
   mains,
   awardKeys,
   badgeProgress,
-  borderColor,
-  mutedColor,
   compact: compactProp,
 }: Props) {
   const { width: windowWidth } = useWindowDimensions();
@@ -80,8 +70,6 @@ export function ProfileBadgeGrid({
           key={section.id}
           section={section}
           tileSize={tileSize}
-          borderColor={borderColor}
-          mutedColor={mutedColor}
           compact={compactProp ?? section.id === 'sub-tiers'}
         />
       ))}

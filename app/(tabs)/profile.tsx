@@ -109,9 +109,7 @@ export default function ProfileScreen() {
   }, [deleteAccount]);
 
   const statsSlot = stats ? (
-    <ProfileStatStrip
-      {...profileStatStripPropsFromPublicProfile(stats, authColors.textMuted, authColors.text)}
-    />
+    <ProfileStatStrip {...profileStatStripPropsFromPublicProfile(stats)} />
   ) : null;
 
   if (!authLoading && !isAuthenticated) {
@@ -141,24 +139,13 @@ export default function ProfileScreen() {
       ) : null}
 
       {error ? (
-        <ErrorRetryBlock
-          message={error}
-          onRetry={() => void refresh()}
-          borderColor={authColors.border}
-          retryLabel="Try again"
-        />
+        <ErrorRetryBlock message={error} onRetry={() => void refresh()} retryLabel="Try again" />
       ) : null}
 
       {user ? (
         <>
           <View style={styles.profileHero}>
-            <UserAvatar
-              storedUrl={user.avatar_url}
-              mutedIconColor={authColors.textMuted}
-              borderColor={authColors.border}
-              onPress={onAvatarPress}
-              busy={avatarBusy}
-            />
+            <UserAvatar storedUrl={user.avatar_url} onPress={onAvatarPress} busy={avatarBusy} />
 
             <ProfileUserIdentity
               username={user.username}
@@ -167,7 +154,6 @@ export default function ProfileScreen() {
               email={user.email}
               motto={user.motto}
               state={user.state}
-              mutedColor={authColors.textMuted}
               onMottoPress={() => setMottoModalVisible(true)}
               onStatePress={() => setStateModalVisible(true)}
             />
@@ -175,12 +161,7 @@ export default function ProfileScreen() {
             <UserProfileSummary statsSlot={statsSlot} />
           </View>
 
-          <ProfileScoringCollapsible
-            ref={scoringRef}
-            userId={user.id}
-            borderColor={authColors.border}
-            mutedColor={authColors.textMuted}
-          />
+          <ProfileScoringCollapsible ref={scoringRef} userId={user.id} />
 
           <UserDetectionGallerySection
             ref={galleryRef}

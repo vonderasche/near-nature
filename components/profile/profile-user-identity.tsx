@@ -16,7 +16,6 @@ type Props = {
   statePlaceholder?: string;
   onMottoPress?: () => void;
   onStatePress?: () => void;
-  mutedColor?: string;
 };
 
 function formatUsername(username: string): string {
@@ -40,7 +39,6 @@ export function ProfileUserIdentity({
   statePlaceholder = 'Add home state',
   onMottoPress,
   onStatePress,
-  mutedColor = authColors.textMuted,
 }: Props) {
   const [expanded, setExpanded] = useState(false);
   const handle = formatUsername(username);
@@ -65,7 +63,7 @@ export function ProfileUserIdentity({
         style={({ pressed }) => [styles.trigger, pressed && styles.triggerPressed]}>
         <Text style={styles.username}>{handle}</Text>
         <View style={expanded ? styles.chevronExpanded : undefined}>
-          <HeroIcon name="chevron-down" size={20} color={mutedColor} />
+          <HeroIcon name="chevron-down" size={20} color={authColors.textMuted} />
         </View>
       </Pressable>
 
@@ -79,10 +77,7 @@ export function ProfileUserIdentity({
           onMottoPress && pressed && styles.triggerPressed,
         ]}>
         <Text
-          style={[
-            mottoIsPlaceholder ? styles.mottoPlaceholder : styles.motto,
-            { color: mottoIsPlaceholder ? mutedColor : authColors.text },
-          ]}
+          style={mottoIsPlaceholder ? styles.mottoPlaceholder : styles.motto}
           numberOfLines={3}>
           {mottoTrimmed ?? mottoPlaceholder}
         </Text>
@@ -95,7 +90,7 @@ export function ProfileUserIdentity({
               {fullName}
             </Text>
           ) : null}
-          <Text style={[styles.email, { color: mutedColor }]} numberOfLines={1}>
+          <Text style={styles.email} numberOfLines={1}>
             {email}
           </Text>
           <Pressable
@@ -107,13 +102,9 @@ export function ProfileUserIdentity({
               styles.statePress,
               onStatePress && pressed && styles.triggerPressed,
             ]}>
-            <Text style={[styles.stateLabel, { color: mutedColor }]}>Home state</Text>
+            <Text style={styles.stateLabel}>Home state</Text>
             <Text
-              style={[
-                styles.stateValue,
-                stateIsPlaceholder && styles.stateValuePlaceholder,
-                { color: stateIsPlaceholder ? mutedColor : authColors.text },
-              ]}
+              style={[styles.stateValue, stateIsPlaceholder && styles.stateValuePlaceholder]}
               numberOfLines={1}>
               {stateDisplay}
             </Text>
@@ -158,12 +149,14 @@ const styles = StyleSheet.create({
     ...authTypography.body,
     textAlign: 'center',
     lineHeight: 22,
+    color: authColors.text,
   },
   mottoPlaceholder: {
     ...authTypography.subtitle,
     fontStyle: 'italic',
     textAlign: 'center',
     lineHeight: 22,
+    color: authColors.textMuted,
   },
   details: {
     alignItems: 'center',
@@ -180,13 +173,16 @@ const styles = StyleSheet.create({
     ...authTypography.label,
     fontSize: 12,
     textAlign: 'center',
+    color: authColors.textMuted,
   },
   stateValue: {
     ...authTypography.body,
     textAlign: 'center',
+    color: authColors.text,
   },
   stateValuePlaceholder: {
     fontStyle: 'italic',
+    color: authColors.textMuted,
   },
   fullName: {
     ...authTypography.body,
@@ -197,6 +193,7 @@ const styles = StyleSheet.create({
     ...authTypography.subtitle,
     fontSize: 13,
     textAlign: 'center',
+    color: authColors.textMuted,
   },
   chevronExpanded: {
     transform: [{ rotate: '180deg' }],

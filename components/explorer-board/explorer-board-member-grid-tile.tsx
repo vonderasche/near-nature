@@ -16,8 +16,6 @@ type Props = {
   tileSize: number;
   compact: boolean;
   columnCount: number;
-  borderColor: string;
-  mutedColor: string;
   resolveDisplayUrl: (storedUrl: string | null | undefined) => string | null;
   onPressMember: (row: ExplorerBoardMemberRow) => void;
 };
@@ -31,8 +29,6 @@ export function ExplorerBoardMemberGridTile({
   tileSize,
   compact,
   columnCount,
-  borderColor,
-  mutedColor,
   resolveDisplayUrl,
   onPressMember,
 }: Props) {
@@ -52,16 +48,16 @@ export function ExplorerBoardMemberGridTile({
         styles.tileWrap,
         { width: tileSize, opacity: pressed ? 0.92 : 1 },
       ]}>
-      <View style={[styles.tile, { width: tileSize, height: tileSize, borderColor }]}>
+      <View style={[styles.tile, { width: tileSize, height: tileSize }]}>
         {uri ? (
           <Image source={{ uri }} style={StyleSheet.absoluteFillObject} contentFit="cover" transition={200} />
         ) : (
           <View style={styles.fallback}>
-            <HeroIcon name="user" size={compact ? 28 : 40} color={mutedColor} />
+            <HeroIcon name="user" size={compact ? 28 : 40} color={authColors.textMuted} />
           </View>
         )}
         {rank ? (
-          <View style={[styles.rankBadge, { borderColor }]}>
+          <View style={styles.rankBadge}>
             <Text style={styles.rankText}>{rank}</Text>
           </View>
         ) : null}
@@ -72,7 +68,7 @@ export function ExplorerBoardMemberGridTile({
         </View>
       </View>
       {!compact ? (
-        <Text style={[styles.meta, { color: mutedColor }]} numberOfLines={columnCount === 1 ? 2 : 1}>
+        <Text style={styles.meta} numberOfLines={columnCount === 1 ? 2 : 1}>
           {formatExplorerBoardSpeciesMeta(row)}
         </Text>
       ) : null}
@@ -87,6 +83,7 @@ const styles = StyleSheet.create({
   tile: {
     borderRadius: 0,
     borderWidth: 1,
+    borderColor: authColors.border,
     overflow: 'hidden',
     backgroundColor: authColors.background,
   },
@@ -103,6 +100,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: authSpacing.xs,
     paddingVertical: 2,
     borderWidth: 1,
+    borderColor: authColors.border,
     backgroundColor: authColors.background,
   },
   rankText: {
@@ -131,5 +129,6 @@ const styles = StyleSheet.create({
     ...authTypography.body,
     fontSize: 12,
     marginTop: authSpacing.xs,
+    color: authColors.textMuted,
   },
 });

@@ -11,8 +11,6 @@ import { useUserScoringSnapshot } from '@/hooks/useUserScoringSnapshot';
 
 type Props = {
   userId: string;
-  borderColor: string;
-  mutedColor: string;
 };
 
 export type ProfileScoringCollapsibleHandle = {
@@ -22,17 +20,17 @@ export type ProfileScoringCollapsibleHandle = {
 export const ProfileScoringCollapsible = forwardRef<
   ProfileScoringCollapsibleHandle,
   Props
->(function ProfileScoringCollapsible({ userId, borderColor, mutedColor }, ref) {
+>(function ProfileScoringCollapsible({ userId }, ref) {
   const [open, setOpen] = useState(false);
   const { snapshot, loading, error, refetch } = useUserScoringSnapshot(userId);
 
-  const mains = snapshot?.mains ?? [];
+  const mains = useMemo(() => snapshot?.mains ?? [], [snapshot]);
   const hasSavedSpecies = (snapshot?.breakdown.totalSpecies ?? 0) > 0;
   const awardKeys = useMemo(
     () => snapshot?.awardKeys ?? new Set<string>(),
     [snapshot?.awardKeys],
   );
-  const badgeProgress = snapshot?.badgeProgress ?? [];
+  const badgeProgress = useMemo(() => snapshot?.badgeProgress ?? [], [snapshot]);
 
   const previewBadges = useMemo(
     () => buildProfileBadgePreviewRow(mains, awardKeys, badgeProgress),
@@ -53,40 +51,30 @@ export const ProfileScoringCollapsible = forwardRef<
         style={({ pressed }) => [styles.trigger, pressed && styles.triggerPressed]}>
         {loading && !snapshot ? (
           <View style={styles.previewLoading}>
-            <ActivityIndicator size="small" color={mutedColor} />
+            <ActivityIndicator size="small" color={authColors.textMuted} />
           </View>
         ) : (
-          <ProfileBadgePreviewRow
-            badges={previewBadges}
-            borderColor={borderColor}
-            mutedColor={mutedColor}
-          />
+          <ProfileBadgePreviewRow badges={previewBadges} />
         )}
         <View style={open ? styles.chevronExpanded : undefined}>
-          <HeroIcon name="chevron-down" size={20} color={mutedColor} />
+          <HeroIcon name="chevron-down" size={20} color={authColors.textMuted} />
         </View>
       </Pressable>
 
       {open ? (
         <View style={styles.body}>
-          <Text style={[styles.hint, { color: mutedColor }]}>
+          <Text style={styles.hint}>
             {hasSavedSpecies
               ? 'Tap a discipline icon to see its tiers · dimmed = not earned yet'
               : 'Save your first identification to start earning badge progress.'}
           </Text>
 
-          <ProfileBadgeGrid
-            mains={mains}
-            awardKeys={awardKeys}
-            badgeProgress={badgeProgress}
-            borderColor={borderColor}
-            mutedColor={mutedColor}
-          />
+          <ProfileBadgeGrid mains={mains} awardKeys={awardKeys} badgeProgress={badgeProgress} />
 
           {loading ? (
             <View style={styles.syncRow}>
-              <ActivityIndicator size="small" color={mutedColor} />
-              <Text style={[styles.syncText, { color: mutedColor }]}>Updating progress…</Text>
+              <ActivityIndicator size="small" color={authColors.textMuted} />
+              <Text style={styles.syncText}>Updating progress…</Text>
             </View>
           ) : null}
 
@@ -94,7 +82,6 @@ export const ProfileScoringCollapsible = forwardRef<
             <ErrorRetryBlock
               message="Couldn't sync progress. Badge icons still show what you can earn."
               onRetry={() => void refetch()}
-              borderColor={borderColor}
               retryLabel="Try again"
             />
           ) : null}
@@ -136,6 +123,7 @@ const styles = StyleSheet.create({
     ...authTypography.subtitle,
     fontSize: 12,
     textAlign: 'center',
+    color: authColors.textMuted,
   },
   syncRow: {
     flexDirection: 'row',
@@ -146,5 +134,6 @@ const styles = StyleSheet.create({
   syncText: {
     ...authTypography.subtitle,
     fontSize: 12,
+    color: authColors.textMuted,
   },
 });

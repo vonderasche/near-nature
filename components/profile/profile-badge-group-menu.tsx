@@ -17,8 +17,6 @@ import { clampPopoverLeft } from '@/lib/ui/clampPopoverLeft';
 type Props = {
   group: ProfileBadgeGroup;
   size: number;
-  borderColor: string;
-  mutedColor: string;
   compact?: boolean;
 };
 
@@ -29,14 +27,10 @@ const CELL_GAP = 6;
 function BadgeMenuCell({
   badge,
   size,
-  borderColor,
-  mutedColor,
   compact,
 }: {
   badge: ProfileBadgeItem;
   size: number;
-  borderColor: string;
-  mutedColor: string;
   compact?: boolean;
 }) {
   const iconName: HeroIconName = badge.icon;
@@ -57,20 +51,20 @@ function BadgeMenuCell({
       <HeroIcon
         name={iconName}
         size={compact ? 18 : 22}
-        color={active ? authColors.background : mutedColor}
+        color={active ? authColors.background : authColors.textMuted}
         variant={useSolid ? 'solid' : 'outline'}
       />
       <Text
-        style={[styles.menuCellLabel, active ? styles.menuCellLabelActive : { color: mutedColor }]}
+        style={[styles.menuCellLabel, active ? styles.menuCellLabelActive : styles.menuCellLabelIdle]}
         numberOfLines={2}>
         {badge.shortLabel}
       </Text>
       {!badge.earned && badge.requirement ? (
-        <Text style={[styles.menuCellMeta, { color: mutedColor }]} numberOfLines={1}>
+        <Text style={styles.menuCellMeta} numberOfLines={1}>
           {badge.requirement}
         </Text>
       ) : null}
-      <Text style={[styles.menuCellMeta, active ? styles.menuCellLabelActive : { color: mutedColor }]}>
+      <Text style={[styles.menuCellMeta, active ? styles.menuCellLabelActive : styles.menuCellMetaIdle]}>
         {badge.points} pts
       </Text>
       {active ? (
@@ -83,13 +77,7 @@ function BadgeMenuCell({
 /**
  * Single discipline/subcategory icon; opens a compact grid menu of its tier badges.
  */
-export function ProfileBadgeGroupMenu({
-  group,
-  size,
-  borderColor,
-  mutedColor,
-  compact = false,
-}: Props) {
+export function ProfileBadgeGroupMenu({ group, size, compact = false }: Props) {
   const [open, setOpen] = useState(false);
   const [menuTop, setMenuTop] = useState(0);
   const [menuLeft, setMenuLeft] = useState<number>(authSpacing.lg);
@@ -133,10 +121,10 @@ export function ProfileBadgeGroupMenu({
           <HeroIcon
             name={group.triggerIcon}
             size={compact ? 20 : 24}
-            color={anyEarned ? authColors.text : mutedColor}
+            color={anyEarned ? authColors.text : authColors.textMuted}
           />
           <Text
-            style={[styles.triggerLabel, { color: anyEarned ? authColors.text : mutedColor }]}
+            style={[styles.triggerLabel, anyEarned ? styles.triggerLabelEarned : styles.triggerLabelIdle]}
             numberOfLines={2}>
             {group.shortLabel}
           </Text>
@@ -151,23 +139,15 @@ export function ProfileBadgeGroupMenu({
             accessibilityLabel={`Dismiss ${group.label} badges`}
           />
           <View
-            style={[
-              styles.menu,
-              { top: menuTop, left: menuLeft, borderColor, width: menuWidth },
-            ]}
+            style={[styles.menu, { top: menuTop, left: menuLeft, width: menuWidth }]}
             accessibilityViewIsModal>
-            <Text style={[styles.menuTitle, { color: mutedColor }]}>{group.label}</Text>
+            <Text style={styles.menuTitle}>{group.label}</Text>
             <ScrollView
               style={wideMenu ? styles.menuScroll : undefined}
               nestedScrollEnabled
               showsVerticalScrollIndicator={false}>
               {featured ? (
-                <BadgeMenuCell
-                  badge={featured}
-                  size={menuWidth - authSpacing.sm * 2}
-                  borderColor={borderColor}
-                  mutedColor={mutedColor}
-                />
+                <BadgeMenuCell badge={featured} size={menuWidth - authSpacing.sm * 2} />
               ) : null}
               <View
                 style={[
@@ -182,8 +162,6 @@ export function ProfileBadgeGroupMenu({
                     key={badge.id}
                     badge={badge}
                     size={cellSize}
-                    borderColor={borderColor}
-                    mutedColor={mutedColor}
                     compact={compact || cellSize < 72}
                   />
                 ))}
@@ -221,6 +199,12 @@ const styles = StyleSheet.create({
     lineHeight: 14,
     textAlign: 'center',
   },
+  triggerLabelEarned: {
+    color: authColors.text,
+  },
+  triggerLabelIdle: {
+    color: authColors.textMuted,
+  },
   modalRoot: {
     flex: 1,
   },
@@ -232,6 +216,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     backgroundColor: authColors.background,
     borderWidth: 1,
+    borderColor: authColors.border,
     padding: authSpacing.sm,
     elevation: 6,
     shadowColor: '#000',
@@ -246,6 +231,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     textAlign: 'center',
+    color: authColors.textMuted,
   },
   menuScroll: {
     maxHeight: 320,
@@ -280,10 +266,17 @@ const styles = StyleSheet.create({
   menuCellLabelActive: {
     color: authColors.background,
   },
+  menuCellLabelIdle: {
+    color: authColors.textMuted,
+  },
   menuCellMeta: {
     fontSize: 10,
     lineHeight: 12,
     textAlign: 'center',
+    color: authColors.textMuted,
+  },
+  menuCellMetaIdle: {
+    color: authColors.textMuted,
   },
   menuCheck: {
     position: 'absolute',

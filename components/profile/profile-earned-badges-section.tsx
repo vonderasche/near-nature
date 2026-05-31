@@ -13,8 +13,6 @@ import {
 
 type Props = {
   userId: string;
-  borderColor: string;
-  mutedColor: string;
 };
 
 export type ProfileEarnedBadgesSectionHandle = {
@@ -22,7 +20,7 @@ export type ProfileEarnedBadgesSectionHandle = {
 };
 
 export const ProfileEarnedBadgesSection = forwardRef<ProfileEarnedBadgesSectionHandle, Props>(
-  function ProfileEarnedBadgesSection({ userId, borderColor, mutedColor }, ref) {
+  function ProfileEarnedBadgesSection({ userId }, ref) {
     const [open, setOpen] = useState(false);
     const { awardKeys, badgeProgress, earnedCount, loading, error, refetch } =
       usePublicUserAwards(userId);
@@ -52,13 +50,13 @@ export const ProfileEarnedBadgesSection = forwardRef<ProfileEarnedBadgesSectionH
           accessibilityRole="button"
           accessibilityState={{ expanded: open }}
           accessibilityLabel={open ? 'Collapse badges' : 'Expand badges'}
-          style={({ pressed }) => [styles.trigger, { borderColor }, pressed && styles.triggerPressed]}>
+          style={({ pressed }) => [styles.trigger, pressed && styles.triggerPressed]}>
           <View style={styles.triggerLeft}>
             <HeroIcon name="trophy" size={20} color={authColors.text} />
             <Text style={styles.triggerTitle}>Badges</Text>
           </View>
           <View style={open ? styles.chevronExpanded : undefined}>
-            <HeroIcon name="chevron-down" size={20} color={mutedColor} />
+            <HeroIcon name="chevron-down" size={20} color={authColors.textMuted} />
           </View>
         </Pressable>
 
@@ -66,7 +64,7 @@ export const ProfileEarnedBadgesSection = forwardRef<ProfileEarnedBadgesSectionH
           <View style={styles.body}>
             {loading ? (
               <View style={styles.syncRow}>
-                <ActivityIndicator size="small" color={mutedColor} />
+                <ActivityIndicator size="small" color={authColors.textMuted} />
               </View>
             ) : null}
 
@@ -74,7 +72,6 @@ export const ProfileEarnedBadgesSection = forwardRef<ProfileEarnedBadgesSectionH
               <ErrorRetryBlock
                 message="Couldn't load badges."
                 onRetry={() => void refetch()}
-                borderColor={borderColor}
                 retryLabel="Try again"
               />
             ) : null}
@@ -85,18 +82,12 @@ export const ProfileEarnedBadgesSection = forwardRef<ProfileEarnedBadgesSectionH
                     <View style={[styles.grid, { gap }]}>
                       {section.badges.map((badge) =>
                         badge.featured ? (
-                          <ProfileBadgeTile
-                            key={badge.id}
-                            badge={badge}
-                            size={innerWidth}
-                            borderColor={borderColor}
-                          />
+                          <ProfileBadgeTile key={badge.id} badge={badge} size={innerWidth} />
                         ) : (
                           <ProfileBadgeTile
                             key={badge.id}
                             badge={badge}
                             size={tileSize}
-                            borderColor={borderColor}
                             compact={section.id === 'sub-tiers'}
                           />
                         ),
@@ -126,6 +117,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: authSpacing.md,
     borderWidth: 1,
     borderRadius: 4,
+    borderColor: authColors.border,
   },
   triggerPressed: {
     opacity: 0.88,
