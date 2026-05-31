@@ -6,6 +6,7 @@ import {
   loadCachedExplorerBoardList,
   saveCachedExplorerBoardList,
 } from '@/lib/explorerBoard/explorerBoardListCache';
+import { mergeExplorerBoardRows } from '@/lib/explorerBoard/mergeExplorerBoardRows';
 import { subscribeExplorerBoardRefresh } from '@/lib/explorerBoard/explorerBoardRefresh';
 import {
   clearLegacyExplorerBoardCache,
@@ -33,7 +34,7 @@ export function useExplorerBoard(pageSize = EXPLORER_BOARD_PAGE_SIZE): {
   hasMore: boolean;
   error: string | null;
   loadMore: () => Promise<void>;
-  refetch: () => Promise<void>;
+  refetch: (options?: { force?: boolean }) => Promise<void>;
 } {
   const [rows, setRows] = useState<ExplorerBoardMemberRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,8 +43,14 @@ export function useExplorerBoard(pageSize = EXPLORER_BOARD_PAGE_SIZE): {
   const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const offsetRef = useRef(0);
+  const rowsRef = useRef<ExplorerBoardMemberRow[]>([]);
   const hasFetchedOnceRef = useRef(false);
   const hadCacheRef = useRef(false);
+
+  const persistRows = useCallback(async (merged: ExplorerBoardMemberRow[], more: boolean) => {
+    rowsRef.current = merged;
+    await saveCachedExplorerBoardList({ rows: merged, hasMore: more });
+  }, []);
 
   const loadPage = useCallback(
     async (mode: 'reset' | 'append', options?: { force?: boolean }) => {
@@ -52,6 +59,9 @@ export function useExplorerBoard(pageSize = EXPLORER_BOARD_PAGE_SIZE): {
       if (mode === 'reset') {
         clearLegacyExplorerBoardCache();
         hadCacheRef.current = false;
+        if (force) {
+          rowsRef.current = [];
+        }
       }
 
       const offset = mode === 'reset' ? 0 : offsetRef.current;
@@ -64,6 +74,7 @@ export function useExplorerBoard(pageSize = EXPLORER_BOARD_PAGE_SIZE): {
         if (isInitial && !force) {
           const cached = await loadCachedExplorerBoardList();
           if (cached && cached.rows.length > 0) {
+            rowsRef.current = cached.rows;
             setRows(cached.rows);
             setHasMore(cached.hasMore);
             offsetRef.current = cached.rows.length;
@@ -93,16 +104,17 @@ export function useExplorerBoard(pageSize = EXPLORER_BOARD_PAGE_SIZE): {
           pageSize,
         });
 
+        const merged =
+          mode === 'reset' ? pageRows : mergeExplorerBoardRows(rowsRef.current, pageRows);
+
         offsetRef.current = offset + pageRows.length;
         setHasMore(more);
-        setRows((prev) => (mode === 'reset' ? pageRows : [...prev, ...pageRows]));
+        setRows(merged);
         hasFetchedOnceRef.current = true;
-
-        if (mode === 'reset' && offset === 0) {
-          await saveCachedExplorerBoardList({ rows: pageRows, hasMore: more });
-        }
+        await persistRows(merged, more);
       } catch (e) {
         if (mode === 'reset' && !hadCacheRef.current) {
+          rowsRef.current = [];
           setRows([]);
           setHasMore(false);
         }
@@ -113,10 +125,12 @@ export function useExplorerBoard(pageSize = EXPLORER_BOARD_PAGE_SIZE): {
         setIsLoadingMore(false);
       }
     },
-    [pageSize],
+    [pageSize, persistRows],
   );
 
   const refetch = useCallback(async (options?: { force?: boolean }) => {
+    hasFetchedOnceRef.current = false;
+    offsetRef.current = 0;
     await loadPage('reset', { force: options?.force ?? true });
   }, [loadPage]);
 
@@ -128,14 +142,15 @@ export function useExplorerBoard(pageSize = EXPLORER_BOARD_PAGE_SIZE): {
   useEffect(() => {
     hasFetchedOnceRef.current = false;
     offsetRef.current = 0;
+    rowsRef.current = [];
     void loadPage('reset');
   }, [loadPage]);
 
   useEffect(() => {
     return subscribeExplorerBoardRefresh(() => {
-      void loadPage('reset', { force: true });
+      void refetch({ force: true });
     });
-  }, [loadPage]);
+  }, [refetch]);
 
   return { rows, isLoading, isRefreshing, isLoadingMore, hasMore, error, loadMore, refetch };
 }

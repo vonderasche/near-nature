@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
 import type { Camera, CameraDevice, CameraDeviceFormat } from 'react-native-vision-camera';
@@ -9,7 +9,7 @@ import type { ComponentProps, RefObject } from 'react';
 import { CameraFocusRing } from '@/components/camera/camera-focus-ring';
 import { CameraGridOverlay } from '@/components/camera/camera-grid-overlay';
 import { CameraLevelOverlay } from '@/components/camera/camera-level-overlay';
-import { authColors } from '@/constants/auth-theme';
+import { CenteredActivityIndicator } from '@/components/shared/centered-activity-indicator';
 import { clampZoom } from '@/lib/camera/cameraZoom';
 
 type Point = { x: number; y: number };
@@ -152,8 +152,8 @@ export function CameraLivePreview({
         {gridVisible ? <CameraGridOverlay /> : null}
         <CameraLevelOverlay visible={levelVisible} />
         {isResumingPreview ? (
-          <View style={styles.resuming} accessibilityLabel="Starting camera">
-            <ActivityIndicator size="large" color={authColors.text} />
+          <View style={styles.resuming}>
+            <CenteredActivityIndicator accessibilityLabel="Starting camera" />
           </View>
         ) : null}
         {focusRing ? (

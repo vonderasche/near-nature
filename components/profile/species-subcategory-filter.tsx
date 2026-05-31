@@ -95,16 +95,9 @@ export function SpeciesSubcategoryFilterModal({
 type SpeciesSubcategoryFilterButtonProps = {
   value: GalleryCategoryFilter;
   onPress: () => void;
-  mutedColor: string;
-  /** @deprecated No longer shown on the icon trigger. */
-  borderColor?: string;
 };
 
-export function SpeciesSubcategoryFilterButton({
-  value,
-  onPress,
-  mutedColor,
-}: SpeciesSubcategoryFilterButtonProps) {
+export function SpeciesSubcategoryFilterButton({ value, onPress }: SpeciesSubcategoryFilterButtonProps) {
   const active = value.kind !== 'all';
   return (
     <Pressable
@@ -114,7 +107,7 @@ export function SpeciesSubcategoryFilterButton({
       hitSlop={10}
       onPress={onPress}
       style={({ pressed }) => [styles.iconTrigger, pressed && styles.iconTriggerPressed]}>
-      <HeroIcon name="funnel" size={22} color={active ? authColors.text : mutedColor} />
+      <HeroIcon name="funnel" size={22} color={active ? authColors.text : authColors.textMuted} />
     </Pressable>
   );
 }

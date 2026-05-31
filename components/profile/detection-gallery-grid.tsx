@@ -5,6 +5,7 @@ import { ActivityIndicator, Pressable, StyleSheet, useWindowDimensions, View } f
 import { AuthButton } from '@/components/auth/auth-button';
 import { DetectionGalleryDetailModal } from '@/components/profile/detection-gallery-detail-modal';
 import { DetectionGalleryTile } from '@/components/profile/detection-gallery-tile';
+import { CenteredActivityIndicator } from '@/components/shared/centered-activity-indicator';
 import { ThemedConfirmModal, ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { ThemedText } from '@/components/themed-text';
 import { authColors, authSpacing } from '@/constants/auth-theme';
@@ -23,9 +24,6 @@ type DetectionGalleryGridProps = {
   onLoadMore?: () => void;
   error: string | null;
   onRetry: () => void;
-  borderColor: string;
-  mutedColor: string;
-  activityColor: string;
   emptyMessage?: string;
   searchQuery?: string;
   sourceItemCount?: number;
@@ -46,9 +44,6 @@ export function DetectionGalleryGrid({
   onLoadMore,
   error,
   onRetry,
-  borderColor,
-  mutedColor,
-  activityColor,
   emptyMessage = 'No saved photos yet. Save an identification from the camera flow.',
   searchQuery = '',
   sourceItemCount = 0,
@@ -132,7 +127,6 @@ export function DetectionGalleryGrid({
               item={tile}
               category={category}
               size={tileSize}
-              borderColor={borderColor}
               deletable={deletable}
               onPress={() => setSelected(tile)}
               onLongPress={deletable && onDeleteItem ? () => confirmAndDelete(tile) : undefined}
@@ -141,21 +135,13 @@ export function DetectionGalleryGrid({
         </View>
       );
     },
-    [
-      borderColor,
-      confirmAndDelete,
-      deletable,
-      mutedColor,
-      onDeleteItem,
-      tileGap,
-      tileSize,
-    ],
+    [confirmAndDelete, deletable, onDeleteItem, tileGap, tileSize],
   );
 
   if (error) {
     return (
       <View style={styles.messageBlock}>
-        <ThemedText style={[styles.message, { color: mutedColor }]}>{error}</ThemedText>
+        <ThemedText style={[styles.message, { color: authColors.textMuted }]}>{error}</ThemedText>
         <Pressable
           onPress={onRetry}
           accessibilityRole="button"
@@ -169,11 +155,7 @@ export function DetectionGalleryGrid({
   }
 
   if (loading && items.length === 0) {
-    return (
-      <View style={styles.loaderWrap} accessibilityLabel="Loading gallery">
-        <ActivityIndicator color={activityColor} />
-      </View>
-    );
+    return <CenteredActivityIndicator accessibilityLabel="Loading gallery" />;
   }
 
   if (items.length === 0) {
@@ -182,7 +164,7 @@ export function DetectionGalleryGrid({
       searchActive && sourceItemCount > 0
         ? `No identifications match "${searchQuery.trim()}". Try another name or keyword from the description.`
         : emptyMessage;
-    return <ThemedText style={[styles.empty, { color: mutedColor }]}>{message}</ThemedText>;
+    return <ThemedText style={[styles.empty, { color: authColors.textMuted }]}>{message}</ThemedText>;
   }
 
   const showLoadMore = hasMore && Boolean(onLoadMore);
@@ -195,14 +177,17 @@ export function DetectionGalleryGrid({
           renderItem={renderItem}
           keyExtractor={(entry) => entry.id}
           scrollEnabled={false}
-          extraData={{ tileSize, columnCount, borderColor, deletable }}
+          extraData={{ tileSize, columnCount, deletable }}
         />
       </View>
 
       {showLoadMore ? (
         <View style={styles.loadMoreWrap}>
           {isLoadingMore ? (
-            <ActivityIndicator color={activityColor} accessibilityLabel="Loading more photos" />
+            <ActivityIndicator
+              color={authColors.text}
+              accessibilityLabel="Loading more photos"
+            />
           ) : (
             <AuthButton
               title="Load more"
@@ -250,11 +235,6 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     flexWrap: 'nowrap',
-  },
-  loaderWrap: {
-    paddingVertical: authSpacing.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   messageBlock: {
     gap: authSpacing.sm,

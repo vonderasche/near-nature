@@ -10,7 +10,6 @@ type Props = {
   item: DetectionGalleryItem;
   category: GalleryNativeCategory;
   size: number;
-  borderColor: string;
   deletable: boolean;
   onPress: () => void;
   onLongPress?: () => void;
@@ -20,7 +19,6 @@ function DetectionGalleryTileComponent({
   item,
   category,
   size,
-  borderColor,
   deletable,
   onPress,
   onLongPress,
@@ -40,7 +38,7 @@ function DetectionGalleryTileComponent({
         {
           width: size,
           height: size,
-          borderColor,
+          borderColor: authColors.border,
           opacity: item.uploadStatus === 'pending' ? (pressed ? 0.75 : 0.92) : pressed ? 0.92 : 1,
         },
       ]}>

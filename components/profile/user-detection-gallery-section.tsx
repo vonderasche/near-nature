@@ -25,9 +25,6 @@ type UserDetectionGallerySectionProps = {
   userId?: string;
   /** When true, only non-sensitive rows (another member's public gallery). */
   publicOnly?: boolean;
-  borderColor: string;
-  mutedColor: string;
-  activityColor: string;
   emptyMessage?: string;
   searchPlaceholder?: string;
   deletable?: boolean;
@@ -46,9 +43,6 @@ export const UserDetectionGallerySection = forwardRef<
   {
     userId,
     publicOnly = false,
-    borderColor,
-    mutedColor,
-    activityColor,
     emptyMessage,
     searchPlaceholder = 'Search name, type, description, or alias…',
     deletable = false,
@@ -110,14 +104,8 @@ export const UserDetectionGallerySection = forwardRef<
         <SpeciesSubcategoryFilterButton
           value={categoryFilter}
           onPress={() => setCategoryFilterOpen(true)}
-          mutedColor={mutedColor}
         />
-        <GalleryGridColumnsPicker
-          value={columns}
-          onChange={setColumnCount}
-          mutedColor={mutedColor}
-          borderColor={borderColor}
-        />
+        <GalleryGridColumnsPicker value={columns} onChange={setColumnCount} />
       </View>
 
       <SpeciesSubcategoryFilterModal
@@ -138,9 +126,6 @@ export const UserDetectionGallerySection = forwardRef<
         onLoadMore={() => void loadMore()}
         error={error}
         onRetry={() => void refetch()}
-        borderColor={borderColor}
-        mutedColor={mutedColor}
-        activityColor={activityColor}
         emptyMessage={resolvedEmptyMessage}
         deletable={deletable}
         onDeleteItem={onDeleteItem}

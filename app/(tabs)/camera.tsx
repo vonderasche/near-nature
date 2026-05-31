@@ -1,6 +1,6 @@
 import { Redirect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuthContext } from '@/context/AuthContext';
@@ -15,6 +15,7 @@ import { useCameraCaptureFormat } from '@/hooks/useCameraCaptureFormat';
 import { useCameraPreferences } from '@/hooks/useCameraPreferences';
 import { useCameraZoom } from '@/hooks/useCameraZoom';
 import { CameraIdentificationPanel } from '@/components/camera/camera-identification-panel';
+import { CenteredActivityIndicator } from '@/components/shared/centered-activity-indicator';
 import { ScreenCenter } from '@/components/shared/screen-center';
 import { ThemedConfirmModal, ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
@@ -160,7 +161,7 @@ export default function CameraScreen() {
       <>
         <View style={[styles.fill, screenShell, contentInsetsPadding(insets)]}>
           <ScreenCenter style={styles.transparentCenter} paddingHorizontal={0}>
-            <ActivityIndicator size="large" color={authColors.text} />
+            <CenteredActivityIndicator accessibilityLabel="Checking camera permission" />
           </ScreenCenter>
         </View>
         {messageModal}
@@ -251,7 +252,7 @@ export default function CameraScreen() {
         ) : (
           <View style={StyleSheet.absoluteFill}>
             <ScreenCenter style={styles.transparentCenter} paddingHorizontal={0}>
-              <ActivityIndicator size="large" color={authColors.text} />
+              <CenteredActivityIndicator accessibilityLabel="Starting camera" />
             </ScreenCenter>
           </View>
         )}

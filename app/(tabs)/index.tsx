@@ -1,6 +1,7 @@
 import { Redirect } from 'expo-router';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { CenteredActivityIndicator } from '@/components/shared/centered-activity-indicator';
 import { authColors } from '@/constants/auth-theme';
 import { useAuthContext } from '@/context/AuthContext';
 import { routes } from '@/lib/routing/routes';
@@ -12,7 +13,7 @@ export default function TabsIndex() {
   if (isLoading) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator size="large" color={authColors.text} />
+        <CenteredActivityIndicator accessibilityLabel="Loading" />
       </View>
     );
   }

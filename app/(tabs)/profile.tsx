@@ -10,7 +10,7 @@ import {
   ProfileScoringCollapsible,
   type ProfileScoringCollapsibleHandle,
 } from '@/components/profile/profile-scoring-collapsible';
-import { CenteredActivityIndicator } from '@/components/profile/centered-activity-indicator';
+import { CenteredActivityIndicator } from '@/components/shared/centered-activity-indicator';
 import { ProfileOverflowMenu } from '@/components/profile/profile-overflow-menu';
 import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
 import {
@@ -186,9 +186,6 @@ export default function ProfileScreen() {
             ref={galleryRef}
             userId={user.id}
             searchPlaceholder="Search your identifications…"
-            borderColor={authColors.border}
-            mutedColor={authColors.textMuted}
-            activityColor={authColors.text}
             deletable
             onDeleteItem={handleGalleryDelete}
             deletingId={deletingId}

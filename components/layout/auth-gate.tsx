@@ -1,7 +1,8 @@
 import { type ReactNode } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Redirect, useSegments } from 'expo-router';
 
+import { CenteredActivityIndicator } from '@/components/shared/centered-activity-indicator';
 import { authColors } from '@/constants/auth-theme';
 import { useAuthContext } from '@/context/AuthContext';
 import { resolveAuthGateRedirect } from '@/lib/routing/resolveAuthGateRedirect';
@@ -24,7 +25,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   if (isLoading || profileGateLoading) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator size="large" color={authColors.text} />
+        <CenteredActivityIndicator accessibilityLabel="Loading app" />
       </View>
     );
   }

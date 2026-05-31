@@ -6,6 +6,7 @@ import { ActivityIndicator, StyleSheet, Text, useWindowDimensions, View } from '
 import { AuthButton } from '@/components/auth/auth-button';
 import { ExplorerBoardMemberGridTile } from '@/components/explorer-board/explorer-board-member-grid-tile';
 import { ExplorerBoardMemberListItem } from '@/components/explorer-board/explorer-board-member-list-item';
+import { CenteredActivityIndicator } from '@/components/shared/centered-activity-indicator';
 import { InlineFormError } from '@/components/shared/inline-form-error';
 import { useExplorerBoardDisplayUrls } from '@/hooks/useExplorerBoardDisplayUrls';
 import { listSectionSupportingStyles } from '@/components/shared/list-detail-card';
@@ -105,9 +106,10 @@ export function DetectionCountExplorerBoard({
 
   if (loading) {
     return (
-      <View style={listSectionSupportingStyles.centered} accessibilityLabel="Loading Explorer Board">
-        <ActivityIndicator color={authColors.textMuted} />
-      </View>
+      <CenteredActivityIndicator
+        color={authColors.textMuted}
+        accessibilityLabel="Loading Explorer Board"
+      />
     );
   }
 

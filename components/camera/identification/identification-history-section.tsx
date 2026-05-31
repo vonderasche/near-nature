@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { ActivityIndicator, Text } from 'react-native';
+import { Text } from 'react-native';
 
 import { SpeciesResultCard } from '@/components/camera/identification/species-result-card';
 import { DetectionGalleryDetailModal } from '@/components/profile/detection-gallery-detail-modal';
+import { CenteredActivityIndicator } from '@/components/shared/centered-activity-indicator';
 import { SectionLabel } from '@/components/shared/section-label';
 import { listSectionSupportingStyles } from '@/components/shared/list-detail-card';
 import { authColors } from '@/constants/auth-theme';
@@ -20,7 +21,10 @@ export function IdentificationHistorySection({ historyLoading, identifications }
     <>
       <SectionLabel label="Your identifications" spaced />
       {historyLoading ? (
-        <ActivityIndicator color={authColors.textMuted} />
+        <CenteredActivityIndicator
+          color={authColors.textMuted}
+          accessibilityLabel="Loading identification history"
+        />
       ) : identifications.length === 0 ? (
         <Text style={listSectionSupportingStyles.muted}>No saved identifications yet.</Text>
       ) : (

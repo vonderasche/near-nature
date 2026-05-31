@@ -8,6 +8,7 @@ import {
   saveDualStorageJson,
 } from '@/lib/db/dualStorageJsonCache';
 import { deleteGlobalCache, loadGlobalCacheJson, saveGlobalCacheJson } from '@/lib/db/globalCacheRepository';
+import { EXPLORER_BOARD_LIST_CACHE_MAX_ROWS } from '@/constants/explorer-board-cache';
 import type { ExplorerBoardMemberRow } from '@/lib/explorerBoard/explorerBoardMemberMap';
 import {
   parseCachedExplorerBoardList,
@@ -39,9 +40,14 @@ export async function saveCachedExplorerBoardList(payload: {
   rows: readonly ExplorerBoardMemberRow[];
   hasMore: boolean;
 }): Promise<void> {
+  const rows =
+    payload.rows.length > EXPLORER_BOARD_LIST_CACHE_MAX_ROWS
+      ? payload.rows.slice(0, EXPLORER_BOARD_LIST_CACHE_MAX_ROWS)
+      : [...payload.rows];
+
   const entry: CachedExplorerBoardList = {
     v: EXPLORER_BOARD_LIST_CACHE_VERSION,
-    rows: [...payload.rows],
+    rows,
     hasMore: payload.hasMore,
     cachedAt: Date.now(),
   };

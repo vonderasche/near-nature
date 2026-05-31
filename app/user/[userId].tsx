@@ -2,7 +2,7 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { CenteredActivityIndicator } from '@/components/profile/centered-activity-indicator';
+import { CenteredActivityIndicator } from '@/components/shared/centered-activity-indicator';
 import {
   ProfileEarnedBadgesSection,
   type ProfileEarnedBadgesSectionHandle,
@@ -137,9 +137,6 @@ export default function PublicUserProfileScreen() {
                 userId={userId}
                 publicOnly
                 searchPlaceholder="Search this member's identifications…"
-                borderColor={border}
-                mutedColor={muted}
-                activityColor={tint}
                 emptyMessage="No public photos yet. Sensitive or private saves are not shown here."
               />
             </>
