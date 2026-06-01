@@ -58,7 +58,7 @@ export function ExplorerBoardDiscoveryGrid({
         onRetry={onRetry}
         searchQuery={searchQuery}
         sourceItemCount={totalCount ?? items.length}
-        emptyMessage="No public identifications match your search yet. Try another species, category, or keyword."
+        emptyMessage="No public identifications match your search yet. Sensitive species are only visible on your profile, not in community search."
         onViewMemberProfile={(userId) => router.push(routePublicUserProfile(userId))}
       />
     </View>

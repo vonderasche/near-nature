@@ -58,6 +58,15 @@ begin
     where d.is_sensitive = false
       and (
         public.detection_matches_search_query(d.search_text, d.search_vector, v_query)
+        or public.detection_row_matches_search_query(
+          d.common_name,
+          d.latin_name,
+          d.description,
+          d.category::text,
+          d.subcategory,
+          d.main_category,
+          v_query
+        )
         or u.username ilike '%' || v_query || '%'
       )
   ),

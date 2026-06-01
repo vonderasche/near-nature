@@ -1,9 +1,8 @@
-import { forwardRef, useImperativeHandle, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { forwardRef, useImperativeHandle, useMemo } from 'react';
+import { ActivityIndicator, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
 import { ProfileBadgeTile } from '@/components/profile/profile-badge-tile';
-import { HeroIcon } from '@/components/ui/hero-icon';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import { usePublicUserAwards } from '@/hooks/usePublicUserAwards';
 import {
@@ -21,7 +20,6 @@ export type ProfileEarnedBadgesSectionHandle = {
 
 export const ProfileEarnedBadgesSection = forwardRef<ProfileEarnedBadgesSectionHandle, Props>(
   function ProfileEarnedBadgesSection({ userId }, ref) {
-    const [open, setOpen] = useState(false);
     const { awardKeys, badgeProgress, earnedCount, loading, error, refetch } =
       usePublicUserAwards(userId);
     const { width: windowWidth } = useWindowDimensions();
@@ -45,59 +43,37 @@ export const ProfileEarnedBadgesSection = forwardRef<ProfileEarnedBadgesSectionH
 
     return (
       <View style={styles.wrap}>
-        <Pressable
-          onPress={() => setOpen((wasOpen) => !wasOpen)}
-          accessibilityRole="button"
-          accessibilityState={{ expanded: open }}
-          accessibilityLabel={open ? 'Collapse badges' : 'Expand badges'}
-          style={({ pressed }) => [styles.trigger, pressed && styles.triggerPressed]}>
-          <View style={styles.triggerLeft}>
-            <HeroIcon name="trophy" size={20} color={authColors.text} />
-            <Text style={styles.triggerTitle}>Badges</Text>
-          </View>
-          <View style={open ? styles.chevronExpanded : undefined}>
-            <HeroIcon name="chevron-down" size={20} color={authColors.textMuted} />
-          </View>
-        </Pressable>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Badges</Text>
+        </View>
 
-        {open ? (
-          <View style={styles.body}>
-            {loading ? (
-              <View style={styles.syncRow}>
-                <ActivityIndicator size="small" color={authColors.textMuted} />
-              </View>
-            ) : null}
+        <View style={styles.body}>
+          {loading ? (
+            <View style={styles.syncRow}>
+              <ActivityIndicator size="small" color={authColors.textMuted} />
+            </View>
+          ) : null}
 
-            {error ? (
-              <ErrorRetryBlock
-                message="Couldn't load badges."
-                onRetry={() => void refetch()}
-                retryLabel="Try again"
-              />
-            ) : null}
+          {error ? (
+            <ErrorRetryBlock
+              message="Couldn't load badges."
+              onRetry={() => void refetch()}
+              retryLabel="Try again"
+            />
+          ) : null}
 
-            {!loading && !error
-              ? sections.map((section) => (
-                  <View key={section.id} style={styles.section}>
-                    <View style={[styles.grid, { gap }]}>
-                      {section.badges.map((badge) =>
-                        badge.featured ? (
-                          <ProfileBadgeTile key={badge.id} badge={badge} size={innerWidth} />
-                        ) : (
-                          <ProfileBadgeTile
-                            key={badge.id}
-                            badge={badge}
-                            size={tileSize}
-                            compact={section.id === 'sub-tiers'}
-                          />
-                        ),
-                      )}
-                    </View>
+          {!loading && !error
+            ? sections.map((section) => (
+                <View key={section.id} style={styles.section}>
+                  <View style={[styles.grid, { gap }]}>
+                    {section.badges.map((badge) => (
+                      <ProfileBadgeTile key={badge.id} badge={badge} size={tileSize} />
+                    ))}
                   </View>
-                ))
-              : null}
-          </View>
-        ) : null}
+                </View>
+              ))
+            : null}
+        </View>
       </View>
     );
   },
@@ -108,33 +84,17 @@ const styles = StyleSheet.create({
     gap: authSpacing.sm,
     marginBottom: authSpacing.md,
   },
-  trigger: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: authSpacing.sm,
+  header: {
     paddingVertical: authSpacing.sm,
     paddingHorizontal: authSpacing.md,
     borderWidth: 1,
     borderRadius: 4,
     borderColor: authColors.border,
   },
-  triggerPressed: {
-    opacity: 0.88,
-  },
-  triggerLeft: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: authSpacing.sm,
-  },
-  triggerTitle: {
+  headerTitle: {
     ...authTypography.subtitle,
     fontWeight: '600',
     color: authColors.text,
-  },
-  chevronExpanded: {
-    transform: [{ rotate: '180deg' }],
   },
   body: {
     gap: authSpacing.md,

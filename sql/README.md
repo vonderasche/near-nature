@@ -126,6 +126,7 @@ If tables already exist and you only need to refresh objects:
 | Points on save | `create_leaderboard.sql` |
 | Gallery search | `add_detection_search.sql` |
 | Explorer Board discovery search | `search_public_detections.sql` (after `add_detection_search.sql`) |
+| Explorer Board search returns nothing | `fix_public_detection_search.sql`, then `search_public_detections.sql` |
 | Gallery search slow / filter incomplete | `optimize_detection_gallery.sql` (after `add_detection_search.sql`) |
 | Supabase Dashboard security linter warnings | `harden_security_linter.sql` |
 

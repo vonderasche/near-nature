@@ -29,6 +29,9 @@ export type FetchPublicDetectionExplorePageResult = {
 const EXPLORE_SELECT =
   'id, user_id, image_url, detected_at, common_name, latin_name, category, subcategory, main_category, description, native_status, users!inner(username)';
 
+/** Recent public rows scanned when RPC search returns nothing (matches gallery client fallback). */
+const POSTGREST_EXPLORE_SCAN_LIMIT = 500;
+
 function mapPostgrestRow(row: Record<string, unknown>): PublicExploreDetectionRow {
   const users = row.users as { username?: string } | null | undefined;
   return {
@@ -104,20 +107,26 @@ async function fetchExploreRowsViaRpc(
   return { rows, hasMore, totalCount };
 }
 
-async function fetchExploreRowsViaPostgrest(
-  offset: number,
-  pageSize: number,
-): Promise<PublicExploreDetectionRow[]> {
+async function fetchExploreRowsViaPostgrestScan(): Promise<PublicExploreDetectionRow[]> {
   const { data, error } = await supabase
     .from('detections')
     .select(EXPLORE_SELECT)
     .eq('is_sensitive', false)
     .order('detected_at', { ascending: false })
-    .range(0, 499);
+    .range(0, POSTGREST_EXPLORE_SCAN_LIMIT - 1);
 
   if (error) throw error;
 
   return (data ?? []).map((row) => mapPostgrestRow(row as Record<string, unknown>));
+}
+
+async function fetchExploreRowsViaClientFilter(
+  query: string,
+  offset: number,
+  pageSize: number,
+): Promise<{ rows: PublicExploreDetectionRow[]; hasMore: boolean; totalCount: number }> {
+  const all = await fetchExploreRowsViaPostgrestScan();
+  return applyLocalExplorePage(all, query, offset, pageSize);
 }
 
 async function fetchExploreRowsPage(
@@ -126,22 +135,22 @@ async function fetchExploreRowsPage(
   pageSize: number,
 ): Promise<{ rows: PublicExploreDetectionRow[]; hasMore: boolean; totalCount: number | null }> {
   if (isLocalDetectionsMode()) {
-    return { rows: [], hasMore: false, totalCount: 0 };
+    throw new Error(
+      'Community search needs identifications saved to Supabase. This build uses on-device-only saves (EXPO_PUBLIC_LOCAL_DETECTIONS).',
+    );
   }
 
   try {
-    return await fetchExploreRowsViaRpc(query, offset, pageSize);
+    const rpc = await fetchExploreRowsViaRpc(query, offset, pageSize);
+    if (isSearchQueryActive(query) && rpc.rows.length === 0) {
+      return await fetchExploreRowsViaClientFilter(query, offset, pageSize);
+    }
+    return rpc;
   } catch (error) {
     const err = error as { code?: string; message?: string };
     if (!isPublicExploreRpcMissing(err)) throw error;
 
-    const all = await fetchExploreRowsViaPostgrest(offset, pageSize);
-    const local = applyLocalExplorePage(all, query, offset, pageSize);
-    return {
-      rows: local.rows,
-      hasMore: local.hasMore,
-      totalCount: local.totalCount,
-    };
+    return await fetchExploreRowsViaClientFilter(query, offset, pageSize);
   }
 }
 
