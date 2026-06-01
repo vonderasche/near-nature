@@ -7,10 +7,15 @@ type Props = {
   icon: HeroIconName;
   accessibilityLabel: string;
   onPress: () => void;
+  onLongPress?: () => void;
+  delayLongPress?: number;
+  accessibilityHint?: string;
   active?: boolean;
   disabled?: boolean;
   /** Short label under the icon (e.g. flash Off / Auto / On). */
   caption?: string;
+  /** Anchor for a long-press expandable control group. */
+  submenuOpen?: boolean;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -18,9 +23,13 @@ export function CameraControlButton({
   icon,
   accessibilityLabel,
   onPress,
+  onLongPress,
+  delayLongPress = 450,
+  accessibilityHint,
   active = false,
   disabled = false,
   caption,
+  submenuOpen = false,
   style,
 }: Props) {
   return (
@@ -28,13 +37,17 @@ export function CameraControlButton({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
-        accessibilityState={{ disabled, selected: active }}
+        accessibilityHint={accessibilityHint}
+        accessibilityState={{ disabled, selected: active || submenuOpen }}
         onPress={onPress}
+        onLongPress={onLongPress}
+        delayLongPress={onLongPress ? delayLongPress : undefined}
         disabled={disabled}
         android_ripple={{ color: authColors.rippleOnDark, borderless: true }}
         style={({ pressed }) => [
           styles.btn,
           active && styles.btnActive,
+          submenuOpen && styles.btnSubmenuOpen,
           disabled && styles.btnDisabled,
           pressed && !disabled && styles.btnPressed,
         ]}>
@@ -68,6 +81,10 @@ const styles = StyleSheet.create({
   },
   btnActive: {
     backgroundColor: authColors.cameraControlActive,
+  },
+  btnSubmenuOpen: {
+    borderWidth: 1,
+    borderColor: authColors.text,
   },
   btnDisabled: {
     opacity: 0.45,

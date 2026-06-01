@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { authColors, authSpacing, authTypography, tint } from '@/constants/auth-theme';
+import { cameraLivePredictionsBottomOffset } from '@/constants/camera-layout';
+import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import type {
   LiveClassifierModelState,
   LiveClassifierPrediction,
@@ -8,6 +9,7 @@ import type {
 
 type Props = {
   enabled: boolean;
+  bottomInset: number;
   modelState: LiveClassifierModelState;
   modelError: string | null;
   predictions: readonly LiveClassifierPrediction[];
@@ -15,15 +17,19 @@ type Props = {
 
 export function CameraLivePredictionsOverlay({
   enabled,
+  bottomInset,
   modelState,
   modelError,
   predictions,
 }: Props) {
   if (!enabled) return null;
 
+  const topPrediction = predictions[0];
+
   return (
-    <View style={styles.wrap} pointerEvents="none">
-      <Text style={styles.title}>Live model</Text>
+    <View
+      style={[styles.wrap, { bottom: cameraLivePredictionsBottomOffset(bottomInset) }]}
+      pointerEvents="none">
       {modelState === 'unavailable' ? (
         <Text style={styles.error}>{modelError ?? 'Frame processors unavailable in this build.'}</Text>
       ) : null}
@@ -31,18 +37,17 @@ export function CameraLivePredictionsOverlay({
       {modelState === 'error' ? (
         <Text style={styles.error}>{modelError ?? 'Model failed to load.'}</Text>
       ) : null}
-      {modelState === 'loaded' && predictions.length === 0 ? (
+      {modelState === 'loaded' && !topPrediction ? (
         <Text style={styles.meta}>Point camera at a subject...</Text>
       ) : null}
-      {predictions.map((prediction, index) => (
-        <View key={`${prediction.classIndex}:${index}`} style={styles.row}>
-          <Text style={styles.rank}>{index + 1}</Text>
+      {topPrediction ? (
+        <View style={styles.row}>
           <Text style={styles.label} numberOfLines={1}>
-            {prediction.label}
+            {topPrediction.label}
           </Text>
-          <Text style={styles.confidence}>{Math.round(prediction.confidence * 100)}%</Text>
+          <Text style={styles.confidence}>{Math.round(topPrediction.confidence * 100)}%</Text>
         </View>
-      ))}
+      ) : null}
     </View>
   );
 }
@@ -52,36 +57,25 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: authSpacing.md,
     right: authSpacing.md,
-    bottom: 118,
     paddingVertical: authSpacing.sm,
     paddingHorizontal: authSpacing.md,
     borderRadius: 12,
     backgroundColor: 'rgba(0,0,0,0.62)',
-    gap: 6,
-  },
-  title: {
-    ...authTypography.label,
-    color: tint,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
+    gap: 4,
+    zIndex: 12,
+    elevation: 12,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: authSpacing.sm,
   },
-  rank: {
-    ...authTypography.label,
-    width: 18,
-    color: authColors.textMuted,
-    textAlign: 'center',
-  },
   label: {
     ...authTypography.body,
     flex: 1,
     color: authColors.text,
     fontWeight: '700',
+    fontSize: 15,
   },
   confidence: {
     ...authTypography.label,

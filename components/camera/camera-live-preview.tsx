@@ -35,12 +35,15 @@ type Props = {
   stabilizationSupported?: boolean;
   frameProcessor?: CameraFrameProcessor;
   onFocusPoint: (point: Point) => void | Promise<void>;
+  /** When true, preview tap dismisses menus only (no focus). */
+  controlMenusOpen?: boolean;
+  onDismissControlMenus?: () => void;
 };
 
 const FOCUS_RING_MS = 1200;
 
 /**
- * Full-screen camera with quality capture settings, grid, tap-to-focus, pinch zoom, and preset chips.
+ * Full-screen camera with quality capture settings, grid, tap-to-focus, pinch zoom, and zoom chips.
  */
 export function CameraLivePreview({
   cameraRef,
@@ -59,6 +62,8 @@ export function CameraLivePreview({
   stabilizationSupported = false,
   frameProcessor,
   onFocusPoint,
+  controlMenusOpen = false,
+  onDismissControlMenus,
 }: Props) {
   const stabilizationMode =
     stabilizationEnabled && stabilizationSupported ? 'auto' : 'off';
@@ -96,6 +101,10 @@ export function CameraLivePreview({
 
   const handleTap = useCallback(
     (x: number, y: number) => {
+      if (controlMenusOpen) {
+        onDismissControlMenus?.();
+        return;
+      }
       if (layout.width <= 0 || layout.height <= 0) return;
       setFocusRing({ x, y, key: Date.now() });
       void onFocusPoint({
@@ -103,7 +112,7 @@ export function CameraLivePreview({
         y: Math.min(1, Math.max(0, y / layout.height)),
       });
     },
-    [layout.width, layout.height, onFocusPoint],
+    [controlMenusOpen, layout.width, layout.height, onDismissControlMenus, onFocusPoint],
   );
 
   const tapGesture = Gesture.Tap()

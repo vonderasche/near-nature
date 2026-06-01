@@ -33,6 +33,7 @@ export default function CameraScreen() {
     title: string;
     message: string;
   } | null>(null);
+  const [controlMenusOpen, setControlMenusOpen] = useState(false);
   const onPhotoCaptured = useCallback((uri: string) => {
     setCapturedPhotoUri(uri);
   }, []);
@@ -201,6 +202,7 @@ export default function CameraScreen() {
         {device ? (
           <>
             <CameraLivePreviewWithClassifier
+              bottomInset={insets.bottom}
               cameraRef={cameraRef}
               device={device}
               format={format}
@@ -217,6 +219,8 @@ export default function CameraScreen() {
               stabilizationSupported={stabilizationSupported}
               liveClassifierEnabled={liveClassifierEnabled}
               onFocusPoint={focusAt}
+              controlMenusOpen={controlMenusOpen}
+              onDismissControlMenus={() => setControlMenusOpen(false)}
             />
             <CameraTopControls
               insets={insets}
@@ -241,6 +245,7 @@ export default function CameraScreen() {
               onLevelPress={toggleLevel}
               liveClassifierEnabled={liveClassifierEnabled}
               onLiveClassifierPress={toggleLiveClassifier}
+              onMenuExpandedChange={setControlMenusOpen}
             />
             <CameraZoomChips
               chips={chips}

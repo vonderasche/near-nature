@@ -41,10 +41,11 @@ export function useOptimisticIdentificationSave({
 
   const saveIdentification = useCallback(
     ({ species, classifications, wikiByLatinName, primaryIndex = 0 }: SaveIdentificationInput) => {
-      if (!userId || species.length === 0 || classifications.length === 0) return;
+      if (!userId || classifications.length === 0) return;
 
-      const index = Math.min(Math.max(0, primaryIndex), species.length - 1);
+      const index = Math.min(Math.max(0, primaryIndex), classifications.length - 1);
       const primary = species[index];
+      if (!primary) return;
       const wiki = wikiByLatinName[primary.latinName];
       const classification = classifications[index] ?? classifications[0];
       const naturalist = resolveNaturalistCategoryFromClassification(classification);

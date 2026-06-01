@@ -2,6 +2,7 @@ import { lookupNativeStatus } from '@/api/inaturalist';
 import { fetchSpeciesWikiData, type SpeciesWikiData } from '@/api/wikipedia';
 import { getSpeciesSubcategoryLabel } from '@/constants/species-subcategories';
 import { classificationToSpeciesCategory } from '@/lib/detections/mapSpeciesCategory';
+import { speciesFromUnenrichedClassification } from '@/lib/identification/speciesFromClassification';
 import { devLog } from '@/lib/devLog';
 import { loadWikiCache, saveWikiCache } from '@/lib/db/wikiCacheRepository';
 import { getSpeciesByScientificName } from '@/lib/db/speciesRepository';
@@ -39,7 +40,17 @@ export type EnrichSpeciesFromApisResult = {
   species: Species[];
   wikiByLatinName: WikiByLatinName;
   wikiError: string | null;
+  /** Stable id prefix for {@link Species.id} (`${speciesIdBase}-${index}`). */
+  speciesIdBase: number;
 };
+
+export type EnrichClassificationIndicesResult = {
+  speciesByIndex: Record<number, Species>;
+  wikiByLatinName: WikiByLatinName;
+  wikiError: string | null;
+};
+
+export { speciesFromUnenrichedClassification } from '@/lib/identification/speciesFromClassification';
 
 async function fetchWikiForClassification(
   latinName: string,
@@ -127,6 +138,117 @@ async function resolveWiki(
   }
 }
 
+type EnrichOneIndexResult = {
+  species: Species;
+  wiki: SpeciesWikiData | null;
+  fetchWiki: boolean;
+};
+
+async function enrichOneClassificationIndex(
+  classification: ClassificationResult,
+  index: number,
+  speciesIdBase: number,
+  userState: string,
+  saved: SavedSpeciesEnrichment | undefined,
+  runFullEnrich: boolean,
+  fetchWiki: boolean,
+  onWikiError: (message: string) => void,
+): Promise<EnrichOneIndexResult> {
+  const statusPromise = runFullEnrich
+    ? resolveNativeStatus(classification, userState, saved)
+    : Promise.resolve(saved?.status ?? ('unknown' as SpeciesStatus));
+  const wikiPromise = fetchWiki
+    ? resolveWiki(classification, saved, onWikiError)
+    : Promise.resolve({ wiki: null, source: 'none' as const });
+
+  const [status, resolvedWiki] = await Promise.all([statusPromise, wikiPromise]);
+  const category = classificationToSpeciesCategory(classification);
+
+  return {
+    species: {
+      id: `${speciesIdBase}-${index}`,
+      latinName: classification.latinName,
+      commonName: classification.commonName,
+      taxonGroup: getSpeciesSubcategoryLabel(category),
+      status,
+    },
+    wiki: fetchWiki ? resolvedWiki.wiki : null,
+    fetchWiki,
+  };
+}
+
+/**
+ * Enrich only the given candidate indices (e.g. alternates 1–2 after the top match).
+ */
+export async function enrichClassificationIndices(
+  classifications: ClassificationResult[],
+  userState: string,
+  indices: readonly number[],
+  options?: EnrichSpeciesFromApisOptions & { speciesIdBase?: number },
+): Promise<EnrichClassificationIndicesResult> {
+  const wikiSpeciesLimit = options?.wikiSpeciesLimit ?? DEFAULT_WIKI_SPECIES_LIMIT;
+  const userId = options?.userId;
+  const speciesIdBase = options?.speciesIdBase ?? Date.now();
+
+  const uniqueIndices = [...new Set(indices)].filter(
+    (index) => index >= 0 && index < classifications.length,
+  );
+  if (uniqueIndices.length === 0) {
+    return { speciesByIndex: {}, wikiByLatinName: {}, wikiError: null };
+  }
+
+  devLog('[enrich] indices', {
+    indices: uniqueIndices,
+    wikiSpeciesLimit,
+    userState,
+    userId: userId ?? null,
+  });
+
+  const savedByLatin = userId
+    ? await resolveSavedSpeciesForLatinNames(
+        userId,
+        classifications.map((c) => c.latinName),
+      )
+    : new Map<string, SavedSpeciesEnrichment>();
+
+  let wikiError: string | null = null;
+  const wikiByLatinName: WikiByLatinName = {};
+  const speciesByIndex: Record<number, Species> = {};
+
+  await Promise.all(
+    uniqueIndices.map(async (index) => {
+      const classification = classifications[index]!;
+      const saved = savedByLatin.get(normalizeLatinName(classification.latinName));
+      const fetchWiki = index < wikiSpeciesLimit && Boolean(classification.latinName);
+
+      const { species, wiki, fetchWiki: didFetchWiki } = await enrichOneClassificationIndex(
+        classification,
+        index,
+        speciesIdBase,
+        userState,
+        saved,
+        true,
+        fetchWiki,
+        (message) => {
+          if (!wikiError) wikiError = message;
+        },
+      );
+
+      speciesByIndex[index] = species;
+      if (didFetchWiki) {
+        wikiByLatinName[classification.latinName] = wiki;
+        devLog('[enrich] wiki item', {
+          latinName: classification.latinName,
+          hasData: Boolean(wiki),
+          index,
+        });
+      }
+    }),
+  );
+
+  return { speciesByIndex, wikiByLatinName, wikiError };
+}
+
 /**
  * After vision returns classifications, enrich each with iNaturalist status and (for the top
  * {@link wikiSpeciesLimit}) Wikipedia data. Local SQLite (saved species, genus catalog, wiki cache)
@@ -143,7 +265,7 @@ export async function enrichSpeciesFromApis(
   const userId = options?.userId;
 
   if (classifications.length === 0) {
-    return { species: [], wikiByLatinName: {}, wikiError: null };
+    return { species: [], wikiByLatinName: {}, wikiError: null, speciesIdBase: Date.now() };
   }
 
   devLog('[enrich] start', {
@@ -163,7 +285,7 @@ export async function enrichSpeciesFromApis(
 
   let wikiError: string | null = null;
   const wikiByLatinName: WikiByLatinName = {};
-  const baseId = Date.now();
+  const speciesIdBase = Date.now();
 
   const species = await Promise.all(
     classifications.map(async (classification, index): Promise<Species> => {
@@ -180,35 +302,29 @@ export async function enrichSpeciesFromApis(
         });
       }
 
-      const statusPromise = runFullEnrich
-        ? resolveNativeStatus(classification, userState, saved)
-        : Promise.resolve(saved?.status ?? ('unknown' as SpeciesStatus));
-      const wikiPromise = fetchWiki
-        ? resolveWiki(classification, saved, (message) => {
-            if (!wikiError) wikiError = message;
-          })
-        : Promise.resolve({ wiki: null, source: 'none' as const });
+      const { species: row, wiki, fetchWiki: didFetchWiki } = await enrichOneClassificationIndex(
+        classification,
+        index,
+        speciesIdBase,
+        userState,
+        saved,
+        runFullEnrich,
+        fetchWiki,
+        (message) => {
+          if (!wikiError) wikiError = message;
+        },
+      );
 
-      const [status, resolvedWiki] = await Promise.all([statusPromise, wikiPromise]);
-
-      if (fetchWiki) {
-        const { wiki, source } = resolvedWiki;
+      if (didFetchWiki) {
         wikiByLatinName[classification.latinName] = wiki;
         devLog('[enrich] wiki item', {
           latinName: classification.latinName,
           hasData: Boolean(wiki),
-          source,
+          source: wiki ? 'fetched' : 'none',
         });
       }
 
-      const category = classificationToSpeciesCategory(classification);
-      return {
-        id: `${baseId}-${index}`,
-        latinName: classification.latinName,
-        commonName: classification.commonName,
-        taxonGroup: getSpeciesSubcategoryLabel(category),
-        status,
-      };
+      return row;
     }),
   );
 
@@ -217,5 +333,5 @@ export async function enrichSpeciesFromApis(
     wikiKeys: Object.keys(wikiByLatinName),
     savedHits: savedByLatin.size,
   });
-  return { species, wikiByLatinName, wikiError };
+  return { species, wikiByLatinName, wikiError, speciesIdBase };
 }

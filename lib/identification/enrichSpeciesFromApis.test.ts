@@ -34,7 +34,7 @@ import { getSpeciesByScientificName } from '@/lib/db/speciesRepository';
 import { loadWikiCache, saveWikiCache } from '@/lib/db/wikiCacheRepository';
 import { resolveSavedSpeciesForLatinNames } from '@/lib/identification/savedSpeciesSessionCache';
 
-import { enrichSpeciesFromApis } from './enrichSpeciesFromApis';
+import { enrichClassificationIndices, enrichSpeciesFromApis } from './enrichSpeciesFromApis';
 
 const classification: ClassificationResult = {
   latinName: 'Danaus plexippus',
@@ -282,6 +282,27 @@ describe('enrichSpeciesFromApis', () => {
 
     expect(lookupNativeStatus).not.toHaveBeenCalled();
     expect(result.species[0].status).toBe('native');
+  });
+
+  it('enrichClassificationIndices only enriches requested indices', async () => {
+    const second: ClassificationResult = {
+      latinName: 'Basiliscus',
+      commonName: 'Basiliscus',
+      confidence: 0.7,
+      taxonGroup: 'animals',
+    };
+
+    const result = await enrichClassificationIndices(
+      [classification, second],
+      'VA',
+      [1],
+      { wikiSpeciesLimit: 3, speciesIdBase: 42 },
+    );
+
+    expect(lookupNativeStatus).toHaveBeenCalledTimes(1);
+    expect(result.speciesByIndex[1]?.latinName).toBe('Basiliscus');
+    expect(result.speciesByIndex[0]).toBeUndefined();
+    expect(result.speciesByIndex[1]?.id).toBe('42-1');
   });
 
   it('still calls iNat when saved native status is unknown', async () => {

@@ -7,6 +7,7 @@ import { areFrameProcessorsAvailable } from '@/lib/camera/areFrameProcessorsAvai
 
 type Props = ComponentProps<typeof CameraLivePreview> & {
   liveClassifierEnabled: boolean;
+  bottomInset: number;
 };
 
 const REBUILD_HINT =
@@ -14,6 +15,7 @@ const REBUILD_HINT =
 
 export function CameraLivePreviewWithClassifier({
   liveClassifierEnabled,
+  bottomInset,
   ...previewProps
 }: Props) {
   if (!liveClassifierEnabled) {
@@ -26,6 +28,7 @@ export function CameraLivePreviewWithClassifier({
         <CameraLivePreview {...previewProps} />
         <CameraLivePredictionsOverlay
           enabled
+          bottomInset={bottomInset}
           modelState="unavailable"
           modelError={REBUILD_HINT}
           predictions={[]}
@@ -38,12 +41,14 @@ export function CameraLivePreviewWithClassifier({
     <CameraLivePreviewWithClassifierActive
       {...previewProps}
       liveClassifierEnabled={liveClassifierEnabled}
+      bottomInset={bottomInset}
     />
   );
 }
 
 function CameraLivePreviewWithClassifierActive({
   liveClassifierEnabled,
+  bottomInset,
   ...previewProps
 }: Props) {
   // Guard against VisionCameraProxy "view not found" crashes during preview remount/resume.
@@ -58,6 +63,7 @@ function CameraLivePreviewWithClassifierActive({
       <CameraLivePreview {...previewProps} frameProcessor={frameProcessor} />
       <CameraLivePredictionsOverlay
         enabled={liveClassifierEnabled}
+        bottomInset={bottomInset}
         modelState={modelState}
         modelError={modelError}
         predictions={predictions}

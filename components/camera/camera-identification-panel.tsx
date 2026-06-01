@@ -53,19 +53,22 @@ export function CameraIdentificationPanel({
     refetchHistory: refetch,
   });
 
-  const { species, classifications, wikiByLatinName, wikiError, tfliteMeta } =
-    useIdentificationResultsState(
-    photoUri,
-    userState,
-    userId ?? undefined,
-      identify,
-    );
+  const {
+    species,
+    classifications,
+    wikiByLatinName,
+    wikiError,
+    tfliteMeta,
+    alternatesEnriching,
+    enrichAlternates,
+    speciesIdBase,
+  } = useIdentificationResultsState(photoUri, userState, userId ?? undefined, identify);
 
   const [selectedSpeciesIndex, setSelectedSpeciesIndex] = useState(0);
 
   useEffect(() => {
     setSelectedSpeciesIndex(0);
-  }, [photoUri, species]);
+  }, [photoUri, classifications]);
 
   const handleSaveIdentification = useCallback(() => {
     saveIdentification({
@@ -102,18 +105,22 @@ export function CameraIdentificationPanel({
 
           <IdentificationSpeciesResultsList
             species={species}
+            classifications={classifications}
+            speciesIdBase={speciesIdBase}
             identifying={identifying}
             identifyError={identifyError}
             wikiByLatinName={wikiByLatinName}
             selectedIndex={selectedSpeciesIndex}
             onSelectIndex={setSelectedSpeciesIndex}
+            alternatesEnriching={alternatesEnriching}
+            onEnrichAlternates={enrichAlternates}
           />
 
           <IdentificationHistorySection historyLoading={historyLoading} identifications={identifications} />
         </ScrollView>
 
         <View style={styles.footer}>
-          {species.length > 0 && !identifying ? (
+          {classifications.length > 0 && !identifying ? (
             <View style={styles.footerActions}>
               <View style={styles.footerHalf}>
                 <AuthButton fillParent variant="outline" title="Retake" onPress={onRetake} />
@@ -129,7 +136,7 @@ export function CameraIdentificationPanel({
           ) : (
             <AuthButton variant="outline" title="Retake" onPress={onRetake} />
           )}
-          {species.length > 0 && !identifying && !userId ? (
+          {classifications.length > 0 && !identifying && !userId ? (
             <Text style={styles.saveHint}>Sign in to save identifications to your account.</Text>
           ) : null}
         </View>

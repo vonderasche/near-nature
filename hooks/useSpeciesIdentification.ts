@@ -22,6 +22,7 @@ export type IdentifySpeciesOutcome = {
   wikiByLatinName: Record<string, SpeciesWikiData | null>;
   wikiError: string | null;
   tfliteMeta: TfliteIdentificationMeta | null;
+  speciesIdBase: number;
 };
 
 interface UseSpeciesIdentificationResult {
@@ -79,16 +80,24 @@ export function useSpeciesIdentification(): UseSpeciesIdentificationResult {
           wikiByLatinName: {},
           wikiError: null,
           tfliteMeta,
+          speciesIdBase: Date.now(),
         };
       }
 
-      const { species, wikiByLatinName, wikiError } = await enrichSpeciesFromApis(
+      const { species, wikiByLatinName, wikiError, speciesIdBase } = await enrichSpeciesFromApis(
         classifications,
         userState,
         { userId, wikiSpeciesLimit: 1, enrichDepthLimit: 1 },
       );
 
-      return { species, classifications, wikiByLatinName, wikiError, tfliteMeta };
+      return {
+        species: species.slice(0, 1),
+        classifications,
+        wikiByLatinName,
+        wikiError,
+        tfliteMeta,
+        speciesIdBase,
+      };
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Identification failed';
       setError(message);
@@ -98,6 +107,7 @@ export function useSpeciesIdentification(): UseSpeciesIdentificationResult {
         wikiByLatinName: {},
         wikiError: null,
         tfliteMeta: null,
+        speciesIdBase: Date.now(),
       };
     } finally {
       if (resizedUri && resizedUri !== photoUri) {

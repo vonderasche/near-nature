@@ -7,3 +7,13 @@ export const CAMERA_BOTTOM_TOOLBAR_BODY_HEIGHT = 104;
 export function cameraZoomChipsBottomOffset(safeAreaBottom: number): number {
   return safeAreaBottom + CAMERA_BOTTOM_TOOLBAR_BODY_HEIGHT + authSpacing.sm;
 }
+
+/** Approximate height of the zoom chip row (padding + chip). */
+export const CAMERA_ZOOM_CHIPS_ROW_HEIGHT = 44;
+
+/** Bottom offset for live classifier overlay — sits above zoom chips. */
+export function cameraLivePredictionsBottomOffset(safeAreaBottom: number): number {
+  return (
+    cameraZoomChipsBottomOffset(safeAreaBottom) + CAMERA_ZOOM_CHIPS_ROW_HEIGHT + authSpacing.lg
+  );
+}

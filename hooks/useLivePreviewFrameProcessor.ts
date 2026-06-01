@@ -18,7 +18,7 @@ import {
 import { normalizeMobileNetInput } from '@/lib/camera/mobilenet/normalizeMobileNetInput';
 import { getLabelAtIndex, type ModelLabelsJson, buildLabelLookup } from '@/lib/camera/mobilenet/parseModelLabels';
 import {
-  parseMobileNetTop3,
+  parseMobileNetTopK,
   type MobileNetPredictionScore,
 } from '@/lib/camera/mobilenet/parseMobileNetOutput';
 import { getCachedTfliteModel } from '@/lib/camera/mobilenet/tfliteModelRunner';
@@ -129,8 +129,8 @@ export function useLivePreviewFrameProcessor(
           const raw = outputs[0];
           if (raw == null) return;
 
-          const top3 = parseMobileNetTop3(raw);
-          publishPredictions(top3);
+          const top1 = parseMobileNetTopK(raw, 1);
+          publishPredictions(top1);
         } catch (error) {
           publishInferenceError(formatMobileNetError(error));
         }

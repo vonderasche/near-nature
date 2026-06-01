@@ -7,17 +7,22 @@ import { AuthButton } from '@/components/auth/auth-button';
 import { listSectionSupportingStyles } from '@/components/shared/list-detail-card';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import { getSpeciesSubcategoryLabel } from '@/constants/species-subcategories';
-import type { Species } from '@/types';
+import { mergeIdentificationSpecies } from '@/lib/identification/mergeIdentificationSpecies';
+import type { ClassificationResult, Species } from '@/types';
 
 import { IdentificationSpeciesWikiBody } from './identification-species-wiki-body';
 
 type Props = {
   species: Species[];
+  classifications: ClassificationResult[];
+  speciesIdBase: number;
   identifying: boolean;
   identifyError: string | null;
   wikiByLatinName: Record<string, SpeciesWikiData | null>;
   selectedIndex: number;
   onSelectIndex: (index: number) => void;
+  alternatesEnriching: boolean;
+  onEnrichAlternates: () => Promise<void>;
 };
 
 function wikiDescription(
@@ -38,36 +43,55 @@ function speciesMeta(s: Species, isTopMatch: boolean): string {
 
 export function IdentificationSpeciesResultsList({
   species,
+  classifications,
+  speciesIdBase,
   identifying,
   identifyError,
   wikiByLatinName,
   selectedIndex,
   onSelectIndex,
+  alternatesEnriching,
+  onEnrichAlternates,
 }: Props) {
   const [showAlternates, setShowAlternates] = useState(false);
 
   useEffect(() => {
     setShowAlternates(false);
-  }, [species]);
+  }, [classifications, speciesIdBase]);
 
-  if (!identifying && species.length === 0 && !identifyError) {
+  const handleChooseAnother = async () => {
+    await onEnrichAlternates();
+    setShowAlternates(true);
+  };
+
+  if (!identifying && classifications.length === 0 && !identifyError) {
     return <Text style={listSectionSupportingStyles.muted}>No species returned.</Text>;
   }
 
-  if (species.length === 0) {
+  if (classifications.length === 0) {
     return null;
   }
 
-  const safeIndex = Math.min(Math.max(0, selectedIndex), species.length - 1);
-  const primary = species[safeIndex]!;
-  const hasAlternates = species.length > 1;
+  const displaySpecies = mergeIdentificationSpecies(
+    classifications,
+    species,
+    {},
+    speciesIdBase,
+  );
+
+  const safeIndex = Math.min(Math.max(0, selectedIndex), classifications.length - 1);
+  const primary = displaySpecies[safeIndex]!;
+  const hasAlternates = classifications.length > 1;
 
   if (showAlternates && hasAlternates) {
     return (
       <View style={styles.alternatesWrap}>
         <Text style={styles.alternatesHeading}>Other matches</Text>
         <Text style={styles.alternatesHint}>Tap a species to use it when you save.</Text>
-        {species.map((s, index) => {
+        {alternatesEnriching ? (
+          <Text style={styles.alternatesHint}>Loading details for other matches…</Text>
+        ) : null}
+        {displaySpecies.map((s, index) => {
           const selected = index === safeIndex;
           return (
             <SpeciesResultCard
@@ -121,10 +145,11 @@ export function IdentificationSpeciesResultsList({
       {hasAlternates ? (
         <AuthButton
           variant="outline"
-          title="Not this species? Choose another"
-          onPress={() => setShowAlternates(true)}
+          title={alternatesEnriching ? 'Loading other matches…' : 'Not this species? Choose another'}
+          onPress={() => void handleChooseAnother()}
+          disabled={alternatesEnriching}
           fillParent
-          accessibilityHint="Shows other model matches so you can pick one before saving"
+          accessibilityHint="Loads details for other model matches so you can pick one before saving"
         />
       ) : null}
     </View>
