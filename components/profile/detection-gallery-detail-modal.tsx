@@ -8,6 +8,7 @@ import { ButtonStack } from '@/components/ui/button-stack';
 import { SheetModalShell } from '@/components/ui/sheet-modal-shell';
 import { ThemedConfirmModal, ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { formatDetectedAt } from '@/lib/detections/formatDetectedAt';
 import { formatGalleryNativeDetailHint } from '@/lib/detections/galleryNativeCategory';
 import type { DetectionGalleryItem } from '@/types';
 import type { UserFacingResult } from '@/types/user-facing-result';
@@ -24,19 +25,6 @@ export type DetectionGalleryDetailModalProps = {
   /** Community explore: open the member who saved this identification. */
   onViewMemberProfile?: (userId: string) => void;
 };
-
-function formatDetectedAt(iso: string): string {
-  try {
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return iso;
-    return d.toLocaleString(undefined, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    });
-  } catch {
-    return iso;
-  }
-}
 
 /**
  * Full-screen overlay with a larger preview and metadata for a saved detection.

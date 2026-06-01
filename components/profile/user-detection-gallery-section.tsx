@@ -2,7 +2,9 @@ import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { DetectionGalleryGrid } from '@/components/profile/detection-gallery-grid';
+import { DetectionGalleryList } from '@/components/profile/detection-gallery-list';
 import { GalleryGridColumnsPicker } from '@/components/profile/gallery-grid-columns-picker';
+import { GalleryLayoutToggle } from '@/components/profile/gallery-layout-toggle';
 import {
   SpeciesSubcategoryFilterButton,
   SpeciesSubcategoryFilterModal,
@@ -11,6 +13,7 @@ import { ScreenSearchField } from '@/components/ui/screen-search-field';
 import { authSpacing } from '@/constants/auth-theme';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useGalleryGridColumns } from '@/hooks/useGalleryGridColumns';
+import { useGalleryLayoutMode } from '@/hooks/useGalleryLayoutMode';
 import { useUserDetectionGallery } from '@/hooks/useUserDetectionGallery';
 import type { GalleryCategoryFilter } from '@/lib/detections/filterDetectionGalleryItems';
 import { isSearchQueryActive } from '@/lib/search/normalizeSearchQuery';
@@ -71,6 +74,7 @@ export const UserDetectionGallerySection = forwardRef<
     categoryFilter,
   });
   const { columns, setColumnCount } = useGalleryGridColumns();
+  const { layoutMode, setLayoutMode } = useGalleryLayoutMode();
 
   useEffect(() => {
     setSearchQuery('');
@@ -105,7 +109,10 @@ export const UserDetectionGallerySection = forwardRef<
           value={categoryFilter}
           onPress={() => setCategoryFilterOpen(true)}
         />
-        <GalleryGridColumnsPicker value={columns} onChange={setColumnCount} />
+        <GalleryLayoutToggle value={layoutMode} onChange={setLayoutMode} />
+        {layoutMode === 'grid' ? (
+          <GalleryGridColumnsPicker value={columns} onChange={setColumnCount} />
+        ) : null}
       </View>
 
       <SpeciesSubcategoryFilterModal
@@ -115,22 +122,40 @@ export const UserDetectionGallerySection = forwardRef<
         onClose={() => setCategoryFilterOpen(false)}
       />
 
-      <DetectionGalleryGrid
-        items={items}
-        sourceItemCount={totalCount ?? items.length}
-        searchQuery={searchQuery}
-        columnCount={columns}
-        loading={isLoading}
-        isLoadingMore={isLoadingMore}
-        hasMore={hasMore}
-        onLoadMore={() => void loadMore()}
-        error={error}
-        onRetry={() => void refetch()}
-        emptyMessage={resolvedEmptyMessage}
-        deletable={deletable}
-        onDeleteItem={onDeleteItem}
-        deletingId={deletingId}
-      />
+      {layoutMode === 'list' ? (
+        <DetectionGalleryList
+          items={items}
+          sourceItemCount={totalCount ?? items.length}
+          searchQuery={searchQuery}
+          loading={isLoading}
+          isLoadingMore={isLoadingMore}
+          hasMore={hasMore}
+          onLoadMore={() => void loadMore()}
+          error={error}
+          onRetry={() => void refetch()}
+          emptyMessage={resolvedEmptyMessage}
+          deletable={deletable}
+          onDeleteItem={onDeleteItem}
+          deletingId={deletingId}
+        />
+      ) : (
+        <DetectionGalleryGrid
+          items={items}
+          sourceItemCount={totalCount ?? items.length}
+          searchQuery={searchQuery}
+          columnCount={columns}
+          loading={isLoading}
+          isLoadingMore={isLoadingMore}
+          hasMore={hasMore}
+          onLoadMore={() => void loadMore()}
+          error={error}
+          onRetry={() => void refetch()}
+          emptyMessage={resolvedEmptyMessage}
+          deletable={deletable}
+          onDeleteItem={onDeleteItem}
+          deletingId={deletingId}
+        />
+      )}
     </View>
   );
 });

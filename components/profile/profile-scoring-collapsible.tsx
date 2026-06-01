@@ -2,11 +2,8 @@ import { forwardRef, useImperativeHandle, useMemo } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { ProfileBadgeGrid } from '@/components/profile/profile-badge-grid';
-import { ProfileBadgePreviewRow } from '@/components/profile/profile-badge-preview-row';
 import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
-import { HeroIcon } from '@/components/ui/hero-icon';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
-import { buildProfileBadgePreviewRow } from '@/lib/profile/profileBadges';
 import { useUserScoringSnapshot } from '@/hooks/useUserScoringSnapshot';
 
 type Props = {
@@ -31,49 +28,38 @@ export const ProfileScoringCollapsible = forwardRef<
   );
   const badgeProgress = useMemo(() => snapshot?.badgeProgress ?? [], [snapshot]);
 
-  const previewBadges = useMemo(
-    () => buildProfileBadgePreviewRow(mains, awardKeys, badgeProgress),
-    [awardKeys, badgeProgress, mains],
-  );
-
   useImperativeHandle(ref, () => ({ refetch }), [refetch]);
 
   return (
     <View style={styles.wrap}>
-      <View style={styles.preview}>
-        {loading && !snapshot ? (
-          <View style={styles.previewLoading}>
-            <ActivityIndicator size="small" color={authColors.textMuted} />
-          </View>
-        ) : (
-          <ProfileBadgePreviewRow badges={previewBadges} />
-        )}
-      </View>
+      <Text style={styles.hint}>
+        {hasSavedSpecies
+          ? 'Tap a discipline icon to see its tiers · dimmed = not earned yet'
+          : 'Save your first identification to start earning badge progress.'}
+      </Text>
 
-      <View style={styles.body}>
-        <Text style={styles.hint}>
-          {hasSavedSpecies
-            ? 'Tap a discipline icon to see its tiers · dimmed = not earned yet'
-            : 'Save your first identification to start earning badge progress.'}
-        </Text>
-
+      {loading && !snapshot ? (
+        <View style={styles.loading}>
+          <ActivityIndicator size="small" color={authColors.textMuted} />
+        </View>
+      ) : (
         <ProfileBadgeGrid mains={mains} awardKeys={awardKeys} badgeProgress={badgeProgress} />
+      )}
 
-        {loading ? (
-          <View style={styles.syncRow}>
-            <ActivityIndicator size="small" color={authColors.textMuted} />
-            <Text style={styles.syncText}>Updating progress…</Text>
-          </View>
-        ) : null}
+      {loading && snapshot ? (
+        <View style={styles.syncRow}>
+          <ActivityIndicator size="small" color={authColors.textMuted} />
+          <Text style={styles.syncText}>Updating progress…</Text>
+        </View>
+      ) : null}
 
-        {error ? (
-          <ErrorRetryBlock
-            message="Couldn't sync progress. Badge icons still show what you can earn."
-            onRetry={() => void refetch()}
-            retryLabel="Try again"
-          />
-        ) : null}
-      </View>
+      {error ? (
+        <ErrorRetryBlock
+          message="Couldn't sync progress. Badge icons still show what you can earn."
+          onRetry={() => void refetch()}
+          retryLabel="Try again"
+        />
+      ) : null}
     </View>
   );
 });
@@ -83,17 +69,10 @@ const styles = StyleSheet.create({
     gap: authSpacing.sm,
     marginBottom: authSpacing.md,
   },
-  preview: {
-    paddingVertical: authSpacing.sm,
-  },
-  previewLoading: {
-    flex: 1,
-    minHeight: 48,
+  loading: {
+    minHeight: 72,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  body: {
-    gap: authSpacing.sm,
   },
   hint: {
     ...authTypography.subtitle,

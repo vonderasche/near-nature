@@ -7,9 +7,15 @@ import { getWikiRowDisplayState } from '@/lib/identification/wikiRowDisplay';
 type Props = {
   latinName: string;
   wikiByLatinName: Record<string, SpeciesWikiData | null>;
+  /** When true, only fun facts render (description is shown on the list card). */
+  omitDescription?: boolean;
 };
 
-export function IdentificationSpeciesWikiBody({ latinName, wikiByLatinName }: Props) {
+export function IdentificationSpeciesWikiBody({
+  latinName,
+  wikiByLatinName,
+  omitDescription = false,
+}: Props) {
   const row = getWikiRowDisplayState(latinName, wikiByLatinName);
 
   switch (row.kind) {
@@ -22,7 +28,7 @@ export function IdentificationSpeciesWikiBody({ latinName, wikiByLatinName }: Pr
         </View>
       );
     case 'ready':
-      return <WikiArticleBody wiki={row.data} />;
+      return <WikiArticleBody wiki={row.data} omitDescription={omitDescription} />;
     default: {
       const _exhaustive: never = row;
       return _exhaustive;
@@ -30,13 +36,26 @@ export function IdentificationSpeciesWikiBody({ latinName, wikiByLatinName }: Pr
   }
 }
 
-function WikiArticleBody({ wiki }: { wiki: SpeciesWikiData }) {
+function WikiArticleBody({
+  wiki,
+  omitDescription,
+}: {
+  wiki: SpeciesWikiData;
+  omitDescription: boolean;
+}) {
+  const showDescription = !omitDescription && wiki.description?.trim();
+  const facts = wiki.funFacts?.filter(Boolean) ?? [];
+
+  if (!showDescription && facts.length === 0) {
+    return null;
+  }
+
   return (
     <View style={styles.wikiWrap}>
-      <Text style={styles.wikiDesc}>{wiki.description}</Text>
-      {wiki.funFacts?.length ? (
+      {showDescription ? <Text style={styles.wikiDesc}>{wiki.description}</Text> : null}
+      {facts.length > 0 ? (
         <View style={styles.facts}>
-          {wiki.funFacts.map((fact) => (
+          {facts.map((fact) => (
             <Text key={fact} style={styles.fact}>
               - {fact}
             </Text>

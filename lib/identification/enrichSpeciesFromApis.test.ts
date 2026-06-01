@@ -20,6 +20,7 @@ vi.mock('@/lib/identification/savedSpeciesSessionCache', () => ({
 
 vi.mock('@/lib/db/speciesRepository', () => ({
   getSpeciesByScientificName: vi.fn(),
+  upsertSpeciesRecords: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('@/lib/db/wikiCacheRepository', () => ({
@@ -257,6 +258,30 @@ describe('enrichSpeciesFromApis', () => {
       funFacts: [],
       pageUrl: 'https://en.wikipedia.org/wiki/Monarch',
     });
+  });
+
+  it('uses catalog native status without calling iNat when floridaStatus is known', async () => {
+    vi.mocked(getSpeciesByScientificName).mockResolvedValue({
+      id: '570',
+      scientificName: 'Danaus plexippus',
+      commonName: 'Monarch butterfly',
+      group: 'Insect',
+      floridaStatus: 'native',
+      taxonomy: {},
+      description: 'From local catalog.',
+      identificationTraits: [],
+      interestingFacts: [],
+      sourceUrls: {},
+      updatedAt: '2026-05-25',
+    });
+
+    const result = await enrichSpeciesFromApis([classification], 'VA', {
+      wikiSpeciesLimit: 1,
+      enrichDepthLimit: 1,
+    });
+
+    expect(lookupNativeStatus).not.toHaveBeenCalled();
+    expect(result.species[0].status).toBe('native');
   });
 
   it('still calls iNat when saved native status is unknown', async () => {

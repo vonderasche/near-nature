@@ -16,6 +16,8 @@ export type SaveIdentificationInput = {
   species: Species[];
   classifications: ClassificationResult[];
   wikiByLatinName: Record<string, SpeciesWikiData | null>;
+  /** Which candidate to save (default 0 = top match). */
+  primaryIndex?: number;
 };
 
 type UseOptimisticIdentificationSaveOptions = {
@@ -38,12 +40,13 @@ export function useOptimisticIdentificationSave({
   const { saveInBackground } = useSaveDetection();
 
   const saveIdentification = useCallback(
-    ({ species, classifications, wikiByLatinName }: SaveIdentificationInput) => {
+    ({ species, classifications, wikiByLatinName, primaryIndex = 0 }: SaveIdentificationInput) => {
       if (!userId || species.length === 0 || classifications.length === 0) return;
 
-      const primary = species[0];
+      const index = Math.min(Math.max(0, primaryIndex), species.length - 1);
+      const primary = species[index];
       const wiki = wikiByLatinName[primary.latinName];
-      const classification = classifications[0];
+      const classification = classifications[index] ?? classifications[0];
       const naturalist = resolveNaturalistCategoryFromClassification(classification);
       const category = classificationToSpeciesCategory(classification);
 

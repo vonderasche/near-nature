@@ -8,6 +8,8 @@ export type ListDetailCardProps = {
   title: string;
   /** Secondary line, italic muted (e.g. Latin name or motto). */
   subtitle?: string | null;
+  /** Optional body copy (e.g. saved description or Wikipedia summary). */
+  description?: string | null;
   /** Tertiary line, muted (e.g. timestamp or detection count). */
   meta?: string | null;
   /** Renders to the left of the text block (e.g. Explorer Board avatar). */
@@ -15,6 +17,9 @@ export type ListDetailCardProps = {
   /** Top-right badge (e.g. Explorer Board rank). */
   cornerBadge?: string | null;
   onPress?: () => void;
+  onLongPress?: () => void;
+  delayLongPress?: number;
+  accessibilityHint?: string;
   accessibilityLabel?: string;
   children?: ReactNode;
 };
@@ -26,19 +31,29 @@ export type ListDetailCardProps = {
 export function ListDetailCard({
   title,
   subtitle,
+  description,
   meta,
   leading,
   cornerBadge,
   onPress,
+  onLongPress,
+  delayLongPress,
+  accessibilityHint,
   accessibilityLabel,
   children,
 }: ListDetailCardProps) {
   const subtitleTrimmed = subtitle?.trim();
+  const descriptionTrimmed = description?.trim();
   const metaTrimmed = meta?.trim();
   const body = (
     <>
       <Text style={styles.title}>{title}</Text>
       {subtitleTrimmed ? <Text style={styles.subtitle}>{subtitleTrimmed}</Text> : null}
+      {descriptionTrimmed ? (
+        <Text style={styles.description} numberOfLines={3}>
+          {descriptionTrimmed}
+        </Text>
+      ) : null}
       {metaTrimmed ? <Text style={styles.meta}>{metaTrimmed}</Text> : null}
       {children}
     </>
@@ -65,7 +80,10 @@ export function ListDetailCard({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel ?? title}
+        accessibilityHint={accessibilityHint}
         onPress={onPress}
+        onLongPress={onLongPress}
+        delayLongPress={delayLongPress}
         style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}>
         {content}
       </Pressable>
@@ -136,6 +154,11 @@ const styles = StyleSheet.create({
     ...authTypography.subtitle,
     color: authColors.textMuted,
     fontStyle: 'italic',
+  },
+  description: {
+    ...authTypography.subtitle,
+    color: authColors.textMuted,
+    marginTop: authSpacing.xs,
   },
   meta: {
     ...authTypography.subtitle,

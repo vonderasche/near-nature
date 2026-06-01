@@ -44,3 +44,6 @@ export const GALLERY_FLASH_LIST_DRAW_DISTANCE = 480;
 export function galleryFlashListRowHeight(tileSize: number, tileGap: number): number {
   return tileSize + tileGap;
 }
+
+/** FlashList row height for bordered list gallery rows (thumb + padding). */
+export const GALLERY_LIST_ROW_HEIGHT = 112;

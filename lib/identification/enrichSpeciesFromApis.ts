@@ -4,11 +4,15 @@ import { getSpeciesSubcategoryLabel } from '@/constants/species-subcategories';
 import { classificationToSpeciesCategory } from '@/lib/detections/mapSpeciesCategory';
 import { devLog } from '@/lib/devLog';
 import { loadWikiCache, saveWikiCache } from '@/lib/db/wikiCacheRepository';
+import { getSpeciesByScientificName } from '@/lib/db/speciesRepository';
 import { normalizeLatinName } from '@/lib/identification/normalizeLatinName';
+import {
+  catalogFloridaStatusToSpeciesStatus,
+  persistGenusEnrichmentToCatalog,
+} from '@/lib/identification/persistGenusToCatalog';
 import { wikiFromSavedDescription } from '@/lib/identification/wikiFromSavedDescription';
 import { wikiFromSpeciesRecord } from '@/lib/identification/wikiFromSpeciesRecord';
 import { resolveSavedSpeciesForLatinNames } from '@/lib/identification/savedSpeciesSessionCache';
-import { getSpeciesByScientificName } from '@/lib/db/speciesRepository';
 import type { SavedSpeciesEnrichment } from '@/services/savedSpeciesEnrichmentService';
 import type { ClassificationResult, Species, SpeciesStatus } from '@/types';
 
@@ -24,6 +28,11 @@ export type EnrichSpeciesFromApisOptions = {
   /** When set, reuses prior saved detection data instead of iNat/wiki when available. */
   userId?: string;
   wikiSpeciesLimit?: number;
+  /**
+   * Only run iNat + wiki enrichment for the first N candidates (others keep vision labels, status unknown).
+   * Use 1 on the identification screen for faster results; alternates are still listed for reclassify.
+   */
+  enrichDepthLimit?: number;
 };
 
 export type EnrichSpeciesFromApisResult = {
@@ -50,8 +59,30 @@ async function resolveNativeStatus(
   if (saved && saved.status !== 'unknown') {
     return saved.status;
   }
+
+  const catalogRecord = await getSpeciesByScientificName(classification.latinName);
+  if (catalogRecord) {
+    const fromCatalog = catalogFloridaStatusToSpeciesStatus(catalogRecord.floridaStatus);
+    if (fromCatalog !== 'unknown') {
+      return fromCatalog;
+    }
+  }
+
   const nativeResult = await lookupNativeStatus(classification.latinName, userState);
-  return nativeResult?.status ?? saved?.status ?? 'unknown';
+  const status = nativeResult?.status ?? saved?.status ?? 'unknown';
+
+  if (nativeResult && status !== 'unknown') {
+    void persistGenusEnrichmentToCatalog({
+      latinName: classification.latinName,
+      commonName: classification.commonName,
+      status,
+      inatTaxonId: nativeResult.taxonId,
+    }).catch((error) => {
+      devLog('[enrich] catalog status persist failed', { error });
+    });
+  }
+
+  return status;
 }
 
 async function resolveWiki(
@@ -79,6 +110,13 @@ async function resolveWiki(
     const wiki = await fetchWikiForClassification(classification.latinName, classification.commonName);
     if (wiki) {
       void saveWikiCache(classification.latinName, wiki);
+      void persistGenusEnrichmentToCatalog({
+        latinName: classification.latinName,
+        commonName: classification.commonName,
+        wiki,
+      }).catch((error) => {
+        devLog('[enrich] catalog wiki persist failed', { error });
+      });
     }
     return { wiki, source: wiki ? 'wikipedia' : 'none' };
   } catch (e: unknown) {
@@ -91,11 +129,9 @@ async function resolveWiki(
 
 /**
  * After vision returns classifications, enrich each with iNaturalist status and (for the top
- * {@link wikiSpeciesLimit}) Wikipedia data. iNat runs for every candidate unless saved status
- * is already known; wiki fetches are capped to the first N species.
- *
- * When {@link EnrichSpeciesFromApisOptions.userId} is set, species the user has saved before
- * reuse `detections` native status and description (no iNat/wiki calls when data is present).
+ * {@link wikiSpeciesLimit}) Wikipedia data. Local SQLite (saved species, genus catalog, wiki cache)
+ * is checked first; network APIs run only on cache miss. Successful API results are written back
+ * to SQLite for future identifications of the same genus.
  */
 export async function enrichSpeciesFromApis(
   classifications: ClassificationResult[],
@@ -103,6 +139,7 @@ export async function enrichSpeciesFromApis(
   options?: EnrichSpeciesFromApisOptions,
 ): Promise<EnrichSpeciesFromApisResult> {
   const wikiSpeciesLimit = options?.wikiSpeciesLimit ?? DEFAULT_WIKI_SPECIES_LIMIT;
+  const enrichDepthLimit = options?.enrichDepthLimit ?? classifications.length;
   const userId = options?.userId;
 
   if (classifications.length === 0) {
@@ -112,6 +149,7 @@ export async function enrichSpeciesFromApis(
   devLog('[enrich] start', {
     count: classifications.length,
     wikiSpeciesLimit,
+    enrichDepthLimit,
     userState,
     userId: userId ?? null,
   });
@@ -130,7 +168,9 @@ export async function enrichSpeciesFromApis(
   const species = await Promise.all(
     classifications.map(async (classification, index): Promise<Species> => {
       const saved = savedByLatin.get(normalizeLatinName(classification.latinName));
-      const fetchWiki = index < wikiSpeciesLimit && Boolean(classification.latinName);
+      const runFullEnrich = index < enrichDepthLimit;
+      const fetchWiki =
+        runFullEnrich && index < wikiSpeciesLimit && Boolean(classification.latinName);
 
       if (saved) {
         devLog('[enrich] saved detection hit', {
@@ -140,7 +180,9 @@ export async function enrichSpeciesFromApis(
         });
       }
 
-      const statusPromise = resolveNativeStatus(classification, userState, saved);
+      const statusPromise = runFullEnrich
+        ? resolveNativeStatus(classification, userState, saved)
+        : Promise.resolve(saved?.status ?? ('unknown' as SpeciesStatus));
       const wikiPromise = fetchWiki
         ? resolveWiki(classification, saved, (message) => {
             if (!wikiError) wikiError = message;

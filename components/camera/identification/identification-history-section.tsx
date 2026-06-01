@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Text } from 'react-native';
 
-import { SpeciesResultCard } from '@/components/camera/identification/species-result-card';
 import { DetectionGalleryDetailModal } from '@/components/profile/detection-gallery-detail-modal';
+import { DetectionGalleryListItem } from '@/components/profile/detection-gallery-list-item';
 import { CenteredActivityIndicator } from '@/components/shared/centered-activity-indicator';
 import { SectionLabel } from '@/components/shared/section-label';
 import { listSectionSupportingStyles } from '@/components/shared/list-detail-card';
@@ -28,15 +28,17 @@ export function IdentificationHistorySection({ historyLoading, identifications }
       ) : identifications.length === 0 ? (
         <Text style={listSectionSupportingStyles.muted}>No saved identifications yet.</Text>
       ) : (
-        identifications.map((row) => (
-          <SpeciesResultCard
-            key={row.id}
-            commonName={row.species.commonName}
-            latinName={row.species.latinName}
-            meta={new Date(row.timestamp).toLocaleString()}
-            onPress={row.galleryItem ? () => setSelected(row.galleryItem!) : undefined}
-          />
-        ))
+        identifications
+          .filter((row): row is typeof row & { galleryItem: DetectionGalleryItem } =>
+            Boolean(row.galleryItem),
+          )
+          .map((row) => (
+            <DetectionGalleryListItem
+              key={row.id}
+              item={row.galleryItem}
+              onPress={() => setSelected(row.galleryItem)}
+            />
+          ))
       )}
       <DetectionGalleryDetailModal
         visible={selected !== null}

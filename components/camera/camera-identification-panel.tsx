@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -61,9 +61,20 @@ export function CameraIdentificationPanel({
       identify,
     );
 
+  const [selectedSpeciesIndex, setSelectedSpeciesIndex] = useState(0);
+
+  useEffect(() => {
+    setSelectedSpeciesIndex(0);
+  }, [photoUri, species]);
+
   const handleSaveIdentification = useCallback(() => {
-    saveIdentification({ species, classifications, wikiByLatinName });
-  }, [classifications, saveIdentification, species, wikiByLatinName]);
+    saveIdentification({
+      species,
+      classifications,
+      wikiByLatinName,
+      primaryIndex: selectedSpeciesIndex,
+    });
+  }, [classifications, saveIdentification, selectedSpeciesIndex, species, wikiByLatinName]);
 
   return (
     <>
@@ -94,6 +105,8 @@ export function CameraIdentificationPanel({
             identifying={identifying}
             identifyError={identifyError}
             wikiByLatinName={wikiByLatinName}
+            selectedIndex={selectedSpeciesIndex}
+            onSelectIndex={setSelectedSpeciesIndex}
           />
 
           <IdentificationHistorySection historyLoading={historyLoading} identifications={identifications} />

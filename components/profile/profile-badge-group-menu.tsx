@@ -125,7 +125,9 @@ export function ProfileBadgeGroupMenu({ group, size, compact = false }: Props) {
           />
           <Text
             style={[styles.triggerLabel, anyEarned ? styles.triggerLabelEarned : styles.triggerLabelIdle]}
-            numberOfLines={2}>
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.75}>
             {group.shortLabel}
           </Text>
         </Pressable>
@@ -195,9 +197,10 @@ const styles = StyleSheet.create({
   },
   triggerLabel: {
     ...authTypography.label,
-    fontSize: 12,
-    lineHeight: 14,
+    fontSize: 11,
+    lineHeight: 13,
     textAlign: 'center',
+    width: '100%',
   },
   triggerLabelEarned: {
     color: authColors.text,

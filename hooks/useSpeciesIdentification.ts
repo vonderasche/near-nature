@@ -85,7 +85,7 @@ export function useSpeciesIdentification(): UseSpeciesIdentificationResult {
       const { species, wikiByLatinName, wikiError } = await enrichSpeciesFromApis(
         classifications,
         userState,
-        { userId },
+        { userId, wikiSpeciesLimit: 1, enrichDepthLimit: 1 },
       );
 
       return { species, classifications, wikiByLatinName, wikiError, tfliteMeta };
