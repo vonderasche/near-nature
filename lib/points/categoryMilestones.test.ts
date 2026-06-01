@@ -5,11 +5,10 @@ import { buildSpeciesCounts, milestonesForNewCounts } from '@/lib/points/categor
 
 describe('categoryMilestones', () => {
   it('maps tier thresholds', () => {
-    expect(tierForSpeciesCount(9)).toBeNull();
-    expect(tierForSpeciesCount(10)).toBe('explorer');
-    expect(tierForSpeciesCount(50)).toBe('voyager');
-    expect(subTierForSpeciesCount(2)).toBeNull();
-    expect(subTierForSpeciesCount(3)).toBe('explorer');
+    expect(tierForSpeciesCount(0)).toBeNull();
+    expect(tierForSpeciesCount(1)).toBe('voyager');
+    expect(subTierForSpeciesCount(0)).toBeNull();
+    expect(subTierForSpeciesCount(1)).toBe('voyager');
   });
 
   it('awards main explorer once', () => {
@@ -25,27 +24,30 @@ describe('categoryMilestones', () => {
     expect(awards.find((a) => a.awardKey === 'main:botanist:explorer')?.points).toBe(50);
   });
 
-  it('awards subcategory explorer at three species', () => {
+  it('awards subcategory explorer and main explorer at one species', () => {
     const counts = buildSpeciesCounts([
       { latin_name: 'Species 1', category: 'wildflowers' },
-      { latin_name: 'Species 2', category: 'wildflowers' },
-      { latin_name: 'Species 3', category: 'wildflowers' },
     ]);
 
     const awards = milestonesForNewCounts(counts, new Set());
     expect(awards.some((a) => a.awardKey === 'sub:wildflowers:explorer')).toBe(true);
-    expect(awards.some((a) => a.awardKey === 'main:botanist:explorer')).toBe(false);
+    expect(awards.some((a) => a.awardKey === 'main:botanist:explorer')).toBe(true);
   });
 
-  it('requires three distinct subcategory species', () => {
+  it('does not award subcategory explorer with zero species', () => {
+    const counts = buildSpeciesCounts([]);
+
+    const awards = milestonesForNewCounts(counts, new Set());
+    expect(awards.some((a) => a.awardKey === 'sub:wildflowers:explorer')).toBe(false);
+  });
+
+  it('awards subcategory explorer with one distinct species', () => {
     const counts = buildSpeciesCounts([
-      { latin_name: 'Coreopsis leavenworthii', category: 'wildflowers' },
-      { latin_name: 'Coreopsis leavenworthii', category: 'wildflowers' },
       { latin_name: 'Coreopsis leavenworthii', category: 'wildflowers' },
     ]);
 
     const awards = milestonesForNewCounts(counts, new Set());
-    expect(awards.some((a) => a.awardKey === 'sub:wildflowers:explorer')).toBe(false);
+    expect(awards.some((a) => a.awardKey === 'sub:wildflowers:explorer')).toBe(true);
   });
 
   it('awards mammalogist true voyager at main discipline voyager only', () => {

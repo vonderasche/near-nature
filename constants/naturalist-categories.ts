@@ -46,15 +46,15 @@ export type MainCategoryDef = {
 };
 
 export const TIER_SPECIES_THRESHOLDS: Record<CategoryTierId, number> = {
-  explorer: 10,
-  adventurer: 25,
-  voyager: 50,
+  explorer: 1,
+  adventurer: 1,
+  voyager: 1,
 };
 
 export const SUB_TIER_SPECIES_THRESHOLDS: Record<CategoryTierId, number> = {
-  explorer: 3,
-  adventurer: 25,
-  voyager: 50,
+  explorer: 1,
+  adventurer: 1,
+  voyager: 1,
 };
 
 export const MAIN_TIER_POINTS: Record<CategoryTierId, number> = {

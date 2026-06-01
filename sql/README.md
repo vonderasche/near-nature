@@ -46,6 +46,7 @@ All `.sql` scripts here are written to be **safe to re-run** (they drop/recreate
 | `pg_trgm_bootstrap.sql` | Enable `pg_trgm` + helpers for trigram GIN indexes (run before search SQL if index creation fails) |
 | `optimize_detection_gallery.sql` | Gallery indexes, faster search RPC, SQL category filter, alias refresh trigger |
 | `check_category_milestones.sql` | Milestone / badge awards after first species discovery (trigger calls this) |
+| `test_badges_main_only_threshold_1.sql` | Test mode: only 4 main badges active, threshold = 1 species |
 | `create_point_awards.sql` | `public.point_awards` table (tier bonuses) |
 | `harden_security_linter.sql` | Supabase linter fixes: `search_path`, RPC grants, `species_metadata` RLS, anon table access |
 | `drop_legacy_rpc.sql` | One-off: drops unused RPCs and old indexes |
@@ -118,6 +119,7 @@ If tables already exist and you only need to refresh objects:
 | Member profiles | `get_public_user_profile.sql` |
 | Member earned badges | `get_public_user_awards.sql` |
 | Profile scoring tab | `get_user_scoring_snapshot.sql`, `get_user_score_by_category.sql`, `add_badge_progress.sql`, `deactivate_legacy_badge_definitions.sql` |
+| Badge test mode (4 mains, threshold 1) | `test_badges_main_only_threshold_1.sql` |
 | Naturalist taxonomy | `add_naturalist_category_enums.sql`, `add_detection_naturalist_columns.sql`, `check_category_milestones.sql` |
 | Username login | `resolve_login_email.sql` |
 | Missing profile after sign-in | `ensure_public_user_profile.sql` |
