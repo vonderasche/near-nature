@@ -2,7 +2,8 @@
 
 Nature-identification app built with **Expo Router**, **Supabase** (Auth, Postgres, Storage, Edge Functions), and on-device caches so profile and gallery feel instant after the first load.
 
-For SQL setup order, see [`sql/README.md`](../sql/README.md).
+For SQL setup order, see [`sql/README.md`](../sql/README.md).  
+For local classifier model folder setup (non-committed binaries), see [`docs/LOCAL_MODEL_SETUP.md`](./LOCAL_MODEL_SETUP.md).
 
 **Diagrams in this doc**
 
