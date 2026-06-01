@@ -11,8 +11,8 @@ describe('previewToSpecialist', () => {
     expect(SPECIALIST_DISPLAY_NAMES.birds).toBe('Birds');
   });
 
-  it('routes wildflower preview to herbaceous_plants', () => {
-    expect(resolveSpecialistForPreviewLabel('Wildflower')).toBe('herbaceous_plants');
+  it('routes wildflower preview to forbs_ferns', () => {
+    expect(resolveSpecialistForPreviewLabel('Wildflower')).toBe('forbs_ferns');
   });
 
   it('returns null for non-organism previews', () => {

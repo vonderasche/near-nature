@@ -2,7 +2,7 @@ import type { ComponentProps } from 'react';
 
 import { CameraLivePredictionsOverlay } from '@/components/camera/camera-live-predictions-overlay';
 import { CameraLivePreview } from '@/components/camera/camera-live-preview';
-import { useMobileNetTop20FrameProcessor } from '@/hooks/useMobileNetTop20FrameProcessor';
+import { useLivePreviewFrameProcessor } from '@/hooks/useLivePreviewFrameProcessor';
 import { areFrameProcessorsAvailable } from '@/lib/camera/areFrameProcessorsAvailable';
 
 type Props = ComponentProps<typeof CameraLivePreview> & {
@@ -12,7 +12,7 @@ type Props = ComponentProps<typeof CameraLivePreview> & {
 const REBUILD_HINT =
   'Frame processors are disabled in this build. Run npx expo prebuild, then rebuild the native app.';
 
-export function CameraLivePreviewWithMobileNet({
+export function CameraLivePreviewWithClassifier({
   liveClassifierEnabled,
   ...previewProps
 }: Props) {
@@ -35,19 +35,23 @@ export function CameraLivePreviewWithMobileNet({
   }
 
   return (
-    <CameraLivePreviewWithMobileNetActive
+    <CameraLivePreviewWithClassifierActive
       {...previewProps}
       liveClassifierEnabled={liveClassifierEnabled}
     />
   );
 }
 
-function CameraLivePreviewWithMobileNetActive({
+function CameraLivePreviewWithClassifierActive({
   liveClassifierEnabled,
   ...previewProps
 }: Props) {
+  // Guard against VisionCameraProxy "view not found" crashes during preview remount/resume.
+  const frameProcessingActive =
+    previewProps.isActive && !previewProps.isResumingPreview && liveClassifierEnabled;
+
   const { frameProcessor, modelState, modelError, predictions } =
-    useMobileNetTop20FrameProcessor(previewProps.isActive && liveClassifierEnabled);
+    useLivePreviewFrameProcessor(frameProcessingActive);
 
   return (
     <>

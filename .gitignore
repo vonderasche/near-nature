@@ -47,3 +47,13 @@ app-example
 # generated native folders
 /ios
 /android
+
+# model training/export artifacts (runtime bundle keeps only .tflite + labels/routing metadata)
+assets/tflite/near_nature_app_bundle/**/tflite/tflite_out/
+assets/tflite/near_nature_app_bundle/**/tflite/_docker_onnx2tflite.py
+assets/tflite/near_nature_app_bundle/**/tflite/export_dummy_input.npy
+assets/tflite/near_nature_app_bundle/**/*.onnx
+assets/tflite/near_nature_app_bundle/**/*.pt
+assets/tflite/near_nature_app_bundle/**/*.pth
+assets/tflite/near_nature_app_bundle/**/train.log
+assets/tflite/near_nature_app_bundle/**/train.err.log

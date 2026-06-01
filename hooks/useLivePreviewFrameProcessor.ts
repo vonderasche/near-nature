@@ -1,59 +1,87 @@
 import { useEffect, useMemo, useState } from 'react';
 import { NitroModules } from 'react-native-nitro-modules';
 import { useRunOnJS } from 'react-native-worklets-core';
-import { useTensorflowModel } from 'react-native-fast-tflite';
 import {
   runAtTargetFps,
   useFrameProcessor,
 } from 'react-native-vision-camera';
 import { useResizePlugin } from 'vision-camera-resize-plugin';
 
-import modelAsset from '@/assets/tflite/near_nature_app_bundle/preview/preview_classifier.tflite';
+import previewLabels from '@/assets/tflite/near_nature_app_bundle/preview_live/efficientnet_b0/tflite/labels.json';
+import modelAsset from '@/assets/tflite/near_nature_app_bundle/preview_live/efficientnet_b0/tflite/efficientnet_b0_imagenet1k.tflite';
 import type { LiveClassifierModelState, LiveClassifierPrediction } from '@/lib/camera/liveClassifierTypes';
 import { formatMobileNetError } from '@/lib/camera/mobilenet/formatMobileNetError';
 import {
-  MOBILENET_PREVIEW_INFERENCE_FPS,
-  MOBILENET_PREVIEW_INPUT_SIZE,
+  LIVE_PREVIEW_INFERENCE_FPS,
+  LIVE_PREVIEW_INPUT_SIZE,
 } from '@/lib/camera/mobilenet/modelConfig';
 import { normalizeMobileNetInput } from '@/lib/camera/mobilenet/normalizeMobileNetInput';
+import { getLabelAtIndex, type ModelLabelsJson, buildLabelLookup } from '@/lib/camera/mobilenet/parseModelLabels';
 import {
   parseMobileNetTop3,
   type MobileNetPredictionScore,
 } from '@/lib/camera/mobilenet/parseMobileNetOutput';
-import { getMobileNetTop20PreviewLabel } from '@/lib/camera/mobilenet/top20PreviewLabels';
+import { getCachedTfliteModel } from '@/lib/camera/mobilenet/tfliteModelRunner';
 
-export type MobileNetLivePrediction = LiveClassifierPrediction;
+export type LivePreviewPrediction = LiveClassifierPrediction;
+const PREVIEW_LABEL_LOOKUP = buildLabelLookup(previewLabels as ModelLabelsJson);
 
-type UseMobileNetTop20FrameProcessorResult = {
+type UseLivePreviewFrameProcessorResult = {
   frameProcessor: ReturnType<typeof useFrameProcessor> | undefined;
   modelState: Exclude<LiveClassifierModelState, 'unavailable'>;
   modelError: string | null;
-  predictions: MobileNetLivePrediction[];
+  predictions: LivePreviewPrediction[];
 };
 
-function labelPrediction(prediction: MobileNetPredictionScore): MobileNetLivePrediction {
+function labelPrediction(prediction: MobileNetPredictionScore): LivePreviewPrediction {
   return {
     ...prediction,
-    label: getMobileNetTop20PreviewLabel(prediction.classIndex),
+    label: getLabelAtIndex(PREVIEW_LABEL_LOOKUP, prediction.classIndex),
   };
 }
 
-export function useMobileNetTop20FrameProcessor(
+export function useLivePreviewFrameProcessor(
   active: boolean,
-): UseMobileNetTop20FrameProcessorResult {
-  const tf = useTensorflowModel(modelAsset, []);
+): UseLivePreviewFrameProcessorResult {
   const { resize } = useResizePlugin();
-  const [predictions, setPredictions] = useState<MobileNetLivePrediction[]>([]);
+  const [predictions, setPredictions] = useState<LivePreviewPrediction[]>([]);
   const [inferenceError, setInferenceError] = useState<string | null>(null);
+  const [model, setModel] = useState<Awaited<ReturnType<typeof getCachedTfliteModel>>>();
+  const [modelLoadError, setModelLoadError] = useState<string | null>(null);
+  const [isModelLoading, setIsModelLoading] = useState(true);
 
-  const model = tf.state === 'loaded' ? tf.model : undefined;
-  const modelError = tf.state === 'error' ? formatMobileNetError(tf.error) : inferenceError;
+  useEffect(() => {
+    let cancelled = false;
+    setIsModelLoading(true);
+    setModelLoadError(null);
+
+    getCachedTfliteModel(modelAsset)
+      .then((loaded) => {
+        if (cancelled) return;
+        setModel(loaded);
+        setIsModelLoading(false);
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        setModel(undefined);
+        setModelLoadError(formatMobileNetError(error));
+        setIsModelLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const modelError = modelLoadError ?? inferenceError;
   const modelState =
-    tf.state === 'error' || inferenceError
+    modelLoadError != null || inferenceError
       ? 'error'
-      : tf.state === 'loaded'
+      : model != null
         ? 'loaded'
-        : 'loading';
+        : isModelLoading
+          ? 'loading'
+          : 'error';
 
   useEffect(() => {
     if (!active) {
@@ -82,14 +110,14 @@ export function useMobileNetTop20FrameProcessor(
       'worklet';
       if (!active || boxedModel == null) return;
 
-      runAtTargetFps(MOBILENET_PREVIEW_INFERENCE_FPS, () => {
+      runAtTargetFps(LIVE_PREVIEW_INFERENCE_FPS, () => {
         'worklet';
         try {
           const tflite = boxedModel.unbox();
           const resized = resize(frame, {
             scale: {
-              width: MOBILENET_PREVIEW_INPUT_SIZE,
-              height: MOBILENET_PREVIEW_INPUT_SIZE,
+              width: LIVE_PREVIEW_INPUT_SIZE,
+              height: LIVE_PREVIEW_INPUT_SIZE,
             },
             pixelFormat: 'rgb',
             dataType: 'float32',

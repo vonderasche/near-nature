@@ -23,5 +23,17 @@ export async function runTfliteTop3(
   if (raw == null) {
     throw new Error('The on-device model returned no output.');
   }
-  return parseMobileNetTop3(raw);
+  return parseMobileNetTop3(raw, { forceFloat: true });
+}
+
+/**
+ * Loads a model and runs top-3 inference without pinning it in the shared cache.
+ * Use for large specialist models to avoid unbounded heap growth across categories.
+ */
+export async function runTfliteTop3Transient(
+  modelAsset: number,
+  input: Float32Array,
+): Promise<MobileNetPredictionScore[]> {
+  const model = await loadTensorflowModel(modelAsset, []);
+  return runTfliteTop3(model, input);
 }

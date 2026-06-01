@@ -283,7 +283,7 @@ flowchart TD
 |------|-----------------|
 | Capture | `hooks/useCameraScreen.ts`, `hooks/usePickPhotoFromGallery.ts` |
 | Classify (native) | `lib/camera/mobilenet/identifyPhotoWithTflite.ts`, `preprocessImageForMobileNet.ts` |
-| Live preview (native) | `hooks/useMobileNetTop20FrameProcessor.ts` — 20-class preview model |
+| Live preview (native) | `hooks/useLivePreviewFrameProcessor.ts` — EfficientNetB0 preview model |
 | Classify (web) | `hooks/useSpeciesIdentification.ts`, `api/gemini.ts`, Edge `identify-species` |
 | Enrich | `lib/identification/enrichSpeciesFromApis.ts` — iNat for all candidates; wiki capped to top N; saved detection / catalog / wiki_cache tiers |
 | UI | `components/camera/camera-identification-panel.tsx` |

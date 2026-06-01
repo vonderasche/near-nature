@@ -8,7 +8,7 @@ import { routes } from '@/lib/routing/routes';
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { CameraBottomToolbar } from '@/components/camera/camera-bottom-toolbar';
-import { CameraLivePreviewWithMobileNet } from '@/components/camera/camera-live-preview-with-mobilenet';
+import { CameraLivePreviewWithClassifier } from '@/components/camera/camera-live-preview-with-classifier';
 import { CameraTopControls } from '@/components/camera/camera-top-controls';
 import { CameraZoomChips } from '@/components/camera/camera-zoom-chips';
 import { useCameraCaptureFormat } from '@/hooks/useCameraCaptureFormat';
@@ -200,7 +200,7 @@ export default function CameraScreen() {
       <View style={styles.root}>
         {device ? (
           <>
-            <CameraLivePreviewWithMobileNet
+            <CameraLivePreviewWithClassifier
               cameraRef={cameraRef}
               device={device}
               format={format}

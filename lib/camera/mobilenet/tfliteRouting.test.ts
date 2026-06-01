@@ -3,7 +3,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { MOBILENET_TOP20_PREVIEW_LABELS } from '@/lib/camera/mobilenet/top20PreviewLabels';
+import { ROUTING_PREVIEW_LABELS } from '@/lib/camera/mobilenet/top20PreviewLabels';
 import {
   resolveSpecialistForPreviewLabel,
   TFLITE_ROUTING,
@@ -13,7 +13,7 @@ describe('tfliteRouting', () => {
   it('matches preview labels to app bundle preview metadata', () => {
     const labelsPath = join(
       process.cwd(),
-      'assets/tflite/near_nature_app_bundle/preview/labels.json',
+      'assets/tflite/near_nature_app_bundle/routing_capture/mobilevit_routing/tflite/labels.json',
     );
     const labelsFile = JSON.parse(readFileSync(labelsPath, 'utf8')) as {
       labels: { index: number; name: string }[];
@@ -23,14 +23,14 @@ describe('tfliteRouting', () => {
       .sort((a, b) => a.index - b.index)
       .map((row) => row.name);
     expect(TFLITE_ROUTING.preview_groups).toEqual(labels);
-    expect(MOBILENET_TOP20_PREVIEW_LABELS).toEqual(labels);
+    expect(ROUTING_PREVIEW_LABELS).toEqual(labels);
   });
 
-  it('routes bird preview to birds folder with species rollup', () => {
+  it('routes bird preview to birds folder', () => {
     const resolved = resolveSpecialistForPreviewLabel('Bird');
     expect(resolved.routingId).toBe('birds');
     expect(resolved.assetFolder).toBe('birds');
-    expect(resolved.inferenceMode).toBe('species_rollup');
+    expect(resolved.inferenceMode).toBe('genus_direct');
     expect(resolved.displayName).toBe('Birds');
   });
 

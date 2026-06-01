@@ -21,12 +21,22 @@ function insertTopPrediction(
 }
 
 /** Returns top-3 predictions from float logits/probabilities or quantized classifier output. */
-export function parseMobileNetTop3(output: ArrayBuffer): MobileNetPredictionScore[] {
+export function parseMobileNetTop3(
+  output: ArrayBuffer,
+  options?: { forceFloat?: boolean },
+): MobileNetPredictionScore[] {
   'worklet';
   const byteLength = output.byteLength;
   const top: MobileNetPredictionScore[] = [];
 
-  if (byteLength >= 4 && byteLength % 4 === 0 && byteLength / 4 <= 1001) {
+  if (options?.forceFloat && (byteLength < 4 || byteLength % 4 !== 0)) {
+    throw new Error('Expected float32 output buffer from TFLite model.');
+  }
+
+  const shouldParseAsFloat =
+    options?.forceFloat === true || (byteLength >= 4 && byteLength % 4 === 0 && byteLength / 4 <= 1001);
+
+  if (shouldParseAsFloat) {
     const floats = new Float32Array(output);
     let maxLogit = floats[0] ?? 0;
     for (let i = 1; i < floats.length; i++) {

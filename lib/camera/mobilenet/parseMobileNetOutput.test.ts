@@ -16,4 +16,14 @@ describe('parseMobileNetTop3', () => {
     expect(top.map((p) => p.classIndex)).toEqual([3, 1, 4]);
     expect(top[0].confidence).toBe(1);
   });
+
+  it('can force float parsing for large class counts', () => {
+    const logits = new Float32Array(1569);
+    logits[10] = 2.1;
+    logits[777] = 4.2;
+    logits[1500] = 3.5;
+
+    const top = parseMobileNetTop3(logits.buffer, { forceFloat: true });
+    expect(top.map((p) => p.classIndex)).toEqual([777, 1500, 10]);
+  });
 });

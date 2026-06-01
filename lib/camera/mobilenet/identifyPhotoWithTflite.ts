@@ -1,12 +1,17 @@
-import previewModelAsset from '@/assets/tflite/near_nature_app_bundle/preview/preview_classifier.tflite';
+import routingModelAsset from '@/assets/tflite/near_nature_app_bundle/routing_capture/mobilevit_routing/tflite/routing_classifier.tflite';
 
-import { rollupSpeciesScoresToGenusTop3 } from '@/lib/camera/mobilenet/birdsSpeciesRollup';
 import { getLabelAtIndex } from '@/lib/camera/mobilenet/parseModelLabels';
 import { preprocessImageForMobileNet } from '@/lib/camera/mobilenet/preprocessImageForMobileNet';
 import { previewLabelToTaxonGroup } from '@/lib/camera/mobilenet/previewLabelTaxonomy';
+import { ROUTING_MODEL_INPUT_SIZE, SPECIALIST_MODEL_INPUT_SIZE } from '@/lib/camera/mobilenet/modelConfig';
+import { parseMobileNetTop3 } from '@/lib/camera/mobilenet/parseMobileNetOutput';
 import { resolveSpecialistForPreviewLabel } from '@/lib/camera/mobilenet/tfliteRouting';
 import { getSpecialistDefinition } from '@/lib/camera/mobilenet/specialistModelRegistry';
-import { getCachedTfliteModel, runTfliteTop3 } from '@/lib/camera/mobilenet/tfliteModelRunner';
+import {
+  getCachedTfliteModel,
+  runTfliteTop3,
+  runTfliteTop3Transient,
+} from '@/lib/camera/mobilenet/tfliteModelRunner';
 import { TFLITE_ROUTING } from '@/lib/camera/mobilenet/tfliteRouting';
 import type { ClassificationResult } from '@/types';
 import type {
@@ -18,6 +23,10 @@ import type {
 
 function previewLabelAtIndex(classIndex: number): string {
   return TFLITE_ROUTING.preview_groups[classIndex] ?? `Class ${classIndex}`;
+}
+
+function sigmoid(x: number): number {
+  return 1 / (1 + Math.exp(-x));
 }
 
 function toPreviewPredictions(
@@ -55,36 +64,38 @@ function genusToClassification(
 }
 
 async function runSpecialistGenusTop3(
-  input: Float32Array,
+  input224: Float32Array,
   specialist: NonNullable<ReturnType<typeof getSpecialistDefinition>>,
 ): Promise<{ classIndex: number; confidence: number }[]> {
-  const specialistModel = await getCachedTfliteModel(specialist.model);
-
-  if (specialist.inferenceMode === 'species_rollup' && specialist.rollup) {
-    const outputs = await specialistModel.run([input.buffer as ArrayBuffer]);
-    const raw = outputs[0];
-    if (raw == null) {
-      throw new Error('The bird species model returned no output.');
-    }
-    return rollupSpeciesScoresToGenusTop3(raw, specialist.rollup);
-  }
-
-  return runTfliteTop3(specialistModel, input);
+  return runTfliteTop3Transient(specialist.model, input224);
 }
 
 /**
  * On-device identification for camera capture and gallery picks:
- * 1) top-20 preview model (near_nature_app_bundle/preview)
- * 2) route top preview class via routing.json
- * 3) run the matching specialist model for genus predictions
+ * 1) MobileViT routing model (top-3 preview groups)
+ * 2) route top preview group via routing.json
+ * 3) run the matching specialist model for genus predictions (top-3)
  */
 export async function identifyPhotoWithTflite(
   photoUri: string,
 ): Promise<TfliteIdentificationResult> {
-  const input = await preprocessImageForMobileNet(photoUri);
-  const previewModel = await getCachedTfliteModel(previewModelAsset);
-  const previewScores = await runTfliteTop3(previewModel, input);
-  const previewTop = toPreviewPredictions(previewScores);
+  const routingInput = await preprocessImageForMobileNet(photoUri, ROUTING_MODEL_INPUT_SIZE);
+  const specialistInput = await preprocessImageForMobileNet(photoUri, SPECIALIST_MODEL_INPUT_SIZE);
+
+  const routingModel = await getCachedTfliteModel(routingModelAsset);
+  const outputs = await routingModel.run([routingInput.buffer as ArrayBuffer]);
+  const raw = outputs[0];
+  if (raw == null) {
+    throw new Error('The routing model returned no output.');
+  }
+
+  const logits = new Float32Array(raw);
+  const probs = new Float32Array(logits.length);
+  for (let i = 0; i < logits.length; i += 1) {
+    probs[i] = sigmoid(logits[i] ?? 0);
+  }
+
+  const previewTop = toPreviewPredictions(parseMobileNetTop3(probs.buffer));
 
   const topPreview = previewTop[0];
   if (!topPreview) {
@@ -141,7 +152,7 @@ export async function identifyPhotoWithTflite(
     throw new Error(`Missing specialist model configuration for ${routing.assetFolder}.`);
   }
 
-  const genusScores = await runSpecialistGenusTop3(input, specialist);
+  const genusScores = await runSpecialistGenusTop3(specialistInput, specialist);
   const genusTop = toGenusPredictions(genusScores, specialist.labelLookup);
 
   const classifications = genusTop.map((row) =>
