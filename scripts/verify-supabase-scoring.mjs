@@ -30,6 +30,16 @@ function isRpcMissing(error) {
   );
 }
 
+/** Unauthenticated probe: RPC exists if we get auth/permission errors, not "function not found". */
+function isAuthenticatedOnlyProbeOk(error) {
+  const msg = (error?.message ?? '').toLowerCase();
+  if (isRpcMissing(error)) return false;
+  if (error?.code === '42501') return true;
+  if (msg.includes('permission denied')) return true;
+  if (msg.includes('not authenticated')) return true;
+  return false;
+}
+
 const env = loadEnv();
 const supabase = createClient(env.EXPO_PUBLIC_SUPABASE_URL, env.EXPO_PUBLIC_SUPABASE_ANON_KEY);
 const probeUserId = '00000000-0000-4000-8000-000000000099';
@@ -44,7 +54,13 @@ async function probe(name, fn) {
     console.log(`  OK ${name}`);
   } catch (e) {
     failed = true;
-    console.error(`  FAIL ${name} — ${e instanceof Error ? e.message : e}`);
+    const msg =
+      e instanceof Error
+        ? e.message
+        : typeof e === 'object' && e !== null && 'message' in e
+          ? String(e.message)
+          : String(e);
+    console.error(`  FAIL ${name} — ${msg}`);
   }
 }
 
@@ -67,7 +83,7 @@ await probe('get_user_scoring_snapshot', async () => {
     if (isRpcMissing(error)) {
       throw new Error('run sql/get_user_scoring_snapshot.sql and reload schema cache');
     }
-    throw error;
+    if (!isAuthenticatedOnlyProbeOk(error)) throw error;
   }
   if (data !== null) {
     console.log('    (unauthenticated probe returned data — expected null)');
@@ -82,7 +98,7 @@ await probe('get_user_score_by_category', async () => {
     if (isRpcMissing(error)) {
       throw new Error('run sql/get_user_score_by_category.sql and reload schema cache');
     }
-    throw error;
+    if (!isAuthenticatedOnlyProbeOk(error)) throw error;
   }
   if (data != null && !Array.isArray(data)) throw new Error('expected array or null');
 });

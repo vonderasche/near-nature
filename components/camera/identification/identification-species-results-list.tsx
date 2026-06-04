@@ -22,7 +22,8 @@ type Props = {
   selectedIndex: number;
   onSelectIndex: (index: number) => void;
   alternatesEnriching: boolean;
-  onEnrichAlternates: () => Promise<void>;
+  canReclassifyWithCloud: boolean;
+  onReclassifyWithCloud: () => Promise<void>;
 };
 
 function wikiDescription(
@@ -51,7 +52,8 @@ export function IdentificationSpeciesResultsList({
   selectedIndex,
   onSelectIndex,
   alternatesEnriching,
-  onEnrichAlternates,
+  canReclassifyWithCloud,
+  onReclassifyWithCloud,
 }: Props) {
   const [showAlternates, setShowAlternates] = useState(false);
 
@@ -59,9 +61,14 @@ export function IdentificationSpeciesResultsList({
     setShowAlternates(false);
   }, [classifications, speciesIdBase]);
 
-  const handleChooseAnother = async () => {
-    await onEnrichAlternates();
-    setShowAlternates(true);
+  useEffect(() => {
+    if (!canReclassifyWithCloud && classifications.length > 1) {
+      setShowAlternates(true);
+    }
+  }, [canReclassifyWithCloud, classifications.length]);
+
+  const handleReclassifyWithCloud = async () => {
+    await onReclassifyWithCloud();
   };
 
   if (!identifying && classifications.length === 0 && !identifyError) {
@@ -81,15 +88,15 @@ export function IdentificationSpeciesResultsList({
 
   const safeIndex = Math.min(Math.max(0, selectedIndex), classifications.length - 1);
   const primary = displaySpecies[safeIndex]!;
-  const hasAlternates = classifications.length > 1;
+  const hasAlternateMatches = classifications.length > 1;
 
-  if (showAlternates && hasAlternates) {
+  if (showAlternates && hasAlternateMatches) {
     return (
       <View style={styles.alternatesWrap}>
-        <Text style={styles.alternatesHeading}>Other matches</Text>
+        <Text style={styles.alternatesHeading}>Cloud identification</Text>
         <Text style={styles.alternatesHint}>Tap a species to use it when you save.</Text>
         {alternatesEnriching ? (
-          <Text style={styles.alternatesHint}>Loading details for other matches…</Text>
+          <Text style={styles.alternatesHint}>Identifying with cloud AI…</Text>
         ) : null}
         {displaySpecies.map((s, index) => {
           const selected = index === safeIndex;
@@ -142,14 +149,14 @@ export function IdentificationSpeciesResultsList({
         />
       </SpeciesResultCard>
 
-      {hasAlternates ? (
+      {canReclassifyWithCloud ? (
         <AuthButton
           variant="outline"
-          title={alternatesEnriching ? 'Loading other matches…' : 'Not this species? Choose another'}
-          onPress={() => void handleChooseAnother()}
+          title={alternatesEnriching ? 'Identifying with cloud AI…' : 'Not this species? Identify with cloud AI'}
+          onPress={() => void handleReclassifyWithCloud()}
           disabled={alternatesEnriching}
           fillParent
-          accessibilityHint="Loads details for other model matches so you can pick one before saving"
+          accessibilityHint="Runs cloud species identification when the on-device match is wrong"
         />
       ) : null}
     </View>

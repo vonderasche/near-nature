@@ -65,7 +65,9 @@ function isGalleryRpcUnavailable(error: { code?: string; message?: string }): bo
     error.code === 'PGRST202' ||
     error.code === '42883' ||
     message.includes('search_user_detections') ||
-    message.includes('does not exist')
+    message.includes('does not exist') ||
+    message.includes('not authenticated') ||
+    message.includes('detection_matches_gallery_category_filter')
   );
 }
 
@@ -182,6 +184,14 @@ export async function fetchUserDetectionGalleryRowsPage({
         pageSize,
         listFilter,
       );
+      if (
+        (isSearchQueryActive(trimmed) || categoryFilter.kind !== 'all') &&
+        result.rows.length === 0 &&
+        offset === 0
+      ) {
+        const { rows: allRows } = await fetchGalleryRowsViaPostgrest(userId, publicOnly, 0, 500);
+        result = applyLocalGalleryPage(allRows, trimmed, categoryFilter, offset, pageSize);
+      }
     } catch (error) {
       const err = error as { code?: string; message?: string };
       if (!isGalleryRpcUnavailable(err)) throw error;

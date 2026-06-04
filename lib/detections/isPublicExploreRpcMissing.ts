@@ -4,6 +4,7 @@ export function isPublicExploreRpcMissing(error: { code?: string; message?: stri
     error.code === 'PGRST202' ||
     error.code === '42883' ||
     message.includes('search_public_detections') ||
-    message.includes('does not exist')
+    message.includes('does not exist') ||
+    message.includes('permission denied for table users')
   );
 }

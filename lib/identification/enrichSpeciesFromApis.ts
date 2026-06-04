@@ -31,7 +31,7 @@ export type EnrichSpeciesFromApisOptions = {
   wikiSpeciesLimit?: number;
   /**
    * Only run iNat + wiki enrichment for the first N candidates (others keep vision labels, status unknown).
-   * Use 1 on the identification screen for faster results; alternates are still listed for reclassify.
+   * Use 1 on the identification screen for faster results; cloud reclassify loads more when needed.
    */
   enrichDepthLimit?: number;
 };

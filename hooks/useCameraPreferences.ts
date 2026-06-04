@@ -1,6 +1,7 @@
 import * as Haptics from 'expo-haptics';
 import { useCallback } from 'react';
 
+import { areFrameProcessorsAvailable } from '@/lib/camera/areFrameProcessorsAvailable';
 import {
   CAMERA_PREF_HDR,
   CAMERA_PREF_LEVEL,
@@ -70,8 +71,14 @@ export function useCameraPreferences() {
   }, [level, hapticTap]);
   const toggleLiveClassifier = useCallback(() => {
     hapticTap();
+    if (!areFrameProcessorsAvailable() && !liveClassifier.value) {
+      return;
+    }
     liveClassifier.setValue(!liveClassifier.value);
   }, [hapticTap, liveClassifier]);
+
+  const liveClassifierEnabled =
+    liveClassifier.value && areFrameProcessorsAvailable();
 
   return {
     hdrEnabled: hdr.value,
@@ -82,7 +89,7 @@ export function useCameraPreferences() {
     toggleShutterSound,
     levelEnabled: level.value,
     toggleLevel,
-    liveClassifierEnabled: liveClassifier.value,
+    liveClassifierEnabled,
     toggleLiveClassifier,
     ready: hdr.ready && stabilization.ready && shutterSound.ready && level.ready && liveClassifier.ready,
   };

@@ -203,3 +203,4 @@ revoke all on function public.get_detection_count_leaderboard(int, int, text) fr
 
 grant execute on function public.get_detection_count_leaderboard(int, int, text) to authenticated;
 grant execute on function public.get_detection_count_leaderboard(int, int, text) to anon;
+

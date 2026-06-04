@@ -1,7 +1,7 @@
 -- Test-only badge profile:
--- - Keep only the 4 main discipline badges active (botanist, herpetologist, ornithologist, mammalogist)
--- - Disable subcategory + bonus badges
--- - Set required_unique_species = 1 for active main badges
+-- - One earnable badge per main discipline (explorer tier only)
+-- - Disable subcategory tiers, higher main tiers, and bonus badges
+-- - required_unique_species = 1 (e.g. first lizard → herpetologist)
 --
 -- Safe to re-run.
 
@@ -10,9 +10,15 @@ set active = false
 where badge_kind in ('sub', 'bonus');
 
 update public.badge_definitions
+set active = false
+where badge_kind = 'main'
+  and tier in ('adventurer', 'voyager');
+
+update public.badge_definitions
 set active = true,
     required_unique_species = 1
 where badge_kind = 'main'
+  and tier = 'explorer'
   and main_category in ('botanist', 'herpetologist', 'ornithologist', 'mammalogist');
 
 -- Optional: if older catalogs exist, keep only these 4 mains active.

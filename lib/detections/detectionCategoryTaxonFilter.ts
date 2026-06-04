@@ -10,7 +10,17 @@ export function detectionCategoryMatchesTaxonGroup(category: string, taxonGroup:
   if (taxonGroup === 'all') return true;
   if (taxonGroup === 'plant') return speciesCategoryMatchesGroup(category, 'plant');
   if (taxonGroup === 'animal') return speciesCategoryMatchesGroup(category, 'animal');
-  if (taxonGroup === 'fungus') return category === 'other';
+  if (taxonGroup === 'fungus') {
+    const c = category.trim().toLowerCase();
+    return (
+      c === 'other' ||
+      c === 'fungi' ||
+      c === 'other_fungi' ||
+      c === 'mushrooms' ||
+      c === 'lichens' ||
+      c === 'slime_molds'
+    );
+  }
   if (taxonGroup === 'other') {
     return (
       category === 'other' ||

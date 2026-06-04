@@ -1,0 +1,53 @@
+{
+  "model": "mobilevit_s",
+  "dataset": "DATASET\\ROUTING_DATASET",
+  "task": "multilabel_single_positive",
+  "loss": "BCEWithLogitsLoss",
+  "num_classes": 21,
+  "class_names": [
+    "Tree",
+    "Shrub / Bush",
+    "Wildflower",
+    "Grass / Sedge",
+    "Fern",
+    "Cactus / Succulent",
+    "Bird",
+    "Reptile / Lizard",
+    "Snake",
+    "Turtle",
+    "Frog / Amphibian",
+    "Butterfly / Moth",
+    "Insect (other)",
+    "Freshwater Fish",
+    "Spider / Arachnid",
+    "Wild mammal",
+    "Dog",
+    "Cat",
+    "Horse / Livestock",
+    "Fungi / Mushroom",
+    "No Plant or Animal"
+  ],
+  "image_size": 256,
+  "precision": "fp32",
+  "train_samples": 10028,
+  "val_samples": 9485,
+  "best_val_top2_acc": 0.1467580390089615,
+  "best_val_top1_acc": 0.1055350553505535,
+  "best_epoch": 1,
+  "early_stop_metric": "val_top2_acc",
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 0.2245271839275748,
+      "train_top1_acc": 0.057239728759473474,
+      "train_top2_acc": 0.11098923015556442,
+      "val_loss": 0.18756060511046607,
+      "val_top1_acc": 0.1055350553505535,
+      "val_top2_acc": 0.1467580390089615,
+      "val_top3_acc": 0.23774380600948866,
+      "elapsed_sec": 299.0832870000013
+    }
+  ],
+  "lr_stem": 0.0002,
+  "lr_attn": 5e-05
+}

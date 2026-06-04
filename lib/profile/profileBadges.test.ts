@@ -2,28 +2,23 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildEarnedProfileBadgeSections,
-  buildProfileBadgeGroups,
   buildProfileBadgePreviewRow,
   buildProfileBadgeSections,
 } from '@/lib/profile/profileBadges';
 import type { BadgeProgress } from '@/lib/profile/categoryProgressTypes';
 
 describe('buildProfileBadgeSections', () => {
-  it('includes only main tier section with four disciplines', () => {
+  it('includes one badge per main discipline', () => {
     const sections = buildProfileBadgeSections([], new Set());
     expect(sections.map((s) => s.id)).toEqual(['main-tiers']);
-    expect(sections[0].badges).toHaveLength(12);
+    expect(sections[0].badges).toHaveLength(4);
+    expect(sections[0].badges.map((b) => b.id)).toEqual([
+      'main:botanist:explorer',
+      'main:herpetologist:explorer',
+      'main:ornithologist:explorer',
+      'main:mammalogist:explorer',
+    ]);
     expect(sections.every((s) => s.badges.every((b) => b.earned === false))).toBe(true);
-  });
-
-  it('groups main tiers into one trigger per discipline with three tier badges each', () => {
-    const sections = buildProfileBadgeSections([], new Set());
-    const mainSection = sections.find((s) => s.id === 'main-tiers')!;
-    const groups = buildProfileBadgeGroups(mainSection);
-    expect(groups).toHaveLength(4);
-    expect(groups.every((g) => g.badges)).toBe(true);
-    expect(groups.every((g) => g.badges.length === 3)).toBe(true);
-    expect(groups[0].id).toBe('botanist');
   });
 
   it('marks badges earned from DB-backed progress rows', () => {
@@ -43,9 +38,9 @@ describe('buildProfileBadgeSections', () => {
     ];
 
     const sections = buildProfileBadgeSections([], new Set(), progress);
-    const mainSection = sections.find((s) => s.id === 'main-tiers')!;
-    const botanist = mainSection.badges.find((b) => b.id === 'main:botanist:explorer')!;
+    const botanist = sections[0].badges.find((b) => b.id === 'main:botanist:explorer')!;
     expect(botanist.earned).toBe(true);
+    expect(botanist.label).toBe('Botanist');
     expect(botanist.points).toBe(50);
   });
 
@@ -57,10 +52,11 @@ describe('buildProfileBadgeSections', () => {
   });
 
   it('buildProfileBadgePreviewRow returns earned badges when present', () => {
-    const keys = new Set(['main:botanist:explorer']);
+    const keys = new Set(['main:herpetologist:explorer']);
     const row = buildProfileBadgePreviewRow([], keys);
     expect(row).toHaveLength(1);
     expect(row[0].earned).toBe(true);
+    expect(row[0].label).toContain('Herpetologist');
   });
 
   it('buildEarnedProfileBadgeSections omits unearned badges and empty sections', () => {
@@ -71,11 +67,13 @@ describe('buildProfileBadgeSections', () => {
     expect(sections[0].badges.every((b) => b.earned)).toBe(true);
   });
 
-  it('marks earned badges from award keys', () => {
-    const keys = new Set(['main:botanist:explorer']);
+  it('marks herpetologist earned from award keys', () => {
+    const keys = new Set(['main:herpetologist:explorer']);
     const sections = buildProfileBadgeSections([], keys);
-    const main = sections[0].badges;
-    expect(main.find((b) => b.id === 'main:botanist:explorer')?.earned).toBe(true);
-    expect(main.find((b) => b.id === 'main:ornithologist:explorer')?.earned).toBe(false);
+    const herp = sections[0].badges.find((b) => b.id === 'main:herpetologist:explorer')!;
+    expect(herp.earned).toBe(true);
+    expect(sections[0].badges.find((b) => b.id === 'main:ornithologist:explorer')?.earned).toBe(
+      false,
+    );
   });
 });

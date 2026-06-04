@@ -19,6 +19,7 @@ import {
   mergePendingAndServerGalleryItems,
   subscribePendingGalleryDetection,
 } from '@/lib/detections/pendingGalleryDetection';
+import { subscribeProfileRefresh } from '@/lib/profile/profileRefresh';
 import { isSearchQueryActive } from '@/lib/search/normalizeSearchQuery';
 import {
   fetchUserDetectionGalleryRowsPage,
@@ -258,6 +259,13 @@ export function useUserDetectionGallery({
     offsetRef.current = 0;
     void loadPage('reset');
   }, [loadPage]);
+
+  useEffect(() => {
+    if (!userId) return;
+    return subscribeProfileRefresh(() => {
+      void refetch();
+    });
+  }, [refetch, userId]);
 
   useEffect(() => {
     if (!showOptimisticPending || !userId) return;

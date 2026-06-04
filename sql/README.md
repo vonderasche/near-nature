@@ -126,6 +126,7 @@ If tables already exist and you only need to refresh objects:
 | Points on save | `create_leaderboard.sql` |
 | Gallery search | `add_detection_search.sql` |
 | Explorer Board discovery search | `search_public_detections.sql` (after `add_detection_search.sql`) |
+| Explorer Board search error: permission denied for table users | `fix_search_public_detections_rls.sql` (or re-run `search_public_detections.sql` after hardening) |
 | Explorer Board search returns nothing | `fix_public_detection_search.sql`, then `search_public_detections.sql` |
 | Gallery search slow / filter incomplete | `optimize_detection_gallery.sql` (after `add_detection_search.sql`) |
 | Supabase Dashboard security linter warnings | `harden_security_linter.sql` |
@@ -214,6 +215,7 @@ SQL: `create_point_awards.sql`, `check_category_milestones.sql` (runs after each
 | Feature | Database |
 |---------|----------|
 | Sign up / edit profile | `public.users` (PostgREST + RLS); availability RPCs at sign-up |
+| Motto / profile edit fails | `update_own_user_profile.sql` (SECURITY DEFINER patch RPC) |
 | Sign in with email or username | RPC `resolve_login_email` |
 | Save / delete photo | `public.detections` + Storage |
 | Explorer Board | RPC `get_detection_count_leaderboard` |

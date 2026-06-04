@@ -28,8 +28,10 @@ describe('classificationToSpeciesCategory', () => {
     ).toBe('trees_shrubs');
   });
 
-  it('stores fungi without badge subcategory', () => {
-    expect(classificationToSpeciesCategory(classification({ taxonGroup: 'fungi' }))).toBe('fungi');
+  it('stores fungi as other_fungi enum value (no badge discipline)', () => {
+    expect(classificationToSpeciesCategory(classification({ taxonGroup: 'fungi' }))).toBe(
+      'other_fungi',
+    );
   });
 
   it('falls back by taxon group', () => {

@@ -1,7 +1,9 @@
 import { FunctionsHttpError } from '@supabase/supabase-js';
 
+import { formatPostgrestError } from '@/lib/supabase/formatPostgrestError';
+import { withTimeout } from '@/lib/async/withTimeout';
+import { getSessionClearingStaleRefresh } from '@/lib/auth/recoverSupabaseSession';
 import { supabase } from '@/lib/supabase';
-
 async function readEdgeFunctionErrorMessage(error: unknown): Promise<string | null> {
   if (error instanceof FunctionsHttpError) {
     const res = error.context as Response | undefined;
@@ -176,14 +178,62 @@ export async function getUser(userId: string): Promise<User | null> {
   return promise;
 }
 
-// Update the current user's profile (RLS: own row only)
-export async function updateUser(userId: string, payload: UpdateUserPayload): Promise<User> {
-  const { data, error } = await supabase.from('users').update(payload).eq('id', userId).select().single();
+const PROFILE_WRITE_TIMEOUT_MS = 20_000;
 
-  if (error) throw error;
+// Update the current user's profile (prefers SECURITY DEFINER RPC; falls back to PostgREST + RLS)
+export async function updateUser(userId: string, payload: UpdateUserPayload): Promise<User> {
+  const session = await withTimeout(
+    getSessionClearingStaleRefresh(),
+    PROFILE_WRITE_TIMEOUT_MS,
+    'Session check timed out. Check your connection and try again.',
+  );
+  const sessionUserId = session?.user?.id;
+  if (!sessionUserId) {
+    throw new Error('Not signed in. Sign in again to save changes.');
+  }
+  if (sessionUserId !== userId) {
+    throw new Error('Session mismatch. Sign out and sign in again.');
+  }
+
+  const { data: rpcRows, error: rpcError } = await withTimeout(
+    supabase.rpc('update_own_user_profile', { p_patch: payload }),
+    PROFILE_WRITE_TIMEOUT_MS,
+    'Save timed out. Check your connection and try again.',
+  );
+
+  if (!rpcError) {
+    const row = ((rpcRows ?? []) as User[])[0];
+    if (row) return row;
+    throw new Error('Profile update returned no row. Sign out and sign in again.');
+  }
+
+  if (!isRpcMissing(rpcError)) {
+    throw new Error(formatPostgrestError(rpcError, 'Failed to update profile'));
+  }
+
+  const attempt = async () =>
+    withTimeout(
+      supabase.from('users').update(payload).eq('id', userId).select().single(),
+      PROFILE_WRITE_TIMEOUT_MS,
+      'Save timed out. Check your connection and try again.',
+    );
+
+  let { data, error } = await attempt();
+
+  if (error?.code === 'PGRST116') {
+    await withTimeout(
+      ensurePublicUserProfile(),
+      PROFILE_WRITE_TIMEOUT_MS,
+      'Profile setup timed out. Check your connection and try again.',
+    ).catch(() => {});
+    ({ data, error } = await attempt());
+  }
+
+  if (error) {
+    throw new Error(formatPostgrestError(error, 'Failed to update profile'));
+  }
   return data as User;
 }
-
 /**
  * Permanently deletes the authenticated user via the `delete-account` Edge Function
  * (service role). `public.users` is removed by FK cascade when `auth.users` is deleted.

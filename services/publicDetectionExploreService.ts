@@ -27,17 +27,16 @@ export type FetchPublicDetectionExplorePageResult = {
 };
 
 const EXPLORE_SELECT =
-  'id, user_id, image_url, detected_at, common_name, latin_name, category, subcategory, main_category, description, native_status, users!inner(username)';
+  'id, user_id, image_url, detected_at, common_name, latin_name, category, subcategory, main_category, description, native_status';
 
 /** Recent public rows scanned when RPC search returns nothing (matches gallery client fallback). */
 const POSTGREST_EXPLORE_SCAN_LIMIT = 500;
 
 function mapPostgrestRow(row: Record<string, unknown>): PublicExploreDetectionRow {
-  const users = row.users as { username?: string } | null | undefined;
   return {
     id: String(row.id),
     user_id: String(row.user_id),
-    username: String(users?.username ?? 'member'),
+    username: 'member',
     image_url: String(row.image_url),
     detected_at: String(row.detected_at),
     common_name: String(row.common_name),

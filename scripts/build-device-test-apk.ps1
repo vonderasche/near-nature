@@ -52,10 +52,18 @@ if (-not (Test-EnvVar 'EXPO_PUBLIC_GEMINI_API_KEY')) {
     Write-Host "     or ensure identify-species Edge Function is deployed." -ForegroundColor Yellow
 }
 
+$gradleProps = Join-Path $Root "android\gradle.properties"
+if (Test-Path $gradleProps) {
+    $props = Get-Content $gradleProps -Raw
+    $props = $props -replace 'VisionCamera_enableFrameProcessors=false', 'VisionCamera_enableFrameProcessors=true'
+    Set-Content -Path $gradleProps -Value $props -NoNewline
+}
+
 Write-Host "Bundling release APK (several minutes)..." -ForegroundColor Cyan
 Push-Location android
 try {
     .\gradlew.bat --stop 2>$null
+    Remove-Item -Recurse -Force (Join-Path $Root "android\app\.cxx") -ErrorAction SilentlyContinue
     .\gradlew.bat assembleRelease -x lint -PreactNativeArchitectures=arm64-v8a --no-parallel
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 } finally {

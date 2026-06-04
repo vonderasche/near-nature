@@ -1,3 +1,4 @@
+import { useFocusEffect } from '@react-navigation/native';
 import { Redirect } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { RefreshControl, StyleSheet, Text, View } from 'react-native';
@@ -79,11 +80,19 @@ export default function ProfileScreen() {
     try {
       const galleryPromise = galleryRef.current?.refetch() ?? Promise.resolve();
       const scoringPromise = scoringRef.current?.refetch() ?? Promise.resolve();
-      await Promise.all([refresh(), galleryPromise, scoringPromise]);
+      await Promise.all([refresh({ force: true }), galleryPromise, scoringPromise]);
     } finally {
       setPullRefreshing(false);
     }
   }, [refresh]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void refresh();
+      void scoringRef.current?.refetch();
+      void galleryRef.current?.refetch();
+    }, [refresh]),
+  );
 
   const handleGalleryDelete = useCallback(
     async (item: DetectionGalleryItem) => {

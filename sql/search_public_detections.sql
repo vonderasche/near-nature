@@ -26,7 +26,9 @@ returns table (
 )
 language plpgsql
 stable
-security invoker
+-- Bypass users RLS (harden_security_linter revokes anon SELECT on public.users).
+-- Only non-sensitive detections + username are exposed (same pattern as leaderboard RPC).
+security definer
 set search_path = public
 as $$
 declare

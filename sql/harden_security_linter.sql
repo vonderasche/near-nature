@@ -96,6 +96,7 @@ revoke execute on function public.sync_detection_search_fields() from anon, auth
 -- public.detections
 drop policy if exists "Users can view their own detections" on public.detections;
 drop policy if exists "Non-sensitive detections are publicly viewable" on public.detections;
+drop policy if exists "Users can select own or public non-sensitive detections" on public.detections;
 drop policy if exists "Users can insert their own detections" on public.detections;
 drop policy if exists "Users can delete their own detections" on public.detections;
 
@@ -122,7 +123,8 @@ create policy "Users can view their own profile"
 
 create policy "Users can update their own profile"
   on public.users for update
-  using ((select auth.uid()) = id);
+  using ((select auth.uid()) = id)
+  with check ((select auth.uid()) = id);
 
 create policy "Users can delete their own profile"
   on public.users for delete
@@ -193,6 +195,10 @@ select public._create_gin_trgm_index(
 -- species_metadata: no direct PostgREST reads (search/upsert use SECURITY DEFINER RPCs)
 revoke select on table public.species_metadata from authenticated;
 
+-- BEFORE INSERT/UPDATE on detections reads species_metadata (must not use caller grants)
+alter function public.sync_detection_search_fields() security definer;
+alter function public.sync_detection_search_fields() set search_path = public;
+
 revoke execute on function public.upsert_species_metadata(text, text, text[]) from anon;
 grant execute on function public.upsert_species_metadata(text, text, text[]) to authenticated;
 
@@ -204,3 +210,6 @@ grant execute on function public.get_user_scoring_snapshot(uuid) to authenticate
 
 revoke execute on function public.ensure_public_user_profile() from anon;
 grant execute on function public.ensure_public_user_profile() to authenticated;
+
+revoke execute on function public.update_own_user_profile(jsonb) from anon;
+grant execute on function public.update_own_user_profile(jsonb) to authenticated;

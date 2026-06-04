@@ -13,31 +13,43 @@ type Props = {
 export function ProfileBadgeTile({ badge, size, compact = false }: Props) {
   const iconName: HeroIconName = badge.icon;
   const useSolid =
-    iconName === 'trophy' || iconName === 'user' || iconName === 'camera';
+    badge.earned &&
+    (iconName === 'trophy' || iconName === 'user' || iconName === 'camera');
+  const active = badge.earned;
 
   return (
     <View
       accessibilityRole="text"
-      accessibilityLabel={`${badge.label}, earned, ${badge.points} points`}
+      accessibilityLabel={`${badge.label}, ${active ? 'earned' : 'not yet earned'}${badge.requirement ? `, ${badge.requirement}` : ''}, ${badge.points} points`}
       style={[
         styles.tile,
         { width: size, minHeight: size },
+        active ? styles.tileEarned : styles.tileIdle,
         badge.featured && styles.tileFeatured,
       ]}>
       <View style={styles.iconWrap}>
         <HeroIcon
           name={iconName}
           size={compact ? 20 : badge.featured ? 28 : 26}
-          color={authColors.text}
+          color={active ? authColors.text : authColors.textMuted}
           variant={useSolid ? 'solid' : 'outline'}
         />
-        <View style={styles.earnedBadge}>
-          <HeroIcon name="check-circle" size={compact ? 12 : 14} color={authColors.text} />
-        </View>
+        {active ? (
+          <View style={styles.earnedBadge}>
+            <HeroIcon name="check-circle" size={compact ? 12 : 14} color={authColors.text} />
+          </View>
+        ) : null}
       </View>
-      <Text style={styles.tileLabel} numberOfLines={2}>
+      <Text
+        style={[styles.tileLabel, active ? styles.tileLabelEarned : styles.tileLabelIdle]}
+        numberOfLines={2}>
         {badge.shortLabel}
       </Text>
+      {!active && badge.requirement ? (
+        <Text style={styles.tileMeta} numberOfLines={1}>
+          {badge.requirement}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -48,8 +60,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: authSpacing.sm,
     paddingHorizontal: authSpacing.xs,
-    backgroundColor: authColors.surfaceRaised,
     gap: 2,
+  },
+  tileEarned: {
+    backgroundColor: authColors.surfaceRaised,
+  },
+  tileIdle: {
+    backgroundColor: authColors.background,
+    opacity: 0.55,
   },
   tileFeatured: {
     width: '100%',
@@ -77,6 +95,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 15,
     textAlign: 'center',
+  },
+  tileLabelEarned: {
     color: authColors.text,
+  },
+  tileLabelIdle: {
+    color: authColors.textMuted,
+  },
+  tileMeta: {
+    fontSize: 10,
+    lineHeight: 12,
+    textAlign: 'center',
+    color: authColors.textMuted,
   },
 });

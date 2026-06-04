@@ -8,7 +8,15 @@ import {
 import type { DetectionGalleryItem } from '@/types';
 
 function exploreFailureMessage(error: unknown): string {
-  if (error instanceof Error && error.message) return error.message;
+  if (error instanceof Error && error.message) {
+    const msg = error.message.toLowerCase();
+    if (msg.includes('permission denied for table users')) {
+      return (
+        'Community search needs a database update. In Supabase → SQL Editor, run sql/fix_search_public_detections_rls.sql (or sql/search_public_detections.sql), reload the schema cache, then try again.'
+      );
+    }
+    return error.message;
+  }
   if (typeof error === 'object' && error !== null && 'message' in error) {
     const message = (error as { message: unknown }).message;
     if (typeof message === 'string' && message.trim().length > 0) return message;

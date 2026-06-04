@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuthContext } from '@/context/AuthContext';
 import { useCacheFirstFetch } from '@/hooks/useCacheFirstFetch';
 import {
@@ -6,7 +6,12 @@ import {
   loadCachedOwnProfile,
   saveCachedOwnProfile,
 } from '@/lib/profile/ownProfileCache';
+import { mergeProfileStats, mergeProfileUser } from '@/lib/profile/mergeProfileUser';
+import { formatPostgrestError } from '@/lib/supabase/formatPostgrestError';
+import { mapSupabaseAuthErrorMessage } from '@/lib/auth/mapSupabaseAuthError';
+import { requestExplorerBoardRefresh } from '@/lib/explorerBoard/explorerBoardRefresh';
 import { warmSavedSpeciesSession } from '@/lib/identification/savedSpeciesSessionCache';
+import { subscribeProfileRefresh } from '@/lib/profile/profileRefresh';
 import { signOutLocalOnly } from '@/services/authService';
 import {
   deleteAccount,
@@ -41,7 +46,7 @@ type UseUserReturn = {
   error: string | null;
   update: (payload: UpdateUserPayload) => Promise<UpdateUserResult>;
   remove: () => Promise<RemoveUserResult>;
-  refresh: () => Promise<void>;
+  refresh: (options?: { force?: boolean }) => Promise<void>;
 };
 
 async function fetchOwnProfileFromNetwork(userId: string): Promise<ProfileBundle> {
@@ -61,6 +66,7 @@ export function useUser(): UseUserReturn {
     error,
     setError,
     refetch,
+    applyLocalPatch,
   } = useCacheFirstFetch<ProfileBundle>({
     enabled: Boolean(userId),
     loadCache: async () => {
@@ -102,28 +108,29 @@ export function useUser(): UseUserReturn {
       }
       setError(null);
       try {
-        const updated = await updateUser(user.id, payload);
-        const nextStats =
-          stats && stats.id === updated.id
-            ? {
-                ...stats,
-                username: updated.username,
-                motto: updated.motto,
-                state: updated.state?.trim().length === 2 ? updated.state.trim().toUpperCase() : null,
-                avatar_url: updated.avatar_url,
-              }
-            : stats;
-        const bundle = { user: updated, stats: nextStats };
-        setData(bundle);
-        await saveCachedOwnProfile(updated.id, bundle);
+        const row = await updateUser(user.id, payload);
+        const mergedUser = mergeProfileUser(user, row);
+        const bundle = {
+          user: mergedUser,
+          stats: mergeProfileStats(stats, mergedUser),
+        };
+        await applyLocalPatch(bundle);
+        if ('motto' in payload || 'avatar_url' in payload || 'username' in payload || 'state' in payload) {
+          requestExplorerBoardRefresh();
+        }
         return userFacingOk();
       } catch (err: unknown) {
-        const failure = userFacingFromUnknown(err, 'Failed to update user');
+        const failure = userFacingErr(
+          err instanceof Error
+            ? mapSupabaseAuthErrorMessage(err.message)
+            : formatPostgrestError(err, 'Failed to update profile'),
+          'Failed to update profile',
+        );
         setError(failure.message);
         return failure;
       }
     },
-    [setData, setError, stats, user],
+    [applyLocalPatch, setError, stats, user],
   );
 
   const remove = useCallback(async (): Promise<RemoveUserResult> => {
@@ -148,9 +155,16 @@ export function useUser(): UseUserReturn {
     }
   }, [setData, setError, user]);
 
-  const refresh = useCallback(async () => {
-    await refetch({ force: true });
+  const refresh = useCallback(async (options?: { force?: boolean }) => {
+    await refetch(options);
   }, [refetch]);
+
+  useEffect(() => {
+    if (!userId) return;
+    return subscribeProfileRefresh(() => {
+      void refetch({ force: true });
+    });
+  }, [refetch, userId]);
 
   return { user, stats, loading, refreshing, deleting, error, update, remove, refresh };
 }

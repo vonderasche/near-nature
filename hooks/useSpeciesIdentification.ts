@@ -57,7 +57,7 @@ export function useSpeciesIdentification(): UseSpeciesIdentificationResult {
       if (isTfliteIdentificationAvailable()) {
         const pipeline = await identifyPhotoWithTflite(photoUri);
         tfliteMeta = pipeline.meta;
-        classifications = pipeline.classifications;
+        classifications = pipeline.classifications.slice(0, 1);
         devLog('[identify] tflite', {
           preview: pipeline.meta.routedPreviewLabel,
           specialist: pipeline.meta.specialistId,

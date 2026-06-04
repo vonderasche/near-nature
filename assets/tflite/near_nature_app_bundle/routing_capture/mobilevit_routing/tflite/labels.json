@@ -1,0 +1,92 @@
+{
+  "model": "mobilevit_s",
+  "classCount": 21,
+  "task": "multilabel_single_positive",
+  "inference": "sigmoid(logits); route on top-2/3 scores",
+  "labels": [
+    {
+      "index": 0,
+      "name": "Tree"
+    },
+    {
+      "index": 1,
+      "name": "Shrub / Bush"
+    },
+    {
+      "index": 2,
+      "name": "Wildflower"
+    },
+    {
+      "index": 3,
+      "name": "Grass / Sedge"
+    },
+    {
+      "index": 4,
+      "name": "Fern"
+    },
+    {
+      "index": 5,
+      "name": "Cactus / Succulent"
+    },
+    {
+      "index": 6,
+      "name": "Bird"
+    },
+    {
+      "index": 7,
+      "name": "Reptile / Lizard"
+    },
+    {
+      "index": 8,
+      "name": "Snake"
+    },
+    {
+      "index": 9,
+      "name": "Turtle"
+    },
+    {
+      "index": 10,
+      "name": "Frog / Amphibian"
+    },
+    {
+      "index": 11,
+      "name": "Butterfly / Moth"
+    },
+    {
+      "index": 12,
+      "name": "Insect (other)"
+    },
+    {
+      "index": 13,
+      "name": "Freshwater Fish"
+    },
+    {
+      "index": 14,
+      "name": "Spider / Arachnid"
+    },
+    {
+      "index": 15,
+      "name": "Wild mammal"
+    },
+    {
+      "index": 16,
+      "name": "Dog"
+    },
+    {
+      "index": 17,
+      "name": "Cat"
+    },
+    {
+      "index": 18,
+      "name": "Horse / Livestock"
+    },
+    {
+      "index": 19,
+      "name": "Fungi / Mushroom"
+    },
+    {
+      "index": 20,
+      "name": "No Plant or Animal"
+    }
+  ]
+}

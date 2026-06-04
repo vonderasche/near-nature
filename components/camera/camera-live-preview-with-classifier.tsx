@@ -10,8 +10,8 @@ type Props = ComponentProps<typeof CameraLivePreview> & {
   bottomInset: number;
 };
 
-const REBUILD_HINT =
-  'Frame processors are disabled in this build. Run npx expo prebuild, then rebuild the native app.';
+const LIVE_PREVIEW_UNAVAILABLE_HINT =
+  'Live preview AI is not available in this build. Photo identification still works.';
 
 export function CameraLivePreviewWithClassifier({
   liveClassifierEnabled,
@@ -30,7 +30,7 @@ export function CameraLivePreviewWithClassifier({
           enabled
           bottomInset={bottomInset}
           modelState="unavailable"
-          modelError={REBUILD_HINT}
+          modelError={LIVE_PREVIEW_UNAVAILABLE_HINT}
           predictions={[]}
         />
       </>

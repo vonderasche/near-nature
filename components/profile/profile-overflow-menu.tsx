@@ -9,6 +9,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import { useLogout } from '@/hooks/useLogout';
 
@@ -22,7 +23,7 @@ type Props = {
  */
 export function ProfileOverflowMenu({ onDeleteProfile, deleteBusy }: Props) {
   const insets = useSafeAreaInsets();
-  const { logout, busy: logoutBusy } = useLogout();
+  const { logout, busy: logoutBusy, logoutError, clearLogoutError } = useLogout();
   const [open, setOpen] = useState(false);
 
   const close = useCallback(() => setOpen(false), []);
@@ -81,6 +82,13 @@ export function ProfileOverflowMenu({ onDeleteProfile, deleteBusy }: Props) {
           </View>
         </View>
       </Modal>
+
+      <ThemedMessageModal
+        visible={logoutError !== null}
+        title="Log out"
+        message={logoutError ?? ''}
+        onDismiss={clearLogoutError}
+      />
     </>
   );
 }

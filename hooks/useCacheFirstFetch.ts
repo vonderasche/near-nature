@@ -31,6 +31,10 @@ export type UseCacheFirstFetchResult<T> = {
   error: string | null;
   setError: React.Dispatch<React.SetStateAction<string | null>>;
   refetch: (options?: { force?: boolean }) => Promise<void>;
+  /** Drops results from in-flight refetches (e.g. after a local profile patch). */
+  invalidatePendingFetch: () => void;
+  /** Apply in-memory + device cache immediately without a network round-trip. */
+  applyLocalPatch: (value: T) => Promise<void>;
 };
 
 /**
@@ -52,6 +56,21 @@ export function useCacheFirstFetch<T>({
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const hadCacheRef = useRef(false);
+  const inFlightRef = useRef<Promise<void> | null>(null);
+  const requestIdRef = useRef(0);
+  /** Monotonic stamp: refetch must not apply older cache/network over a newer local patch. */
+  const dataRevisionAtRef = useRef(0);
+
+  const loadCacheRef = useRef(loadCache);
+  loadCacheRef.current = loadCache;
+  const fetchFreshRef = useRef(fetchFresh);
+  fetchFreshRef.current = fetchFresh;
+  const saveCacheRef = useRef(saveCache);
+  saveCacheRef.current = saveCache;
+  const onFreshRef = useRef(onFresh);
+  onFreshRef.current = onFresh;
+  const mapErrorRef = useRef(mapError);
+  mapErrorRef.current = mapError;
 
   const refetch = useCallback(
     async (options?: { force?: boolean }) => {
@@ -61,61 +80,106 @@ export function useCacheFirstFetch<T>({
         setLoading(false);
         setRefreshing(false);
         hadCacheRef.current = false;
+        inFlightRef.current = null;
         return;
       }
 
-      const force = options?.force ?? false;
-      const cached = force ? null : await loadCache();
-      const cacheIsFresh =
-        cached != null && isCacheEntryFresh(cached.cachedAt, maxAgeMs);
-      const phase = resolveCacheFirstLoadingPhase(force, cached, { cacheIsFresh });
-      const showedCache = phase.showedCache;
-
-      if (cached != null) {
-        setData(cached.value);
-        hadCacheRef.current = true;
-      }
-      setLoading(phase.initialLoading);
-      setRefreshing(phase.backgroundRefreshing);
-      setError(null);
-
-      if (cacheIsFresh && !force) {
-        return;
+      if (inFlightRef.current) {
+        return inFlightRef.current;
       }
 
-      try {
-        const fresh = await fetchFresh();
-        setData(fresh);
-        await onFresh?.(fresh);
-        if (saveCache) {
-          await saveCache(fresh);
+      const run = async () => {
+        const requestId = ++requestIdRef.current;
+        const force = options?.force ?? false;
+        const cached = force ? null : await loadCacheRef.current();
+        const cacheIsFresh =
+          cached != null && isCacheEntryFresh(cached.cachedAt, maxAgeMs);
+        const phase = resolveCacheFirstLoadingPhase(force, cached, { cacheIsFresh });
+        const showedCache = phase.showedCache;
+
+        if (cached != null && cached.cachedAt >= dataRevisionAtRef.current) {
+          setData(cached.value);
+          hadCacheRef.current = true;
+        } else if (cached != null) {
+          hadCacheRef.current = true;
         }
-      } catch (e) {
-        if (clearDataOnErrorWithoutCache && !showedCache && !hadCacheRef.current) {
-          setData(null);
+        setLoading(phase.initialLoading);
+        setRefreshing(phase.backgroundRefreshing);
+        setError(null);
+
+        if (cacheIsFresh && !force) {
+          return;
         }
-        setError(mapError(e));
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
+
+        try {
+          const fresh = await fetchFreshRef.current();
+          if (requestId !== requestIdRef.current) return;
+          setData(fresh);
+          dataRevisionAtRef.current = Date.now();
+          await onFreshRef.current?.(fresh);
+          const persist = saveCacheRef.current;
+          if (persist) {
+            await persist(fresh);
+          }
+        } catch (e) {
+          if (requestId !== requestIdRef.current) return;
+          if (clearDataOnErrorWithoutCache && !showedCache && !hadCacheRef.current) {
+            setData(null);
+          }
+          setError(mapErrorRef.current(e));
+        } finally {
+          if (requestId === requestIdRef.current) {
+            setLoading(false);
+            setRefreshing(false);
+          }
+        }
+      };
+
+      const promise = run().finally(() => {
+        if (inFlightRef.current === promise) {
+          inFlightRef.current = null;
+        }
+      });
+      inFlightRef.current = promise;
+      return promise;
+    },
+    [clearDataOnErrorWithoutCache, enabled, maxAgeMs],
+  );
+
+  const invalidatePendingFetch = useCallback(() => {
+    requestIdRef.current += 1;
+    setRefreshing(false);
+  }, []);
+
+  const applyLocalPatch = useCallback(
+    async (value: T) => {
+      const revisionAt = Date.now();
+      dataRevisionAtRef.current = revisionAt;
+      invalidatePendingFetch();
+      setData(value);
+      const persist = saveCacheRef.current;
+      if (persist) {
+        await persist(value);
       }
     },
-    [
-      clearDataOnErrorWithoutCache,
-      enabled,
-      fetchFresh,
-      loadCache,
-      mapError,
-      maxAgeMs,
-      onFresh,
-      saveCache,
-    ],
+    [invalidatePendingFetch],
   );
 
   useEffect(() => {
     hadCacheRef.current = false;
+    dataRevisionAtRef.current = 0;
     void refetch();
-  }, [refetch]);
+  }, [enabled, refetch]);
 
-  return { data, setData, loading, refreshing, error, setError, refetch };
+  return {
+    data,
+    setData,
+    loading,
+    refreshing,
+    error,
+    setError,
+    refetch,
+    invalidatePendingFetch,
+    applyLocalPatch,
+  };
 }

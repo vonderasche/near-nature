@@ -316,6 +316,8 @@ $$;
 create or replace function public.sync_detection_search_fields()
 returns trigger
 language plpgsql
+security definer
+set search_path = public
 as $$
 declare
   v_aliases text[];

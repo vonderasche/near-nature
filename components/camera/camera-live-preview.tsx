@@ -148,6 +148,8 @@ export function CameraLivePreview({
             format={format}
             isActive
             photo
+            video={frameProcessor != null}
+            pixelFormat={frameProcessor != null ? 'yuv' : 'rgb'}
             photoQualityBalance="quality"
             photoHdr={photoHdr}
             videoStabilizationMode={stabilizationMode}

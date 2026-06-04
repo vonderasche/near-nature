@@ -9,6 +9,7 @@ import {
 } from '@/lib/detections/pendingGalleryDetection';
 import { resolveNaturalistCategoryFromClassification } from '@/lib/points/resolveNaturalistCategory';
 import { requestExplorerBoardRefresh } from '@/lib/explorerBoard/explorerBoardRefresh';
+import { requestProfileRefresh } from '@/lib/profile/profileRefresh';
 import { useSaveDetection } from '@/hooks/useSaveDetection';
 import type { ClassificationResult, Species } from '@/types';
 
@@ -82,6 +83,7 @@ export function useOptimisticIdentificationSave({
           return;
         }
         void refetchHistory();
+        requestProfileRefresh();
         if (result.result.newSpeciesDiscovery) {
           requestExplorerBoardRefresh();
         }

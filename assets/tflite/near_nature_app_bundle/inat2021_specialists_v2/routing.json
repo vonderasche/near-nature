@@ -1,0 +1,136 @@
+{
+  "preview_groups": [
+    "Tree",
+    "Shrub / Bush",
+    "Wildflower",
+    "Grass / Sedge",
+    "Fern",
+    "Cactus / Succulent",
+    "Bird",
+    "Reptile / Lizard",
+    "Snake",
+    "Turtle",
+    "Frog / Amphibian",
+    "Butterfly / Moth",
+    "Insect (other)",
+    "Freshwater Fish",
+    "Spider / Arachnid",
+    "Wild mammal",
+    "Dog",
+    "Cat",
+    "Horse / Livestock",
+    "Fungi / Mushroom",
+    "No Plant or Animal"
+  ],
+  "preview_to_specialist": {
+    "Tree": "trees",
+    "Shrub / Bush": "woody_plants",
+    "Wildflower": "forbs_ferns",
+    "Grass / Sedge": "dryland_plants",
+    "Fern": "forbs_ferns",
+    "Cactus / Succulent": "dryland_plants",
+    "Bird": "birds",
+    "Reptile / Lizard": "herps",
+    "Snake": "herps",
+    "Turtle": "herps",
+    "Frog / Amphibian": "herps",
+    "Butterfly / Moth": "insects",
+    "Insect (other)": "insects",
+    "Freshwater Fish": "fish",
+    "Spider / Arachnid": "arachnids",
+    "Wild mammal": null,
+    "Dog": "mammals_domestic",
+    "Cat": "mammals_domestic",
+    "Horse / Livestock": "mammals_domestic",
+    "Fungi / Mushroom": "fungi",
+    "No Plant or Animal": null
+  },
+  "specialists": [
+    {
+      "id": "trees",
+      "title": "Trees",
+      "description": "Woody trees and similar growth forms.",
+      "preview_groups": ["Tree"]
+    },
+    {
+      "id": "woody_plants",
+      "title": "Woody plants",
+      "description": "Shrubs, bushes, and woody understory plants.",
+      "preview_groups": ["Shrub / Bush"]
+    },
+    {
+      "id": "forbs_ferns",
+      "title": "Forbs & ferns",
+      "description": "Wildflowers and ferns.",
+      "preview_groups": ["Wildflower", "Fern"]
+    },
+    {
+      "id": "dryland_plants",
+      "title": "Dryland plants",
+      "description": "Grasses, sedges, cacti, and succulents.",
+      "preview_groups": ["Grass / Sedge", "Cactus / Succulent"]
+    },
+    {
+      "id": "birds",
+      "title": "Birds",
+      "description": "Bird genus classifier.",
+      "preview_groups": ["Bird"]
+    },
+    {
+      "id": "herps",
+      "title": "Reptiles & amphibians",
+      "description": "Lizards, snakes, turtles, and frogs.",
+      "preview_groups": ["Reptile / Lizard", "Snake", "Turtle", "Frog / Amphibian"]
+    },
+    {
+      "id": "insects",
+      "title": "Insects",
+      "description": "Insects (including butterflies/moths) genus classifier.",
+      "preview_groups": ["Butterfly / Moth", "Insect (other)"]
+    },
+    {
+      "id": "arachnids",
+      "title": "Arachnids",
+      "description": "Spiders and other arachnids genus classifier.",
+      "preview_groups": ["Spider / Arachnid"]
+    },
+    {
+      "id": "fish",
+      "title": "Fish",
+      "description": "Ray-finned and other fish genera.",
+      "preview_groups": ["Freshwater Fish"]
+    },
+    {
+      "id": "fungi",
+      "title": "Fungi",
+      "description": "Mushroom and fungus genera.",
+      "preview_groups": ["Fungi / Mushroom"]
+    },
+    {
+      "id": "mammals_domestic",
+      "title": "Domestic mammals",
+      "description": "Dogs, cats, and livestock genera.",
+      "preview_groups": ["Dog", "Cat", "Horse / Livestock"]
+    },
+
+    {
+      "id": "herbaceous_plants",
+      "title": "Herbaceous plants",
+      "description": "Legacy combined herbaceous specialist (not used by current routing.json).",
+      "preview_groups": []
+    },
+    {
+      "id": "insects_arachnids",
+      "title": "Insects & arachnids",
+      "description": "Legacy combined insects+arachnids specialist (not used by current routing.json).",
+      "preview_groups": []
+    },
+    {
+      "id": "mammals_domestic",
+      "title": "Domestic mammals",
+      "description": "Dogs, cats, and livestock.",
+      "preview_groups": ["Dog", "Cat", "Horse / Livestock"]
+    }
+  ]
+}
+

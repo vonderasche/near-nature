@@ -1,0 +1,562 @@
+{
+  "model": "mobilenet_v3_large",
+  "classCount": 139,
+  "labels": [
+    {
+      "index": 0,
+      "name": "Acanthocereus"
+    },
+    {
+      "index": 1,
+      "name": "Achnatherum"
+    },
+    {
+      "index": 2,
+      "name": "Agave"
+    },
+    {
+      "index": 3,
+      "name": "Agropyron"
+    },
+    {
+      "index": 4,
+      "name": "Aloe"
+    },
+    {
+      "index": 5,
+      "name": "Alopecurus"
+    },
+    {
+      "index": 6,
+      "name": "Ammophila"
+    },
+    {
+      "index": 7,
+      "name": "Andropogon"
+    },
+    {
+      "index": 8,
+      "name": "Anthoxanthum"
+    },
+    {
+      "index": 9,
+      "name": "Aristida"
+    },
+    {
+      "index": 10,
+      "name": "Arrhenatherum"
+    },
+    {
+      "index": 11,
+      "name": "Arundinaria"
+    },
+    {
+      "index": 12,
+      "name": "Arundo"
+    },
+    {
+      "index": 13,
+      "name": "Asphodelus"
+    },
+    {
+      "index": 14,
+      "name": "Austroderia"
+    },
+    {
+      "index": 15,
+      "name": "Avena"
+    },
+    {
+      "index": 16,
+      "name": "Bergerocactus"
+    },
+    {
+      "index": 17,
+      "name": "Bolboschoenus"
+    },
+    {
+      "index": 18,
+      "name": "Bothriochloa"
+    },
+    {
+      "index": 19,
+      "name": "Bouteloua"
+    },
+    {
+      "index": 20,
+      "name": "Briza"
+    },
+    {
+      "index": 21,
+      "name": "Bromus"
+    },
+    {
+      "index": 22,
+      "name": "Calamagrostis"
+    },
+    {
+      "index": 23,
+      "name": "Carex"
+    },
+    {
+      "index": 24,
+      "name": "Carnegiea"
+    },
+    {
+      "index": 25,
+      "name": "Carpobrotus"
+    },
+    {
+      "index": 26,
+      "name": "Cenchrus"
+    },
+    {
+      "index": 27,
+      "name": "Chasmanthium"
+    },
+    {
+      "index": 28,
+      "name": "Chloris"
+    },
+    {
+      "index": 29,
+      "name": "Cladium"
+    },
+    {
+      "index": 30,
+      "name": "Conicosia"
+    },
+    {
+      "index": 31,
+      "name": "Cortaderia"
+    },
+    {
+      "index": 32,
+      "name": "Coryphantha"
+    },
+    {
+      "index": 33,
+      "name": "Cotyledon"
+    },
+    {
+      "index": 34,
+      "name": "Crassula"
+    },
+    {
+      "index": 35,
+      "name": "Cylindropuntia"
+    },
+    {
+      "index": 36,
+      "name": "Cynodon"
+    },
+    {
+      "index": 37,
+      "name": "Cynosurus"
+    },
+    {
+      "index": 38,
+      "name": "Cyperus"
+    },
+    {
+      "index": 39,
+      "name": "Dactylis"
+    },
+    {
+      "index": 40,
+      "name": "Dactyloctenium"
+    },
+    {
+      "index": 41,
+      "name": "Danthonia"
+    },
+    {
+      "index": 42,
+      "name": "Dasyochloa"
+    },
+    {
+      "index": 43,
+      "name": "Deschampsia"
+    },
+    {
+      "index": 44,
+      "name": "Dianella"
+    },
+    {
+      "index": 45,
+      "name": "Dichanthelium"
+    },
+    {
+      "index": 46,
+      "name": "Digitaria"
+    },
+    {
+      "index": 47,
+      "name": "Disphyma"
+    },
+    {
+      "index": 48,
+      "name": "Distichlis"
+    },
+    {
+      "index": 49,
+      "name": "Dudleya"
+    },
+    {
+      "index": 50,
+      "name": "Dulichium"
+    },
+    {
+      "index": 51,
+      "name": "Echeveria"
+    },
+    {
+      "index": 52,
+      "name": "Echinocactus"
+    },
+    {
+      "index": 53,
+      "name": "Echinocereus"
+    },
+    {
+      "index": 54,
+      "name": "Echinochloa"
+    },
+    {
+      "index": 55,
+      "name": "Ehrharta"
+    },
+    {
+      "index": 56,
+      "name": "Eleocharis"
+    },
+    {
+      "index": 57,
+      "name": "Eleusine"
+    },
+    {
+      "index": 58,
+      "name": "Elymus"
+    },
+    {
+      "index": 59,
+      "name": "Eriophorum"
+    },
+    {
+      "index": 60,
+      "name": "Escobaria"
+    },
+    {
+      "index": 61,
+      "name": "Ferocactus"
+    },
+    {
+      "index": 62,
+      "name": "Ficinia"
+    },
+    {
+      "index": 63,
+      "name": "Glyceria"
+    },
+    {
+      "index": 64,
+      "name": "Hamatocactus"
+    },
+    {
+      "index": 65,
+      "name": "Hemerocallis"
+    },
+    {
+      "index": 66,
+      "name": "Hilaria"
+    },
+    {
+      "index": 67,
+      "name": "Holcus"
+    },
+    {
+      "index": 68,
+      "name": "Homalocephala"
+    },
+    {
+      "index": 69,
+      "name": "Hordeum"
+    },
+    {
+      "index": 70,
+      "name": "Hylotelephium"
+    },
+    {
+      "index": 71,
+      "name": "Imperata"
+    },
+    {
+      "index": 72,
+      "name": "Juncus"
+    },
+    {
+      "index": 73,
+      "name": "Kalanchoe"
+    },
+    {
+      "index": 74,
+      "name": "Kniphofia"
+    },
+    {
+      "index": 75,
+      "name": "Koeleria"
+    },
+    {
+      "index": 76,
+      "name": "Lagurus"
+    },
+    {
+      "index": 77,
+      "name": "Lamarckia"
+    },
+    {
+      "index": 78,
+      "name": "Leersia"
+    },
+    {
+      "index": 79,
+      "name": "Leymus"
+    },
+    {
+      "index": 80,
+      "name": "Lolium"
+    },
+    {
+      "index": 81,
+      "name": "Lophocereus"
+    },
+    {
+      "index": 82,
+      "name": "Lophophora"
+    },
+    {
+      "index": 83,
+      "name": "Luzula"
+    },
+    {
+      "index": 84,
+      "name": "Mammillaria"
+    },
+    {
+      "index": 85,
+      "name": "Melica"
+    },
+    {
+      "index": 86,
+      "name": "Melinis"
+    },
+    {
+      "index": 87,
+      "name": "Mesembryanthemum"
+    },
+    {
+      "index": 88,
+      "name": "Microstegium"
+    },
+    {
+      "index": 89,
+      "name": "Milium"
+    },
+    {
+      "index": 90,
+      "name": "Miscanthus"
+    },
+    {
+      "index": 91,
+      "name": "Muhlenbergia"
+    },
+    {
+      "index": 92,
+      "name": "Myrtillocactus"
+    },
+    {
+      "index": 93,
+      "name": "Nassella"
+    },
+    {
+      "index": 94,
+      "name": "Neolloydia"
+    },
+    {
+      "index": 95,
+      "name": "Oplismenus"
+    },
+    {
+      "index": 96,
+      "name": "Opuntia"
+    },
+    {
+      "index": 97,
+      "name": "Orostachys"
+    },
+    {
+      "index": 98,
+      "name": "Oryzopsis"
+    },
+    {
+      "index": 99,
+      "name": "Pachycereus"
+    },
+    {
+      "index": 100,
+      "name": "Panicum"
+    },
+    {
+      "index": 101,
+      "name": "Paspalum"
+    },
+    {
+      "index": 102,
+      "name": "Pediocactus"
+    },
+    {
+      "index": 103,
+      "name": "Peniocereus"
+    },
+    {
+      "index": 104,
+      "name": "Pennisetum"
+    },
+    {
+      "index": 105,
+      "name": "Phalaris"
+    },
+    {
+      "index": 106,
+      "name": "Phleum"
+    },
+    {
+      "index": 107,
+      "name": "Phormium"
+    },
+    {
+      "index": 108,
+      "name": "Phragmites"
+    },
+    {
+      "index": 109,
+      "name": "Poa"
+    },
+    {
+      "index": 110,
+      "name": "Polypogon"
+    },
+    {
+      "index": 111,
+      "name": "Portulaca"
+    },
+    {
+      "index": 112,
+      "name": "Rhodiola"
+    },
+    {
+      "index": 113,
+      "name": "Rhynchospora"
+    },
+    {
+      "index": 114,
+      "name": "Schizachyrium"
+    },
+    {
+      "index": 115,
+      "name": "Schoenoplectus"
+    },
+    {
+      "index": 116,
+      "name": "Scirpus"
+    },
+    {
+      "index": 117,
+      "name": "Sedum"
+    },
+    {
+      "index": 118,
+      "name": "Selenicereus"
+    },
+    {
+      "index": 119,
+      "name": "Sempervivum"
+    },
+    {
+      "index": 120,
+      "name": "Sesuvium"
+    },
+    {
+      "index": 121,
+      "name": "Setaria"
+    },
+    {
+      "index": 122,
+      "name": "Sorghastrum"
+    },
+    {
+      "index": 123,
+      "name": "Sorghum"
+    },
+    {
+      "index": 124,
+      "name": "Spinifex"
+    },
+    {
+      "index": 125,
+      "name": "Sporobolus"
+    },
+    {
+      "index": 126,
+      "name": "Stenocereus"
+    },
+    {
+      "index": 127,
+      "name": "Stenotaphrum"
+    },
+    {
+      "index": 128,
+      "name": "Stipa"
+    },
+    {
+      "index": 129,
+      "name": "Tetragonia"
+    },
+    {
+      "index": 130,
+      "name": "Themeda"
+    },
+    {
+      "index": 131,
+      "name": "Trichophorum"
+    },
+    {
+      "index": 132,
+      "name": "Tridens"
+    },
+    {
+      "index": 133,
+      "name": "Tripsacum"
+    },
+    {
+      "index": 134,
+      "name": "Triticum"
+    },
+    {
+      "index": 135,
+      "name": "Tylecodon"
+    },
+    {
+      "index": 136,
+      "name": "Umbilicus"
+    },
+    {
+      "index": 137,
+      "name": "Uniola"
+    },
+    {
+      "index": 138,
+      "name": "Yucca"
+    }
+  ]
+}

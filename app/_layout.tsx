@@ -1,10 +1,13 @@
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { DarkTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet } from 'react-native';
 import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+WebBrowser.maybeCompleteAuthSession();
 
 import { AuthGate } from '@/components/layout/auth-gate';
 import { LocalDatabaseErrorBanner } from '@/components/layout/local-database-error-banner';
@@ -42,6 +45,7 @@ export default function RootLayout() {
                 <LocalDatabaseErrorBanner />
                 <Stack>
                   <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                  <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
                   <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                   <Stack.Screen name="user/[userId]" options={{ title: 'Member' }} />
                 </Stack>

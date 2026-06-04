@@ -1,6 +1,7 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 
 import { useCacheFirstFetch } from '@/hooks/useCacheFirstFetch';
+import { subscribeProfileRefresh } from '@/lib/profile/profileRefresh';
 import {
   loadCachedScoringSnapshotEntry,
   saveCachedScoringSnapshot,
@@ -27,6 +28,12 @@ export function useUserScoringSnapshot(userId: string | undefined) {
   });
 
   const forceRefetch = useCallback(() => refetch({ force: true }), [refetch]);
+
+  useEffect(() => {
+    return subscribeProfileRefresh(() => {
+      void refetch({ force: true });
+    });
+  }, [refetch]);
 
   return {
     snapshot,

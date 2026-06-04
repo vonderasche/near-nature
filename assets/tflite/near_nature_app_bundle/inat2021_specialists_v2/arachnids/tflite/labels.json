@@ -1,0 +1,394 @@
+{
+  "model": "mobilenet_v3_large",
+  "classCount": 97,
+  "labels": [
+    {
+      "index": 0,
+      "name": "Aceria"
+    },
+    {
+      "index": 1,
+      "name": "Aculepeira"
+    },
+    {
+      "index": 2,
+      "name": "Aculops"
+    },
+    {
+      "index": 3,
+      "name": "Aculus"
+    },
+    {
+      "index": 4,
+      "name": "Agalenatea"
+    },
+    {
+      "index": 5,
+      "name": "Amblyomma"
+    },
+    {
+      "index": 6,
+      "name": "Anasaitis"
+    },
+    {
+      "index": 7,
+      "name": "Aphonopelma"
+    },
+    {
+      "index": 8,
+      "name": "Araneus"
+    },
+    {
+      "index": 9,
+      "name": "Araniella"
+    },
+    {
+      "index": 10,
+      "name": "Argiope"
+    },
+    {
+      "index": 11,
+      "name": "Attulus"
+    },
+    {
+      "index": 12,
+      "name": "Atypoides"
+    },
+    {
+      "index": 13,
+      "name": "Austracantha"
+    },
+    {
+      "index": 14,
+      "name": "Badumna"
+    },
+    {
+      "index": 15,
+      "name": "Centruroides"
+    },
+    {
+      "index": 16,
+      "name": "Cheiracanthium"
+    },
+    {
+      "index": 17,
+      "name": "Colonus"
+    },
+    {
+      "index": 18,
+      "name": "Cyclosa"
+    },
+    {
+      "index": 19,
+      "name": "Cyrtophora"
+    },
+    {
+      "index": 20,
+      "name": "Dermacentor"
+    },
+    {
+      "index": 21,
+      "name": "Dolomedes"
+    },
+    {
+      "index": 22,
+      "name": "Dysdera"
+    },
+    {
+      "index": 23,
+      "name": "Enoplognatha"
+    },
+    {
+      "index": 24,
+      "name": "Eratigena"
+    },
+    {
+      "index": 25,
+      "name": "Eriophora"
+    },
+    {
+      "index": 26,
+      "name": "Eriophyes"
+    },
+    {
+      "index": 27,
+      "name": "Eris"
+    },
+    {
+      "index": 28,
+      "name": "Frontinella"
+    },
+    {
+      "index": 29,
+      "name": "Gasteracantha"
+    },
+    {
+      "index": 30,
+      "name": "Hadrurus"
+    },
+    {
+      "index": 31,
+      "name": "Hasarius"
+    },
+    {
+      "index": 32,
+      "name": "Helpis"
+    },
+    {
+      "index": 33,
+      "name": "Hentzia"
+    },
+    {
+      "index": 34,
+      "name": "Herpyllus"
+    },
+    {
+      "index": 35,
+      "name": "Heteropoda"
+    },
+    {
+      "index": 36,
+      "name": "Hogna"
+    },
+    {
+      "index": 37,
+      "name": "Holocnemus"
+    },
+    {
+      "index": 38,
+      "name": "Hypoblemum"
+    },
+    {
+      "index": 39,
+      "name": "Ixodes"
+    },
+    {
+      "index": 40,
+      "name": "Kukulcania"
+    },
+    {
+      "index": 41,
+      "name": "Larinioides"
+    },
+    {
+      "index": 42,
+      "name": "Latrodectus"
+    },
+    {
+      "index": 43,
+      "name": "Leiobunum"
+    },
+    {
+      "index": 44,
+      "name": "Leucauge"
+    },
+    {
+      "index": 45,
+      "name": "Loxosceles"
+    },
+    {
+      "index": 46,
+      "name": "Lyssomanes"
+    },
+    {
+      "index": 47,
+      "name": "Maevia"
+    },
+    {
+      "index": 48,
+      "name": "Mangora"
+    },
+    {
+      "index": 49,
+      "name": "Marpissa"
+    },
+    {
+      "index": 50,
+      "name": "Mecynogea"
+    },
+    {
+      "index": 51,
+      "name": "Menemerus"
+    },
+    {
+      "index": 52,
+      "name": "Metacyrba"
+    },
+    {
+      "index": 53,
+      "name": "Micrathena"
+    },
+    {
+      "index": 54,
+      "name": "Micrommata"
+    },
+    {
+      "index": 55,
+      "name": "Misumena"
+    },
+    {
+      "index": 56,
+      "name": "Misumenoides"
+    },
+    {
+      "index": 57,
+      "name": "Mitopus"
+    },
+    {
+      "index": 58,
+      "name": "Naphrys"
+    },
+    {
+      "index": 59,
+      "name": "Neoscona"
+    },
+    {
+      "index": 60,
+      "name": "Nephila"
+    },
+    {
+      "index": 61,
+      "name": "Neriene"
+    },
+    {
+      "index": 62,
+      "name": "Nuctenea"
+    },
+    {
+      "index": 63,
+      "name": "Nyssus"
+    },
+    {
+      "index": 64,
+      "name": "Olios"
+    },
+    {
+      "index": 65,
+      "name": "Opilio"
+    },
+    {
+      "index": 66,
+      "name": "Oxyopes"
+    },
+    {
+      "index": 67,
+      "name": "Paraphidippus"
+    },
+    {
+      "index": 68,
+      "name": "Parasteatoda"
+    },
+    {
+      "index": 69,
+      "name": "Paravaejovis"
+    },
+    {
+      "index": 70,
+      "name": "Paruroctonus"
+    },
+    {
+      "index": 71,
+      "name": "Pelegrina"
+    },
+    {
+      "index": 72,
+      "name": "Peucetia"
+    },
+    {
+      "index": 73,
+      "name": "Phalangium"
+    },
+    {
+      "index": 74,
+      "name": "Phidippus"
+    },
+    {
+      "index": 75,
+      "name": "Philaeus"
+    },
+    {
+      "index": 76,
+      "name": "Pholcus"
+    },
+    {
+      "index": 77,
+      "name": "Pisaura"
+    },
+    {
+      "index": 78,
+      "name": "Pisaurina"
+    },
+    {
+      "index": 79,
+      "name": "Platycryptus"
+    },
+    {
+      "index": 80,
+      "name": "Plexippus"
+    },
+    {
+      "index": 81,
+      "name": "Rabidosa"
+    },
+    {
+      "index": 82,
+      "name": "Salticus"
+    },
+    {
+      "index": 83,
+      "name": "Sassacus"
+    },
+    {
+      "index": 84,
+      "name": "Sidymella"
+    },
+    {
+      "index": 85,
+      "name": "Steatoda"
+    },
+    {
+      "index": 86,
+      "name": "Synema"
+    },
+    {
+      "index": 87,
+      "name": "Thelacantha"
+    },
+    {
+      "index": 88,
+      "name": "Thomisus"
+    },
+    {
+      "index": 89,
+      "name": "Trichonephila"
+    },
+    {
+      "index": 90,
+      "name": "Trite"
+    },
+    {
+      "index": 91,
+      "name": "Uroctonus"
+    },
+    {
+      "index": 92,
+      "name": "Vaejovis"
+    },
+    {
+      "index": 93,
+      "name": "Vasates"
+    },
+    {
+      "index": 94,
+      "name": "Verrucosa"
+    },
+    {
+      "index": 95,
+      "name": "Zoropsis"
+    },
+    {
+      "index": 96,
+      "name": "Zygiella"
+    }
+  ]
+}

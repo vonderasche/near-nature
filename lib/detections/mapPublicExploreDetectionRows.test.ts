@@ -38,5 +38,8 @@ describe('isPublicExploreRpcMissing', () => {
         message: 'Could not find the function public.search_public_detections in the schema cache',
       }),
     ).toBe(true);
+    expect(
+      isPublicExploreRpcMissing({ message: 'permission denied for table users' }),
+    ).toBe(true);
   });
 });

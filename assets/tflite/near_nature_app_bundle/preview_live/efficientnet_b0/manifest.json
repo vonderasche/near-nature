@@ -1,0 +1,8 @@
+{
+  "model_name": "efficientnet_b0",
+  "num_classes": 1000,
+  "checkpoint": "efficientnet_b0_imagenet1k.pth",
+  "full_model": "efficientnet_b0_imagenet1k_full.pt",
+  "pretrained_on": "ImageNet-1K",
+  "input_size": 224
+}

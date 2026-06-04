@@ -15,6 +15,18 @@ function db(): SQLiteDatabase | null {
   return getLocalDatabase();
 }
 
+/** expo-sqlite allows one active transaction; serialize detection writes. */
+let detectionWriteChain: Promise<void> = Promise.resolve();
+
+function enqueueDetectionWrite<T>(fn: () => Promise<T>): Promise<T> {
+  const run = detectionWriteChain.then(fn, fn);
+  detectionWriteChain = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
+}
+
 const UPSERT_SQL = `
   INSERT INTO user_detections (
     id,
@@ -88,6 +100,22 @@ function toBindValues(
   ];
 }
 
+async function upsertUserDetectionOnConnection(
+  conn: SQLiteDatabase,
+  userId: string,
+  row: DetectionGalleryRow,
+  meta: StoredUserDetectionMeta,
+): Promise<void> {
+  const syncedAt = nowMs();
+  const existing = await conn.getFirstAsync<{ created_at: number }>(
+    'SELECT created_at FROM user_detections WHERE id = ? LIMIT 1',
+    row.id,
+  );
+  const createdAt = existing?.created_at ?? syncedAt;
+
+  await conn.runAsync(UPSERT_SQL, ...toBindValues(userId, row, meta, syncedAt, createdAt));
+}
+
 export async function upsertUserDetection(
   userId: string,
   row: DetectionGalleryRow,
@@ -96,17 +124,7 @@ export async function upsertUserDetection(
   const conn = db();
   if (!conn) return;
 
-  const syncedAt = nowMs();
-  const existing = await conn.getFirstAsync<{ created_at: number }>(
-    'SELECT created_at FROM user_detections WHERE id = ? LIMIT 1',
-    row.id,
-  );
-  const createdAt = existing?.created_at ?? syncedAt;
-
-  await conn.runAsync(
-    UPSERT_SQL,
-    ...toBindValues(userId, row, meta, syncedAt, createdAt),
-  );
+  await enqueueDetectionWrite(() => upsertUserDetectionOnConnection(conn, userId, row, meta));
 }
 
 export async function upsertUserDetections(
@@ -117,17 +135,26 @@ export async function upsertUserDetections(
   const conn = db();
   if (!rows.length || !conn) return;
 
-  await conn.withTransactionAsync(async () => {
-    for (const row of rows) {
-      await upsertUserDetection(userId, row, metaById?.get(row.id) ?? {});
-    }
+  await enqueueDetectionWrite(async () => {
+    await conn.withTransactionAsync(async () => {
+      for (const row of rows) {
+        await upsertUserDetectionOnConnection(
+          conn,
+          userId,
+          row,
+          metaById?.get(row.id) ?? {},
+        );
+      }
+    });
   });
 }
 
 export async function deleteUserDetection(userId: string, detectionId: string): Promise<void> {
   const conn = db();
   if (!conn) return;
-  await conn.runAsync('DELETE FROM user_detections WHERE user_id = ? AND id = ?', userId, detectionId);
+  await enqueueDetectionWrite(() =>
+    conn.runAsync('DELETE FROM user_detections WHERE user_id = ? AND id = ?', userId, detectionId),
+  );
 }
 
 export async function listUserDetectionGalleryRows(
@@ -191,11 +218,13 @@ export async function countUserDetections(userId: string, publicOnly = false): P
 export async function clearUserDetectionsForUser(userId: string): Promise<void> {
   const conn = db();
   if (!conn) return;
-  await conn.runAsync('DELETE FROM user_detections WHERE user_id = ?', userId);
+  await enqueueDetectionWrite(() =>
+    conn.runAsync('DELETE FROM user_detections WHERE user_id = ?', userId),
+  );
 }
 
 export async function clearAllUserDetections(): Promise<void> {
   const conn = db();
   if (!conn) return;
-  await conn.runAsync('DELETE FROM user_detections');
+  await enqueueDetectionWrite(() => conn.runAsync('DELETE FROM user_detections'));
 }

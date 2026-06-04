@@ -1,20 +1,20 @@
-import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 
 import { completeSupabaseAuthSessionFromUrl } from '@/lib/auth/completeSupabaseAuthSessionFromUrl';
 import { signInWithEmail } from '@/lib/auth/email-auth';
+import { mapSupabaseAuthErrorMessage } from '@/lib/auth/mapSupabaseAuthError';
+import {
+  getOAuthRedirectUrl,
+  getPasswordRecoveryRedirectUrl,
+  listAuthRedirectUrlsForSupabase,
+} from '@/lib/auth/oauthRedirect';
+import { parseOAuthCallbackError } from '@/lib/auth/parseOAuthCallbackError';
 import { clearLocalUserDataOnSignOut } from '@/lib/db/clearLocalUserDataOnSignOut';
+import { devLog } from '@/lib/devLog';
 import { supabase } from '@/lib/supabase';
+import { ensurePublicUserProfile } from '@/services/userService';
 
-/** Add this URL (and your dev `exp://` variant) under Supabase Auth → URL configuration → Redirect URLs. */
-export function getPasswordRecoveryRedirectUrl(): string {
-  return Linking.createURL('/reset-password');
-}
-
-/** Add this URL under Supabase Auth -> URL configuration -> Redirect URLs. */
-export function getOAuthRedirectUrl(): string {
-  return Linking.createURL('/auth/callback');
-}
+export { getOAuthRedirectUrl, getPasswordRecoveryRedirectUrl, listAuthRedirectUrlsForSupabase };
 
 export async function signUp(email: string, password: string, fullName: string) {
   const { data, error } = await supabase.auth.signUp({
@@ -36,33 +36,71 @@ export async function signIn(emailOrUsername: string, password: string) {
 
 export async function signInWithGoogle() {
   const redirectTo = getOAuthRedirectUrl();
+  devLog('[auth] Google OAuth redirectTo', redirectTo);
+
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
       redirectTo,
       skipBrowserRedirect: true,
+      queryParams: { prompt: 'select_account' },
     },
   });
 
-  if (error) throw error;
+  if (error) {
+    throw new Error(mapSupabaseAuthErrorMessage(error.message));
+  }
   if (!data.url) throw new Error('Could not start Google sign-in.');
 
   const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-  if (result.type !== 'success') {
+  if (result.type === 'cancel' || result.type === 'dismiss') {
     throw new Error('Google sign-in was cancelled.');
+  }
+  if (result.type !== 'success') {
+    throw new Error('Google sign-in did not complete. Try again.');
+  }
+
+  const oauthError = parseOAuthCallbackError(result.url);
+  if (oauthError) {
+    throw new Error(oauthError);
   }
 
   const completed = await completeSupabaseAuthSessionFromUrl(result.url);
-  if (completed.error) throw completed.error;
+  if (completed.error) {
+    throw new Error(mapSupabaseAuthErrorMessage(completed.error.message));
+  }
   if (!completed.data.session) {
     throw new Error('Google sign-in did not return a session.');
   }
+
+  try {
+    await ensurePublicUserProfile();
+  } catch (profileError) {
+    devLog('[auth] ensurePublicUserProfile after Google sign-in', profileError);
+  }
 }
 
-export async function signOut() {
-  const { error } = await supabase.auth.signOut();
-  await clearLocalUserDataOnSignOut();
-  if (error) throw error;
+export async function signOut(): Promise<void> {
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      devLog('[auth] global signOut failed, clearing local session', error.message);
+      await supabase.auth.signOut({ scope: 'local' });
+    }
+  } catch (err: unknown) {
+    devLog('[auth] signOut threw, clearing local session', err);
+    try {
+      await supabase.auth.signOut({ scope: 'local' });
+    } catch (localErr: unknown) {
+      devLog('[auth] local signOut failed', localErr);
+    }
+  }
+
+  try {
+    await clearLocalUserDataOnSignOut();
+  } catch (err: unknown) {
+    devLog('[auth] clearLocalUserDataOnSignOut failed', err);
+  }
 }
 
 /**

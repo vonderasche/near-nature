@@ -42,7 +42,8 @@ create policy "Users can view their own profile"
 
 create policy "Users can update their own profile"
   on public.users for update
-  using ((select auth.uid()) = id);
+  using ((select auth.uid()) = id)
+  with check ((select auth.uid()) = id);
 
 create policy "Users can delete their own profile"
   on public.users for delete

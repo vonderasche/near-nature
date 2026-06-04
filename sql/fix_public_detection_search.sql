@@ -88,4 +88,4 @@ begin
 end;
 $$;
 
--- Then run sql/search_public_detections.sql in the same session (updates the RPC body).
+-- Then run sql/search_public_detections.sql in the same session (SECURITY DEFINER RPC).

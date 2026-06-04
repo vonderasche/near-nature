@@ -60,7 +60,9 @@ export function CameraIdentificationPanel({
     wikiError,
     tfliteMeta,
     alternatesEnriching,
-    enrichAlternates,
+    reclassifyError,
+    canReclassifyWithCloud,
+    reclassifyWithCloud,
     speciesIdBase,
   } = useIdentificationResultsState(photoUri, userState, userId ?? undefined, identify);
 
@@ -95,6 +97,7 @@ export function CameraIdentificationPanel({
         {identifyError ? <InlineFormError>{identifyError}</InlineFormError> : null}
         {historyError ? <InlineFormError>{historyError}</InlineFormError> : null}
         {wikiError ? <InlineFormError>{wikiError}</InlineFormError> : null}
+        {reclassifyError ? <InlineFormError>{reclassifyError}</InlineFormError> : null}
 
         <ScrollView
           style={styles.scroll}
@@ -113,7 +116,8 @@ export function CameraIdentificationPanel({
             selectedIndex={selectedSpeciesIndex}
             onSelectIndex={setSelectedSpeciesIndex}
             alternatesEnriching={alternatesEnriching}
-            onEnrichAlternates={enrichAlternates}
+            canReclassifyWithCloud={canReclassifyWithCloud}
+            onReclassifyWithCloud={reclassifyWithCloud}
           />
 
           <IdentificationHistorySection historyLoading={historyLoading} identifications={identifications} />

@@ -1,6 +1,8 @@
 import { useCallback, useState } from 'react';
+import { useRouter } from 'expo-router';
 
 import { useAuth } from '@/hooks/useAuth';
+import { routes } from '@/lib/routing/routes';
 
 export type UseLogoutResult = {
   /** Calls {@link useAuth} `logout`; failures set {@link UseLogoutResult.logoutError}. */
@@ -15,6 +17,7 @@ export type UseLogoutResult = {
  */
 export function useLogout(): UseLogoutResult {
   const { logout: signOut } = useAuth();
+  const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
 
@@ -27,12 +30,13 @@ export function useLogout(): UseLogoutResult {
     setLogoutError(null);
     try {
       await signOut();
+      router.replace(routes.explorerBoardTab);
     } catch (err: unknown) {
       setLogoutError(err instanceof Error ? err.message : 'Something went wrong.');
     } finally {
       setBusy(false);
     }
-  }, [signOut]);
+  }, [router, signOut]);
 
   return { logout, busy, logoutError, clearLogoutError };
 }

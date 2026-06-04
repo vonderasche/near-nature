@@ -34,7 +34,7 @@ export const ProfileScoringCollapsible = forwardRef<
     <View style={styles.wrap}>
       <Text style={styles.hint}>
         {hasSavedSpecies
-          ? 'Tap a discipline icon to see its tiers · dimmed = not earned yet'
+          ? 'Earn a discipline badge with your first unique species in that group · dimmed = not earned yet'
           : 'Save your first identification to start earning badge progress.'}
       </Text>
 

@@ -18,7 +18,7 @@ export function classificationToSpeciesCategory(c: ClassificationResult): string
     return raw;
   }
 
-  if (c.taxonGroup === 'fungi') return 'fungi';
+  if (c.taxonGroup === 'fungi') return 'other_fungi';
   if (c.taxonGroup === 'birds') return 'songbirds';
   if (c.taxonGroup === 'plants') return 'wildflowers';
   return 'small_mammals';

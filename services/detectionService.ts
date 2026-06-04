@@ -15,6 +15,7 @@ import {
 import { invalidateCachedGalleryList, prependCachedGalleryRow } from '@/lib/detections/galleryListCache';
 import type { DetectionGalleryRow } from '@/lib/detections/mapDetectionGalleryRow';
 import { upsertSavedSpeciesInSession } from '@/lib/identification/savedSpeciesSessionCache';
+import { requestProfileRefresh } from '@/lib/profile/profileRefresh';
 import { invalidateCachedScoringSnapshot } from '@/lib/profile/scoringSnapshotCache';
 import { upsertSpeciesMetadata } from '@/services/speciesMetadataService';
 import { classificationToSpeciesCategory } from '@/lib/detections/mapSpeciesCategory';
@@ -60,6 +61,7 @@ export async function saveDetection(input: SaveDetectionInput): Promise<SaveDete
     });
     await prependCachedGalleryRow(userId, false, row);
     await invalidateCachedScoringSnapshot(userId);
+    requestProfileRefresh();
     upsertSavedSpeciesInSession(userId, {
       latinName: species.latinName,
       commonName: species.commonName,
@@ -206,6 +208,7 @@ export async function saveDetection(input: SaveDetectionInput): Promise<SaveDete
 
   await prependCachedGalleryRow(userId, false, galleryRow);
   await invalidateCachedScoringSnapshot(userId);
+  requestProfileRefresh();
 
   await upsertUserDetection(userId, galleryRow, {
     confidence: confidencePct,
@@ -241,6 +244,7 @@ export async function deleteSavedDetection(detectionId: string): Promise<void> {
     await removeLocalDetection(userId, detectionId);
     await invalidateCachedGalleryList(userId);
     await invalidateCachedScoringSnapshot(userId);
+    requestProfileRefresh();
     return;
   }
 
@@ -266,6 +270,7 @@ export async function deleteSavedDetection(detectionId: string): Promise<void> {
     const uid = String(row.user_id);
     await invalidateCachedGalleryList(uid);
     await invalidateCachedScoringSnapshot(uid);
+    requestProfileRefresh();
     await deleteUserDetection(uid, detectionId);
   }
 
