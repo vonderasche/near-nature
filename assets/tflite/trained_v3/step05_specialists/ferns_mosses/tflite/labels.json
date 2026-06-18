@@ -1,0 +1,398 @@
+{
+  "model": "efficientnet_b1",
+  "classCount": 98,
+  "labels": [
+    {
+      "index": 0,
+      "name": "Acrostichum"
+    },
+    {
+      "index": 1,
+      "name": "Adiantum"
+    },
+    {
+      "index": 2,
+      "name": "Anomodon"
+    },
+    {
+      "index": 3,
+      "name": "Aspidotis"
+    },
+    {
+      "index": 4,
+      "name": "Asplenium"
+    },
+    {
+      "index": 5,
+      "name": "Asterella"
+    },
+    {
+      "index": 6,
+      "name": "Astrolepis"
+    },
+    {
+      "index": 7,
+      "name": "Athyrium"
+    },
+    {
+      "index": 8,
+      "name": "Azolla"
+    },
+    {
+      "index": 9,
+      "name": "Blechnum"
+    },
+    {
+      "index": 10,
+      "name": "Botrychium"
+    },
+    {
+      "index": 11,
+      "name": "Botrypus"
+    },
+    {
+      "index": 12,
+      "name": "Bryum"
+    },
+    {
+      "index": 13,
+      "name": "Ceratodon"
+    },
+    {
+      "index": 14,
+      "name": "Conocephalum"
+    },
+    {
+      "index": 15,
+      "name": "Cranfillia"
+    },
+    {
+      "index": 16,
+      "name": "Cryptogramma"
+    },
+    {
+      "index": 17,
+      "name": "Cyathea"
+    },
+    {
+      "index": 18,
+      "name": "Cyrtomium"
+    },
+    {
+      "index": 19,
+      "name": "Cystopteris"
+    },
+    {
+      "index": 20,
+      "name": "Dawsonia"
+    },
+    {
+      "index": 21,
+      "name": "Dendroalsia"
+    },
+    {
+      "index": 22,
+      "name": "Dennstaedtia"
+    },
+    {
+      "index": 23,
+      "name": "Deparia"
+    },
+    {
+      "index": 24,
+      "name": "Dicksonia"
+    },
+    {
+      "index": 25,
+      "name": "Dicranopteris"
+    },
+    {
+      "index": 26,
+      "name": "Dicranum"
+    },
+    {
+      "index": 27,
+      "name": "Dryopteris"
+    },
+    {
+      "index": 28,
+      "name": "Equisetum"
+    },
+    {
+      "index": 29,
+      "name": "Funaria"
+    },
+    {
+      "index": 30,
+      "name": "Gleichenia"
+    },
+    {
+      "index": 31,
+      "name": "Grimmia"
+    },
+    {
+      "index": 32,
+      "name": "Gymnocarpium"
+    },
+    {
+      "index": 33,
+      "name": "Hedwigia"
+    },
+    {
+      "index": 34,
+      "name": "Histiopteris"
+    },
+    {
+      "index": 35,
+      "name": "Homalosorus"
+    },
+    {
+      "index": 36,
+      "name": "Hylocomium"
+    },
+    {
+      "index": 37,
+      "name": "Hymenophyllum"
+    },
+    {
+      "index": 38,
+      "name": "Hypnum"
+    },
+    {
+      "index": 39,
+      "name": "Hypolepis"
+    },
+    {
+      "index": 40,
+      "name": "Isothecium"
+    },
+    {
+      "index": 41,
+      "name": "Kindbergia"
+    },
+    {
+      "index": 42,
+      "name": "Leptopteris"
+    },
+    {
+      "index": 43,
+      "name": "Leucobryum"
+    },
+    {
+      "index": 44,
+      "name": "Leucolepis"
+    },
+    {
+      "index": 45,
+      "name": "Lomaria"
+    },
+    {
+      "index": 46,
+      "name": "Lunularia"
+    },
+    {
+      "index": 47,
+      "name": "Lygodium"
+    },
+    {
+      "index": 48,
+      "name": "Marchantia"
+    },
+    {
+      "index": 49,
+      "name": "Matteuccia"
+    },
+    {
+      "index": 50,
+      "name": "Microsorum"
+    },
+    {
+      "index": 51,
+      "name": "Myriopteris"
+    },
+    {
+      "index": 52,
+      "name": "Neckera"
+    },
+    {
+      "index": 53,
+      "name": "Nephrolepis"
+    },
+    {
+      "index": 54,
+      "name": "Notogrammitis"
+    },
+    {
+      "index": 55,
+      "name": "Onoclea"
+    },
+    {
+      "index": 56,
+      "name": "Osmunda"
+    },
+    {
+      "index": 57,
+      "name": "Osmundastrum"
+    },
+    {
+      "index": 58,
+      "name": "Paesia"
+    },
+    {
+      "index": 59,
+      "name": "Parathelypteris"
+    },
+    {
+      "index": 60,
+      "name": "Pellaea"
+    },
+    {
+      "index": 61,
+      "name": "Pentagramma"
+    },
+    {
+      "index": 62,
+      "name": "Phegopteris"
+    },
+    {
+      "index": 63,
+      "name": "Phlebodium"
+    },
+    {
+      "index": 64,
+      "name": "Physcomitrium"
+    },
+    {
+      "index": 65,
+      "name": "Plagiomnium"
+    },
+    {
+      "index": 66,
+      "name": "Plagiothecium"
+    },
+    {
+      "index": 67,
+      "name": "Pleopeltis"
+    },
+    {
+      "index": 68,
+      "name": "Pleurozium"
+    },
+    {
+      "index": 69,
+      "name": "Pneumatopteris"
+    },
+    {
+      "index": 70,
+      "name": "Polypodium"
+    },
+    {
+      "index": 71,
+      "name": "Polystichum"
+    },
+    {
+      "index": 72,
+      "name": "Polytrichum"
+    },
+    {
+      "index": 73,
+      "name": "Psilotum"
+    },
+    {
+      "index": 74,
+      "name": "Pteridium"
+    },
+    {
+      "index": 75,
+      "name": "Pteris"
+    },
+    {
+      "index": 76,
+      "name": "Ptilium"
+    },
+    {
+      "index": 77,
+      "name": "Pyrrosia"
+    },
+    {
+      "index": 78,
+      "name": "Racomitrium"
+    },
+    {
+      "index": 79,
+      "name": "Rhizomnium"
+    },
+    {
+      "index": 80,
+      "name": "Rhodobryum"
+    },
+    {
+      "index": 81,
+      "name": "Rhytidiadelphus"
+    },
+    {
+      "index": 82,
+      "name": "Rumohra"
+    },
+    {
+      "index": 83,
+      "name": "Salvinia"
+    },
+    {
+      "index": 84,
+      "name": "Sceptridium"
+    },
+    {
+      "index": 85,
+      "name": "Sphagnum"
+    },
+    {
+      "index": 86,
+      "name": "Sticherus"
+    },
+    {
+      "index": 87,
+      "name": "Struthiopteris"
+    },
+    {
+      "index": 88,
+      "name": "Syntrichia"
+    },
+    {
+      "index": 89,
+      "name": "Telmatoblechnum"
+    },
+    {
+      "index": 90,
+      "name": "Thelypteris"
+    },
+    {
+      "index": 91,
+      "name": "Thuidium"
+    },
+    {
+      "index": 92,
+      "name": "Tmesipteris"
+    },
+    {
+      "index": 93,
+      "name": "Tortula"
+    },
+    {
+      "index": 94,
+      "name": "Trichomanes"
+    },
+    {
+      "index": 95,
+      "name": "Woodsia"
+    },
+    {
+      "index": 96,
+      "name": "Woodwardia"
+    },
+    {
+      "index": 97,
+      "name": "not_organism"
+    }
+  ]
+}

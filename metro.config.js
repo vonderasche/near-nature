@@ -17,4 +17,8 @@ if (!config.resolver.assetExts.includes('tflite')) {
   config.resolver.assetExts.push('tflite');
 }
 
+if (!config.resolver.assetExts.includes('csv')) {
+  config.resolver.assetExts.push('csv');
+}
+
 module.exports = config;

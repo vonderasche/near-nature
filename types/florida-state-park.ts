@@ -1,0 +1,24 @@
+export type FloridaStatePark = {
+  parkId: string;
+  unitId: string;
+  parkName: string;
+  webAlias: string;
+  county: string;
+  district: number | null;
+  acreage: number | null;
+  address: string;
+  city: string;
+  state: string;
+  latitude: number | null;
+  longitude: number | null;
+  gpsSource: string;
+  hasGps: boolean;
+  parkPageUrl: string;
+  imageUrl: string;
+  description: string;
+  topPlants: string[];
+  topAnimals: string[];
+  publicAccess: string;
+  dataSource: string;
+  updatedAt: string;
+};

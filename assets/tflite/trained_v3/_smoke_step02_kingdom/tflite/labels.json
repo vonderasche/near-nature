@@ -1,0 +1,22 @@
+{
+  "model": "efficientnet_b0",
+  "classCount": 4,
+  "labels": [
+    {
+      "index": 0,
+      "name": "plantae"
+    },
+    {
+      "index": 1,
+      "name": "animalia"
+    },
+    {
+      "index": 2,
+      "name": "fungi"
+    },
+    {
+      "index": 3,
+      "name": "uncertain"
+    }
+  ]
+}

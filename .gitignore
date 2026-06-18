@@ -57,3 +57,17 @@ assets/tflite/near_nature_app_bundle/**/*.pt
 assets/tflite/near_nature_app_bundle/**/*.pth
 assets/tflite/near_nature_app_bundle/**/train.log
 assets/tflite/near_nature_app_bundle/**/train.err.log
+assets/tflite/near_nature_app_bundle/**/*.log
+
+# trained_v3 training/export artifacts (runtime bundle keeps .tflite + labels/metadata)
+assets/tflite/trained_v3/**/tflite/tflite_out/
+assets/tflite/trained_v3/**/tflite/_docker_onnx2tflite.py
+assets/tflite/trained_v3/**/tflite/export_dummy_input.npy
+assets/tflite/trained_v3/**/*.onnx
+assets/tflite/trained_v3/**/*.pt
+assets/tflite/trained_v3/**/train.log
+assets/tflite/trained_v3/**/train.err.log
+
+# local tooling scratch
+supabase/.temp/
+build-log.txt

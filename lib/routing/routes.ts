@@ -12,6 +12,7 @@ export const routes = {
   forgotPassword: '/forgot-password',
   resetPassword: '/reset-password',
   cameraTab: '/(tabs)/camera',
+  discoverTab: '/(tabs)/discover',
   explorerBoardTab: '/(tabs)/explorer-board',
 } as const;
 

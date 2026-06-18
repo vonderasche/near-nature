@@ -1,6 +1,6 @@
-import { getLocalDatabase, isLocalDatabaseSupported } from '@/lib/db/database';
+import { getLocalDatabase, isLocalDatabaseReady, isLocalDatabaseSupported } from '@/lib/db/database';
 
-/** True when expo-sqlite is open and ready for user cache reads/writes. */
+/** True when expo-sqlite is open, migrated, and ready for user cache reads/writes. */
 export function isSqliteUserCacheAvailable(): boolean {
-  return isLocalDatabaseSupported() && getLocalDatabase() != null;
+  return isLocalDatabaseSupported() && isLocalDatabaseReady() && getLocalDatabase() != null;
 }

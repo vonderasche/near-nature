@@ -19,6 +19,7 @@ import {
   ListBulletIcon,
   LockClosedIcon,
   MagnifyingGlassIcon,
+  MapPinIcon,
   PhotoIcon,
   RectangleStackIcon,
   SparklesIcon,
@@ -32,6 +33,7 @@ import {
 } from 'react-native-heroicons/outline';
 import {
   CameraIcon as CameraIconSolid,
+  MapPinIcon as MapPinIconSolid,
   TrophyIcon as TrophyIconSolid,
   UserIcon as UserIconSolid,
 } from 'react-native-heroicons/solid';
@@ -55,6 +57,7 @@ export type HeroIconName =
   | 'list-bullet'
   | 'lock-closed'
   | 'magnifying-glass'
+  | 'map-pin'
   | 'photo'
   | 'rectangle-stack'
   | 'sparkles'
@@ -93,6 +96,7 @@ const OUTLINE: Record<HeroIconName, IconComponent> = {
   'list-bullet': ListBulletIcon,
   'lock-closed': LockClosedIcon,
   'magnifying-glass': MagnifyingGlassIcon,
+  'map-pin': MapPinIcon,
   photo: PhotoIcon,
   'rectangle-stack': RectangleStackIcon,
   sparkles: SparklesIcon,
@@ -107,6 +111,7 @@ const OUTLINE: Record<HeroIconName, IconComponent> = {
 
 const SOLID_OVERRIDES: Partial<Record<HeroIconName, IconComponent>> = {
   camera: CameraIconSolid,
+  'map-pin': MapPinIconSolid,
   trophy: TrophyIconSolid,
   user: UserIconSolid,
 };
@@ -132,6 +137,7 @@ export type IconSymbolName =
   | 'camera.fill'
   | 'person.fill'
   | 'trophy.fill'
+  | 'map.fill'
   | 'line.3.horizontal'
   | 'square.grid.2x2'
   | 'chevron.right';
@@ -143,6 +149,7 @@ const SYMBOL_MAP: Record<
   'camera.fill': { name: 'camera', variant: 'solid' },
   'person.fill': { name: 'user', variant: 'solid' },
   'trophy.fill': { name: 'trophy', variant: 'solid' },
+  'map.fill': { name: 'map-pin', variant: 'solid' },
   'line.3.horizontal': { name: 'bars-3' },
   'square.grid.2x2': { name: 'squares-2x2' },
   'chevron.right': { name: 'chevron-right' },

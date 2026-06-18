@@ -10,6 +10,7 @@ import {
 } from '@/lib/camera/tflite/modelConfigs';
 import type { ClassificationModelConfig, TfliteModelConfig } from '@/lib/camera/tflite/modelTypes';
 import { mapRawPredictions } from '@/lib/camera/tflite/tfliteClassification';
+import { devLog } from '@/lib/devLog';
 
 export type MlClassificationResult = {
   type: 'classification';
@@ -90,6 +91,10 @@ export function useMlFrameProcessor({
   );
 
   const publishClassificationOnJS = Worklets.createRunOnJS(publishClassification);
+
+  const logInferenceTimingOnJS = Worklets.createRunOnJS((modelId: string, inferenceMs: number) => {
+    devLog(`[v3] ${modelId} inference ${inferenceMs.toFixed(1)}ms`);
+  });
 
   const inputWidth = config.input.width;
   const inputHeight = config.input.height;
@@ -196,11 +201,17 @@ export function useMlFrameProcessor({
           ) as ArrayBuffer;
         }
 
+        const inferenceStart = Date.now();
         const outputs = tflite.runSync([inputBuffer]);
+        const inferenceMs = Date.now() - inferenceStart;
         const outputBuffer = outputs[0];
 
         if (outputBuffer == null) {
           return;
+        }
+
+        if (config.id.startsWith('v3-')) {
+          logInferenceTimingOnJS(config.id, inferenceMs);
         }
 
         const scores = readClassificationScoresInline(outputBuffer, outputType);
@@ -229,6 +240,7 @@ export function useMlFrameProcessor({
       normStd,
       resize,
       publishClassificationOnJS,
+      logInferenceTimingOnJS,
       nextInferenceAt,
     ],
   );

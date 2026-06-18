@@ -1,0 +1,26 @@
+{
+  "model": "efficientnet_b1",
+  "classCount": 5,
+  "labels": [
+    {
+      "index": 0,
+      "name": "trees_shrubs"
+    },
+    {
+      "index": 1,
+      "name": "herbaceous"
+    },
+    {
+      "index": 2,
+      "name": "ferns_mosses"
+    },
+    {
+      "index": 3,
+      "name": "dryland_plants"
+    },
+    {
+      "index": 4,
+      "name": "not_plant"
+    }
+  ]
+}

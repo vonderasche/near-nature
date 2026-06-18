@@ -1,0 +1,24 @@
+{
+  "architecture": "efficientnet_b1",
+  "checkpoint": "E:\\PROGRAMMING\\Portfolio\\near nature\\python\\models\\trained_v3\\step05_specialists\\fungi\\best.pt",
+  "inputSize": 240,
+  "numClasses": 211,
+  "tfliteFile": "fungi.tflite",
+  "inputLayout": "NHWC",
+  "inputDtype": "float32",
+  "normalization": {
+    "mean": [
+      0.485,
+      0.456,
+      0.406
+    ],
+    "std": [
+      0.229,
+      0.224,
+      0.225
+    ]
+  },
+  "outputActivation": "softmax",
+  "val_acc": 0.814996884303815,
+  "epoch": 9
+}

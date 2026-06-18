@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { DEFAULT_CACHE_MAX_AGE_MS } from '@/constants/cache-ttl';
+import { useLocalDatabaseReady } from '@/context/LocalDatabaseContext';
 import { isCacheEntryFresh } from '@/lib/cache/isCacheEntryFresh';
 import { shouldLoadExplorerBoardFromCache } from '@/lib/explorerBoard/explorerBoardCachePolicy';
 import {
@@ -47,6 +48,7 @@ export function useExplorerBoard(pageSize = EXPLORER_BOARD_PAGE_SIZE): {
   const rowsRef = useRef<ExplorerBoardMemberRow[]>([]);
   const hasFetchedOnceRef = useRef(false);
   const hadCacheRef = useRef(false);
+  const { ready: dbReady, supported: dbSupported } = useLocalDatabaseReady();
 
   const persistRows = useCallback(async (merged: ExplorerBoardMemberRow[], more: boolean) => {
     rowsRef.current = merged;
@@ -148,8 +150,9 @@ export function useExplorerBoard(pageSize = EXPLORER_BOARD_PAGE_SIZE): {
   }, [hasMore, isLoadingMore, isLoading, isRefreshing, loadPage]);
 
   useEffect(() => {
+    if (dbSupported && !dbReady) return;
     void loadPage('reset');
-  }, [loadPage]);
+  }, [dbReady, dbSupported, loadPage]);
 
   useEffect(() => {
     return subscribeExplorerBoardRefresh(() => {

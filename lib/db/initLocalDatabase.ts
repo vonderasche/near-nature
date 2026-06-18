@@ -1,5 +1,5 @@
 import { devLog } from '@/lib/devLog';
-import { openLocalDatabase, isLocalDatabaseSupported } from '@/lib/db/database';
+import { openLocalDatabase, isLocalDatabaseSupported, markLocalDatabaseReady } from '@/lib/db/database';
 import { runPendingMigrations } from '@/lib/db/migrations';
 import { LATEST_DB_MIGRATION_VERSION } from '@/lib/db/migrations/index';
 import { migrateLegacyAsyncStorageCacheIfNeeded } from '@/lib/db/migrateLegacyAsyncStorageCache';
@@ -23,6 +23,7 @@ export async function initLocalDatabase(): Promise<void> {
     await seedSpeciesCatalogIfNeeded();
     await migrateLegacyAsyncStorageCacheIfNeeded();
 
+    markLocalDatabaseReady();
     devLog('[db] ready', { migrationVersion: LATEST_DB_MIGRATION_VERSION });
   })().catch((error) => {
     initPromise = null;

@@ -1,0 +1,594 @@
+{
+  "model": "efficientnet_b1",
+  "classCount": 147,
+  "labels": [
+    {
+      "index": 0,
+      "name": "Abudefduf"
+    },
+    {
+      "index": 1,
+      "name": "Acanthopagrus"
+    },
+    {
+      "index": 2,
+      "name": "Acanthurus"
+    },
+    {
+      "index": 3,
+      "name": "Achoerodus"
+    },
+    {
+      "index": 4,
+      "name": "Aetobatus"
+    },
+    {
+      "index": 5,
+      "name": "Ambloplites"
+    },
+    {
+      "index": 6,
+      "name": "Ameiurus"
+    },
+    {
+      "index": 7,
+      "name": "Amia"
+    },
+    {
+      "index": 8,
+      "name": "Amphiprion"
+    },
+    {
+      "index": 9,
+      "name": "Anguilla"
+    },
+    {
+      "index": 10,
+      "name": "Anoplocapros"
+    },
+    {
+      "index": 11,
+      "name": "Aplodinotus"
+    },
+    {
+      "index": 12,
+      "name": "Archosargus"
+    },
+    {
+      "index": 13,
+      "name": "Ariopsis"
+    },
+    {
+      "index": 14,
+      "name": "Arothron"
+    },
+    {
+      "index": 15,
+      "name": "Atypichthys"
+    },
+    {
+      "index": 16,
+      "name": "Aulostomus"
+    },
+    {
+      "index": 17,
+      "name": "Bathytoshia"
+    },
+    {
+      "index": 18,
+      "name": "Bodianus"
+    },
+    {
+      "index": 19,
+      "name": "Brachaluteres"
+    },
+    {
+      "index": 20,
+      "name": "Campostoma"
+    },
+    {
+      "index": 21,
+      "name": "Carassius"
+    },
+    {
+      "index": 22,
+      "name": "Carcharias"
+    },
+    {
+      "index": 23,
+      "name": "Catostomus"
+    },
+    {
+      "index": 24,
+      "name": "Chaetodon"
+    },
+    {
+      "index": 25,
+      "name": "Cheilodactylus"
+    },
+    {
+      "index": 26,
+      "name": "Chilomycterus"
+    },
+    {
+      "index": 27,
+      "name": "Chromis"
+    },
+    {
+      "index": 28,
+      "name": "Chrysophrys"
+    },
+    {
+      "index": 29,
+      "name": "Cirrhitichthys"
+    },
+    {
+      "index": 30,
+      "name": "Coris"
+    },
+    {
+      "index": 31,
+      "name": "Culaea"
+    },
+    {
+      "index": 32,
+      "name": "Cynoscion"
+    },
+    {
+      "index": 33,
+      "name": "Cyprinodon"
+    },
+    {
+      "index": 34,
+      "name": "Cyprinus"
+    },
+    {
+      "index": 35,
+      "name": "Dascyllus"
+    },
+    {
+      "index": 36,
+      "name": "Dicotylichthys"
+    },
+    {
+      "index": 37,
+      "name": "Dinolestes"
+    },
+    {
+      "index": 38,
+      "name": "Diodon"
+    },
+    {
+      "index": 39,
+      "name": "Diplodus"
+    },
+    {
+      "index": 40,
+      "name": "Dorosoma"
+    },
+    {
+      "index": 41,
+      "name": "Enneapterygius"
+    },
+    {
+      "index": 42,
+      "name": "Enoplosus"
+    },
+    {
+      "index": 43,
+      "name": "Esox"
+    },
+    {
+      "index": 44,
+      "name": "Etheostoma"
+    },
+    {
+      "index": 45,
+      "name": "Eupetrichthys"
+    },
+    {
+      "index": 46,
+      "name": "Fistularia"
+    },
+    {
+      "index": 47,
+      "name": "Forsterygion"
+    },
+    {
+      "index": 48,
+      "name": "Fundulus"
+    },
+    {
+      "index": 49,
+      "name": "Gambusia"
+    },
+    {
+      "index": 50,
+      "name": "Gasterosteus"
+    },
+    {
+      "index": 51,
+      "name": "Ginglymostoma"
+    },
+    {
+      "index": 52,
+      "name": "Girella"
+    },
+    {
+      "index": 53,
+      "name": "Gobiesox"
+    },
+    {
+      "index": 54,
+      "name": "Gymnothorax"
+    },
+    {
+      "index": 55,
+      "name": "Haemulon"
+    },
+    {
+      "index": 56,
+      "name": "Halichoeres"
+    },
+    {
+      "index": 57,
+      "name": "Herichthys"
+    },
+    {
+      "index": 58,
+      "name": "Heterodontus"
+    },
+    {
+      "index": 59,
+      "name": "Hippocampus"
+    },
+    {
+      "index": 60,
+      "name": "Hypanus"
+    },
+    {
+      "index": 61,
+      "name": "Hypoplectrodes"
+    },
+    {
+      "index": 62,
+      "name": "Hypsypops"
+    },
+    {
+      "index": 63,
+      "name": "Ictalurus"
+    },
+    {
+      "index": 64,
+      "name": "Labroides"
+    },
+    {
+      "index": 65,
+      "name": "Lactophrys"
+    },
+    {
+      "index": 66,
+      "name": "Lagodon"
+    },
+    {
+      "index": 67,
+      "name": "Latropiscis"
+    },
+    {
+      "index": 68,
+      "name": "Lepisosteus"
+    },
+    {
+      "index": 69,
+      "name": "Lepomis"
+    },
+    {
+      "index": 70,
+      "name": "Lutjanus"
+    },
+    {
+      "index": 71,
+      "name": "Luxilus"
+    },
+    {
+      "index": 72,
+      "name": "Mayaheros"
+    },
+    {
+      "index": 73,
+      "name": "Mecaenichthys"
+    },
+    {
+      "index": 74,
+      "name": "Megalops"
+    },
+    {
+      "index": 75,
+      "name": "Meuschenia"
+    },
+    {
+      "index": 76,
+      "name": "Microcanthus"
+    },
+    {
+      "index": 77,
+      "name": "Micropogonias"
+    },
+    {
+      "index": 78,
+      "name": "Micropterus"
+    },
+    {
+      "index": 79,
+      "name": "Microspathodon"
+    },
+    {
+      "index": 80,
+      "name": "Mola"
+    },
+    {
+      "index": 81,
+      "name": "Monacanthus"
+    },
+    {
+      "index": 82,
+      "name": "Morone"
+    },
+    {
+      "index": 83,
+      "name": "Mugil"
+    },
+    {
+      "index": 84,
+      "name": "Mullus"
+    },
+    {
+      "index": 85,
+      "name": "Myliobatis"
+    },
+    {
+      "index": 86,
+      "name": "Naso"
+    },
+    {
+      "index": 87,
+      "name": "Neogobius"
+    },
+    {
+      "index": 88,
+      "name": "Notemigonus"
+    },
+    {
+      "index": 89,
+      "name": "Notolabrus"
+    },
+    {
+      "index": 90,
+      "name": "Oblada"
+    },
+    {
+      "index": 91,
+      "name": "Ocyurus"
+    },
+    {
+      "index": 92,
+      "name": "Oligocottus"
+    },
+    {
+      "index": 93,
+      "name": "Oncorhynchus"
+    },
+    {
+      "index": 94,
+      "name": "Ophthalmolepis"
+    },
+    {
+      "index": 95,
+      "name": "Orectolobus"
+    },
+    {
+      "index": 96,
+      "name": "Oreochromis"
+    },
+    {
+      "index": 97,
+      "name": "Ostorhinchus"
+    },
+    {
+      "index": 98,
+      "name": "Ostracion"
+    },
+    {
+      "index": 99,
+      "name": "Paralabrax"
+    },
+    {
+      "index": 100,
+      "name": "Parma"
+    },
+    {
+      "index": 101,
+      "name": "Parupeneus"
+    },
+    {
+      "index": 102,
+      "name": "Perca"
+    },
+    {
+      "index": 103,
+      "name": "Phycodurus"
+    },
+    {
+      "index": 104,
+      "name": "Phyllopteryx"
+    },
+    {
+      "index": 105,
+      "name": "Pictilabrus"
+    },
+    {
+      "index": 106,
+      "name": "Pimephales"
+    },
+    {
+      "index": 107,
+      "name": "Platycephalus"
+    },
+    {
+      "index": 108,
+      "name": "Plotosus"
+    },
+    {
+      "index": 109,
+      "name": "Pogonias"
+    },
+    {
+      "index": 110,
+      "name": "Pomacanthus"
+    },
+    {
+      "index": 111,
+      "name": "Pomatomus"
+    },
+    {
+      "index": 112,
+      "name": "Pomoxis"
+    },
+    {
+      "index": 113,
+      "name": "Pseudocaranx"
+    },
+    {
+      "index": 114,
+      "name": "Pseudolabrus"
+    },
+    {
+      "index": 115,
+      "name": "Pterois"
+    },
+    {
+      "index": 116,
+      "name": "Rhinichthys"
+    },
+    {
+      "index": 117,
+      "name": "Salmo"
+    },
+    {
+      "index": 118,
+      "name": "Salvelinus"
+    },
+    {
+      "index": 119,
+      "name": "Sander"
+    },
+    {
+      "index": 120,
+      "name": "Sarpa"
+    },
+    {
+      "index": 121,
+      "name": "Scardinius"
+    },
+    {
+      "index": 122,
+      "name": "Scarus"
+    },
+    {
+      "index": 123,
+      "name": "Schuettea"
+    },
+    {
+      "index": 124,
+      "name": "Sciaenops"
+    },
+    {
+      "index": 125,
+      "name": "Scorpaena"
+    },
+    {
+      "index": 126,
+      "name": "Scorpis"
+    },
+    {
+      "index": 127,
+      "name": "Semotilus"
+    },
+    {
+      "index": 128,
+      "name": "Serranus"
+    },
+    {
+      "index": 129,
+      "name": "Sparisoma"
+    },
+    {
+      "index": 130,
+      "name": "Sphyraena"
+    },
+    {
+      "index": 131,
+      "name": "Squalius"
+    },
+    {
+      "index": 132,
+      "name": "Taeniura"
+    },
+    {
+      "index": 133,
+      "name": "Tetractenos"
+    },
+    {
+      "index": 134,
+      "name": "Thalassoma"
+    },
+    {
+      "index": 135,
+      "name": "Tilodon"
+    },
+    {
+      "index": 136,
+      "name": "Trachinops"
+    },
+    {
+      "index": 137,
+      "name": "Trachurus"
+    },
+    {
+      "index": 138,
+      "name": "Triaenodon"
+    },
+    {
+      "index": 139,
+      "name": "Triakis"
+    },
+    {
+      "index": 140,
+      "name": "Trygonoptera"
+    },
+    {
+      "index": 141,
+      "name": "Trygonorrhina"
+    },
+    {
+      "index": 142,
+      "name": "Upeneichthys"
+    },
+    {
+      "index": 143,
+      "name": "Urobatis"
+    },
+    {
+      "index": 144,
+      "name": "Zanclus"
+    },
+    {
+      "index": 145,
+      "name": "Zebrasoma"
+    },
+    {
+      "index": 146,
+      "name": "not_animal"
+    }
+  ]
+}

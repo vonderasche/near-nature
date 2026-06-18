@@ -1,4 +1,5 @@
 import type { ComponentProps } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import { CameraLivePredictionsOverlay } from '@/components/camera/camera-live-predictions-overlay';
 import { CameraLivePreview } from '@/components/camera/camera-live-preview';
@@ -24,7 +25,7 @@ export function CameraLivePreviewWithClassifier({
 
   if (!areFrameProcessorsAvailable()) {
     return (
-      <>
+      <View style={styles.previewRoot} pointerEvents="box-none">
         <CameraLivePreview {...previewProps} />
         <CameraLivePredictionsOverlay
           enabled
@@ -33,7 +34,7 @@ export function CameraLivePreviewWithClassifier({
           modelError={LIVE_PREVIEW_UNAVAILABLE_HINT}
           predictions={[]}
         />
-      </>
+      </View>
     );
   }
 
@@ -59,7 +60,7 @@ function CameraLivePreviewWithClassifierActive({
     useLivePreviewFrameProcessor(frameProcessingActive);
 
   return (
-    <>
+    <View style={styles.previewRoot} pointerEvents="box-none">
       <CameraLivePreview {...previewProps} frameProcessor={frameProcessor} />
       <CameraLivePredictionsOverlay
         enabled={liveClassifierEnabled}
@@ -68,6 +69,12 @@ function CameraLivePreviewWithClassifierActive({
         modelError={modelError}
         predictions={predictions}
       />
-    </>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  previewRoot: {
+    ...StyleSheet.absoluteFillObject,
+  },
+});

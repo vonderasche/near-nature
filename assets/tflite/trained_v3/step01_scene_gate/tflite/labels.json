@@ -1,0 +1,14 @@
+{
+  "model": "efficientnet_lite0",
+  "classCount": 2,
+  "labels": [
+    {
+      "index": 0,
+      "name": "not_organism"
+    },
+    {
+      "index": 1,
+      "name": "organism"
+    }
+  ]
+}

@@ -5,9 +5,18 @@ import * as SQLite from 'expo-sqlite';
 export const LOCAL_DATABASE_NAME = 'near_nature.db';
 
 let database: SQLiteDatabase | null = null;
+let databaseReady = false;
 
 export function isLocalDatabaseSupported(): boolean {
   return Platform.OS !== 'web';
+}
+
+export function isLocalDatabaseReady(): boolean {
+  return databaseReady;
+}
+
+export function markLocalDatabaseReady(): void {
+  databaseReady = true;
 }
 
 export async function openLocalDatabase(): Promise<SQLiteDatabase | null> {

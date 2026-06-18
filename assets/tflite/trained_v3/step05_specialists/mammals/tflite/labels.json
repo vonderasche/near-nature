@@ -1,0 +1,670 @@
+{
+  "model": "efficientnet_b1",
+  "classCount": 166,
+  "labels": [
+    {
+      "index": 0,
+      "name": "Acinonyx"
+    },
+    {
+      "index": 1,
+      "name": "Aepyceros"
+    },
+    {
+      "index": 2,
+      "name": "Alcelaphus"
+    },
+    {
+      "index": 3,
+      "name": "Alces"
+    },
+    {
+      "index": 4,
+      "name": "Alouatta"
+    },
+    {
+      "index": 5,
+      "name": "Ammospermophilus"
+    },
+    {
+      "index": 6,
+      "name": "Antidorcas"
+    },
+    {
+      "index": 7,
+      "name": "Antilocapra"
+    },
+    {
+      "index": 8,
+      "name": "Arctocephalus"
+    },
+    {
+      "index": 9,
+      "name": "Ateles"
+    },
+    {
+      "index": 10,
+      "name": "Axis"
+    },
+    {
+      "index": 11,
+      "name": "Balaenoptera"
+    },
+    {
+      "index": 12,
+      "name": "Bassariscus"
+    },
+    {
+      "index": 13,
+      "name": "Bison"
+    },
+    {
+      "index": 14,
+      "name": "Blarina"
+    },
+    {
+      "index": 15,
+      "name": "Bos"
+    },
+    {
+      "index": 16,
+      "name": "Boselaphus"
+    },
+    {
+      "index": 17,
+      "name": "Bradypus"
+    },
+    {
+      "index": 18,
+      "name": "Bubalus"
+    },
+    {
+      "index": 19,
+      "name": "Callithrix"
+    },
+    {
+      "index": 20,
+      "name": "Callosciurus"
+    },
+    {
+      "index": 21,
+      "name": "Callospermophilus"
+    },
+    {
+      "index": 22,
+      "name": "Canis"
+    },
+    {
+      "index": 23,
+      "name": "Capra"
+    },
+    {
+      "index": 24,
+      "name": "Capreolus"
+    },
+    {
+      "index": 25,
+      "name": "Castor"
+    },
+    {
+      "index": 26,
+      "name": "Cavia"
+    },
+    {
+      "index": 27,
+      "name": "Cebus"
+    },
+    {
+      "index": 28,
+      "name": "Ceratotherium"
+    },
+    {
+      "index": 29,
+      "name": "Cercopithecus"
+    },
+    {
+      "index": 30,
+      "name": "Cervus"
+    },
+    {
+      "index": 31,
+      "name": "Chlorocebus"
+    },
+    {
+      "index": 32,
+      "name": "Choloepus"
+    },
+    {
+      "index": 33,
+      "name": "Condylura"
+    },
+    {
+      "index": 34,
+      "name": "Conepatus"
+    },
+    {
+      "index": 35,
+      "name": "Connochaetes"
+    },
+    {
+      "index": 36,
+      "name": "Crocuta"
+    },
+    {
+      "index": 37,
+      "name": "Cynomys"
+    },
+    {
+      "index": 38,
+      "name": "Dama"
+    },
+    {
+      "index": 39,
+      "name": "Damaliscus"
+    },
+    {
+      "index": 40,
+      "name": "Dasyprocta"
+    },
+    {
+      "index": 41,
+      "name": "Dasypus"
+    },
+    {
+      "index": 42,
+      "name": "Delphinus"
+    },
+    {
+      "index": 43,
+      "name": "Didelphis"
+    },
+    {
+      "index": 44,
+      "name": "Elephas"
+    },
+    {
+      "index": 45,
+      "name": "Enhydra"
+    },
+    {
+      "index": 46,
+      "name": "Eptesicus"
+    },
+    {
+      "index": 47,
+      "name": "Equus"
+    },
+    {
+      "index": 48,
+      "name": "Erethizon"
+    },
+    {
+      "index": 49,
+      "name": "Erinaceus"
+    },
+    {
+      "index": 50,
+      "name": "Eschrichtius"
+    },
+    {
+      "index": 51,
+      "name": "Eumetopias"
+    },
+    {
+      "index": 52,
+      "name": "Eutamias"
+    },
+    {
+      "index": 53,
+      "name": "Felis"
+    },
+    {
+      "index": 54,
+      "name": "Funambulus"
+    },
+    {
+      "index": 55,
+      "name": "Galeopterus"
+    },
+    {
+      "index": 56,
+      "name": "Gazella"
+    },
+    {
+      "index": 57,
+      "name": "Geosciurus"
+    },
+    {
+      "index": 58,
+      "name": "Giraffa"
+    },
+    {
+      "index": 59,
+      "name": "Glaucomys"
+    },
+    {
+      "index": 60,
+      "name": "Grampus"
+    },
+    {
+      "index": 61,
+      "name": "Halichoerus"
+    },
+    {
+      "index": 62,
+      "name": "Hippopotamus"
+    },
+    {
+      "index": 63,
+      "name": "Hippotragus"
+    },
+    {
+      "index": 64,
+      "name": "Hydrochoerus"
+    },
+    {
+      "index": 65,
+      "name": "Hystrix"
+    },
+    {
+      "index": 66,
+      "name": "Ictidomys"
+    },
+    {
+      "index": 67,
+      "name": "Kobus"
+    },
+    {
+      "index": 68,
+      "name": "Lagidium"
+    },
+    {
+      "index": 69,
+      "name": "Lama"
+    },
+    {
+      "index": 70,
+      "name": "Lasionycteris"
+    },
+    {
+      "index": 71,
+      "name": "Lasiurus"
+    },
+    {
+      "index": 72,
+      "name": "Lepus"
+    },
+    {
+      "index": 73,
+      "name": "Lontra"
+    },
+    {
+      "index": 74,
+      "name": "Loxodonta"
+    },
+    {
+      "index": 75,
+      "name": "Lutra"
+    },
+    {
+      "index": 76,
+      "name": "Lycalopex"
+    },
+    {
+      "index": 77,
+      "name": "Lynx"
+    },
+    {
+      "index": 78,
+      "name": "Macaca"
+    },
+    {
+      "index": 79,
+      "name": "Macropus"
+    },
+    {
+      "index": 80,
+      "name": "Marmota"
+    },
+    {
+      "index": 81,
+      "name": "Martes"
+    },
+    {
+      "index": 82,
+      "name": "Megaptera"
+    },
+    {
+      "index": 83,
+      "name": "Meles"
+    },
+    {
+      "index": 84,
+      "name": "Mephitis"
+    },
+    {
+      "index": 85,
+      "name": "Microtus"
+    },
+    {
+      "index": 86,
+      "name": "Mirounga"
+    },
+    {
+      "index": 87,
+      "name": "Mungos"
+    },
+    {
+      "index": 88,
+      "name": "Mus"
+    },
+    {
+      "index": 89,
+      "name": "Mustela"
+    },
+    {
+      "index": 90,
+      "name": "Myocastor"
+    },
+    {
+      "index": 91,
+      "name": "Myodes"
+    },
+    {
+      "index": 92,
+      "name": "Nasua"
+    },
+    {
+      "index": 93,
+      "name": "Neomonachus"
+    },
+    {
+      "index": 94,
+      "name": "Neotamias"
+    },
+    {
+      "index": 95,
+      "name": "Neotoma"
+    },
+    {
+      "index": 96,
+      "name": "Neovison"
+    },
+    {
+      "index": 97,
+      "name": "Ochotona"
+    },
+    {
+      "index": 98,
+      "name": "Odocoileus"
+    },
+    {
+      "index": 99,
+      "name": "Ondatra"
+    },
+    {
+      "index": 100,
+      "name": "Orcinus"
+    },
+    {
+      "index": 101,
+      "name": "Oreamnos"
+    },
+    {
+      "index": 102,
+      "name": "Oreotragus"
+    },
+    {
+      "index": 103,
+      "name": "Ornithorhynchus"
+    },
+    {
+      "index": 104,
+      "name": "Oryctolagus"
+    },
+    {
+      "index": 105,
+      "name": "Oryx"
+    },
+    {
+      "index": 106,
+      "name": "Otaria"
+    },
+    {
+      "index": 107,
+      "name": "Otospermophilus"
+    },
+    {
+      "index": 108,
+      "name": "Ovis"
+    },
+    {
+      "index": 109,
+      "name": "Panthera"
+    },
+    {
+      "index": 110,
+      "name": "Papio"
+    },
+    {
+      "index": 111,
+      "name": "Pecari"
+    },
+    {
+      "index": 112,
+      "name": "Pekania"
+    },
+    {
+      "index": 113,
+      "name": "Perimyotis"
+    },
+    {
+      "index": 114,
+      "name": "Peromyscus"
+    },
+    {
+      "index": 115,
+      "name": "Phacochoerus"
+    },
+    {
+      "index": 116,
+      "name": "Phascolarctos"
+    },
+    {
+      "index": 117,
+      "name": "Phoca"
+    },
+    {
+      "index": 118,
+      "name": "Phocarctos"
+    },
+    {
+      "index": 119,
+      "name": "Phocoena"
+    },
+    {
+      "index": 120,
+      "name": "Procavia"
+    },
+    {
+      "index": 121,
+      "name": "Procyon"
+    },
+    {
+      "index": 122,
+      "name": "Pseudocheirus"
+    },
+    {
+      "index": 123,
+      "name": "Pteropus"
+    },
+    {
+      "index": 124,
+      "name": "Puma"
+    },
+    {
+      "index": 125,
+      "name": "Rangifer"
+    },
+    {
+      "index": 126,
+      "name": "Raphicerus"
+    },
+    {
+      "index": 127,
+      "name": "Rattus"
+    },
+    {
+      "index": 128,
+      "name": "Rhabdomys"
+    },
+    {
+      "index": 129,
+      "name": "Rhynchonycteris"
+    },
+    {
+      "index": 130,
+      "name": "Rupicapra"
+    },
+    {
+      "index": 131,
+      "name": "Rusa"
+    },
+    {
+      "index": 132,
+      "name": "Scalopus"
+    },
+    {
+      "index": 133,
+      "name": "Scapanus"
+    },
+    {
+      "index": 134,
+      "name": "Sciurus"
+    },
+    {
+      "index": 135,
+      "name": "Semnopithecus"
+    },
+    {
+      "index": 136,
+      "name": "Sigmodon"
+    },
+    {
+      "index": 137,
+      "name": "Sus"
+    },
+    {
+      "index": 138,
+      "name": "Sylvicapra"
+    },
+    {
+      "index": 139,
+      "name": "Sylvilagus"
+    },
+    {
+      "index": 140,
+      "name": "Syncerus"
+    },
+    {
+      "index": 141,
+      "name": "Tachyglossus"
+    },
+    {
+      "index": 142,
+      "name": "Tadarida"
+    },
+    {
+      "index": 143,
+      "name": "Talpa"
+    },
+    {
+      "index": 144,
+      "name": "Tamandua"
+    },
+    {
+      "index": 145,
+      "name": "Tamias"
+    },
+    {
+      "index": 146,
+      "name": "Tamiasciurus"
+    },
+    {
+      "index": 147,
+      "name": "Tapirus"
+    },
+    {
+      "index": 148,
+      "name": "Taxidea"
+    },
+    {
+      "index": 149,
+      "name": "Thomomys"
+    },
+    {
+      "index": 150,
+      "name": "Trachypithecus"
+    },
+    {
+      "index": 151,
+      "name": "Tragelaphus"
+    },
+    {
+      "index": 152,
+      "name": "Trichechus"
+    },
+    {
+      "index": 153,
+      "name": "Trichosurus"
+    },
+    {
+      "index": 154,
+      "name": "Tursiops"
+    },
+    {
+      "index": 155,
+      "name": "Urocitellus"
+    },
+    {
+      "index": 156,
+      "name": "Urocyon"
+    },
+    {
+      "index": 157,
+      "name": "Ursus"
+    },
+    {
+      "index": 158,
+      "name": "Urva"
+    },
+    {
+      "index": 159,
+      "name": "Vicugna"
+    },
+    {
+      "index": 160,
+      "name": "Vombatus"
+    },
+    {
+      "index": 161,
+      "name": "Vulpes"
+    },
+    {
+      "index": 162,
+      "name": "Wallabia"
+    },
+    {
+      "index": 163,
+      "name": "Xerospermophilus"
+    },
+    {
+      "index": 164,
+      "name": "Zalophus"
+    },
+    {
+      "index": 165,
+      "name": "not_animal"
+    }
+  ]
+}
