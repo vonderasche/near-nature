@@ -220,18 +220,6 @@ export async function identifyPhotoWithV3Cascade(
     });
   }
 
-  if (plantGroup === 'herbaceous') {
-    return finishEmpty(cascadeStart, 'herbaceous no specialist', {
-      previewTop: [...previewTop, kingdomTop, plantGroupTop],
-      routedPreviewLabel: formatV3RouteLabel(kingdom, plantGroup),
-      specialistId: plantGroup,
-      specialistDisplayName: 'Herbaceous plants',
-      genusTop: [],
-      usedSpecialist: false,
-      notice: 'Herbaceous plant specialist is not bundled yet.',
-    });
-  }
-
   if (!isV3PlantSpecialistAvailable(plantGroup)) {
     return finishEmpty(cascadeStart, `no specialist for ${plantGroup}`, {
       previewTop: [...previewTop, kingdomTop, plantGroupTop],

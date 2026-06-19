@@ -59,6 +59,10 @@ assets/tflite/near_nature_app_bundle/**/train.log
 assets/tflite/near_nature_app_bundle/**/train.err.log
 assets/tflite/near_nature_app_bundle/**/*.log
 
+# duplicate specialist exports at trained_v3 root (canonical: step05_specialists/)
+assets/tflite/trained_v3/birds/
+assets/tflite/trained_v3/herbaceous/
+
 # trained_v3 training/export artifacts (runtime bundle keeps .tflite + labels/metadata)
 assets/tflite/trained_v3/**/tflite/tflite_out/
 assets/tflite/trained_v3/**/tflite/_docker_onnx2tflite.py

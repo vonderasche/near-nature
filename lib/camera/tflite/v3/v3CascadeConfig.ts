@@ -4,6 +4,7 @@ import plantRouterLabelsJson from '@/assets/tflite/trained_v3/step03_plant_route
 import treesShrubsLabelsJson from '@/assets/tflite/trained_v3/step05_specialists/trees_shrubs/tflite/labels.json';
 import fernsMossesLabelsJson from '@/assets/tflite/trained_v3/step05_specialists/ferns_mosses/tflite/labels.json';
 import drylandPlantsLabelsJson from '@/assets/tflite/trained_v3/step05_specialists/dryland_plants/tflite/labels.json';
+import herbaceousLabelsJson from '@/assets/tflite/trained_v3/step05_specialists/herbaceous/tflite/labels.json';
 import fungiLabelsJson from '@/assets/tflite/trained_v3/step05_specialists/fungi/tflite/labels.json';
 
 import type { ImageNormalization } from '@/lib/camera/tflite/modelTypes';
@@ -39,11 +40,17 @@ export const V3_PLANT_ROUTER_LABELS = labelsFromBundle(plantRouterLabelsJson as 
 export const V3_ORGANISM_LABEL = 'organism';
 export const V3_NOT_ORGANISM_LABEL = 'not_organism';
 
-export const V3_PLANT_SPECIALIST_GROUPS = ['trees_shrubs', 'ferns_mosses', 'dryland_plants'] as const;
+export const V3_PLANT_SPECIALIST_GROUPS = [
+  'trees_shrubs',
+  'herbaceous',
+  'ferns_mosses',
+  'dryland_plants',
+] as const;
 export type V3PlantSpecialistGroup = (typeof V3_PLANT_SPECIALIST_GROUPS)[number];
 
 export const V3_SPECIALIST_LABELS: Record<V3PlantSpecialistGroup | 'fungi', readonly string[]> = {
   trees_shrubs: labelsFromBundle(treesShrubsLabelsJson as LabelsBundle),
+  herbaceous: labelsFromBundle(herbaceousLabelsJson as LabelsBundle),
   ferns_mosses: labelsFromBundle(fernsMossesLabelsJson as LabelsBundle),
   dryland_plants: labelsFromBundle(drylandPlantsLabelsJson as LabelsBundle),
   fungi: labelsFromBundle(fungiLabelsJson as LabelsBundle),
@@ -55,6 +62,7 @@ export const V3_MODEL_ASSETS = {
   plantRouter: require('@/assets/tflite/trained_v3/step03_plant_router/tflite/plant_router.tflite'),
   specialists: {
     trees_shrubs: require('@/assets/tflite/trained_v3/step05_specialists/trees_shrubs/tflite/trees_shrubs.tflite'),
+    herbaceous: require('@/assets/tflite/trained_v3/step05_specialists/herbaceous/tflite/herbaceous.tflite'),
     ferns_mosses: require('@/assets/tflite/trained_v3/step05_specialists/ferns_mosses/tflite/ferns_mosses.tflite'),
     dryland_plants: require('@/assets/tflite/trained_v3/step05_specialists/dryland_plants/tflite/dryland_plants.tflite'),
     fungi: require('@/assets/tflite/trained_v3/step05_specialists/fungi/tflite/fungi.tflite'),
@@ -63,6 +71,7 @@ export const V3_MODEL_ASSETS = {
 
 export const V3_SPECIALIST_DISPLAY_NAMES: Record<V3PlantSpecialistGroup | 'fungi', string> = {
   trees_shrubs: 'Trees & shrubs',
+  herbaceous: 'Herbaceous plants',
   ferns_mosses: 'Ferns & mosses',
   dryland_plants: 'Dryland plants',
   fungi: 'Fungi',
