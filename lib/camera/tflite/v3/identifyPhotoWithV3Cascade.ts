@@ -1,4 +1,6 @@
 import {
+  V3_ANIMAL_ROUTER_LABELS,
+  V3_ANIMAL_ROUTER_TOP1_THRESHOLD,
   V3_KINGDOM_LABELS,
   V3_KINGDOM_TOP1_THRESHOLD,
   V3_ORGANISM_LABEL,
@@ -8,9 +10,12 @@ import {
   V3_SCENE_GATE_ORGANISM_THRESHOLD,
   V3_SPECIALIST_DISPLAY_NAMES,
   V3_SPECIALIST_LABELS,
+  type V3SpecialistGroup,
+  isV3AnimalSpecialistAvailable,
   isV3PlantSpecialistAvailable,
 } from '@/lib/camera/tflite/v3/v3CascadeConfig';
 import {
+  loadV3AnimalRouterModel,
   loadV3KingdomModel,
   loadV3PlantRouterModel,
   loadV3SceneGateModel,
@@ -26,6 +31,7 @@ import { buildV3Input224Square, buildV3Input240B1Crop } from '@/lib/camera/tflit
 import {
   formatV3RouteLabel,
   genusToV3Classification,
+  v3AnimalGroupToSubcategory,
   v3PlantGroupToSubcategory,
   v3SpecialistGroupToSubcategory,
 } from '@/lib/camera/tflite/v3/v3Taxonomy';
@@ -76,7 +82,7 @@ async function buildV3Input240B1CropLogged(photoUri: string): Promise<ArrayBuffe
 
 /**
  * Near Nature v3 capture cascade:
- * scene_gate (224) → kingdom (224) → plant_router (240) / fungi specialist / animal stop.
+ * scene_gate (224) → kingdom (224) → plant_router / animal_router (240) → specialist.
  */
 export async function identifyPhotoWithV3Cascade(
   photoUri: string,
@@ -135,14 +141,63 @@ export async function identifyPhotoWithV3Cascade(
   const kingdom = kingdomTop.label;
 
   if (kingdom === 'animalia') {
-    return finishEmpty(cascadeStart, 'animalia stop', {
-      previewTop: [...previewTop, kingdomTop],
-      routedPreviewLabel: kingdom,
-      specialistId: 'animalia',
-      specialistDisplayName: 'Animalia',
-      genusTop: [],
-      usedSpecialist: false,
-      notice: 'Animal routing models are not bundled yet. Kingdom: animalia.',
+    const input240 = await buildV3Input240B1CropLogged(photoUri);
+    const animalRouterModel = await loadV3AnimalRouterModel();
+    const animalRouterPredictions = runV3ClassificationBuffer(
+      animalRouterModel,
+      input240,
+      V3_ANIMAL_ROUTER_LABELS,
+      7,
+      'animal_router',
+    );
+    const animalGroupTop = topPrediction(animalRouterPredictions);
+
+    if (!animalGroupTop || animalGroupTop.confidence < V3_ANIMAL_ROUTER_TOP1_THRESHOLD) {
+      return finishEmpty(cascadeStart, 'animal_router below threshold', {
+        previewTop: [...previewTop, kingdomTop, ...toPreviewPredictions(animalRouterPredictions)],
+        routedPreviewLabel: formatV3RouteLabel(kingdom, animalGroupTop?.label),
+        specialistId: null,
+        specialistDisplayName: null,
+        genusTop: [],
+        usedSpecialist: false,
+        notice: 'Could not confidently route this animal photo.',
+      });
+    }
+
+    const animalGroup = animalGroupTop.label;
+
+    if (animalGroup === 'not_animal') {
+      return finishEmpty(cascadeStart, 'animal_router not_animal', {
+        previewTop: [...previewTop, kingdomTop, animalGroupTop],
+        routedPreviewLabel: formatV3RouteLabel(kingdom, animalGroup),
+        specialistId: animalGroup,
+        specialistDisplayName: 'Not animal',
+        genusTop: [],
+        usedSpecialist: false,
+        notice: 'Animal router classified this image as not an animal.',
+      });
+    }
+
+    if (!isV3AnimalSpecialistAvailable(animalGroup)) {
+      return finishEmpty(cascadeStart, `no specialist for ${animalGroup}`, {
+        previewTop: [...previewTop, kingdomTop, animalGroupTop],
+        routedPreviewLabel: formatV3RouteLabel(kingdom, animalGroup),
+        specialistId: animalGroup,
+        specialistDisplayName: animalGroup,
+        genusTop: [],
+        usedSpecialist: false,
+        notice: `No on-device specialist is available for "${animalGroup}".`,
+      });
+    }
+
+    return runV3SpecialistCapture({
+      cascadeStart,
+      previewTop: [...previewTop, kingdomTop, animalGroupTop],
+      routedPreviewLabel: formatV3RouteLabel(kingdom, animalGroup),
+      specialistGroup: animalGroup,
+      taxonGroup: 'animals',
+      subcategory: v3AnimalGroupToSubcategory(animalGroup),
+      input240,
     });
   }
 
@@ -247,7 +302,7 @@ async function runV3SpecialistCapture(options: {
   cascadeStart: number;
   previewTop: PreviewPrediction[];
   routedPreviewLabel: string;
-  specialistGroup: keyof typeof V3_SPECIALIST_LABELS;
+  specialistGroup: V3SpecialistGroup;
   taxonGroup: ClassificationResult['taxonGroup'];
   subcategory?: ClassificationResult['subcategory'];
   input240: ArrayBuffer;

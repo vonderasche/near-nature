@@ -1,7 +1,11 @@
 import type { SubcategoryId } from '@/constants/naturalist-categories';
 import type { ClassificationResult } from '@/types';
 import type { VisionTaxonGroup } from '@/types';
-import type { V3PlantSpecialistGroup } from '@/lib/camera/tflite/v3/v3CascadeConfig';
+import type {
+  V3AnimalSpecialistGroup,
+  V3PlantSpecialistGroup,
+  V3SpecialistGroup,
+} from '@/lib/camera/tflite/v3/v3CascadeConfig';
 
 export function v3KingdomToTaxonGroup(kingdom: string): VisionTaxonGroup {
   if (kingdom === 'plantae') return 'plants';
@@ -16,15 +20,27 @@ const PLANT_GROUP_TO_SUBCATEGORY: Readonly<Record<string, SubcategoryId>> = {
   herbaceous: 'wildflowers',
 };
 
+const ANIMAL_GROUP_TO_SUBCATEGORY: Readonly<Partial<Record<V3AnimalSpecialistGroup, SubcategoryId>>> =
+  {
+    birds: 'songbirds',
+    herps: 'lizards',
+    mammals: 'small_mammals',
+  };
+
 export function v3PlantGroupToSubcategory(group: string): SubcategoryId | undefined {
   return PLANT_GROUP_TO_SUBCATEGORY[group];
 }
 
-export function v3SpecialistGroupToSubcategory(
-  group: V3PlantSpecialistGroup | 'fungi',
-): SubcategoryId {
+export function v3AnimalGroupToSubcategory(group: V3AnimalSpecialistGroup): SubcategoryId | undefined {
+  return ANIMAL_GROUP_TO_SUBCATEGORY[group];
+}
+
+export function v3SpecialistGroupToSubcategory(group: V3SpecialistGroup): SubcategoryId | undefined {
   if (group === 'fungi') return 'other_fungi';
-  return PLANT_GROUP_TO_SUBCATEGORY[group] ?? 'wildflowers';
+  if ((PLANT_GROUP_TO_SUBCATEGORY as Record<string, SubcategoryId>)[group]) {
+    return PLANT_GROUP_TO_SUBCATEGORY[group as V3PlantSpecialistGroup];
+  }
+  return v3AnimalGroupToSubcategory(group as V3AnimalSpecialistGroup);
 }
 
 export function genusToV3Classification(
@@ -42,9 +58,9 @@ export function genusToV3Classification(
   };
 }
 
-export function formatV3RouteLabel(kingdom: string, plantGroup?: string | null): string {
-  if (plantGroup) {
-    return `${kingdom} / ${plantGroup}`;
+export function formatV3RouteLabel(kingdom: string, routerGroup?: string | null): string {
+  if (routerGroup) {
+    return `${kingdom} / ${routerGroup}`;
   }
   return kingdom;
 }
