@@ -245,6 +245,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'flex-start',
+    justifyContent: 'center',
     gap: authSpacing.sm,
     overflow: 'visible',
   },

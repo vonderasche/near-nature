@@ -34,35 +34,31 @@ export function CameraLivePredictionsOverlay({
           paddingVertical: theme.spacing.sm,
           paddingHorizontal: theme.spacing.md,
           borderRadius: 12,
-          backgroundColor: 'rgba(0,0,0,0.62)',
+          backgroundColor: theme.colors.overlayScrim,
           gap: 4,
           zIndex: 12,
           elevation: 12,
-        },
-        row: {
-          flexDirection: 'row',
           alignItems: 'center',
-          gap: theme.spacing.sm,
         },
         label: {
           ...theme.typography.body,
-          flex: 1,
           color: theme.colors.textPrimary,
           fontWeight: '700',
           fontSize: 15,
-        },
-        confidence: {
-          ...theme.typography.label,
-          color: theme.colors.textSecondary,
-          fontVariant: ['tabular-nums'],
+          textAlign: 'center',
+          width: '100%',
         },
         meta: {
           ...theme.typography.label,
           color: theme.colors.textSecondary,
+          textAlign: 'center',
+          width: '100%',
         },
         error: {
           ...theme.typography.label,
           color: '#f87171',
+          textAlign: 'center',
+          width: '100%',
         },
       }),
     [theme],
@@ -87,12 +83,9 @@ export function CameraLivePredictionsOverlay({
         <Text style={styles.meta}>Point camera at a subject...</Text>
       ) : null}
       {topPrediction ? (
-        <View style={styles.row}>
-          <Text style={styles.label} numberOfLines={1}>
-            {topPrediction.label}
-          </Text>
-          <Text style={styles.confidence}>{Math.round(topPrediction.confidence * 100)}%</Text>
-        </View>
+        <Text style={styles.label} numberOfLines={2}>
+          {topPrediction.label}
+        </Text>
       ) : null}
     </View>
   );

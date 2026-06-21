@@ -50,11 +50,7 @@ export function CameraControlButton({
           backgroundColor: theme.colors.overlayScrim,
         },
         btnActive: {
-          backgroundColor: theme.colors.cameraControlActive,
-        },
-        btnSubmenuOpen: {
-          borderWidth: 1,
-          borderColor: theme.colors.textPrimary,
+          backgroundColor: theme.colors.overlayScrimStrong,
         },
         btnDisabled: {
           opacity: 0.45,
@@ -69,6 +65,7 @@ export function CameraControlButton({
           color: theme.colors.textPrimary,
           textTransform: 'uppercase',
           letterSpacing: 0.4,
+          textAlign: 'center',
         },
         captionDisabled: {
           color: theme.colors.textSecondary,
@@ -92,7 +89,6 @@ export function CameraControlButton({
         style={({ pressed }) => [
           styles.btn,
           active && styles.btnActive,
-          submenuOpen && styles.btnSubmenuOpen,
           disabled && styles.btnDisabled,
           pressed && !disabled && styles.btnPressed,
         ]}>
