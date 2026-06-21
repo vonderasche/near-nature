@@ -16,7 +16,8 @@ import {
   type ProfileScoringCollapsibleHandle,
 } from '@/components/profile/profile-scoring-collapsible';
 import { CenteredActivityIndicator } from '@/components/shared/centered-activity-indicator';
-import { ProfileSettingsButton } from '@/components/profile/profile-settings-button';
+import { ProfileHeaderActions } from '@/components/profile/profile-header-actions';
+import { AppGuideButton } from '@/components/shared/app-guide-button';
 import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
 import { Button } from '@/components/ui/Button';
 import { THEME_LABELS } from '@/constants/theme-preferences';
@@ -123,7 +124,7 @@ export default function ProfileScreen() {
     <TabScreenWithLogout
       title="Profile"
       hideLogout={Boolean(user)}
-      titleAccessory={user ? <ProfileSettingsButton /> : undefined}
+      titleAccessory={user ? <ProfileHeaderActions /> : <AppGuideButton />}
       refreshControl={
         <RefreshControl
           refreshing={pullRefreshing}

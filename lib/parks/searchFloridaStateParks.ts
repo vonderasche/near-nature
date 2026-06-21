@@ -1,4 +1,5 @@
 import { normalizeSearchQuery } from '@/lib/search/normalizeSearchQuery';
+import { speciesHighlightNames } from '@/lib/parks/parkSpeciesHighlights';
 import type { FloridaStatePark } from '@/types/florida-state-park';
 
 function parkSearchHaystack(park: FloridaStatePark): string {
@@ -9,8 +10,8 @@ function parkSearchHaystack(park: FloridaStatePark): string {
     park.address,
     park.description,
     park.publicAccess,
-    park.topPlants.join(' '),
-    park.topAnimals.join(' '),
+    speciesHighlightNames(park.topPlants).join(' '),
+    speciesHighlightNames(park.topAnimals).join(' '),
   ]
     .join(' ')
     .toLowerCase();

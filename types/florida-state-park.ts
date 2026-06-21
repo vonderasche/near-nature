@@ -1,3 +1,8 @@
+export type ParkSpeciesHighlight = {
+  name: string;
+  imageUrl: string;
+};
+
 export type FloridaStatePark = {
   parkId: string;
   unitId: string;
@@ -15,9 +20,12 @@ export type FloridaStatePark = {
   hasGps: boolean;
   parkPageUrl: string;
   imageUrl: string;
+  imageSource: string;
+  imageLicense: string;
+  imageAttribution: string;
   description: string;
-  topPlants: string[];
-  topAnimals: string[];
+  topPlants: ParkSpeciesHighlight[];
+  topAnimals: ParkSpeciesHighlight[];
   publicAccess: string;
   dataSource: string;
   updatedAt: string;

@@ -1,7 +1,9 @@
 import { Pressable, StyleSheet } from 'react-native';
 
 import { ListDetailCard } from '@/components/shared/list-detail-card';
+import { ListThumbnail } from '@/components/shared/list-thumbnail';
 import { formatParkMeta, formatSpeciesPreview, parkDistanceMiles } from '@/lib/parks/formatFloridaStatePark';
+import { resolveParkListImageUrl, speciesHighlightNames } from '@/lib/parks/parkSpeciesHighlights';
 import type { DeviceCoordinates } from '@/lib/parks/sortFloridaStateParks';
 import type { FloridaStatePark } from '@/types/florida-state-park';
 
@@ -14,9 +16,11 @@ type Props = {
 
 export function ParkListItem({ park, deviceCoords = null, showDistance = false, onPress }: Props) {
   const wildlifePreview =
-    formatSpeciesPreview(park.topAnimals) ?? formatSpeciesPreview(park.topPlants);
+    formatSpeciesPreview(speciesHighlightNames(park.topAnimals)) ??
+    formatSpeciesPreview(speciesHighlightNames(park.topPlants));
   const distanceMiles = showDistance ? parkDistanceMiles(park, deviceCoords) : null;
   const meta = formatParkMeta(park, { distanceMiles });
+  const imageUrl = resolveParkListImageUrl(park);
 
   return (
     <Pressable
@@ -31,6 +35,7 @@ export function ParkListItem({ park, deviceCoords = null, showDistance = false, 
         subtitle={wildlifePreview}
         description={park.description}
         meta={meta}
+        leading={<ListThumbnail uri={imageUrl} recyclingKey={park.parkId} />}
       />
     </Pressable>
   );

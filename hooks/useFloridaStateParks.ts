@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { aggregateDiscoverSpecies, searchDiscoverSpecies } from '@/lib/parks/aggregateDiscoverSpecies';
 import { loadFloridaStateParks } from '@/lib/parks/loadFloridaStateParks';
 import type { DiscoverParkSortMode } from '@/lib/parks/discoverParkSort';
 import { searchFloridaStateParks } from '@/lib/parks/searchFloridaStateParks';
 import { sortFloridaStateParks, type DeviceCoordinates } from '@/lib/parks/sortFloridaStateParks';
+import type { DiscoverSpeciesEntry } from '@/types/discover-species';
 import type { FloridaStatePark } from '@/types/florida-state-park';
 
 export function useFloridaStateParks(
@@ -12,6 +14,10 @@ export function useFloridaStateParks(
   deviceCoords: DeviceCoordinates | null,
 ): {
   parks: FloridaStatePark[];
+  plants: DiscoverSpeciesEntry[];
+  animals: DiscoverSpeciesEntry[];
+  plantCount: number;
+  animalCount: number;
   totalCount: number;
   isLoading: boolean;
   error: string | null;
@@ -44,8 +50,24 @@ export function useFloridaStateParks(
     return sortFloridaStateParks(filtered, sortMode, deviceCoords);
   }, [allParks, deviceCoords, searchQuery, sortMode]);
 
+  const allPlants = useMemo(() => aggregateDiscoverSpecies(allParks, 'plant'), [allParks]);
+  const allAnimals = useMemo(() => aggregateDiscoverSpecies(allParks, 'animal'), [allParks]);
+
+  const plants = useMemo(
+    () => searchDiscoverSpecies(allPlants, searchQuery),
+    [allPlants, searchQuery],
+  );
+  const animals = useMemo(
+    () => searchDiscoverSpecies(allAnimals, searchQuery),
+    [allAnimals, searchQuery],
+  );
+
   return {
     parks,
+    plants,
+    animals,
+    plantCount: allPlants.length,
+    animalCount: allAnimals.length,
     totalCount: allParks.length,
     isLoading,
     error,
