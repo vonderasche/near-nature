@@ -1,7 +1,7 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { HeroIcon, type HeroIconName } from '@/components/ui/hero-icon';
-import { authColors, authSpacing } from '@/constants/auth-theme';
+import { useTheme } from '@/hooks/useTheme';
 import type { ProfileBadgeItem } from '@/lib/profile/profileBadges';
 
 type Props = {
@@ -9,24 +9,26 @@ type Props = {
 };
 
 function PreviewChip({ badge }: { badge: ProfileBadgeItem }) {
+  const { theme } = useTheme();
   const iconName: HeroIconName = badge.icon;
   const useSolid =
     badge.earned && (iconName === 'trophy' || iconName === 'user' || iconName === 'camera');
+  const iconColor = badge.earned ? theme.colors.textPrimary : theme.colors.textSecondary;
 
   return (
     <View
-      style={[styles.chip, badge.earned ? styles.chipEarned : styles.chipDimmed]}
+      style={[styles.chip, !badge.earned && styles.chipDimmed]}
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants">
       <HeroIcon
         name={iconName}
         size={22}
-        color={badge.earned ? authColors.text : authColors.textMuted}
+        color={iconColor}
         variant={useSolid ? 'solid' : 'outline'}
       />
       {badge.earned ? (
-        <View style={styles.earnedMark}>
-          <HeroIcon name="check-circle" size={11} color={authColors.text} />
+        <View style={[styles.earnedMark, { backgroundColor: theme.colors.background }]}>
+          <HeroIcon name="check-circle" size={11} color={theme.colors.textPrimary} />
         </View>
       ) : null}
     </View>
@@ -35,11 +37,13 @@ function PreviewChip({ badge }: { badge: ProfileBadgeItem }) {
 
 /** Horizontal strip of badge icons for the scoring collapsible trigger. */
 export function ProfileBadgePreviewRow({ badges }: Props) {
+  const { theme } = useTheme();
+
   return (
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.scrollContent}
+      contentContainerStyle={[styles.scrollContent, { gap: theme.spacing.sm }]}
       style={styles.scroll}>
       {badges.map((badge) => (
         <PreviewChip key={badge.id} badge={badge} />
@@ -56,7 +60,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: authSpacing.sm,
     paddingVertical: 2,
   },
   chip: {
@@ -64,10 +67,6 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: authColors.background,
-  },
-  chipEarned: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
   },
   chipDimmed: {
     opacity: 0.45,
@@ -76,7 +75,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 2,
     bottom: 2,
-    backgroundColor: authColors.background,
     borderRadius: 6,
     padding: 1,
   },

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { authColors, authSpacing } from '@/constants/auth-theme';
+import { useTheme } from '@/hooks/useTheme';
 
 type ScreenCenterProps = {
   children: ReactNode;
@@ -16,9 +16,21 @@ type ScreenCenterProps = {
 export function ScreenCenter({
   children,
   style,
-  paddingHorizontal = authSpacing.lg,
+  paddingHorizontal,
 }: ScreenCenterProps) {
-  return <View style={[styles.root, { paddingHorizontal }, style]}>{children}</View>;
+  const { theme } = useTheme();
+  const horizontal = paddingHorizontal ?? theme.spacing.lg;
+
+  return (
+    <View
+      style={[
+        styles.root,
+        { backgroundColor: theme.colors.background, paddingHorizontal: horizontal },
+        style,
+      ]}>
+      {children}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -26,6 +38,5 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: authColors.background,
   },
 });

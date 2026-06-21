@@ -3,8 +3,8 @@ import { StyleSheet, View } from 'react-native';
 import { Redirect, useSegments } from 'expo-router';
 
 import { CenteredActivityIndicator } from '@/components/shared/centered-activity-indicator';
-import { authColors } from '@/constants/auth-theme';
 import { useAuthContext } from '@/context/AuthContext';
+import { useTheme } from '@/hooks/useTheme';
 import { resolveAuthGateRedirect } from '@/lib/routing/resolveAuthGateRedirect';
 
 /**
@@ -12,6 +12,7 @@ import { resolveAuthGateRedirect } from '@/lib/routing/resolveAuthGateRedirect';
  * require sign-in. Signed-in users need a `public.users` row before (tabs) or member routes.
  */
 export function AuthGate({ children }: { children: ReactNode }) {
+  const { theme } = useTheme();
   const {
     isAuthenticated,
     isLoading,
@@ -24,7 +25,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const profileGateLoading = isAuthenticated && !isPasswordRecovery && !profileGateResolved;
   if (isLoading || profileGateLoading) {
     return (
-      <View style={styles.loading}>
+      <View style={[styles.loading, { backgroundColor: theme.colors.background }]}>
         <CenteredActivityIndicator accessibilityLabel="Loading app" />
       </View>
     );
@@ -50,6 +51,5 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: authColors.background,
   },
 });

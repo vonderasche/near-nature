@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { useTheme } from '@/hooks/useTheme';
 
 export type ProfileStatStripProps = {
   currentStreak: number;
@@ -28,14 +28,16 @@ function StatCell({
   label: string;
   sublabel?: string;
 }) {
+  const { theme } = useTheme();
+
   return (
-    <View style={styles.cell}>
-      <ThemedText type="defaultSemiBold" style={styles.value}>
+    <View style={[styles.cell, { gap: 2, paddingHorizontal: theme.spacing.xs }]}>
+      <ThemedText type="defaultSemiBold" style={[styles.value, { color: theme.colors.textPrimary }]}>
         {value}
       </ThemedText>
-      <ThemedText style={styles.label}>{label}</ThemedText>
+      <ThemedText style={[styles.label, { color: theme.colors.textSecondary }]}>{label}</ThemedText>
       {sublabel ? (
-        <ThemedText style={styles.sublabel} numberOfLines={1}>
+        <ThemedText style={[styles.sublabel, { color: theme.colors.textSecondary }]} numberOfLines={1}>
           {sublabel}
         </ThemedText>
       ) : null}
@@ -53,16 +55,26 @@ export function ProfileStatStrip({
   speciesCount,
   pointsCaption,
 }: ProfileStatStripProps) {
+  const { theme } = useTheme();
+
   return (
-    <View style={styles.row}>
+    <View
+      style={[
+        styles.row,
+        {
+          marginTop: theme.spacing.xs,
+          marginBottom: theme.spacing.xs,
+          paddingVertical: theme.spacing.xs,
+        },
+      ]}>
       <StatCell
         value={formatCount(currentStreak)}
         label="Streak"
         sublabel={longestStreak > 0 ? `Best ${formatCount(longestStreak)}` : undefined}
       />
-      <View style={styles.divider} />
+      <View style={[styles.divider, { backgroundColor: theme.colors.border, marginVertical: theme.spacing.xs }]} />
       <StatCell value={formatCount(pointsTotal)} label="Points" sublabel={pointsCaption} />
-      <View style={styles.divider} />
+      <View style={[styles.divider, { backgroundColor: theme.colors.border, marginVertical: theme.spacing.xs }]} />
       <StatCell value={formatCount(speciesCount)} label="Species" />
     </View>
   );
@@ -76,39 +88,28 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 420,
     alignSelf: 'center',
-    marginTop: authSpacing.xs,
-    marginBottom: authSpacing.xs,
-    paddingVertical: authSpacing.xs,
   },
   cell: {
     flex: 1,
     alignItems: 'center',
-    gap: 2,
-    paddingHorizontal: authSpacing.xs,
   },
   value: {
-    ...authTypography.body,
     fontSize: 20,
     fontWeight: '700',
-    color: authColors.text,
   },
   label: {
     fontSize: 12,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
-    color: authColors.textMuted,
   },
   sublabel: {
     fontSize: 11,
     marginTop: 2,
     textAlign: 'center',
-    color: authColors.textMuted,
   },
   divider: {
     width: StyleSheet.hairlineWidth,
     alignSelf: 'stretch',
-    backgroundColor: authColors.border,
-    marginVertical: authSpacing.xs,
   },
 });

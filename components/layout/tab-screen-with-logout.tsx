@@ -7,8 +7,8 @@ import { AuthButton } from '@/components/auth/auth-button';
 import { ScreenHeading } from '@/components/shared/screen-heading';
 import { SubtleRefreshIndicator } from '@/components/layout/subtle-refresh-indicator';
 import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
-import { authColors, authSpacing } from '@/constants/auth-theme';
 import { useLogout } from '@/hooks/useLogout';
+import { useTheme } from '@/hooks/useTheme';
 import { contentInsetsPadding } from '@/lib/screen/contentInsets';
 
 type TabScreenWithLogoutProps = {
@@ -33,15 +33,16 @@ export function TabScreenWithLogout({
   hideLogout = false,
   titleAccessory,
 }: TabScreenWithLogoutProps) {
+  const { theme } = useTheme();
   const { logout, busy, logoutError, clearLogoutError } = useLogout();
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const edge = contentInsetsPadding(insets);
 
   const headingBlock = titleAccessory ? (
-    <View style={styles.titleRow}>
+    <View style={[styles.titleRow, { gap: theme.spacing.sm, marginBottom: theme.spacing.md }]}>
       <View style={styles.titleText}>
-        <View style={styles.titleWithIndicator}>
+        <View style={[styles.titleWithIndicator, { gap: theme.spacing.sm }]}>
           <ScreenHeading title={title} subtitle={subtitle} marginBottom={0} />
           <SubtleRefreshIndicator visible={backgroundRefreshing} />
         </View>
@@ -49,7 +50,11 @@ export function TabScreenWithLogout({
       {titleAccessory}
     </View>
   ) : (
-    <View style={styles.titleWithIndicatorStandalone}>
+    <View
+      style={[
+        styles.titleWithIndicatorStandalone,
+        { gap: theme.spacing.sm, marginBottom: theme.spacing.md },
+      ]}>
       <ScreenHeading title={title} subtitle={subtitle} marginBottom={0} />
       <SubtleRefreshIndicator visible={backgroundRefreshing} />
     </View>
@@ -64,17 +69,20 @@ export function TabScreenWithLogout({
     />
   );
 
+  const shellStyle = { backgroundColor: theme.colors.background };
+
   if (children) {
     return (
-      <View style={styles.fill}>
+      <View style={[styles.fill, shellStyle]}>
         <ScrollView
-          style={styles.fill}
+          style={[styles.fill, shellStyle]}
           contentContainerStyle={[
             styles.scrollContent,
             {
+              gap: theme.spacing.lg,
               paddingTop: edge.paddingTop,
-              paddingBottom: edge.paddingBottom + authSpacing.xl + tabBarHeight,
-              paddingHorizontal: authSpacing.lg,
+              paddingBottom: edge.paddingBottom + theme.spacing.xl + tabBarHeight,
+              paddingHorizontal: theme.spacing.lg,
             },
           ]}
           keyboardShouldPersistTaps="handled"
@@ -102,21 +110,23 @@ export function TabScreenWithLogout({
       style={[
         styles.fill,
         styles.centeredShell,
+        shellStyle,
         {
+          gap: theme.spacing.lg,
           paddingTop: edge.paddingTop,
           paddingBottom: edge.paddingBottom + tabBarHeight,
-          paddingHorizontal: authSpacing.lg,
+          paddingHorizontal: theme.spacing.lg,
         },
       ]}>
       {titleAccessory ? (
-        <View style={[styles.titleRow, { width: '100%' }]}>
+        <View style={[styles.titleRow, { width: '100%', gap: theme.spacing.sm }]}>
           <View style={styles.titleText}>
             <ScreenHeading title={title} subtitle={subtitle} marginBottom={0} />
           </View>
           {titleAccessory}
         </View>
       ) : (
-        <ScreenHeading title={title} subtitle={subtitle} marginBottom={authSpacing.md} />
+        <ScreenHeading title={title} subtitle={subtitle} marginBottom={theme.spacing.md} />
       )}
       {!hideLogout ? (
         <AuthButton
@@ -135,17 +145,12 @@ export function TabScreenWithLogout({
 const styles = StyleSheet.create({
   fill: {
     flex: 1,
-    backgroundColor: authColors.background,
   },
-  scrollContent: {
-    gap: authSpacing.lg,
-  },
+  scrollContent: {},
   titleRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    gap: authSpacing.sm,
-    marginBottom: authSpacing.md,
   },
   titleText: {
     flex: 1,
@@ -154,18 +159,14 @@ const styles = StyleSheet.create({
   titleWithIndicator: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: authSpacing.sm,
   },
   titleWithIndicatorStandalone: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    gap: authSpacing.sm,
-    marginBottom: authSpacing.md,
   },
   centeredShell: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: authSpacing.lg,
   },
 });

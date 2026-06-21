@@ -137,6 +137,7 @@ export type IconSymbolName =
   | 'camera.fill'
   | 'person.fill'
   | 'trophy.fill'
+  | 'chart.bar.fill'
   | 'map.fill'
   | 'line.3.horizontal'
   | 'square.grid.2x2'
@@ -149,6 +150,7 @@ const SYMBOL_MAP: Record<
   'camera.fill': { name: 'camera', variant: 'solid' },
   'person.fill': { name: 'user', variant: 'solid' },
   'trophy.fill': { name: 'trophy', variant: 'solid' },
+  'chart.bar.fill': { name: 'chart-bar' },
   'map.fill': { name: 'map-pin', variant: 'solid' },
   'line.3.horizontal': { name: 'bars-3' },
   'square.grid.2x2': { name: 'squares-2x2' },

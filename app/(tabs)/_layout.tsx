@@ -35,11 +35,14 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: theme.colors.accent,
+        tabBarActiveTintColor: theme.colors.textPrimary,
         tabBarInactiveTintColor: theme.colors.tabIconDefault,
         tabBarStyle: {
           backgroundColor: theme.colors.background,
           borderTopColor: theme.colors.border,
+        },
+        sceneStyle: {
+          backgroundColor: theme.colors.background,
         },
         headerShown: false,
         tabBarButton: HapticTab,
@@ -66,7 +69,7 @@ export default function TabLayout() {
         name="explorer-board"
         options={{
           title: 'Explorer Board',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="trophy.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="chart.bar.fill" color={color} />,
         }}
       />
       <Tabs.Screen

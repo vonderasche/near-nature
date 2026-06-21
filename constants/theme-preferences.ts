@@ -17,5 +17,5 @@ export const THEME_LABELS: Record<ThemeName, string> = {
   neutralGray: 'Neutral gray',
 };
 
-/** Themes shown in the appearance picker (neutralGray kept for legacy persisted prefs). */
-export const SELECTABLE_THEME_NAMES: ThemeName[] = ['dark', 'light'];
+/** Themes shown in the appearance picker. */
+export const SELECTABLE_THEME_NAMES: ThemeName[] = ['dark', 'light', 'neutralGray'];

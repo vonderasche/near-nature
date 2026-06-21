@@ -1,16 +1,25 @@
 import { Pressable, View } from 'react-native';
 
+import { HeroIcon } from '@/components/ui/hero-icon';
 import { Text } from '@/components/ui/Text';
 import { SELECTABLE_THEME_NAMES, THEME_LABELS } from '@/constants/theme-preferences';
-import { themes } from '@/constants/themes';
+import { themes, type ThemeName } from '@/constants/themes';
 import { useTheme } from '@/hooks/useTheme';
 
-export function ThemePicker() {
-  const { themeName, setThemeName } = useTheme();
-  const { theme } = useTheme();
+type Props = {
+  onThemeSelected?: () => void;
+};
+
+export function ThemePicker({ onThemeSelected }: Props) {
+  const { theme, themeName, setThemeName } = useTheme();
+
+  function selectTheme(name: ThemeName) {
+    setThemeName(name);
+    onThemeSelected?.();
+  }
 
   return (
-    <View style={{ gap: theme.spacing.sm }}>
+    <View style={{ gap: theme.spacing.xs }}>
       {SELECTABLE_THEME_NAMES.map((name) => {
         const selected = themeName === name;
         const preview = themes[name].colors;
@@ -21,7 +30,7 @@ export function ThemePicker() {
             accessibilityRole="button"
             accessibilityState={{ selected }}
             accessibilityLabel={`${THEME_LABELS[name]} theme`}
-            onPress={() => setThemeName(name)}
+            onPress={() => selectTheme(name)}
             style={({ pressed }) => [
               {
                 flexDirection: 'row',
@@ -31,28 +40,25 @@ export function ThemePicker() {
                 paddingVertical: theme.spacing.md,
                 paddingHorizontal: theme.spacing.sm,
                 borderRadius: theme.radii.md,
-                backgroundColor: selected ? theme.colors.surfaceRaised : 'transparent',
               },
               pressed && { opacity: 0.85 },
             ]}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm, flex: 1 }}>
               <View
                 style={{
                   width: 28,
                   height: 28,
                   borderRadius: 14,
                   backgroundColor: preview.background,
-                  borderWidth: 2,
-                  borderColor: preview.accent,
+                  borderWidth: 1,
+                  borderColor: preview.border,
                 }}
               />
-              <Text variant="body">{THEME_LABELS[name]}</Text>
-            </View>
-            {selected ? (
-              <Text variant="caption" color="accent">
-                Active
+              <Text variant="body" color={selected ? 'primary' : 'secondary'}>
+                {THEME_LABELS[name]}
               </Text>
-            ) : null}
+            </View>
+            {selected ? <HeroIcon name="check" size={20} color={theme.colors.textPrimary} /> : null}
           </Pressable>
         );
       })}

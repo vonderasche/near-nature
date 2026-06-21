@@ -3,7 +3,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { ProfileBadgeGrid } from '@/components/profile/profile-badge-grid';
 import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { useTheme } from '@/hooks/useTheme';
 import { useUserScoringSnapshot } from '@/hooks/useUserScoringSnapshot';
 
 type Props = {
@@ -18,6 +18,7 @@ export const ProfileScoringCollapsible = forwardRef<
   ProfileScoringCollapsibleHandle,
   Props
 >(function ProfileScoringCollapsible({ userId }, ref) {
+  const { theme } = useTheme();
   const { snapshot, loading, error, refetch } = useUserScoringSnapshot(userId);
 
   const mains = useMemo(() => snapshot?.mains ?? [], [snapshot]);
@@ -31,8 +32,8 @@ export const ProfileScoringCollapsible = forwardRef<
   useImperativeHandle(ref, () => ({ refetch }), [refetch]);
 
   return (
-    <View style={styles.wrap}>
-      <Text style={styles.hint}>
+    <View style={[styles.wrap, { gap: theme.spacing.sm, marginBottom: theme.spacing.md }]}>
+      <Text style={[styles.hint, { color: theme.colors.textSecondary }]}>
         {hasSavedSpecies
           ? 'Earn a discipline badge with your first unique species in that group · dimmed = not earned yet'
           : 'Save your first identification to start earning badge progress.'}
@@ -40,16 +41,16 @@ export const ProfileScoringCollapsible = forwardRef<
 
       {loading && !snapshot ? (
         <View style={styles.loading}>
-          <ActivityIndicator size="small" color={authColors.textMuted} />
+          <ActivityIndicator size="small" color={theme.colors.textSecondary} />
         </View>
       ) : (
         <ProfileBadgeGrid mains={mains} awardKeys={awardKeys} badgeProgress={badgeProgress} />
       )}
 
       {loading && snapshot ? (
-        <View style={styles.syncRow}>
-          <ActivityIndicator size="small" color={authColors.textMuted} />
-          <Text style={styles.syncText}>Updating progress…</Text>
+        <View style={[styles.syncRow, { gap: theme.spacing.sm }]}>
+          <ActivityIndicator size="small" color={theme.colors.textSecondary} />
+          <Text style={[styles.syncText, { color: theme.colors.textSecondary }]}>Updating progress…</Text>
         </View>
       ) : null}
 
@@ -65,30 +66,22 @@ export const ProfileScoringCollapsible = forwardRef<
 });
 
 const styles = StyleSheet.create({
-  wrap: {
-    gap: authSpacing.sm,
-    marginBottom: authSpacing.md,
-  },
+  wrap: {},
   loading: {
     minHeight: 72,
     alignItems: 'center',
     justifyContent: 'center',
   },
   hint: {
-    ...authTypography.subtitle,
     fontSize: 12,
     textAlign: 'center',
-    color: authColors.textMuted,
   },
   syncRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: authSpacing.sm,
   },
   syncText: {
-    ...authTypography.subtitle,
     fontSize: 12,
-    color: authColors.textMuted,
   },
 });

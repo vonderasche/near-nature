@@ -18,9 +18,8 @@ import {
 import { CenteredActivityIndicator } from '@/components/shared/centered-activity-indicator';
 import { ProfileHeaderActions } from '@/components/profile/profile-header-actions';
 import { AppGuideButton } from '@/components/shared/app-guide-button';
+import { ProfileThemeCollapsible } from '@/components/profile/profile-theme-collapsible';
 import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
-import { Button } from '@/components/ui/Button';
-import { THEME_LABELS } from '@/constants/theme-preferences';
 import {
   UserDetectionGallerySection,
   type UserDetectionGallerySectionHandle,
@@ -40,7 +39,7 @@ import { stageGalleryItem } from '@/lib/gallery/galleryItemRouteCache';
 import type { DetectionGalleryItem } from '@/types';
 
 export default function ProfileScreen() {
-  const { theme, themeName } = useTheme();
+  const { theme } = useTheme();
   const router = useRouter();
   const { categoryFilter, setCategoryFilter } = useGalleryCategoryFilter();
   const { isAuthenticated, isLoading: authLoading } = useAuthContext();
@@ -163,13 +162,7 @@ export default function ProfileScreen() {
 
             <UserProfileSummary statsSlot={statsSlot} />
 
-            <Button
-              title={`Appearance: ${THEME_LABELS[themeName]}`}
-              variant="outline"
-              fillParent
-              onPress={() => router.push(routes.profileSettings as Href)}
-              accessibilityHint="Opens theme and account settings"
-            />
+            <ProfileThemeCollapsible />
           </View>
 
           <ProfileScoringCollapsible ref={scoringRef} userId={user.id} />

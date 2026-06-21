@@ -1,7 +1,6 @@
 import { ScrollView, View } from 'react-native';
 import { useCallback, useState } from 'react';
 
-import { ThemePicker } from '@/components/profile/theme-picker';
 import { Section } from '@/components/ui/Section';
 import { Screen } from '@/components/ui/Screen';
 import { StackScreenHeader } from '@/components/ui/StackScreenHeader';
@@ -29,13 +28,9 @@ export default function ProfileSettingsScreen() {
   return (
     <Screen>
       <ScrollView contentContainerStyle={{ paddingBottom: theme.spacing.xxl }}>
-        <StackScreenHeader title="Settings" subtitle="Appearance and account" />
+        <StackScreenHeader title="Settings" subtitle="Account" />
 
-        <Section title="Appearance">
-          <ThemePicker />
-        </Section>
-
-        <Section title="Account" spaced>
+        <Section title="Account">
           <View style={{ gap: theme.spacing.sm }}>
             <Button
               title="Log out"

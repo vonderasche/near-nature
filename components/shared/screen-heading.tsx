@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View, type ViewStyle } from 'react-native';
 
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { useTheme } from '@/hooks/useTheme';
 
 export type ScreenHeadingProps = {
   title: string;
@@ -11,27 +11,34 @@ export type ScreenHeadingProps = {
 };
 
 /**
- * Title + optional subtitle using auth typography (shared by auth flows, camera flows, results, etc.).
+ * Title + optional subtitle for tab screens and flows.
  */
-export function ScreenHeading({ title, subtitle, marginBottom = authSpacing.sm, style }: ScreenHeadingProps) {
+export function ScreenHeading({ title, subtitle, marginBottom, style }: ScreenHeadingProps) {
+  const { theme } = useTheme();
+
   return (
-    <View style={[styles.wrap, { marginBottom }, style]}>
-      <Text style={styles.title}>{title}</Text>
-      {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+    <View style={[styles.wrap, { gap: theme.spacing.xs, marginBottom }, style]}>
+      <Text style={[styles.title, theme.typography.title, { color: theme.colors.textPrimary }]}>
+        {title}
+      </Text>
+      {subtitle ? (
+        <Text
+          style={[styles.subtitle, theme.typography.subtitle, { color: theme.colors.textSecondary }]}>
+          {subtitle}
+        </Text>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: {
-    gap: authSpacing.xs,
-  },
+  wrap: {},
   title: {
-    ...authTypography.title,
-    color: authColors.text,
+    fontSize: 28,
+    fontWeight: '700',
   },
   subtitle: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
+    fontSize: 14,
+    fontWeight: '400',
   },
 });

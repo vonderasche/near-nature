@@ -1,7 +1,7 @@
 import { HeroIcon } from '@/components/ui/hero-icon';
 import { Pressable, StyleSheet } from 'react-native';
 
-import { authColors, authSpacing } from '@/constants/auth-theme';
+import { useTheme } from '@/hooks/useTheme';
 import {
   galleryLayoutAccessibilityLabel,
   type GalleryLayoutMode,
@@ -14,6 +14,7 @@ type Props = {
 
 /** Toggles photo grid vs bordered list rows in profile / public galleries. */
 export function GalleryLayoutToggle({ value, onChange }: Props) {
+  const { theme } = useTheme();
   const isList = value === 'list';
   const next: GalleryLayoutMode = isList ? 'grid' : 'list';
 
@@ -24,20 +25,22 @@ export function GalleryLayoutToggle({ value, onChange }: Props) {
       accessibilityHint={`Switch to ${galleryLayoutAccessibilityLabel(next)}`}
       hitSlop={10}
       onPress={() => onChange(next)}
-      style={({ pressed }) => [styles.trigger, pressed && styles.triggerPressed]}>
+      style={({ pressed }) => [
+        styles.trigger,
+        { padding: theme.spacing.xs },
+        pressed && styles.triggerPressed,
+      ]}>
       <HeroIcon
         name={isList ? 'squares-2x2' : 'list-bullet'}
         size={22}
-        color={authColors.textMuted}
+        color={theme.colors.textSecondary}
       />
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  trigger: {
-    padding: authSpacing.xs,
-  },
+  trigger: {},
   triggerPressed: {
     opacity: 0.75,
   },
