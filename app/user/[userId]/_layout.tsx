@@ -1,11 +1,11 @@
 import { Stack } from 'expo-router';
 
-import { PublicGalleryProvider } from '@/context/PublicGalleryContext';
+import { GalleryCategoryFilterProvider } from '@/context/GalleryCategoryFilterContext';
 
 export default function PublicUserLayout() {
   return (
-    <PublicGalleryProvider>
+    <GalleryCategoryFilterProvider>
       <Stack screenOptions={{ headerShown: false }} />
-    </PublicGalleryProvider>
+    </GalleryCategoryFilterProvider>
   );
 }

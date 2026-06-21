@@ -5,7 +5,7 @@ import { MottoEditForm } from '@/components/profile/motto-edit-form';
 import { Screen } from '@/components/ui/Screen';
 import { StackScreenHeader } from '@/components/ui/StackScreenHeader';
 import { useAuthContext } from '@/context/AuthContext';
-import { useMottoSave } from '@/hooks/useMottoSave';
+import { useProfileFieldSave } from '@/hooks/useProfileFieldSave';
 import { useTheme } from '@/hooks/useTheme';
 import { useUser } from '@/hooks/useUser';
 import { routes } from '@/lib/routing/routes';
@@ -15,7 +15,7 @@ export default function EditMottoScreen() {
   const { theme } = useTheme();
   const { isAuthenticated, isLoading: authLoading } = useAuthContext();
   const { user, update } = useUser();
-  const { saveMotto, saving } = useMottoSave(update);
+  const { saveMotto, saving } = useProfileFieldSave(update);
 
   if (!authLoading && !isAuthenticated) {
     return <Redirect href={routes.login} />;

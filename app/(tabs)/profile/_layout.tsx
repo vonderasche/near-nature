@@ -1,10 +1,13 @@
 import { Stack } from 'expo-router';
 
-import { ProfileGalleryProvider } from '@/context/ProfileGalleryContext';
+import {
+  GalleryCategoryFilterProvider,
+  PROFILE_GALLERY_FILTER_STORAGE_KEY,
+} from '@/context/GalleryCategoryFilterContext';
 
 export default function ProfileStackLayout() {
   return (
-    <ProfileGalleryProvider>
+    <GalleryCategoryFilterProvider persistKey={PROFILE_GALLERY_FILTER_STORAGE_KEY}>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="settings" />
@@ -13,6 +16,6 @@ export default function ProfileStackLayout() {
         <Stack.Screen name="gallery-filter" />
         <Stack.Screen name="detection/[detectionId]" />
       </Stack>
-    </ProfileGalleryProvider>
+    </GalleryCategoryFilterProvider>
   );
 }

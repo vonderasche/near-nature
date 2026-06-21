@@ -6,8 +6,24 @@ import type { UpdateUserPayload } from '@/services/userService';
 
 type UpdateFn = (payload: UpdateUserPayload) => Promise<UpdateUserResult>;
 
-export function useStateSave(update: UpdateFn) {
+/** Shared loading wrapper for profile field updates (motto, home state, etc.). */
+export function useProfileFieldSave(update: UpdateFn) {
   const [saving, setSaving] = useState(false);
+
+  const saveMotto = useCallback(
+    async (motto: string | null): Promise<UpdateUserResult> => {
+      setSaving(true);
+      try {
+        const payload: UpdateUserPayload = {
+          motto: motto && motto.trim().length > 0 ? motto.trim() : null,
+        };
+        return await update(payload);
+      } finally {
+        setSaving(false);
+      }
+    },
+    [update],
+  );
 
   const saveState = useCallback(
     async (stateCode: UsStateCode | ''): Promise<UpdateUserResult> => {
@@ -25,5 +41,5 @@ export function useStateSave(update: UpdateFn) {
     [update],
   );
 
-  return { saveState, saving };
+  return { saveMotto, saveState, saving };
 }

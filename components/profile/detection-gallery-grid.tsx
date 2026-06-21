@@ -1,14 +1,15 @@
 import { FlashList } from '@shopify/flash-list';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useCallback, useMemo } from 'react';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
-import { AuthButton } from '@/components/auth/auth-button';
-import { DetectionGalleryDetailModal } from '@/components/profile/detection-gallery-detail-modal';
 import { DetectionGalleryRow } from '@/components/profile/detection-gallery-row';
-import { CenteredActivityIndicator } from '@/components/shared/centered-activity-indicator';
-import { ThemedConfirmModal, ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
-import { ThemedText } from '@/components/themed-text';
-import { authColors, authSpacing } from '@/constants/auth-theme';
+import {
+  DetectionGalleryLoadMore,
+  DetectionGalleryOverlays,
+  DetectionGalleryStatus,
+} from '@/components/profile/detection-gallery-overlays';
+import { authSpacing } from '@/constants/auth-theme';
+import { useGalleryItemActions } from '@/hooks/useGalleryItemActions';
 import { buildGalleryListEntries, type GalleryListRowEntry } from '@/lib/detections/buildGalleryListEntries';
 import {
   GALLERY_FLASH_LIST_DRAW_DISTANCE,
@@ -16,9 +17,8 @@ import {
   minGalleryTileSize,
   type GalleryGridColumns,
 } from '@/lib/detections/galleryGridColumns';
-import { isSearchQueryActive } from '@/lib/search/normalizeSearchQuery';
 import type { DetectionGalleryItem } from '@/types';
-import { userFacingErr, type UserFacingResult } from '@/types/user-facing-result';
+import type { UserFacingResult } from '@/types/user-facing-result';
 
 type DetectionGalleryGridProps = {
   items: DetectionGalleryItem[];
@@ -39,9 +39,6 @@ type DetectionGalleryGridProps = {
   onOpenDetection?: (item: DetectionGalleryItem) => void;
 };
 
-/**
- * Virtualized gallery grid (FlashList, scroll disabled — parent profile ScrollView scrolls).
- */
 export function DetectionGalleryGrid({
   items,
   columnCount,
@@ -61,66 +58,13 @@ export function DetectionGalleryGrid({
   onOpenDetection,
 }: DetectionGalleryGridProps) {
   const { width: windowWidth } = useWindowDimensions();
-  const [selected, setSelected] = useState<DetectionGalleryItem | null>(null);
-  const [pendingDelete, setPendingDelete] = useState<DetectionGalleryItem | null>(null);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-
-  useEffect(() => {
-    if (!deletable || !onDeleteItem) {
-      setPendingDelete(null);
-      setDeleteError(null);
-      setDeleteLoading(false);
-    }
-  }, [deletable, onDeleteItem]);
-
-  const itemsById = useMemo(() => new Map(items.map((item) => [item.id, item])), [items]);
-
-  const requestDelete = useCallback(
-    async (it: DetectionGalleryItem): Promise<UserFacingResult> => {
-      if (!onDeleteItem) return userFacingErr('Delete is not available.');
-      const r = await onDeleteItem(it);
-      if (r.ok) setSelected(null);
-      return r;
-    },
-    [onDeleteItem],
-  );
-
-  const confirmDeleteFromSheet = useCallback(async () => {
-    if (!pendingDelete) return;
-    setDeleteLoading(true);
-    try {
-      const res = await requestDelete(pendingDelete);
-      if (!res.ok) {
-        setDeleteError(res.message);
-      }
-      setPendingDelete(null);
-    } finally {
-      setDeleteLoading(false);
-    }
-  }, [pendingDelete, requestDelete]);
-
-  const handlePressItemId = useCallback(
-    (itemId: string) => {
-      const item = itemsById.get(itemId);
-      if (!item) return;
-      if (onOpenDetection) {
-        onOpenDetection(item);
-        return;
-      }
-      setSelected(item);
-    },
-    [itemsById, onOpenDetection],
-  );
-
-  const handleLongPressItemId = useCallback(
-    (itemId: string) => {
-      if (!onDeleteItem) return;
-      const item = itemsById.get(itemId);
-      if (item) setPendingDelete(item);
-    },
-    [itemsById, onDeleteItem],
-  );
+  const actions = useGalleryItemActions({
+    items,
+    deletable,
+    onDeleteItem,
+    deletingId,
+    onOpenDetection,
+  });
 
   const tileGap = authSpacing.sm;
   const tileSize = useMemo(() => {
@@ -146,11 +90,11 @@ export function DetectionGalleryGrid({
         tileSize={tileSize}
         tileGap={tileGap}
         deletable={deletable}
-        onPressItemId={handlePressItemId}
-        onLongPressItemId={deletable && onDeleteItem ? handleLongPressItemId : undefined}
+        onPressItemId={actions.handlePressItemId}
+        onLongPressItemId={deletable && onDeleteItem ? actions.handleLongPressItemId : undefined}
       />
     ),
-    [deletable, handleLongPressItemId, handlePressItemId, onDeleteItem, tileGap, tileSize],
+    [actions.handleLongPressItemId, actions.handlePressItemId, deletable, onDeleteItem, tileGap, tileSize],
   );
 
   const overrideItemLayout = useCallback(
@@ -160,36 +104,21 @@ export function DetectionGalleryGrid({
     [rowHeight],
   );
 
-  if (error) {
-    return (
-      <View style={styles.messageBlock}>
-        <ThemedText style={[styles.message, { color: authColors.textMuted }]}>{error}</ThemedText>
-        <Pressable
-          onPress={onRetry}
-          accessibilityRole="button"
-          accessibilityLabel="Retry loading gallery">
-          <ThemedText type="link" style={styles.retry}>
-            Try again
-          </ThemedText>
-        </Pressable>
-      </View>
-    );
-  }
+  const status = (
+    <DetectionGalleryStatus
+      error={error}
+      loading={loading}
+      itemsCount={items.length}
+      emptyMessage={emptyMessage}
+      searchQuery={searchQuery}
+      sourceItemCount={sourceItemCount}
+      onRetry={onRetry}
+    />
+  );
 
-  if (loading && items.length === 0) {
-    return <CenteredActivityIndicator accessibilityLabel="Loading gallery" />;
+  if (error || (loading && items.length === 0) || items.length === 0) {
+    return status;
   }
-
-  if (items.length === 0) {
-    const searchActive = isSearchQueryActive(searchQuery);
-    const message =
-      searchActive && sourceItemCount > 0
-        ? `No identifications match "${searchQuery.trim()}". Try another name or keyword from the description.`
-        : emptyMessage;
-    return <ThemedText style={[styles.empty, { color: authColors.textMuted }]}>{message}</ThemedText>;
-  }
-
-  const showLoadMore = hasMore && Boolean(onLoadMore);
 
   return (
     <>
@@ -204,49 +133,16 @@ export function DetectionGalleryGrid({
         />
       </View>
 
-      {showLoadMore ? (
-        <View style={styles.loadMoreWrap}>
-          {isLoadingMore ? (
-            <ActivityIndicator
-              color={authColors.text}
-              accessibilityLabel="Loading more photos"
-            />
-          ) : (
-            <AuthButton
-              title="Load more"
-              variant="outline"
-              onPress={onLoadMore!}
-              fillParent
-              accessibilityLabel="Load more gallery photos"
-            />
-          )}
-        </View>
-      ) : null}
+      <DetectionGalleryLoadMore
+        visible={hasMore && Boolean(onLoadMore)}
+        isLoadingMore={isLoadingMore}
+        onLoadMore={onLoadMore}
+      />
 
-      <DetectionGalleryDetailModal
-        visible={!onOpenDetection && selected !== null}
-        item={selected}
-        onClose={() => setSelected(null)}
-        deletable={Boolean(deletable && onDeleteItem)}
-        onRequestDelete={deletable && onDeleteItem ? requestDelete : undefined}
-        deleteBusy={Boolean(selected && deletingId === selected.id)}
+      <DetectionGalleryOverlays
+        actions={actions}
+        onCloseDetail={actions.closeDetail}
         onViewMemberProfile={onViewMemberProfile}
-      />
-
-      <ThemedConfirmModal
-        visible={pendingDelete !== null}
-        title="Delete this photo?"
-        message="It will be removed from your gallery. This cannot be undone."
-        confirmLabel="Delete"
-        onCancel={() => setPendingDelete(null)}
-        onConfirm={confirmDeleteFromSheet}
-        confirmLoading={deleteLoading || Boolean(pendingDelete && deletingId === pendingDelete.id)}
-      />
-      <ThemedMessageModal
-        visible={deleteError !== null}
-        title="Could not delete"
-        message={deleteError ?? ''}
-        onDismiss={() => setDeleteError(null)}
       />
     </>
   );
@@ -255,24 +151,5 @@ export function DetectionGalleryGrid({
 const styles = StyleSheet.create({
   listWrap: {
     minHeight: 2,
-  },
-  messageBlock: {
-    gap: authSpacing.sm,
-  },
-  message: {
-    fontSize: 14,
-  },
-  retry: {
-    alignSelf: 'flex-start',
-  },
-  empty: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  loadMoreWrap: {
-    marginTop: authSpacing.md,
-    alignItems: 'center',
-    minHeight: 44,
-    justifyContent: 'center',
   },
 });

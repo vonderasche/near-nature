@@ -18,7 +18,7 @@ import { ProfileStatStrip } from '@/components/profile/profile-stat-strip';
 import { profileStatStripPropsFromPublicProfile } from '@/lib/profile/profileStatStripFromPublicProfile';
 import { UserAvatar } from '@/components/profile/user-avatar';
 import { StackScreenHeader } from '@/components/ui/StackScreenHeader';
-import { usePublicGalleryPrefs } from '@/context/PublicGalleryContext';
+import { useGalleryCategoryFilter } from '@/context/GalleryCategoryFilterContext';
 import { useTheme } from '@/hooks/useTheme';
 import { usePublicUserProfile } from '@/hooks/usePublicUserProfile';
 import { stageGalleryItem } from '@/lib/gallery/galleryItemRouteCache';
@@ -33,7 +33,7 @@ import type { DetectionGalleryItem } from '@/types';
 function PublicUserProfileBody({ userId }: { userId: string }) {
   const router = useRouter();
   const { theme } = useTheme();
-  const { categoryFilter, setCategoryFilter } = usePublicGalleryPrefs();
+  const { categoryFilter, setCategoryFilter } = useGalleryCategoryFilter();
   const insets = useSafeAreaInsets();
   const edge = contentInsetsPadding(insets);
 

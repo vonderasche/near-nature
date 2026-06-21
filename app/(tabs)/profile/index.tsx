@@ -4,7 +4,7 @@ import { useCallback, useRef, useState } from 'react';
 import { RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import { useAuthContext } from '@/context/AuthContext';
-import { useProfileGalleryPrefs } from '@/context/ProfileGalleryContext';
+import { useGalleryCategoryFilter } from '@/context/GalleryCategoryFilterContext';
 import {
   routeProfileDetection,
   routes,
@@ -41,7 +41,7 @@ import type { DetectionGalleryItem } from '@/types';
 export default function ProfileScreen() {
   const { theme, themeName } = useTheme();
   const router = useRouter();
-  const { categoryFilter, setCategoryFilter } = useProfileGalleryPrefs();
+  const { categoryFilter, setCategoryFilter } = useGalleryCategoryFilter();
   const { isAuthenticated, isLoading: authLoading } = useAuthContext();
   const {
     user,

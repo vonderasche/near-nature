@@ -5,7 +5,7 @@ import { StateEditForm } from '@/components/profile/state-edit-form';
 import { Screen } from '@/components/ui/Screen';
 import { StackScreenHeader } from '@/components/ui/StackScreenHeader';
 import { useAuthContext } from '@/context/AuthContext';
-import { useStateSave } from '@/hooks/useStateSave';
+import { useProfileFieldSave } from '@/hooks/useProfileFieldSave';
 import { useTheme } from '@/hooks/useTheme';
 import { useUser } from '@/hooks/useUser';
 import { routes } from '@/lib/routing/routes';
@@ -15,7 +15,7 @@ export default function EditStateScreen() {
   const { theme } = useTheme();
   const { isAuthenticated, isLoading: authLoading } = useAuthContext();
   const { user, update } = useUser();
-  const { saveState, saving } = useStateSave(update);
+  const { saveState, saving } = useProfileFieldSave(update);
 
   if (!authLoading && !isAuthenticated) {
     return <Redirect href={routes.login} />;
