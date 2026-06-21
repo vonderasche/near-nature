@@ -3,11 +3,9 @@ import { useMemo } from 'react';
 import { useMlFrameProcessor } from '@/hooks/useMlFrameProcessor';
 import type { LiveClassifierModelState, LiveClassifierPrediction } from '@/lib/camera/liveClassifierTypes';
 import { formatMobileNetError } from '@/lib/camera/mobilenet/formatMobileNetError';
-import {
-  V3_ORGANISM_LABEL,
-  V3_SCENE_GATE_ORGANISM_THRESHOLD,
-} from '@/lib/camera/tflite/v3/v3CascadeConfig';
-import { v3SceneGatePreviewConfig } from '@/lib/camera/tflite/v3/v3SceneGatePreviewConfig';
+import { V3_KINGDOM_TOP1_THRESHOLD } from '@/lib/camera/tflite/v3/v3CascadeConfig';
+import { v3KingdomPreviewConfig } from '@/lib/camera/tflite/v3/v3KingdomPreviewConfig';
+import { formatV3KingdomPreviewLabel } from '@/lib/camera/tflite/v3/v3Taxonomy';
 
 type UseV3PreviewFrameProcessorResult = {
   frameProcessor: ReturnType<typeof useMlFrameProcessor>['frameProcessor'] | undefined;
@@ -21,7 +19,7 @@ export function useV3PreviewFrameProcessor(
   active: boolean,
 ): UseV3PreviewFrameProcessorResult {
   const { frameProcessor, result, modelState, modelError } = useMlFrameProcessor({
-    config: v3SceneGatePreviewConfig,
+    config: v3KingdomPreviewConfig,
     enabled: active,
     frameSkippingEnabled: true,
   });
@@ -31,31 +29,22 @@ export function useV3PreviewFrameProcessor(
       return { predictions: [], organismDetected: false };
     }
 
-    const organism = result.predictions.find((row) => row.label === V3_ORGANISM_LABEL);
-    const organismConfidence = organism?.confidence ?? 0;
-    const passed = organismConfidence >= V3_SCENE_GATE_ORGANISM_THRESHOLD;
-
-    if (passed) {
-      return {
-        organismDetected: true,
-        predictions: [
-          {
-            classIndex: 1,
-            label: 'Organism',
-            confidence: organismConfidence,
-          },
-        ],
-      };
+    const sorted = [...result.predictions].sort((a, b) => b.confidence - a.confidence);
+    const top = sorted[0];
+    if (!top) {
+      return { predictions: [], organismDetected: false };
     }
 
-    const notOrganism = result.predictions.find((row) => row.label !== V3_ORGANISM_LABEL);
+    const confident =
+      top.confidence >= V3_KINGDOM_TOP1_THRESHOLD && top.label !== 'uncertain';
+
     return {
-      organismDetected: false,
+      organismDetected: confident,
       predictions: [
         {
           classIndex: 0,
-          label: 'No organism',
-          confidence: notOrganism?.confidence ?? 1 - organismConfidence,
+          label: formatV3KingdomPreviewLabel(top.label),
+          confidence: top.confidence,
         },
       ],
     };

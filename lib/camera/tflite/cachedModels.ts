@@ -1,4 +1,4 @@
-import type { TfliteModel } from 'react-native-fast-tflite';
+import type { TensorflowModelDelegate, TfliteModel } from 'react-native-fast-tflite';
 
 import { loadBundledTfliteModel } from '@/lib/camera/tflite/loadBundledTfliteModel';
 import {
@@ -13,16 +13,20 @@ import {
   type SpecialistModelDefinition,
 } from '@/lib/camera/mobilenet/specialistModelRegistry';
 
-const modelCache = new Map<number, Promise<TfliteModel>>();
+const modelCache = new Map<string, Promise<TfliteModel>>();
 const specialistModelPromises: Partial<Record<SpecialistAssetFolder, Promise<TfliteModel>>> = {};
 let mobilevitRoutingModelPromise: Promise<TfliteModel> | null = null;
 
-export function getCachedTfliteModel(modelAsset: number): Promise<TfliteModel> {
-  const existing = modelCache.get(modelAsset);
+export function getCachedTfliteModel(
+  modelAsset: number,
+  delegates: TensorflowModelDelegate[] = [],
+): Promise<TfliteModel> {
+  const cacheKey = `${modelAsset}:${delegates.join(',')}`;
+  const existing = modelCache.get(cacheKey);
   if (existing) return existing;
 
-  const pending = loadBundledTfliteModel(modelAsset, []);
-  modelCache.set(modelAsset, pending);
+  const pending = loadBundledTfliteModel(modelAsset, delegates);
+  modelCache.set(cacheKey, pending);
   return pending;
 }
 

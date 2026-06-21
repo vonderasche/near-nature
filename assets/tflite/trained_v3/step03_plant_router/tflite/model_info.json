@@ -1,8 +1,7 @@
 {
   "architecture": "efficientnet_b1",
-  "checkpoint": "e:\\PROGRAMMING\\Portfolio\\near nature\\python\\models\\trained_v3\\step03_plant_router\\best.pt",
+  "checkpoint": "E:\\PROGRAMMING\\Portfolio\\NearNature\\python\\models\\trained_v3\\step03_plant_router\\best.pt",
   "inputSize": 240,
-  "resizeShortEdge": 255,
   "numClasses": 5,
   "tfliteFile": "plant_router.tflite",
   "inputLayout": "NHWC",
@@ -19,22 +18,7 @@
       0.225
     ]
   },
-  "preprocess": {
-    "mode": "resize_short_edge_then_center_crop",
-    "cropSize": 240,
-    "resizeShortEdge": 255,
-    "interpolation": "bilinear",
-    "pixelRange": "[0, 1]",
-    "colorSpace": "RGB"
-  },
   "outputActivation": "softmax",
-  "val_acc": 0.8573145189818688,
-  "epoch": 8,
-  "class_names": [
-    "trees_shrubs",
-    "herbaceous",
-    "ferns_mosses",
-    "dryland_plants",
-    "not_plant"
-  ]
+  "val_acc": 0.8101307758393181,
+  "epoch": 5
 }

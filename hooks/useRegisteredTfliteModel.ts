@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { NitroModules } from 'react-native-nitro-modules';
 import type { TensorflowModelDelegate, TfliteModel } from 'react-native-fast-tflite';
 
-import { loadBundledTfliteModel } from '@/lib/camera/tflite/loadBundledTfliteModel';
+import { getCachedTfliteModel } from '@/lib/camera/tflite/cachedModels';
 import type { TfliteModelConfig } from '@/lib/camera/tflite/modelTypes';
 
 type ModelLoadState =
@@ -28,7 +28,7 @@ export function useRegisteredTfliteModel(
     const load = async () => {
       try {
         setLoadState({ state: 'loading', model: undefined, error: undefined });
-        const model = await loadBundledTfliteModel(config.model, delegates);
+        const model = await getCachedTfliteModel(config.model, delegates);
 
         if (!cancelled) {
           setLoadState({ state: 'loaded', model, error: undefined });

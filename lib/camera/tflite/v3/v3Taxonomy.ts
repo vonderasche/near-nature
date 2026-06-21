@@ -13,6 +13,17 @@ export function v3KingdomToTaxonGroup(kingdom: string): VisionTaxonGroup {
   return 'animals';
 }
 
+const KINGDOM_PREVIEW_DISPLAY: Readonly<Record<string, string>> = {
+  plantae: 'Plant',
+  animalia: 'Animal',
+  fungi: 'Fungi',
+  uncertain: 'Uncertain',
+};
+
+export function formatV3KingdomPreviewLabel(kingdom: string): string {
+  return KINGDOM_PREVIEW_DISPLAY[kingdom] ?? kingdom;
+}
+
 const PLANT_GROUP_TO_SUBCATEGORY: Readonly<Record<string, SubcategoryId>> = {
   trees_shrubs: 'trees_shrubs',
   ferns_mosses: 'ferns_mosses',

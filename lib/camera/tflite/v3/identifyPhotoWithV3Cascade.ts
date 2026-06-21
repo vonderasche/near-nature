@@ -250,6 +250,9 @@ export async function identifyPhotoWithV3Cascade(
   const plantGroupTop = topPrediction(plantRouterPredictions);
 
   if (!plantGroupTop || plantGroupTop.confidence < V3_PLANT_ROUTER_TOP1_THRESHOLD) {
+    const routerHint = plantGroupTop
+      ? `Best guess: ${plantGroupTop.label.replace(/_/g, ' ')} (${Math.round(plantGroupTop.confidence * 100)}%, need ${Math.round(V3_PLANT_ROUTER_TOP1_THRESHOLD * 100)}%).`
+      : 'No plant group prediction returned.';
     return finishEmpty(cascadeStart, 'plant_router below threshold', {
       previewTop: [...previewTop, kingdomTop, ...toPreviewPredictions(plantRouterPredictions)],
       routedPreviewLabel: formatV3RouteLabel(kingdom, plantGroupTop?.label),
@@ -257,7 +260,7 @@ export async function identifyPhotoWithV3Cascade(
       specialistDisplayName: null,
       genusTop: [],
       usedSpecialist: false,
-      notice: 'Could not confidently route this plant photo.',
+      notice: `Could not confidently route this plant photo. ${routerHint}`,
     });
   }
 
