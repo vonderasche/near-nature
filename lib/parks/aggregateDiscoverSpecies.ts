@@ -1,3 +1,4 @@
+import { inferDiscoverSpeciesSubcategory } from '@/lib/discover/inferDiscoverSpeciesSubcategory';
 import { normalizeSearchQuery } from '@/lib/search/normalizeSearchQuery';
 import type { DiscoverSpeciesEntry, DiscoverSpeciesKind } from '@/types/discover-species';
 import type { FloridaStatePark, ParkSpeciesHighlight } from '@/types/florida-state-park';
@@ -45,6 +46,7 @@ export function aggregateDiscoverSpecies(
       name,
       imageUrl: value.imageUrl,
       kind,
+      subcategoryId: inferDiscoverSpeciesSubcategory(name, kind),
       parkCount: value.parkNames.length,
       parkNames: [...value.parkNames].sort((a, b) => a.localeCompare(b)),
     }))

@@ -17,6 +17,7 @@ export const routes = {
   resetPassword: '/reset-password',
   cameraTab: '/(tabs)/camera',
   discoverTab: '/(tabs)/discover',
+  discoverSpeciesFilter: '/(tabs)/discover/species-filter',
   explorerBoardTab: '/(tabs)/explorer-board',
 } as const;
 
@@ -59,6 +60,31 @@ export function routePublicUserGalleryFilter(userId: string) {
 export function routePublicUserDetection(params: { userId: string; detectionId: string }) {
   return {
     pathname: '/user/[userId]/detection/[detectionId]' as const,
+    params,
+  };
+}
+
+export function routeDiscoverPark(params: { parkId: string; latitude?: string; longitude?: string }) {
+  return {
+    pathname: '/(tabs)/discover/park/[parkId]' as const,
+    params,
+  };
+}
+
+export function routeDiscoverSpecies(params: { kind: 'plant' | 'animal'; name: string }) {
+  return {
+    pathname: '/(tabs)/discover/species/[speciesSlug]' as const,
+    params: {
+      speciesSlug: encodeURIComponent(params.name),
+      kind: params.kind,
+      name: params.name,
+    },
+  };
+}
+
+export function routeDiscoverSpeciesFilter(params: { kind: 'plant' | 'animal' }) {
+  return {
+    pathname: '/(tabs)/discover/species-filter' as const,
     params,
   };
 }

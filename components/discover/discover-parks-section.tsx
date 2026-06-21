@@ -1,7 +1,8 @@
-import { useCallback, useState } from 'react';
+import { useRouter, type Href } from 'expo-router';
+import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { ParkDetailModal } from '@/components/discover/park-detail-modal';
+import { DiscoverItemGrid, type DiscoverGridItem } from '@/components/discover/discover-item-grid';
 import { ParkListItem } from '@/components/discover/park-list-item';
 import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
 import { CenteredActivityIndicator } from '@/components/shared/centered-activity-indicator';
@@ -12,6 +13,11 @@ import type { DiscoverParkSortMode } from '@/lib/parks/discoverParkSort';
 import { isSearchQueryActive } from '@/lib/search/normalizeSearchQuery';
 import type { DeviceCoordinatesStatus } from '@/hooks/useDeviceCoordinates';
 import type { DeviceCoordinates } from '@/lib/parks/sortFloridaStateParks';
+import { resolveParkListImageUrl } from '@/lib/parks/parkSpeciesHighlights';
+import { stageDiscoverPark } from '@/lib/discover/discoverRouteCache';
+import { routeDiscoverPark } from '@/lib/routing/routes';
+import type { GalleryGridColumns } from '@/lib/detections/galleryGridColumns';
+import type { GalleryLayoutMode } from '@/lib/detections/galleryLayoutMode';
 import type { FloridaStatePark } from '@/types/florida-state-park';
 
 type Props = {
@@ -23,6 +29,8 @@ type Props = {
   sortMode: DiscoverParkSortMode;
   locationStatus: DeviceCoordinatesStatus;
   deviceCoords: DeviceCoordinates | null;
+  layoutMode: GalleryLayoutMode;
+  gridColumns: GalleryGridColumns;
   onRetry: () => void;
 };
 
@@ -35,11 +43,13 @@ export function DiscoverParksSection({
   sortMode,
   locationStatus,
   deviceCoords,
+  layoutMode,
+  gridColumns,
   onRetry,
 }: Props) {
+  const router = useRouter();
   const { theme } = useTheme();
   const listSectionSupportingStyles = useListSectionSupportingStyles();
-  const [selectedPark, setSelectedPark] = useState<FloridaStatePark | null>(null);
   const searchActive = isSearchQueryActive(searchQuery);
   const showDistance = sortMode === 'nearest' && locationStatus === 'ready';
   const nearestSortNotice =
@@ -49,9 +59,26 @@ export function DiscoverParksSection({
         ? 'Location is unavailable — showing parks A–Z instead.'
         : null;
 
-  const closeDetail = useCallback(() => {
-    setSelectedPark(null);
-  }, []);
+  const gridItems = useMemo(
+    (): DiscoverGridItem[] =>
+      parks.map((park) => ({
+        key: floridaStateParkListKey(park),
+        title: park.parkName,
+        imageUrl: resolveParkListImageUrl(park),
+        accessibilityLabel: park.parkName,
+        onPress: () => {
+          stageDiscoverPark(park);
+          router.push(
+            routeDiscoverPark({
+              parkId: park.parkId,
+              latitude: park.latitude != null ? String(park.latitude) : undefined,
+              longitude: park.longitude != null ? String(park.longitude) : undefined,
+            }) as unknown as Href,
+          );
+        },
+      })),
+    [parks, router],
+  );
 
   if (loading && parks.length === 0) {
     return <CenteredActivityIndicator accessibilityLabel="Loading Florida state parks" />;
@@ -87,6 +114,8 @@ export function DiscoverParksSection({
               : 'No park data is available right now.'}
           </Text>
         </View>
+      ) : layoutMode === 'grid' ? (
+        <DiscoverItemGrid items={gridItems} columnCount={gridColumns} />
       ) : (
         parks.map((park) => (
           <ParkListItem
@@ -94,12 +123,9 @@ export function DiscoverParksSection({
             park={park}
             deviceCoords={deviceCoords}
             showDistance={showDistance}
-            onPress={setSelectedPark}
           />
         ))
       )}
-
-      <ParkDetailModal visible={selectedPark != null} park={selectedPark} onClose={closeDetail} />
     </View>
   );
 }
