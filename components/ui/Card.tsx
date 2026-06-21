@@ -15,7 +15,7 @@ export function Card({ children, style }: CardProps) {
     <View
       style={[
         {
-          backgroundColor: theme.colors.surface,
+          backgroundColor: theme.colors.background,
           borderRadius: theme.radii.md,
           padding: theme.spacing.lg,
         },

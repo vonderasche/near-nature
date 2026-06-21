@@ -96,7 +96,7 @@ function buildTheme(colors: AppThemeColors): AppTheme {
 
 const darkColors: AppThemeColors = {
   background: darkLegacyColors.background,
-  surface: darkLegacyColors.fieldBackground,
+  surface: darkLegacyColors.background,
   textPrimary: darkLegacyColors.text,
   textSecondary: darkLegacyColors.textMuted,
   accent: tint,
@@ -117,7 +117,7 @@ const darkColors: AppThemeColors = {
 };
 
 const lightColors: AppThemeColors = {
-  background: '#f5f5f7',
+  background: '#ffffff',
   surface: '#ffffff',
   textPrimary: '#1c1c1e',
   textSecondary: '#636366',
@@ -140,7 +140,7 @@ const lightColors: AppThemeColors = {
 
 const neutralGrayColors: AppThemeColors = {
   background: '#2c2c2e',
-  surface: '#3a3a3c',
+  surface: '#2c2c2e',
   textPrimary: '#f2f2f7',
   textSecondary: '#aeaeb2',
   accent: tint,

@@ -5,8 +5,8 @@ import type { EventArg } from '@react-navigation/native';
 
 import { HapticTab } from '@/components/layout/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { authColors, tint } from '@/constants/auth-theme';
 import { useAuthContext } from '@/context/AuthContext';
+import { useTheme } from '@/hooks/useTheme';
 import { routes } from '@/lib/routing/routes';
 
 type TabPressEvent = EventArg<'tabPress', true, undefined>;
@@ -20,6 +20,7 @@ const AUTH_TAB_MESSAGES: Record<AuthRequiredTab, string> = {
 export default function TabLayout() {
   const { isAuthenticated } = useAuthContext();
   const router = useRouter();
+  const { theme } = useTheme();
 
   const requireAuthOnTabPress = (tab: AuthRequiredTab) => (event: TabPressEvent) => {
     if (isAuthenticated) return;
@@ -34,11 +35,11 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: tint,
-        tabBarInactiveTintColor: authColors.tabIconDefault,
+        tabBarActiveTintColor: theme.colors.accent,
+        tabBarInactiveTintColor: theme.colors.tabIconDefault,
         tabBarStyle: {
-          backgroundColor: authColors.background,
-          borderTopColor: authColors.border,
+          backgroundColor: theme.colors.background,
+          borderTopColor: theme.colors.border,
         },
         headerShown: false,
         tabBarButton: HapticTab,

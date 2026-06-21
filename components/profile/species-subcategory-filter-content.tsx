@@ -1,6 +1,5 @@
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 
-import { Card } from '@/components/ui/Card';
 import { Text } from '@/components/ui/Text';
 import {
   ANIMAL_SUBCATEGORIES,
@@ -106,21 +105,22 @@ function FilterRow({
 
   return (
     <Pressable accessibilityRole="button" accessibilityState={{ selected: active }} onPress={onPress}>
-      <Card
+      <View
         style={{
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
-          backgroundColor: active ? theme.colors.surfaceRaised : theme.colors.surface,
+          paddingVertical: theme.spacing.md,
+          paddingHorizontal: theme.spacing.sm,
+          borderRadius: theme.radii.md,
           marginBottom: theme.spacing.xs,
+          backgroundColor: active ? theme.colors.surfaceRaised : 'transparent',
         }}>
         <Text variant="body" color={active ? 'primary' : 'secondary'}>
           {label}
         </Text>
         {active ? <HeroIcon name="check" size={20} color={theme.colors.accent} /> : null}
-      </Card>
+      </View>
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({});

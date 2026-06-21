@@ -68,7 +68,7 @@ export function DetectionGalleryDetailContent({
             styles.imageFrame,
             {
               borderRadius: theme.radii.md,
-              backgroundColor: theme.colors.surface,
+              backgroundColor: theme.colors.background,
             },
           ]}>
           <Image

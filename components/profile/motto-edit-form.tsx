@@ -52,9 +52,11 @@ export function MottoEditForm({ initialMotto, onSave, saving = false, onCancel }
           styles.input,
           {
             color: theme.colors.textPrimary,
-            backgroundColor: theme.colors.surface,
+            backgroundColor: theme.colors.background,
             borderRadius: theme.radii.md,
             padding: theme.spacing.md,
+            borderWidth: 1,
+            borderColor: theme.colors.border,
           },
         ]}
       />

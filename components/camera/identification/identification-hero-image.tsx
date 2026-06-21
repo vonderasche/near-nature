@@ -16,7 +16,7 @@ export function IdentificationHeroImage({ photoUri }: Props) {
         styles.frame,
         {
           borderRadius: theme.radii.md,
-          backgroundColor: theme.colors.surface,
+          backgroundColor: theme.colors.background,
           marginBottom: theme.spacing.lg,
         },
       ]}>

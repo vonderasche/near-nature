@@ -20,7 +20,7 @@ export function NavigationThemeBridge({ children }: Props) {
         ...DarkTheme.colors,
         primary: theme.colors.accent,
         background: theme.colors.background,
-        card: theme.colors.surface,
+        card: theme.colors.background,
         text: theme.colors.textPrimary,
         border: theme.colors.border,
         notification: theme.colors.accent,

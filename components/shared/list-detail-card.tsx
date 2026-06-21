@@ -68,7 +68,7 @@ export function ListDetailCard({
 
   const cardStyle = surface
     ? {
-        backgroundColor: theme.colors.surface,
+        backgroundColor: theme.colors.background,
         borderRadius: theme.radii.md,
         padding: theme.spacing.lg,
         marginBottom: theme.spacing.sm,
