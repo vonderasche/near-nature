@@ -1,25 +1,27 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { AuthButton } from '@/components/auth/auth-button';
+import { IdentificationHeroImage } from '@/components/camera/identification/identification-hero-image';
 import { IdentificationHistorySection } from '@/components/camera/identification/identification-history-section';
-import { IdentificationRoutingBanner } from '@/components/camera/identification/identification-routing-banner';
-import { IdentificationPhotoSection } from '@/components/camera/identification/identification-photo-section';
+import { IdentificationResultHeader } from '@/components/camera/identification/identification-result-header';
 import { IdentificationSpeciesResultsList } from '@/components/camera/identification/identification-species-results-list';
+import { IdentificationSpeciesWikiBody } from '@/components/camera/identification/identification-species-wiki-body';
 import { UploadToDatabaseButton } from '@/components/camera/identification/upload-to-database-button';
 import { InlineFormError } from '@/components/shared/inline-form-error';
-import { LoadingHintRow } from '@/components/shared/loading-hint-row';
-import { ScreenHeading } from '@/components/shared/screen-heading';
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { Button } from '@/components/ui/Button';
+import { Screen } from '@/components/ui/Screen';
+import { Section } from '@/components/ui/Section';
+import { Text } from '@/components/ui/Text';
 import { useAuthContext } from '@/context/AuthContext';
+import { useTheme } from '@/hooks/useTheme';
 import { useUserHomeState } from '@/hooks/useUserHomeState';
 import { useIdentificationResultsState } from '@/hooks/useIdentificationResultsState';
 import { useIdentifications } from '@/hooks/useIdentifications';
 import { useOptimisticIdentificationSave } from '@/hooks/useOptimisticIdentificationSave';
 import { useSpeciesIdentification } from '@/hooks/useSpeciesIdentification';
-import { contentInsetsPadding } from '@/lib/screen/contentInsets';
+import { mergeIdentificationSpecies } from '@/lib/identification/mergeIdentificationSpecies';
+
 type Props = {
   photoUri: string;
   /** Return to the live camera (retake flow). */
@@ -33,7 +35,7 @@ export function CameraIdentificationPanel({
   onRetake,
   onBackgroundSaveError,
 }: Props) {
-  const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
   const { stateCode: userState } = useUserHomeState();
 
   const { userId } = useAuthContext();
@@ -81,104 +83,126 @@ export function CameraIdentificationPanel({
     });
   }, [classifications, saveIdentification, selectedSpeciesIndex, species, wikiByLatinName]);
 
+  const safeIndex =
+    classifications.length > 0
+      ? Math.min(Math.max(0, selectedSpeciesIndex), classifications.length - 1)
+      : 0;
+  const displaySpecies =
+    classifications.length > 0
+      ? mergeIdentificationSpecies(classifications, species, {}, speciesIdBase)
+      : [];
+  const primaryLatinName = displaySpecies[safeIndex]?.latinName ?? classifications[safeIndex]?.latinName;
+  const showAboutSection = Boolean(primaryLatinName) && classifications.length > 0 && !identifying;
+  const showDetailsSection = classifications.length > 0 || identifying || identifyError;
+
   return (
-    <>
-      <View style={[styles.root, contentInsetsPadding(insets)]}>
-        <ScreenHeading
-          title="Identification"
-          subtitle="Tap Save to keep this sighting—you'll return to the camera while it uploads."
-          marginBottom={authSpacing.md}
+    <Screen>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}>
+        <IdentificationHeroImage photoUri={photoUri} />
+
+        <IdentificationResultHeader
+          identifying={identifying}
+          classifications={classifications}
+          tfliteMeta={tfliteMeta}
         />
-
-        {identifying ? <LoadingHintRow label="Running on-device models…" /> : null}
-
-        <IdentificationRoutingBanner meta={tfliteMeta} identifying={identifying} />
 
         {identifyError ? <InlineFormError>{identifyError}</InlineFormError> : null}
         {historyError ? <InlineFormError>{historyError}</InlineFormError> : null}
         {wikiError ? <InlineFormError>{wikiError}</InlineFormError> : null}
         {reclassifyError ? <InlineFormError>{reclassifyError}</InlineFormError> : null}
 
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}>
-          <IdentificationPhotoSection photoUri={photoUri} />
+        {showAboutSection && primaryLatinName ? (
+          <Section title="About">
+            <IdentificationSpeciesWikiBody
+              latinName={primaryLatinName}
+              wikiByLatinName={wikiByLatinName}
+            />
+          </Section>
+        ) : null}
 
-          <IdentificationSpeciesResultsList
-            species={species}
-            classifications={classifications}
-            speciesIdBase={speciesIdBase}
-            identifying={identifying}
-            identifyError={identifyError}
-            wikiByLatinName={wikiByLatinName}
-            selectedIndex={selectedSpeciesIndex}
-            onSelectIndex={setSelectedSpeciesIndex}
-            alternatesEnriching={alternatesEnriching}
-            canReclassifyWithCloud={canReclassifyWithCloud}
-            onReclassifyWithCloud={reclassifyWithCloud}
+        {showDetailsSection ? (
+          <Section title="Details" spaced>
+            <IdentificationSpeciesResultsList
+              species={species}
+              classifications={classifications}
+              speciesIdBase={speciesIdBase}
+              identifying={identifying}
+              identifyError={identifyError}
+              wikiByLatinName={wikiByLatinName}
+              selectedIndex={selectedSpeciesIndex}
+              onSelectIndex={setSelectedSpeciesIndex}
+              alternatesEnriching={alternatesEnriching}
+              canReclassifyWithCloud={canReclassifyWithCloud}
+              onReclassifyWithCloud={reclassifyWithCloud}
+              sectionedLayout
+            />
+          </Section>
+        ) : null}
+
+        <Section title="Your identifications" spaced>
+          <IdentificationHistorySection
+            historyLoading={historyLoading}
+            identifications={identifications}
+            hideLabel
           />
+        </Section>
+      </ScrollView>
 
-          <IdentificationHistorySection historyLoading={historyLoading} identifications={identifications} />
-        </ScrollView>
-
-        <View style={styles.footer}>
-          {classifications.length > 0 && !identifying ? (
-            <View style={styles.footerActions}>
-              <View style={styles.footerHalf}>
-                <AuthButton fillParent variant="outline" title="Retake" onPress={onRetake} />
-              </View>
-              <View style={styles.footerHalf}>
-                <UploadToDatabaseButton
-                  fillParent
-                  onPress={handleSaveIdentification}
-                  disabled={!userId}
-                />
-              </View>
+      <View
+        style={[
+          styles.footer,
+          {
+            marginTop: theme.spacing.sm,
+            paddingTop: theme.spacing.lg,
+            gap: theme.spacing.sm,
+          },
+        ]}>
+        {classifications.length > 0 && !identifying ? (
+          <View style={[styles.footerActions, { gap: theme.spacing.sm }]}>
+            <View style={styles.footerHalf}>
+              <Button fillParent variant="outline" title="Retake" onPress={onRetake} />
             </View>
-          ) : (
-            <AuthButton variant="outline" title="Retake" onPress={onRetake} />
-          )}
-          {classifications.length > 0 && !identifying && !userId ? (
-            <Text style={styles.saveHint}>Sign in to save identifications to your account.</Text>
-          ) : null}
-        </View>
+            <View style={styles.footerHalf}>
+              <UploadToDatabaseButton
+                fillParent
+                onPress={handleSaveIdentification}
+                disabled={!userId}
+              />
+            </View>
+          </View>
+        ) : (
+          <Button variant="outline" title="Retake" onPress={onRetake} />
+        )}
+        {classifications.length > 0 && !identifying && !userId ? (
+          <Text variant="subtitle" color="secondary" style={styles.saveHint}>
+            Sign in to save identifications to your account.
+          </Text>
+        ) : null}
       </View>
-    </>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: authColors.background,
-    paddingHorizontal: authSpacing.lg,
-  },
   scroll: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: authSpacing.xl,
+    paddingBottom: 24,
   },
   footerActions: {
     flexDirection: 'row',
-    gap: authSpacing.sm,
   },
   footerHalf: {
     flex: 1,
     minWidth: 0,
   },
   saveHint: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
     textAlign: 'center',
   },
-  footer: {
-    marginTop: authSpacing.sm,
-    paddingTop: authSpacing.md,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: authColors.border,
-    gap: authSpacing.sm,
-  },
+  footer: {},
 });

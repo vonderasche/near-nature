@@ -13,6 +13,7 @@ type ModelLoadState =
 export function useRegisteredTfliteModel(
   config: TfliteModelConfig,
   delegates: TensorflowModelDelegate[] = [],
+  enabled = true,
 ) {
   const [loadState, setLoadState] = useState<ModelLoadState>({
     state: 'loading',
@@ -23,6 +24,11 @@ export function useRegisteredTfliteModel(
   const delegatesKey = delegates.join(',');
 
   useEffect(() => {
+    if (!enabled) {
+      setLoadState({ state: 'loading', model: undefined, error: undefined });
+      return;
+    }
+
     let cancelled = false;
 
     const load = async () => {
@@ -49,7 +55,7 @@ export function useRegisteredTfliteModel(
     return () => {
       cancelled = true;
     };
-  }, [config.id, config.model, delegatesKey]);
+  }, [config.id, config.model, delegatesKey, enabled]);
 
   const boxedModel = useMemo(() => {
     if (loadState.state !== 'loaded') {

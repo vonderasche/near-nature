@@ -12,14 +12,20 @@ import type { DetectionGalleryItem, Identification } from '@/types';
 type Props = {
   historyLoading: boolean;
   identifications: Identification[];
+  /** When true, omit the built-in section label (parent Section provides the title). */
+  hideLabel?: boolean;
 };
 
-export function IdentificationHistorySection({ historyLoading, identifications }: Props) {
+export function IdentificationHistorySection({
+  historyLoading,
+  identifications,
+  hideLabel = false,
+}: Props) {
   const [selected, setSelected] = useState<DetectionGalleryItem | null>(null);
 
   return (
     <>
-      <SectionLabel label="Your identifications" spaced />
+      {hideLabel ? null : <SectionLabel label="Your identifications" spaced />}
       {historyLoading ? (
         <CenteredActivityIndicator
           color={authColors.textMuted}

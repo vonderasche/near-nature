@@ -1,7 +1,8 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { SpeciesWikiData } from '@/api/wikipedia';
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { Text } from '@/components/ui/Text';
+import { useTheme } from '@/hooks/useTheme';
 import { getWikiRowDisplayState } from '@/lib/identification/wikiRowDisplay';
 
 type Props = {
@@ -24,7 +25,9 @@ export function IdentificationSpeciesWikiBody({
     case 'empty':
       return (
         <View style={styles.wikiWrap}>
-          <Text style={styles.wikiDesc}>No Wikipedia article found.</Text>
+          <Text variant="subtitle" color="secondary">
+            No Wikipedia article found.
+          </Text>
         </View>
       );
     case 'ready':
@@ -43,6 +46,7 @@ function WikiArticleBody({
   wiki: SpeciesWikiData;
   omitDescription: boolean;
 }) {
+  const { theme } = useTheme();
   const showDescription = !omitDescription && wiki.description?.trim();
   const facts = wiki.funFacts?.filter(Boolean) ?? [];
 
@@ -51,12 +55,16 @@ function WikiArticleBody({
   }
 
   return (
-    <View style={styles.wikiWrap}>
-      {showDescription ? <Text style={styles.wikiDesc}>{wiki.description}</Text> : null}
+    <View style={[styles.wikiWrap, { gap: theme.spacing.xs }]}>
+      {showDescription ? (
+        <Text variant="subtitle" color="secondary">
+          {wiki.description}
+        </Text>
+      ) : null}
       {facts.length > 0 ? (
-        <View style={styles.facts}>
+        <View style={{ gap: theme.spacing.xs }}>
           {facts.map((fact) => (
-            <Text key={fact} style={styles.fact}>
+            <Text key={fact} variant="subtitle" color="secondary">
               - {fact}
             </Text>
           ))}
@@ -67,19 +75,5 @@ function WikiArticleBody({
 }
 
 const styles = StyleSheet.create({
-  wikiWrap: {
-    marginTop: authSpacing.sm,
-    gap: authSpacing.xs,
-  },
-  wikiDesc: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
-  },
-  facts: {
-    gap: authSpacing.xs,
-  },
-  fact: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
-  },
+  wikiWrap: {},
 });

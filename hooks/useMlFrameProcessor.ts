@@ -32,7 +32,7 @@ export function useMlFrameProcessor({
 }: UseMlFrameProcessorOptions) {
   const [result, setResult] = useState<MlClassificationResult | null>(null);
 
-  const { state, error, boxedModel } = useRegisteredTfliteModel(config);
+  const { state, error, boxedModel } = useRegisteredTfliteModel(config, [], enabled);
   const { resize } = useResizePlugin();
 
   useEffect(() => {

@@ -1,10 +1,10 @@
-import { Redirect, useRouter } from 'expo-router';
+import { Redirect, useRouter, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuthContext } from '@/context/AuthContext';
-import { routes } from '@/lib/routing/routes';
+import { routeCameraIdentification, routes } from '@/lib/routing/routes';
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { CameraBottomToolbar } from '@/components/camera/camera-bottom-toolbar';
@@ -14,10 +14,9 @@ import { CameraZoomChips } from '@/components/camera/camera-zoom-chips';
 import { useCameraCaptureFormat } from '@/hooks/useCameraCaptureFormat';
 import { useCameraPreferences } from '@/hooks/useCameraPreferences';
 import { useCameraZoom } from '@/hooks/useCameraZoom';
-import { CameraIdentificationPanel } from '@/components/camera/camera-identification-panel';
 import { CenteredActivityIndicator } from '@/components/shared/centered-activity-indicator';
 import { ScreenCenter } from '@/components/shared/screen-center';
-import { ThemedConfirmModal, ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
+import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import { useCameraScreen } from '@/hooks/useCameraScreen';
 import { usePickPhotoFromGallery } from '@/hooks/usePickPhotoFromGallery';
@@ -27,27 +26,29 @@ export default function CameraScreen() {
   const { isAuthenticated, isLoading } = useAuthContext();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [capturedPhotoUri, setCapturedPhotoUri] = useState<string | null>(null);
   const [pickerNotice, setPickerNotice] = useState<{ title: string; message: string } | null>(null);
-  const [backgroundSaveError, setBackgroundSaveError] = useState<{
-    title: string;
-    message: string;
-  } | null>(null);
   const [controlMenusOpen, setControlMenusOpen] = useState(false);
-  const onPhotoCaptured = useCallback((uri: string) => {
-    setCapturedPhotoUri(uri);
-  }, []);
 
-  const retake = useCallback(() => {
-    setCapturedPhotoUri(null);
-  }, []);
+  const navigateToIdentification = useCallback(
+    (uri: string) => {
+      router.push(routeCameraIdentification({ uri }) as unknown as Href);
+    },
+    [router],
+  );
+
+  const onPhotoCaptured = useCallback(
+    (uri: string) => {
+      navigateToIdentification(uri);
+    },
+    [navigateToIdentification],
+  );
 
   const { pickFromGallery, picking: pickingGallery } = usePickPhotoFromGallery();
 
   const handlePickGallery = useCallback(async () => {
     const result = await pickFromGallery();
     if (result.ok) {
-      setCapturedPhotoUri(result.uri);
+      navigateToIdentification(result.uri);
       return;
     }
     if (result.reason === 'permission' || result.reason === 'error') {
@@ -56,7 +57,7 @@ export default function CameraScreen() {
         message: result.message,
       });
     }
-  }, [pickFromGallery]);
+  }, [navigateToIdentification, pickFromGallery]);
 
   const {
     hdrEnabled,
@@ -121,41 +122,8 @@ export default function CameraScreen() {
         message={pickerNotice?.message ?? ''}
         onDismiss={() => setPickerNotice(null)}
       />
-      <ThemedConfirmModal
-        visible={backgroundSaveError !== null}
-        title={backgroundSaveError?.title ?? 'Save failed'}
-        message={
-          backgroundSaveError?.message
-            ? `${backgroundSaveError.message} Open your profile to check your gallery or try saving again.`
-            : 'Your identification could not be saved. Open your profile to check your gallery or try again.'
-        }
-        cancelLabel="Dismiss"
-        confirmLabel="Open profile"
-        confirmDestructive={false}
-        onCancel={() => setBackgroundSaveError(null)}
-        onConfirm={() => {
-          setBackgroundSaveError(null);
-          router.push(routes.profileTab);
-        }}
-      />
     </>
   );
-
-  if (capturedPhotoUri) {
-    return (
-      <CameraIdentificationPanel
-        key={capturedPhotoUri}
-        photoUri={capturedPhotoUri}
-        onRetake={retake}
-        onBackgroundSaveError={(message) =>
-          setBackgroundSaveError({
-            title: 'Save failed',
-            message,
-          })
-        }
-      />
-    );
-  }
 
   if (isPermissionPending) {
     return (

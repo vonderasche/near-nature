@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { useTheme } from '@/hooks/useTheme';
 
 export type ListDetailCardProps = {
   /** Primary line (e.g. common name or username). */
@@ -16,6 +17,8 @@ export type ListDetailCardProps = {
   leading?: ReactNode;
   /** Top-right badge (e.g. Explorer Board rank). */
   cornerBadge?: string | null;
+  /** Borderless elevated surface (identification results). */
+  surface?: boolean;
   onPress?: () => void;
   onLongPress?: () => void;
   delayLongPress?: number;
@@ -25,8 +28,8 @@ export type ListDetailCardProps = {
 };
 
 /**
- * Bordered list row used by identification results and other stacked summaries
- * (same look as the original {@link SpeciesResultCard}).
+ * List row used by identification results and other stacked summaries.
+ * Default keeps a bordered look for legacy screens; pass `surface` for borderless cards.
  */
 export function ListDetailCard({
   title,
@@ -35,6 +38,7 @@ export function ListDetailCard({
   meta,
   leading,
   cornerBadge,
+  surface = false,
   onPress,
   onLongPress,
   delayLongPress,
@@ -42,6 +46,7 @@ export function ListDetailCard({
   accessibilityLabel,
   children,
 }: ListDetailCardProps) {
+  const { theme } = useTheme();
   const subtitleTrimmed = subtitle?.trim();
   const descriptionTrimmed = description?.trim();
   const metaTrimmed = meta?.trim();
@@ -60,6 +65,15 @@ export function ListDetailCard({
   );
 
   const cornerTrimmed = cornerBadge?.trim();
+
+  const cardStyle = surface
+    ? {
+        backgroundColor: theme.colors.surface,
+        borderRadius: theme.radii.md,
+        padding: theme.spacing.lg,
+        marginBottom: theme.spacing.sm,
+      }
+    : styles.card;
 
   const content = (
     <>
@@ -84,14 +98,14 @@ export function ListDetailCard({
         onPress={onPress}
         onLongPress={onLongPress}
         delayLongPress={delayLongPress}
-        style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}>
+        style={({ pressed }) => [cardStyle, pressed && styles.cardPressed]}>
         {content}
       </Pressable>
     );
   }
 
   return (
-    <View style={styles.card}>
+    <View style={cardStyle}>
       {content}
     </View>
   );

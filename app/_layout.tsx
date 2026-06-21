@@ -14,6 +14,7 @@ import { LocalDatabaseErrorBanner } from '@/components/layout/local-database-err
 import { FirstLoginWelcomeModal } from '@/components/welcome/first-login-welcome-modal';
 import { AuthProvider } from '@/context/AuthContext';
 import { LocalDatabaseProvider } from '@/context/LocalDatabaseContext';
+import { AppThemeProvider } from '@/context/ThemeContext';
 
 export const unstable_settings = {
   /** Guests land on Explorer Board; signed-in users are routed to Camera via tabs index. */
@@ -40,6 +41,7 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <AuthProvider>
           <LocalDatabaseProvider>
+            <AppThemeProvider>
             <ThemeProvider value={navigationTheme}>
               <AuthGate>
                 <LocalDatabaseErrorBanner />
@@ -53,6 +55,7 @@ export default function RootLayout() {
               <FirstLoginWelcomeModal />
               <StatusBar style="light" />
             </ThemeProvider>
+            </AppThemeProvider>
           </LocalDatabaseProvider>
         </AuthProvider>
       </SafeAreaProvider>

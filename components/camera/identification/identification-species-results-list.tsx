@@ -24,6 +24,8 @@ type Props = {
   alternatesEnriching: boolean;
   canReclassifyWithCloud: boolean;
   onReclassifyWithCloud: () => Promise<void>;
+  /** When true, wiki copy lives in a parent About section; cards show names/meta only. */
+  sectionedLayout?: boolean;
 };
 
 function wikiDescription(
@@ -54,6 +56,7 @@ export function IdentificationSpeciesResultsList({
   alternatesEnriching,
   canReclassifyWithCloud,
   onReclassifyWithCloud,
+  sectionedLayout = false,
 }: Props) {
   const [showAlternates, setShowAlternates] = useState(false);
 
@@ -105,14 +108,15 @@ export function IdentificationSpeciesResultsList({
               key={s.id}
               commonName={s.commonName}
               latinName={s.latinName}
-              description={wikiDescription(s.latinName, wikiByLatinName)}
+              description={sectionedLayout ? null : wikiDescription(s.latinName, wikiByLatinName)}
               meta={speciesMeta(s, index === 0)}
+              surface={sectionedLayout}
               onPress={() => {
                 onSelectIndex(index);
                 setShowAlternates(false);
               }}>
               {selected ? <Text style={styles.selectedMark}>Selected for save</Text> : null}
-              {index < 1 ? (
+              {index < 1 && !sectionedLayout ? (
                 <IdentificationSpeciesWikiBody
                   latinName={s.latinName}
                   wikiByLatinName={wikiByLatinName}
@@ -140,13 +144,18 @@ export function IdentificationSpeciesResultsList({
       <SpeciesResultCard
         commonName={primary.commonName}
         latinName={primary.latinName}
-        description={wikiDescription(primary.latinName, wikiByLatinName)}
-        meta={speciesMeta(primary, safeIndex === 0)}>
-        <IdentificationSpeciesWikiBody
-          latinName={primary.latinName}
-          wikiByLatinName={wikiByLatinName}
-          omitDescription
-        />
+        description={
+          sectionedLayout ? null : wikiDescription(primary.latinName, wikiByLatinName)
+        }
+        meta={speciesMeta(primary, safeIndex === 0)}
+        surface={sectionedLayout}>
+        {sectionedLayout ? null : (
+          <IdentificationSpeciesWikiBody
+            latinName={primary.latinName}
+            wikiByLatinName={wikiByLatinName}
+            omitDescription
+          />
+        )}
       </SpeciesResultCard>
 
       {canReclassifyWithCloud ? (

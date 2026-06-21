@@ -18,6 +18,14 @@ export const routes = {
 
 export type AppRoute = (typeof routes)[keyof typeof routes];
 
+/** On-device identification results after capture or gallery pick. */
+export function routeCameraIdentification(params: { uri: string; userState?: string }) {
+  return {
+    pathname: '/(tabs)/camera/identification' as const,
+    params,
+  };
+}
+
 /** Another member’s public profile (`app/user/[userId].tsx`). */
 export function routePublicUserProfile(userId: string) {
   return { pathname: '/user/[userId]' as const, params: { userId } };

@@ -8,6 +8,7 @@ type SpeciesResultCardProps = {
   latinName: string;
   description?: string | null;
   meta: string;
+  surface?: boolean;
   onPress?: () => void;
   children?: ReactNode;
 };
@@ -17,6 +18,7 @@ export function SpeciesResultCard({
   latinName,
   description,
   meta,
+  surface = false,
   onPress,
   children,
 }: SpeciesResultCardProps) {
@@ -32,6 +34,7 @@ export function SpeciesResultCard({
       subtitle={subtitle}
       description={bodyDescription}
       meta={meta}
+      surface={surface}
       onPress={onPress}
       accessibilityLabel={`Open ${title} details`}>
       {children}
