@@ -1,7 +1,8 @@
+import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { cameraLivePredictionsBottomOffset } from '@/constants/camera-layout';
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { useTheme } from '@/hooks/useTheme';
 import type {
   LiveClassifierModelState,
   LiveClassifierPrediction,
@@ -22,6 +23,51 @@ export function CameraLivePredictionsOverlay({
   modelError,
   predictions,
 }: Props) {
+  const { theme } = useTheme();
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        wrap: {
+          position: 'absolute',
+          left: theme.spacing.md,
+          right: theme.spacing.md,
+          paddingVertical: theme.spacing.sm,
+          paddingHorizontal: theme.spacing.md,
+          borderRadius: 12,
+          backgroundColor: 'rgba(0,0,0,0.62)',
+          gap: 4,
+          zIndex: 12,
+          elevation: 12,
+        },
+        row: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: theme.spacing.sm,
+        },
+        label: {
+          ...theme.typography.body,
+          flex: 1,
+          color: theme.colors.textPrimary,
+          fontWeight: '700',
+          fontSize: 15,
+        },
+        confidence: {
+          ...theme.typography.label,
+          color: theme.colors.textSecondary,
+          fontVariant: ['tabular-nums'],
+        },
+        meta: {
+          ...theme.typography.label,
+          color: theme.colors.textSecondary,
+        },
+        error: {
+          ...theme.typography.label,
+          color: '#f87171',
+        },
+      }),
+    [theme],
+  );
+
   if (!enabled) return null;
 
   const topPrediction = predictions[0];
@@ -51,43 +97,3 @@ export function CameraLivePredictionsOverlay({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: {
-    position: 'absolute',
-    left: authSpacing.md,
-    right: authSpacing.md,
-    paddingVertical: authSpacing.sm,
-    paddingHorizontal: authSpacing.md,
-    borderRadius: 12,
-    backgroundColor: 'rgba(0,0,0,0.62)',
-    gap: 4,
-    zIndex: 12,
-    elevation: 12,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: authSpacing.sm,
-  },
-  label: {
-    ...authTypography.body,
-    flex: 1,
-    color: authColors.text,
-    fontWeight: '700',
-    fontSize: 15,
-  },
-  confidence: {
-    ...authTypography.label,
-    color: authColors.textMuted,
-    fontVariant: ['tabular-nums'],
-  },
-  meta: {
-    ...authTypography.label,
-    color: authColors.textMuted,
-  },
-  error: {
-    ...authTypography.label,
-    color: '#f87171',
-  },
-});

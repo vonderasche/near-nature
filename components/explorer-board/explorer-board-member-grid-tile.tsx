@@ -1,8 +1,9 @@
 import { Image } from 'expo-image';
 import { HeroIcon } from '@/components/ui/hero-icon';
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { useTheme } from '@/hooks/useTheme';
 import {
   formatExplorerBoardAccessibilityCounts,
   formatExplorerBoardSpeciesMeta,
@@ -32,6 +33,68 @@ export function ExplorerBoardMemberGridTile({
   resolveDisplayUrl,
   onPressMember,
 }: Props) {
+  const { theme } = useTheme();
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        tileWrap: {
+          marginBottom: theme.spacing.xs,
+        },
+        tile: {
+          borderRadius: 0,
+          borderWidth: 1,
+          borderColor: theme.colors.border,
+          overflow: 'hidden',
+          backgroundColor: theme.colors.background,
+        },
+        fallback: {
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        rankBadge: {
+          position: 'absolute',
+          top: theme.spacing.xs,
+          left: theme.spacing.xs,
+          minWidth: 24,
+          paddingHorizontal: theme.spacing.xs,
+          paddingVertical: 2,
+          borderWidth: 1,
+          borderColor: theme.colors.border,
+          backgroundColor: theme.colors.background,
+        },
+        rankText: {
+          ...theme.typography.label,
+          fontSize: 12,
+          fontWeight: '700',
+          color: theme.colors.textPrimary,
+          textAlign: 'center',
+        },
+        footer: {
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          paddingHorizontal: theme.spacing.xs,
+          paddingVertical: theme.spacing.xs,
+          backgroundColor: theme.colors.overlayScrimStrong,
+        },
+        username: {
+          ...theme.typography.body,
+          fontSize: 13,
+          fontWeight: '600',
+          color: theme.colors.textPrimary,
+        },
+        meta: {
+          ...theme.typography.body,
+          fontSize: 12,
+          marginTop: theme.spacing.xs,
+          color: theme.colors.textSecondary,
+        },
+      }),
+    [theme],
+  );
+
   const stored = explorerBoardMemberTileImageUrl(row);
   const uri = resolveDisplayUrl(stored);
   const motto = parseExplorerBoardMotto(row.motto);
@@ -53,7 +116,7 @@ export function ExplorerBoardMemberGridTile({
           <Image source={{ uri }} style={StyleSheet.absoluteFillObject} contentFit="cover" transition={200} />
         ) : (
           <View style={styles.fallback}>
-            <HeroIcon name="user" size={compact ? 28 : 40} color={authColors.textMuted} />
+            <HeroIcon name="user" size={compact ? 28 : 40} color={theme.colors.textSecondary} />
           </View>
         )}
         {rank ? (
@@ -75,60 +138,3 @@ export function ExplorerBoardMemberGridTile({
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  tileWrap: {
-    marginBottom: authSpacing.xs,
-  },
-  tile: {
-    borderRadius: 0,
-    borderWidth: 1,
-    borderColor: authColors.border,
-    overflow: 'hidden',
-    backgroundColor: authColors.background,
-  },
-  fallback: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rankBadge: {
-    position: 'absolute',
-    top: authSpacing.xs,
-    left: authSpacing.xs,
-    minWidth: 24,
-    paddingHorizontal: authSpacing.xs,
-    paddingVertical: 2,
-    borderWidth: 1,
-    borderColor: authColors.border,
-    backgroundColor: authColors.background,
-  },
-  rankText: {
-    ...authTypography.label,
-    fontSize: 12,
-    fontWeight: '700',
-    color: authColors.text,
-    textAlign: 'center',
-  },
-  footer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingHorizontal: authSpacing.xs,
-    paddingVertical: authSpacing.xs,
-    backgroundColor: authColors.overlayScrimStrong,
-  },
-  username: {
-    ...authTypography.body,
-    fontSize: 13,
-    fontWeight: '600',
-    color: authColors.text,
-  },
-  meta: {
-    ...authTypography.body,
-    fontSize: 12,
-    marginTop: authSpacing.xs,
-    color: authColors.textMuted,
-  },
-});

@@ -9,13 +9,13 @@ import { ExplorerBoardDiscoveryGrid } from '@/components/explorer-board/explorer
 import { ExplorerBoardViewModeToggle } from '@/components/explorer-board/explorer-board-view-mode-toggle';
 import { GridLayoutMenu } from '@/components/ui/grid-layout-menu';
 import { ScreenSearchField } from '@/components/ui/screen-search-field';
-import { authColors, authSpacing } from '@/constants/auth-theme';
 import { useAuthContext } from '@/context/AuthContext';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useExplorerBoard } from '@/hooks/useExplorerBoard';
 import { useExplorerBoardColumns } from '@/hooks/useExplorerBoardColumns';
 import { useExplorerBoardLayout } from '@/hooks/useExplorerBoardLayout';
 import { usePublicDetectionExplore } from '@/hooks/usePublicDetectionExplore';
+import { useTheme } from '@/hooks/useTheme';
 import {
   EXPLORER_BOARD_COLUMN_OPTIONS,
   isExplorerBoardColumns,
@@ -25,6 +25,7 @@ import { routes } from '@/lib/routing/routes';
 import { isSearchQueryActive } from '@/lib/search/normalizeSearchQuery';
 
 export default function ExplorerBoardScreen() {
+  const { theme } = useTheme();
   const { isAuthenticated } = useAuthContext();
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
@@ -80,7 +81,7 @@ export default function ExplorerBoardScreen() {
       hideLogout
       titleAccessory={
         searchActive ? null : (
-          <View style={styles.toolbar}>
+          <View style={[styles.toolbar, { gap: theme.spacing.xs }]}>
             <ExplorerBoardViewModeToggle value={layoutMode} onChange={setLayout} />
             {layoutMode === 'grid' ? (
               <GridLayoutMenu
@@ -99,8 +100,8 @@ export default function ExplorerBoardScreen() {
         <RefreshControl
           refreshing={refreshing}
           onRefresh={onRefresh}
-          tintColor={authColors.text}
-          colors={[authColors.text]}
+          tintColor={theme.colors.textPrimary}
+          colors={[theme.colors.textPrimary]}
         />
       }
       backgroundRefreshing={isRefreshing && !refreshing && !searchActive}>
@@ -114,7 +115,9 @@ export default function ExplorerBoardScreen() {
       {searchActive ? (
         <>
           {exploreLoading ? (
-            <Text style={styles.searchHint}>Searching community identifications…</Text>
+            <Text style={[styles.searchHint, { color: theme.colors.textSecondary }]}>
+              Searching community identifications…
+            </Text>
           ) : null}
           <ExplorerBoardDiscoveryGrid
             items={exploreItems}
@@ -152,11 +155,9 @@ const styles = StyleSheet.create({
   toolbar: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: authSpacing.xs,
   },
   searchHint: {
     fontSize: 13,
     lineHeight: 18,
-    color: authColors.textMuted,
   },
 });

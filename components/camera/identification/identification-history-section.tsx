@@ -1,12 +1,13 @@
-import { useState } from 'react';
-import { Text } from 'react-native';
+import { useRouter, type Href } from 'expo-router';
 
-import { DetectionGalleryDetailModal } from '@/components/profile/detection-gallery-detail-modal';
 import { DetectionGalleryListItem } from '@/components/profile/detection-gallery-list-item';
 import { CenteredActivityIndicator } from '@/components/shared/centered-activity-indicator';
 import { SectionLabel } from '@/components/shared/section-label';
-import { listSectionSupportingStyles } from '@/components/shared/list-detail-card';
-import { authColors } from '@/constants/auth-theme';
+import { useListSectionSupportingStyles } from '@/components/shared/list-detail-card';
+import { Text } from '@/components/ui/Text';
+import { useTheme } from '@/hooks/useTheme';
+import { stageGalleryItem } from '@/lib/gallery/galleryItemRouteCache';
+import { routeCameraDetection } from '@/lib/routing/routes';
 import type { DetectionGalleryItem, Identification } from '@/types';
 
 type Props = {
@@ -21,14 +22,21 @@ export function IdentificationHistorySection({
   identifications,
   hideLabel = false,
 }: Props) {
-  const [selected, setSelected] = useState<DetectionGalleryItem | null>(null);
+  const router = useRouter();
+  const { theme } = useTheme();
+  const listSectionSupportingStyles = useListSectionSupportingStyles();
+
+  const openItem = (item: DetectionGalleryItem) => {
+    stageGalleryItem(item);
+    router.push(routeCameraDetection({ detectionId: item.id }) as unknown as Href);
+  };
 
   return (
     <>
       {hideLabel ? null : <SectionLabel label="Your identifications" spaced />}
       {historyLoading ? (
         <CenteredActivityIndicator
-          color={authColors.textMuted}
+          color={theme.colors.textSecondary}
           accessibilityLabel="Loading identification history"
         />
       ) : identifications.length === 0 ? (
@@ -42,16 +50,10 @@ export function IdentificationHistorySection({
             <DetectionGalleryListItem
               key={row.id}
               item={row.galleryItem}
-              onPress={() => setSelected(row.galleryItem)}
+              onPress={() => openItem(row.galleryItem)}
             />
           ))
       )}
-      <DetectionGalleryDetailModal
-        visible={selected !== null}
-        item={selected}
-        onClose={() => setSelected(null)}
-      />
     </>
   );
 }
-

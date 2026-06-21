@@ -31,7 +31,9 @@ export type SubcategoryId =
   | 'deer_hoofed'
   | 'bats'
   | 'marine_mammals'
-  | 'carnivores';
+  | 'carnivores'
+  /** Postgres `species_category` for fungi — no badge discipline. */
+  | 'other_fungi';
 
 export type SubcategoryDef = {
   id: SubcategoryId;
@@ -184,6 +186,7 @@ function subcategoryLabel(id: SubcategoryId): string {
     bats: 'Bats',
     marine_mammals: 'Marine Mammals',
     carnivores: 'Carnivores',
+    other_fungi: 'Fungi / Mushroom',
   };
   return labels[id];
 }

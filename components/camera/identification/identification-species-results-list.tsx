@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import type { SpeciesWikiData } from '@/api/wikipedia';
 import { SpeciesResultCard } from '@/components/camera/identification/species-result-card';
 import { AuthButton } from '@/components/auth/auth-button';
-import { listSectionSupportingStyles } from '@/components/shared/list-detail-card';
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { useListSectionSupportingStyles } from '@/components/shared/list-detail-card';
+import { useTheme } from '@/hooks/useTheme';
 import { getSpeciesSubcategoryLabel } from '@/constants/species-subcategories';
 import { mergeIdentificationSpecies } from '@/lib/identification/mergeIdentificationSpecies';
 import type { ClassificationResult, Species } from '@/types';
@@ -58,6 +58,36 @@ export function IdentificationSpeciesResultsList({
   onReclassifyWithCloud,
   sectionedLayout = false,
 }: Props) {
+  const { theme } = useTheme();
+  const listSectionSupportingStyles = useListSectionSupportingStyles();
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        primaryWrap: {
+          gap: theme.spacing.sm,
+        },
+        alternatesWrap: {
+          gap: theme.spacing.sm,
+        },
+        alternatesHeading: {
+          ...theme.typography.body,
+          fontWeight: '600',
+          color: theme.colors.textPrimary,
+        },
+        alternatesHint: {
+          ...theme.typography.subtitle,
+          color: theme.colors.textSecondary,
+          marginBottom: theme.spacing.xs,
+        },
+        selectedMark: {
+          ...theme.typography.label,
+          color: theme.colors.textPrimary,
+          marginTop: theme.spacing.xs,
+        },
+      }),
+    [theme],
+  );
+
   const [showAlternates, setShowAlternates] = useState(false);
 
   useEffect(() => {
@@ -171,27 +201,3 @@ export function IdentificationSpeciesResultsList({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  primaryWrap: {
-    gap: authSpacing.sm,
-  },
-  alternatesWrap: {
-    gap: authSpacing.sm,
-  },
-  alternatesHeading: {
-    ...authTypography.body,
-    fontWeight: '600',
-    color: authColors.text,
-  },
-  alternatesHint: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
-    marginBottom: authSpacing.xs,
-  },
-  selectedMark: {
-    ...authTypography.label,
-    color: authColors.text,
-    marginTop: authSpacing.xs,
-  },
-});

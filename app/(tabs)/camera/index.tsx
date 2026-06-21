@@ -17,12 +17,13 @@ import { useCameraZoom } from '@/hooks/useCameraZoom';
 import { CenteredActivityIndicator } from '@/components/shared/centered-activity-indicator';
 import { ScreenCenter } from '@/components/shared/screen-center';
 import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { useTheme } from '@/hooks/useTheme';
 import { useCameraScreen } from '@/hooks/useCameraScreen';
 import { usePickPhotoFromGallery } from '@/hooks/usePickPhotoFromGallery';
 import { contentInsetsPadding } from '@/lib/screen/contentInsets';
 
 export default function CameraScreen() {
+  const { theme } = useTheme();
   const { isAuthenticated, isLoading } = useAuthContext();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -128,7 +129,12 @@ export default function CameraScreen() {
   if (isPermissionPending) {
     return (
       <>
-        <View style={[styles.fill, screenShell, contentInsetsPadding(insets)]}>
+        <View
+          style={[
+            styles.fill,
+            { backgroundColor: theme.colors.background },
+            contentInsetsPadding(insets),
+          ]}>
           <ScreenCenter style={styles.transparentCenter} paddingHorizontal={0}>
             <CenteredActivityIndicator accessibilityLabel="Checking camera permission" />
           </ScreenCenter>
@@ -141,10 +147,15 @@ export default function CameraScreen() {
   if (!isPermissionGranted) {
     return (
       <>
-        <View style={[styles.fill, screenShell, contentInsetsPadding(insets)]}>
-          <ScreenCenter style={styles.transparentCenter} paddingHorizontal={authSpacing.lg}>
-            <View style={styles.permissionBlock}>
-              <Text style={styles.permissionMessage}>
+        <View
+          style={[
+            styles.fill,
+            { backgroundColor: theme.colors.background },
+            contentInsetsPadding(insets),
+          ]}>
+          <ScreenCenter style={styles.transparentCenter} paddingHorizontal={theme.spacing.lg}>
+            <View style={[styles.permissionBlock, { gap: theme.spacing.md }]}>
+              <Text style={[styles.permissionMessage, { color: theme.colors.textPrimary }]}>
                 Camera access is needed to take photos. You can still identify an existing photo from
                 your gallery.
               </Text>
@@ -166,7 +177,7 @@ export default function CameraScreen() {
 
   return (
     <>
-      <View style={styles.root}>
+      <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
         {device ? (
           <>
             <CameraLivePreviewWithClassifier
@@ -243,10 +254,6 @@ export default function CameraScreen() {
   );
 }
 
-const screenShell = {
-  backgroundColor: authColors.background,
-} as const;
-
 const styles = StyleSheet.create({
   fill: {
     flex: 1,
@@ -256,17 +263,15 @@ const styles = StyleSheet.create({
   },
   root: {
     flex: 1,
-    backgroundColor: authColors.background,
   },
   permissionBlock: {
     width: '100%',
     maxWidth: 400,
-    gap: authSpacing.md,
     alignItems: 'stretch',
   },
   permissionMessage: {
-    ...authTypography.body,
-    color: authColors.text,
+    fontSize: 16,
+    fontWeight: '400',
     textAlign: 'center',
   },
 });

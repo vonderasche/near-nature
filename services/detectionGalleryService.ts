@@ -1,6 +1,6 @@
 import { isLocalDetectionsMode } from '@/lib/config/isLocalDetectionsMode';
 import { devLog } from '@/lib/devLog';
-import { upsertUserDetections } from '@/lib/db/detectionRepository';
+import { getDetectionGalleryRowById, upsertUserDetections } from '@/lib/db/detectionRepository';
 import { isSqliteUserCacheAvailable } from '@/lib/db/sqliteCacheSupport';
 import { filterDetectionGalleryRows } from '@/lib/detections/filterDetectionGalleryItems';
 import {
@@ -207,6 +207,66 @@ export async function fetchUserDetectionGalleryRowsPage({
 
   syncGalleryRowsToLocalDb(userId, result.rows);
   return result;
+}
+
+const DETECTION_BY_ID_SELECT =
+  'id, user_id, image_url, detected_at, common_name, latin_name, category, subcategory, main_category, description, native_status, is_sensitive';
+
+export type FetchDetectionGalleryItemByIdOptions = {
+  userId?: string;
+  publicOnly?: boolean;
+};
+
+/**
+ * Loads one gallery item by detection id (Supabase, local store, or SQLite cache).
+ */
+export async function fetchDetectionGalleryItemById(
+  detectionId: string,
+  options: FetchDetectionGalleryItemByIdOptions = {},
+): Promise<DetectionGalleryItem | null> {
+  const { userId, publicOnly = false } = options;
+
+  if (isLocalDetectionsMode()) {
+    if (userId) {
+      const all = await loadLocalDetectionRows(userId);
+      const row = all.find((entry) => entry.id === detectionId);
+      if (!row) return null;
+      const items = await hydrateGalleryItemsFromRows([row]);
+      return items[0] ?? null;
+    }
+  }
+
+  const cachedRow = await getDetectionGalleryRowById(detectionId, { userId, publicOnly });
+  if (cachedRow) {
+    const items = await hydrateGalleryItemsFromRows([cachedRow]);
+    return items[0] ?? null;
+  }
+
+  if (isLocalDetectionsMode()) {
+    return null;
+  }
+
+  let query = supabase.from('detections').select(DETECTION_BY_ID_SELECT).eq('id', detectionId);
+  if (userId) {
+    query = query.eq('user_id', userId);
+  }
+  if (publicOnly) {
+    query = query.eq('is_sensitive', false);
+  }
+
+  const { data, error } = await query.maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+
+  const row = data as DetectionGalleryRow & { user_id?: string; is_sensitive?: boolean };
+  const items = await hydrateGalleryItemsFromRows([row]);
+  const item = items[0];
+  if (!item) return null;
+
+  if (row.user_id) {
+    return { ...item, ownerUserId: row.user_id };
+  }
+  return item;
 }
 
 /**

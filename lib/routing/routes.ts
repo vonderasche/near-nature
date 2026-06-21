@@ -37,6 +37,13 @@ export function routeProfileDetection(params: { detectionId: string }) {
   };
 }
 
+export function routeCameraDetection(params: { detectionId: string }) {
+  return {
+    pathname: '/(tabs)/camera/detection/[detectionId]' as const,
+    params,
+  };
+}
+
 /** Another member’s public profile (`app/user/[userId]/index.tsx`). */
 export function routePublicUserProfile(userId: string) {
   return { pathname: '/user/[userId]' as const, params: { userId } };

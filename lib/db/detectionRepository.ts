@@ -157,6 +157,41 @@ export async function deleteUserDetection(userId: string, detectionId: string): 
   );
 }
 
+export async function getDetectionGalleryRowById(
+  detectionId: string,
+  options: { userId?: string; publicOnly?: boolean } = {},
+): Promise<DetectionGalleryRow | null> {
+  const conn = db();
+  if (!conn) return null;
+
+  const { userId, publicOnly = false } = options;
+  const sensitivityClause = publicOnly ? ' AND is_sensitive = 0' : '';
+  const row = userId
+    ? await conn.getFirstAsync<UserDetectionRow>(
+        `SELECT
+          id, user_id, image_url, detected_at, common_name, latin_name,
+          category, subcategory, main_category, description, native_status,
+          confidence, state, inaturalist_id, is_sensitive, points, synced_at, created_at
+         FROM user_detections
+         WHERE id = ? AND user_id = ?${sensitivityClause}
+         LIMIT 1`,
+        detectionId,
+        userId,
+      )
+    : await conn.getFirstAsync<UserDetectionRow>(
+        `SELECT
+          id, user_id, image_url, detected_at, common_name, latin_name,
+          category, subcategory, main_category, description, native_status,
+          confidence, state, inaturalist_id, is_sensitive, points, synced_at, created_at
+         FROM user_detections
+         WHERE id = ?${sensitivityClause}
+         LIMIT 1`,
+        detectionId,
+      );
+
+  return row ? mapUserDetectionRowToGalleryRow(row) : null;
+}
+
 export async function listUserDetectionGalleryRows(
   userId: string,
   options: { publicOnly?: boolean; limit?: number; offset?: number } = {},

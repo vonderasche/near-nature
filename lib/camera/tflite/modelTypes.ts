@@ -31,6 +31,8 @@ export type ClassificationModelConfig = BaseModelConfig & {
   supportsFrameSkipping?: boolean;
   frameSkipInterval?: number;
   frameSkipTargetFps?: number;
+  routesToSpecialist?: boolean;
+  showInCameraPicker?: boolean;
 };
 
 export type TfliteModelConfig = ClassificationModelConfig;

@@ -1,7 +1,8 @@
+import { useMemo } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { cameraZoomChipsBottomOffset } from '@/constants/camera-layout';
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { useTheme } from '@/hooks/useTheme';
 import type { ZoomChip } from '@/lib/camera/cameraZoom';
 
 type Props = {
@@ -12,6 +13,52 @@ type Props = {
 };
 
 export function CameraZoomChips({ chips, activeChipId, onSelectChip, bottomInset }: Props) {
+  const { theme } = useTheme();
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        bar: {
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          alignItems: 'center',
+          zIndex: 20,
+          elevation: 20,
+        },
+        row: {
+          flexDirection: 'row',
+          gap: theme.spacing.sm,
+          paddingHorizontal: theme.spacing.md,
+          paddingVertical: theme.spacing.xs,
+          borderRadius: 20,
+          backgroundColor: 'rgba(0,0,0,0.45)',
+        },
+        chip: {
+          minWidth: 44,
+          paddingHorizontal: theme.spacing.sm,
+          paddingVertical: 6,
+          borderRadius: 16,
+          alignItems: 'center',
+        },
+        chipActive: {
+          backgroundColor: theme.colors.primaryFill,
+        },
+        chipPressed: {
+          opacity: Platform.OS === 'ios' ? 0.88 : 1,
+        },
+        chipText: {
+          ...theme.typography.body,
+          color: theme.colors.textPrimary,
+          fontSize: 14,
+          fontWeight: '600',
+        },
+        chipTextActive: {
+          color: theme.colors.primaryOnFill,
+        },
+      }),
+    [theme],
+  );
+
   if (chips.length === 0) return null;
 
   return (
@@ -40,44 +87,3 @@ export function CameraZoomChips({ chips, activeChipId, onSelectChip, bottomInset
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  bar: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    zIndex: 20,
-    elevation: 20,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: authSpacing.sm,
-    paddingHorizontal: authSpacing.md,
-    paddingVertical: authSpacing.xs,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-  },
-  chip: {
-    minWidth: 44,
-    paddingHorizontal: authSpacing.sm,
-    paddingVertical: 6,
-    borderRadius: 16,
-    alignItems: 'center',
-  },
-  chipActive: {
-    backgroundColor: authColors.primaryFill,
-  },
-  chipPressed: {
-    opacity: Platform.OS === 'ios' ? 0.88 : 1,
-  },
-  chipText: {
-    ...authTypography.body,
-    color: authColors.text,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  chipTextActive: {
-    color: authColors.primaryOnFill,
-  },
-});

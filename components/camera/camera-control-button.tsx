@@ -1,7 +1,8 @@
+import { useMemo } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { HeroIcon, type HeroIconName } from '@/components/ui/hero-icon';
-import { authColors, authTypography } from '@/constants/auth-theme';
+import { useTheme } from '@/hooks/useTheme';
 
 type Props = {
   icon: HeroIconName;
@@ -32,6 +33,50 @@ export function CameraControlButton({
   submenuOpen = false,
   style,
 }: Props) {
+  const { theme } = useTheme();
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        wrap: {
+          alignItems: 'center',
+          gap: 2,
+        },
+        btn: {
+          width: 44,
+          height: 44,
+          borderRadius: 22,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: theme.colors.overlayScrim,
+        },
+        btnActive: {
+          backgroundColor: theme.colors.cameraControlActive,
+        },
+        btnSubmenuOpen: {
+          borderWidth: 1,
+          borderColor: theme.colors.textPrimary,
+        },
+        btnDisabled: {
+          opacity: 0.45,
+        },
+        btnPressed: {
+          opacity: Platform.OS === 'ios' ? 0.85 : 1,
+        },
+        caption: {
+          ...theme.typography.subtitle,
+          fontSize: 10,
+          fontWeight: '600',
+          color: theme.colors.textPrimary,
+          textTransform: 'uppercase',
+          letterSpacing: 0.4,
+        },
+        captionDisabled: {
+          color: theme.colors.textSecondary,
+        },
+      }),
+    [theme],
+  );
+
   return (
     <View style={[styles.wrap, style]}>
       <Pressable
@@ -43,7 +88,7 @@ export function CameraControlButton({
         onLongPress={onLongPress}
         delayLongPress={onLongPress ? delayLongPress : undefined}
         disabled={disabled}
-        android_ripple={{ color: authColors.rippleOnDark, borderless: true }}
+        android_ripple={{ color: theme.colors.rippleOnDark, borderless: true }}
         style={({ pressed }) => [
           styles.btn,
           active && styles.btnActive,
@@ -54,7 +99,7 @@ export function CameraControlButton({
         <HeroIcon
           name={icon}
           size={26}
-          color={disabled ? authColors.textMuted : authColors.text}
+          color={disabled ? theme.colors.textSecondary : theme.colors.textPrimary}
         />
       </Pressable>
       {caption ? (
@@ -65,42 +110,3 @@ export function CameraControlButton({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: {
-    alignItems: 'center',
-    gap: 2,
-  },
-  btn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: authColors.overlayScrim,
-  },
-  btnActive: {
-    backgroundColor: authColors.cameraControlActive,
-  },
-  btnSubmenuOpen: {
-    borderWidth: 1,
-    borderColor: authColors.text,
-  },
-  btnDisabled: {
-    opacity: 0.45,
-  },
-  btnPressed: {
-    opacity: Platform.OS === 'ios' ? 0.85 : 1,
-  },
-  caption: {
-    ...authTypography.subtitle,
-    fontSize: 10,
-    fontWeight: '600',
-    color: authColors.text,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-  },
-  captionDisabled: {
-    color: authColors.textMuted,
-  },
-});

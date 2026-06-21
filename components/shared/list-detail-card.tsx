@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import { useTheme } from '@/hooks/useTheme';
 
 export type ListDetailCardProps = {
@@ -27,6 +27,27 @@ export type ListDetailCardProps = {
   children?: ReactNode;
 };
 
+/** Shared empty / supporting copy for list sections (matches identification history). */
+export function useListSectionSupportingStyles() {
+  const { theme } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
+        muted: {
+          ...theme.typography.subtitle,
+          color: theme.colors.textSecondary,
+          marginBottom: theme.spacing.sm,
+        },
+        centered: {
+          paddingVertical: theme.spacing.lg,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+      }),
+    [theme],
+  );
+}
+
 /**
  * List row used by identification results and other stacked summaries.
  * Default keeps a bordered look for legacy screens; pass `surface` for borderless cards.
@@ -47,6 +68,66 @@ export function ListDetailCard({
   children,
 }: ListDetailCardProps) {
   const { theme } = useTheme();
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        card: {
+          position: 'relative',
+          borderWidth: 1,
+          borderColor: theme.colors.border,
+          padding: theme.spacing.md,
+          marginBottom: theme.spacing.sm,
+        },
+        cardPressed: {
+          opacity: 0.88,
+        },
+        cornerBadge: {
+          position: 'absolute',
+          top: theme.spacing.sm,
+          right: theme.spacing.sm,
+          zIndex: 1,
+          ...theme.typography.label,
+          color: theme.colors.textSecondary,
+        },
+        leaderRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: theme.spacing.md,
+        },
+        rowWithCornerBadge: {
+          paddingRight: theme.spacing.lg,
+        },
+        leadingWrap: {
+          flexShrink: 0,
+        },
+        bodyFlex: {
+          flex: 1,
+          minWidth: 0,
+        },
+        title: {
+          ...theme.typography.body,
+          fontWeight: '600',
+          color: theme.colors.textPrimary,
+        },
+        subtitle: {
+          ...theme.typography.subtitle,
+          color: theme.colors.textSecondary,
+          fontStyle: 'italic',
+        },
+        description: {
+          ...theme.typography.subtitle,
+          color: theme.colors.textSecondary,
+          marginTop: theme.spacing.xs,
+        },
+        meta: {
+          ...theme.typography.subtitle,
+          color: theme.colors.textSecondary,
+          marginTop: theme.spacing.xs,
+        },
+      }),
+    [theme],
+  );
+
   const subtitleTrimmed = subtitle?.trim();
   const descriptionTrimmed = description?.trim();
   const metaTrimmed = meta?.trim();
@@ -110,73 +191,3 @@ export function ListDetailCard({
     </View>
   );
 }
-
-/** Shared empty / supporting copy for list sections (matches identification history). */
-export const listSectionSupportingStyles = StyleSheet.create({
-  muted: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
-    marginBottom: authSpacing.sm,
-  },
-  centered: {
-    paddingVertical: authSpacing.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
-
-const styles = StyleSheet.create({
-  card: {
-    position: 'relative',
-    borderWidth: 1,
-    borderColor: authColors.border,
-    padding: authSpacing.md,
-    marginBottom: authSpacing.sm,
-  },
-  cardPressed: {
-    opacity: 0.88,
-  },
-  cornerBadge: {
-    position: 'absolute',
-    top: authSpacing.sm,
-    right: authSpacing.sm,
-    zIndex: 1,
-    ...authTypography.label,
-    color: authColors.textMuted,
-  },
-  leaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: authSpacing.md,
-  },
-  rowWithCornerBadge: {
-    paddingRight: authSpacing.lg,
-  },
-  leadingWrap: {
-    flexShrink: 0,
-  },
-  bodyFlex: {
-    flex: 1,
-    minWidth: 0,
-  },
-  title: {
-    ...authTypography.body,
-    fontWeight: '600',
-    color: authColors.text,
-  },
-  subtitle: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
-    fontStyle: 'italic',
-  },
-  description: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
-    marginTop: authSpacing.xs,
-  },
-  meta: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
-    marginTop: authSpacing.xs,
-  },
-});

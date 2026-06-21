@@ -26,6 +26,7 @@ export type AuthButtonProps = {
   /** Optional leading icon (e.g. delete-outline). */
   icon?: HeroIconName;
   accessibilityLabel?: string;
+  accessibilityHint?: string;
   accessibilityRole?: AccessibilityRole;
   accessibilityState?: AccessibilityState;
 };
@@ -40,6 +41,7 @@ export function AuthButton({
   fillParent = false,
   icon,
   accessibilityLabel,
+  accessibilityHint,
   accessibilityRole = 'button',
   accessibilityState,
 }: AuthButtonProps) {
@@ -64,6 +66,7 @@ export function AuthButton({
       accessibilityRole={accessibilityRole}
       accessibilityState={accessibilityState}
       accessibilityLabel={accessibilityLabel ?? title}
+      accessibilityHint={accessibilityHint}
       onPress={onPress}
       disabled={disabled || loading}
       style={({ pressed }) => [

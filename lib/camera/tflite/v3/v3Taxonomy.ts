@@ -58,7 +58,7 @@ export function genusToV3Classification(
   genus: string,
   confidence: number,
   taxonGroup: VisionTaxonGroup,
-  subcategory?: SubcategoryId,
+  subcategory?: string,
 ): ClassificationResult {
   return {
     latinName: genus,

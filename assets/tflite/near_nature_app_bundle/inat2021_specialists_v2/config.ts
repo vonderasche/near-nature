@@ -12,7 +12,7 @@ import woodyPlantsMeta from './woody_plants/tflite/labels.json';
 import forbsFernsMeta from './forbs_ferns/tflite/labels.json';
 import drylandPlantsMeta from './dryland_plants/tflite/labels.json';
 import routing from './routing.json';
-import { ClassificationModelConfig } from '../types';
+import { ClassificationModelConfig } from '@/lib/camera/tflite/modelTypes';
 
 const IMAGENET_MEAN: [number, number, number] = [0.485, 0.456, 0.406];
 const IMAGENET_STD: [number, number, number] = [0.229, 0.224, 0.225];

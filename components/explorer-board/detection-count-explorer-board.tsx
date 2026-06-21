@@ -9,8 +9,8 @@ import { ExplorerBoardMemberListItem } from '@/components/explorer-board/explore
 import { CenteredActivityIndicator } from '@/components/shared/centered-activity-indicator';
 import { InlineFormError } from '@/components/shared/inline-form-error';
 import { useExplorerBoardDisplayUrls } from '@/hooks/useExplorerBoardDisplayUrls';
-import { listSectionSupportingStyles } from '@/components/shared/list-detail-card';
-import { authColors, authSpacing } from '@/constants/auth-theme';
+import { useListSectionSupportingStyles } from '@/components/shared/list-detail-card';
+import { useTheme } from '@/hooks/useTheme';
 import type { ExplorerBoardColumns } from '@/lib/explorerBoard/explorerBoardColumns';
 import {
   EXPLORER_BOARD_FLASH_LIST_DRAW_DISTANCE,
@@ -44,6 +44,8 @@ export function DetectionCountExplorerBoard({
   onLoadMore,
   error,
 }: Props) {
+  const { theme } = useTheme();
+  const listSectionSupportingStyles = useListSectionSupportingStyles();
   const router = useRouter();
   const { width: windowWidth } = useWindowDimensions();
   const { resolveDisplayUrl } = useExplorerBoardDisplayUrls(
@@ -52,14 +54,14 @@ export function DetectionCountExplorerBoard({
 
   const compact = columnCount >= 4;
   const tileSize = useMemo(() => {
-    const horizontalPadding = authSpacing.lg * 2;
-    const gap = authSpacing.sm;
+    const horizontalPadding = theme.spacing.lg * 2;
+    const gap = theme.spacing.sm;
     const inner = Math.max(0, windowWidth - horizontalPadding);
     return Math.max(
       minExplorerBoardTileSize(columnCount),
       Math.floor((inner - gap * (columnCount - 1)) / columnCount),
     );
-  }, [windowWidth, columnCount]);
+  }, [windowWidth, columnCount, theme.spacing.lg, theme.spacing.sm]);
 
   const openMember = useCallback(
     (row: ExplorerBoardMemberRow) => {
@@ -94,7 +96,7 @@ export function DetectionCountExplorerBoard({
   );
 
   const isGrid = layoutMode === 'grid';
-  const gridRowHeight = tileSize + authSpacing.sm;
+  const gridRowHeight = tileSize + theme.spacing.sm;
 
   const overrideGridItemLayout = useCallback(
     (layout: { span?: number; size?: number }) => {
@@ -112,7 +114,7 @@ export function DetectionCountExplorerBoard({
   if (loading) {
     return (
       <CenteredActivityIndicator
-        color={authColors.textMuted}
+        color={theme.colors.textSecondary}
         accessibilityLabel="Loading Explorer Board"
       />
     );
@@ -142,9 +144,12 @@ export function DetectionCountExplorerBoard({
       </View>
 
       {hasMore && onLoadMore ? (
-        <View style={styles.loadMoreWrap}>
+        <View style={[styles.loadMoreWrap, { marginTop: theme.spacing.md }]}>
           {isLoadingMore ? (
-            <ActivityIndicator color={authColors.textMuted} accessibilityLabel="Loading more rankings" />
+            <ActivityIndicator
+              color={theme.colors.textSecondary}
+              accessibilityLabel="Loading more rankings"
+            />
           ) : (
             <AuthButton
               title="Load more"
@@ -165,7 +170,6 @@ const styles = StyleSheet.create({
     minHeight: 2,
   },
   loadMoreWrap: {
-    marginTop: authSpacing.md,
     alignItems: 'center',
     minHeight: 44,
     justifyContent: 'center',

@@ -5,8 +5,8 @@ import { ParkDetailModal } from '@/components/discover/park-detail-modal';
 import { ParkListItem } from '@/components/discover/park-list-item';
 import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
 import { CenteredActivityIndicator } from '@/components/shared/centered-activity-indicator';
-import { listSectionSupportingStyles } from '@/components/shared/list-detail-card';
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { useListSectionSupportingStyles } from '@/components/shared/list-detail-card';
+import { useTheme } from '@/hooks/useTheme';
 import { floridaStateParkListKey } from '@/lib/parks/formatFloridaStatePark';
 import type { DiscoverParkSortMode } from '@/lib/parks/discoverParkSort';
 import { isSearchQueryActive } from '@/lib/search/normalizeSearchQuery';
@@ -37,6 +37,8 @@ export function DiscoverParksSection({
   deviceCoords,
   onRetry,
 }: Props) {
+  const { theme } = useTheme();
+  const listSectionSupportingStyles = useListSectionSupportingStyles();
   const [selectedPark, setSelectedPark] = useState<FloridaStatePark | null>(null);
   const searchActive = isSearchQueryActive(searchQuery);
   const showDistance = sortMode === 'nearest' && locationStatus === 'ready';
@@ -60,9 +62,9 @@ export function DiscoverParksSection({
   }
 
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, { gap: theme.spacing.sm }]}>
       {totalCount > 0 ? (
-        <Text style={styles.resultCount}>
+        <Text style={[styles.resultCount, { color: theme.colors.textSecondary }]}>
           {searchActive
             ? parks.length === 1
               ? '1 park matches your search'
@@ -74,7 +76,7 @@ export function DiscoverParksSection({
       ) : null}
 
       {nearestSortNotice ? (
-        <Text style={styles.sortNotice}>{nearestSortNotice}</Text>
+        <Text style={[styles.sortNotice, { color: theme.colors.textSecondary }]}>{nearestSortNotice}</Text>
       ) : null}
 
       {parks.length === 0 ? (
@@ -103,15 +105,13 @@ export function DiscoverParksSection({
 }
 
 const styles = StyleSheet.create({
-  wrap: {
-    gap: authSpacing.sm,
-  },
+  wrap: {},
   resultCount: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
+    fontSize: 14,
+    fontWeight: '400',
   },
   sortNotice: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
+    fontSize: 14,
+    fontWeight: '400',
   },
 });

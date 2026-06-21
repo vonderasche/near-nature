@@ -1,9 +1,9 @@
 import { HeroIcon, type HeroIconName } from '@/components/ui/hero-icon';
 import { Image } from 'expo-image';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { authColors } from '@/constants/auth-theme';
+import { useTheme } from '@/hooks/useTheme';
 import { useStoredImageDisplayUrl } from '@/hooks/useStoredImageDisplayUrl';
 
 const SIZE = 44;
@@ -28,6 +28,7 @@ export function ExplorerBoardMemberAvatar({
   displayUri: displayUriProp,
   fallbackIcon = 'user',
 }: ExplorerBoardMemberAvatarProps) {
+  const { theme } = useTheme();
   const signedLocally = useStoredImageDisplayUrl(displayUriProp === undefined ? storedUrl : null);
   const displayUri = displayUriProp !== undefined ? displayUriProp : signedLocally;
   const [failed, setFailed] = useState(false);
@@ -38,8 +39,16 @@ export function ExplorerBoardMemberAvatar({
 
   const showImage = Boolean(displayUri?.trim()) && !failed;
 
+  const ringStyle = useMemo(
+    () => ({
+      borderColor: theme.colors.border,
+      backgroundColor: theme.colors.background,
+    }),
+    [theme],
+  );
+
   return (
-    <View style={styles.ring} accessibilityLabel="Member avatar">
+    <View style={[styles.ring, ringStyle]} accessibilityLabel="Member avatar">
       {showImage ? (
         <Image
           key={displayUri}
@@ -50,7 +59,7 @@ export function ExplorerBoardMemberAvatar({
           onError={() => setFailed(true)}
         />
       ) : (
-        <HeroIcon name={fallbackIcon ?? 'user'} size={24} color={authColors.textMuted} />
+        <HeroIcon name={fallbackIcon ?? 'user'} size={24} color={theme.colors.textSecondary} />
       )}
     </View>
   );
@@ -62,11 +71,9 @@ const styles = StyleSheet.create({
     height: SIZE,
     borderRadius: 0,
     borderWidth: 1,
-    borderColor: authColors.border,
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: authColors.background,
   },
   image: {
     width: SIZE,

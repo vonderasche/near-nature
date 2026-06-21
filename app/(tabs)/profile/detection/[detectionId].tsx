@@ -11,7 +11,7 @@ import { routes } from '@/lib/routing/routes';
 export default function ProfileDetectionDetailScreen() {
   const { isAuthenticated, isLoading: authLoading } = useAuthContext();
   const detectionId = paramToString(useLocalSearchParams<{ detectionId?: string | string[] }>().detectionId);
-  const { refresh } = useUser();
+  const { refresh, user } = useUser();
   const { deleteById, deletingId } = useDeleteDetection();
 
   if (!authLoading && !isAuthenticated) {
@@ -25,6 +25,7 @@ export default function ProfileDetectionDetailScreen() {
       deletingId={deletingId}
       onDeleteItem={(item) => deleteById(item.id)}
       onDeleted={() => refresh()}
+      fetchOptions={{ userId: user?.id }}
     />
   );
 }

@@ -6,12 +6,11 @@ import { DetectionGalleryList } from '@/components/profile/detection-gallery-lis
 import { GalleryGridColumnsPicker } from '@/components/profile/gallery-grid-columns-picker';
 import { GalleryLayoutToggle } from '@/components/profile/gallery-layout-toggle';
 import { SpeciesSubcategoryFilterButton } from '@/components/profile/species-subcategory-filter';
-import { SpeciesSubcategoryFilterModal } from '@/components/profile/species-subcategory-filter-modal';
 import { ScreenSearchField } from '@/components/ui/screen-search-field';
-import { authSpacing } from '@/constants/auth-theme';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useGalleryGridColumns } from '@/hooks/useGalleryGridColumns';
 import { useGalleryLayoutMode } from '@/hooks/useGalleryLayoutMode';
+import { useTheme } from '@/hooks/useTheme';
 import { useUserDetectionGallery } from '@/hooks/useUserDetectionGallery';
 import type { GalleryCategoryFilter } from '@/lib/detections/filterDetectionGalleryItems';
 import { isSearchQueryActive } from '@/lib/search/normalizeSearchQuery';
@@ -33,7 +32,7 @@ type UserDetectionGallerySectionProps = {
   deletingId?: string | null;
   categoryFilter?: GalleryCategoryFilter;
   onCategoryFilterChange?: (value: GalleryCategoryFilter) => void;
-  onOpenCategoryFilter?: () => void;
+  onOpenCategoryFilter: () => void;
   onOpenDetection?: (item: DetectionGalleryItem) => void;
   onViewMemberProfile?: (userId: string) => void;
 };
@@ -62,11 +61,11 @@ export const UserDetectionGallerySection = forwardRef<
   },
   ref,
 ) {
+  const { theme } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [localCategoryFilter, setLocalCategoryFilter] = useState<GalleryCategoryFilter>({
     kind: 'all',
   });
-  const [categoryFilterOpen, setCategoryFilterOpen] = useState(false);
   const categoryFilter = controlledCategoryFilter ?? localCategoryFilter;
   const setCategoryFilter = onCategoryFilterChange ?? setLocalCategoryFilter;
   const debouncedSearch = useDebouncedValue(searchQuery, 280);
@@ -123,8 +122,8 @@ export const UserDetectionGallerySection = forwardRef<
   };
 
   return (
-    <View style={styles.wrap}>
-      <View style={styles.searchRow}>
+    <View style={[styles.wrap, { gap: theme.spacing.sm }]}>
+      <View style={[styles.searchRow, { gap: theme.spacing.sm }]}>
         {userId ? (
           <ScreenSearchField
             borderless
@@ -137,30 +136,12 @@ export const UserDetectionGallerySection = forwardRef<
         ) : (
           <View style={styles.searchField} />
         )}
-        <SpeciesSubcategoryFilterButton
-          value={categoryFilter}
-          onPress={() => {
-            if (onOpenCategoryFilter) {
-              onOpenCategoryFilter();
-              return;
-            }
-            setCategoryFilterOpen(true);
-          }}
-        />
+        <SpeciesSubcategoryFilterButton value={categoryFilter} onPress={onOpenCategoryFilter} />
         <GalleryLayoutToggle value={layoutMode} onChange={setLayoutMode} />
         {layoutMode === 'grid' ? (
           <GalleryGridColumnsPicker value={columns} onChange={setColumnCount} />
         ) : null}
       </View>
-
-      {!onOpenCategoryFilter ? (
-        <SpeciesSubcategoryFilterModal
-          visible={categoryFilterOpen}
-          value={categoryFilter}
-          onChange={setCategoryFilter}
-          onClose={() => setCategoryFilterOpen(false)}
-        />
-      ) : null}
 
       {layoutMode === 'list' ? (
         <DetectionGalleryList {...sharedGalleryProps} />
@@ -172,13 +153,10 @@ export const UserDetectionGallerySection = forwardRef<
 });
 
 const styles = StyleSheet.create({
-  wrap: {
-    gap: authSpacing.sm,
-  },
+  wrap: {},
   searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: authSpacing.sm,
   },
   searchField: {
     flex: 1,

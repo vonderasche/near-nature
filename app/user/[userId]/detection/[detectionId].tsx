@@ -4,7 +4,15 @@ import { DetectionDetailScreenBody } from '@/components/profile/detection-detail
 import { paramToString } from '@/lib/routing/searchParams';
 
 export default function PublicUserDetectionDetailScreen() {
-  const detectionId = paramToString(useLocalSearchParams<{ detectionId?: string | string[] }>().detectionId);
+  const params = useLocalSearchParams<{ userId?: string | string[]; detectionId?: string | string[] }>();
+  const userId = paramToString(params.userId);
+  const detectionId = paramToString(params.detectionId);
 
-  return <DetectionDetailScreenBody detectionId={detectionId} showMemberProfileLink />;
+  return (
+    <DetectionDetailScreenBody
+      detectionId={detectionId}
+      showMemberProfileLink
+      fetchOptions={{ userId: userId || undefined, publicOnly: true }}
+    />
+  );
 }

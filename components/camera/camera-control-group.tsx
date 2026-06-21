@@ -2,13 +2,14 @@ import {
   Children,
   cloneElement,
   isValidElement,
+  useMemo,
   type ReactElement,
   type ReactNode,
 } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import type { CameraControlButton } from '@/components/camera/camera-control-button';
-import { authColors, authSpacing } from '@/constants/auth-theme';
+import { useTheme } from '@/hooks/useTheme';
 
 type CameraControlButtonElement = ReactElement<
   React.ComponentProps<typeof CameraControlButton>
@@ -47,6 +48,32 @@ export function CameraControlGroup({
   anchor,
   children,
 }: Props) {
+  const { theme } = useTheme();
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        groupColumn: {
+          flexDirection: 'column',
+          alignItems: 'center',
+          zIndex: 25,
+          elevation: 25,
+        },
+        flyout: {
+          marginTop: theme.spacing.xs,
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: theme.spacing.xs,
+          paddingHorizontal: theme.spacing.xs,
+          paddingVertical: theme.spacing.xs,
+          borderRadius: 22,
+          backgroundColor: theme.colors.overlayScrim,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: theme.colors.border,
+        },
+      }),
+    [theme],
+  );
+
   const anchorWithHandlers = cloneElement(anchor, {
     onPress: onToggleExpanded,
     onLongPress: onToggleExpanded,
@@ -67,24 +94,3 @@ export function CameraControlGroup({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  groupColumn: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    zIndex: 25,
-    elevation: 25,
-  },
-  flyout: {
-    marginTop: authSpacing.xs,
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: authSpacing.xs,
-    paddingHorizontal: authSpacing.xs,
-    paddingVertical: authSpacing.xs,
-    borderRadius: 22,
-    backgroundColor: authColors.overlayScrim,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: authColors.border,
-  },
-});

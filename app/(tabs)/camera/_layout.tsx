@@ -24,6 +24,7 @@ export default function CameraStackLayout() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="identification" />
+        <Stack.Screen name="detection/[detectionId]" />
       </Stack>
       <ThemedConfirmModal
         visible={backgroundSaveError !== null}
