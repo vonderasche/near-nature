@@ -2,22 +2,25 @@ import { Pressable, StyleSheet } from 'react-native';
 
 import { discoverSpeciesFilterSummary } from '@/components/discover/discover-species-filter-content';
 import { HeroIcon } from '@/components/ui/hero-icon';
+import { useDiscoverSpeciesBrowse } from '@/context/DiscoverSpeciesBrowseContext';
 import { useTheme } from '@/hooks/useTheme';
-import type { DiscoverSpeciesSubcategoryFilter } from '@/lib/discover/discoverSpeciesFilter';
+import type { DiscoverSpeciesKind } from '@/types/discover-species';
 
 type Props = {
-  value: DiscoverSpeciesSubcategoryFilter;
+  kind: DiscoverSpeciesKind;
   onPress: () => void;
 };
 
-export function DiscoverSpeciesFilterButton({ value, onPress }: Props) {
+export function DiscoverSpeciesFilterButton({ kind, onPress }: Props) {
   const { theme } = useTheme();
-  const active = value.kind !== 'all';
+  const { getFilter } = useDiscoverSpeciesBrowse();
+  const filter = getFilter(kind);
+  const active = filter.kind !== 'all';
 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`Category filter: ${discoverSpeciesFilterSummary(value)}`}
+      accessibilityLabel={`Category filter: ${discoverSpeciesFilterSummary(filter)}`}
       accessibilityHint="Opens category filter"
       hitSlop={10}
       onPress={onPress}

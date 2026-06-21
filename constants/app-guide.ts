@@ -21,7 +21,7 @@ export const APP_GUIDE_STEPS: AppGuideStep[] = [
     body: 'Browse Florida state parks, then switch to Plants or Animals to explore featured species you can look for—similar to the park list, with photos and park locations.',
   },
   {
-    title: 'Explorer Board',
+    title: 'Rankings',
     body: 'See who is discovering the most native species. Search the community gallery for public identifications from other members.',
   },
 ];

@@ -36,7 +36,7 @@ export function MottoEditForm({ initialMotto, onSave, saving = false, onCancel }
   return (
     <View style={{ gap: theme.spacing.lg }}>
       <Text variant="subtitle" color="secondary">
-        Shown on your profile and the Explorer Board.
+        Shown on your profile and Rankings.
       </Text>
 
       <TextInput

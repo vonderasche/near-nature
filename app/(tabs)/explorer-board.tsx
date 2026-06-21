@@ -7,9 +7,10 @@ import { TabScreenWithLogout } from '@/components/layout/tab-screen-with-logout'
 import { DetectionCountExplorerBoard } from '@/components/explorer-board/detection-count-explorer-board';
 import { ExplorerBoardDiscoveryGrid } from '@/components/explorer-board/explorer-board-discovery-grid';
 import { ExplorerBoardViewModeToggle } from '@/components/explorer-board/explorer-board-view-mode-toggle';
+import { ListSearchToolbar } from '@/components/shared/list-search-toolbar';
 import { GridLayoutMenu } from '@/components/ui/grid-layout-menu';
-import { ScreenSearchField } from '@/components/ui/screen-search-field';
 import { useAuthContext } from '@/context/AuthContext';
+import { SEARCH_DEBOUNCE_MS } from '@/constants/search';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useExplorerBoard } from '@/hooks/useExplorerBoard';
 import { useExplorerBoardColumns } from '@/hooks/useExplorerBoardColumns';
@@ -30,7 +31,7 @@ export default function ExplorerBoardScreen() {
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const debouncedSearchQuery = useDebouncedValue(searchQuery, 280);
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, SEARCH_DEBOUNCE_MS);
   const searchActive = isSearchQueryActive(debouncedSearchQuery);
   const {
     rows,
@@ -76,7 +77,7 @@ export default function ExplorerBoardScreen() {
 
   return (
     <TabScreenWithLogout
-      title="Explorer Board"
+      title="Rankings"
       subtitle={subtitle}
       hideLogout
       titleAccessory={
@@ -90,7 +91,7 @@ export default function ExplorerBoardScreen() {
                   if (isExplorerBoardColumns(n)) setColumnCount(n);
                 }}
                 columnOptions={EXPLORER_BOARD_COLUMN_OPTIONS}
-                context="explorer board"
+                context="rankings"
               />
             ) : null}
           </View>
@@ -105,12 +106,12 @@ export default function ExplorerBoardScreen() {
         />
       }
       backgroundRefreshing={isRefreshing && !refreshing && !searchActive}>
-      <ScreenSearchField
-        value={searchQuery}
-        onChangeText={setSearchQuery}
+      <ListSearchToolbar
+        searchQuery={searchQuery}
+        onSearchQueryChange={setSearchQuery}
         placeholder="Search species, descriptions, or members…"
-        accessibilityLabel="Search Explorer Board"
-        accessibilityHint="When you type a species or keyword, shows matching public identifications. Leave empty for the rankings."
+        accessibilityLabel="Search Rankings"
+        accessibilityHint="When you type a species or keyword, shows matching public identifications. Leave empty for the member rankings."
       />
       {searchActive ? (
         <>

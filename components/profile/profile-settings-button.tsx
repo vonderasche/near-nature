@@ -12,7 +12,7 @@ export function ProfileSettingsButton() {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel="Open profile settings"
+      accessibilityLabel="Account settings"
       hitSlop={12}
       onPress={() => router.push(routes.profileSettings as Href)}
       style={({ pressed }) => [styles.trigger, pressed && styles.pressed]}>

@@ -289,7 +289,7 @@ export default function SignUpScreen() {
         helperText={lastNameError}
         helperTone={lastNameError ? 'error' : 'muted'}
       />
-      <AuthField label="Short motto" value={motto} onChangeText={setMotto} placeholder="Shown on Explorer Board" />
+      <AuthField label="Short motto" value={motto} onChangeText={setMotto} placeholder="Shown on Rankings" />
 
       <AuthBirthDateField
         month={birthMonth}

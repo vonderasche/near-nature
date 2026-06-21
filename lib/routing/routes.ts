@@ -19,6 +19,8 @@ export const routes = {
   discoverTab: '/(tabs)/discover',
   discoverSpeciesFilter: '/(tabs)/discover/species-filter',
   explorerBoardTab: '/(tabs)/explorer-board',
+  /** User-facing “Rankings” tab (same route as `explorerBoardTab`). */
+  rankingsTab: '/(tabs)/explorer-board',
 } as const;
 
 export type AppRoute = (typeof routes)[keyof typeof routes];

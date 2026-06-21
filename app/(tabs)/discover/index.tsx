@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { RefreshControl } from 'react-native';
 
 import { DiscoverBrowseCollapsible } from '@/components/discover/discover-browse-collapsible';
 import { DiscoverParksSection } from '@/components/discover/discover-parks-section';
@@ -6,19 +7,23 @@ import { DiscoverSearchToolbar } from '@/components/discover/discover-search-too
 import { DiscoverSpeciesSection } from '@/components/discover/discover-species-section';
 import { TabScreenWithLogout } from '@/components/layout/tab-screen-with-logout';
 import { AppGuideButton } from '@/components/shared/app-guide-button';
+import { SEARCH_DEBOUNCE_MS } from '@/constants/search';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useDeviceCoordinates } from '@/hooks/useDeviceCoordinates';
+import { useDiscoverBrowseMode } from '@/hooks/useDiscoverBrowseMode';
 import { useDiscoverParkSort } from '@/hooks/useDiscoverParkSort';
 import { useFloridaStateParks } from '@/hooks/useFloridaStateParks';
 import { useGalleryGridColumns } from '@/hooks/useGalleryGridColumns';
 import { useGalleryLayoutMode } from '@/hooks/useGalleryLayoutMode';
-import type { DiscoverBrowseMode } from '@/lib/discover/discoverBrowseMode';
-import { DEFAULT_DISCOVER_BROWSE } from '@/lib/discover/discoverBrowseMode';
+import { useTheme } from '@/hooks/useTheme';
+import { discoverBrowseLabel } from '@/lib/discover/discoverBrowseMode';
 
 export default function DiscoverScreen() {
+  const { theme } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
-  const [browseMode, setBrowseMode] = useState<DiscoverBrowseMode>(DEFAULT_DISCOVER_BROWSE);
-  const debouncedSearchQuery = useDebouncedValue(searchQuery, 220);
+  const [pullRefreshing, setPullRefreshing] = useState(false);
+  const { browseMode, setBrowseMode } = useDiscoverBrowseMode();
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, SEARCH_DEBOUNCE_MS);
   const { sortMode, setSortMode } = useDiscoverParkSort();
   const { coords, status: locationStatus } = useDeviceCoordinates(sortMode === 'nearest');
   const { layoutMode, setLayoutMode } = useGalleryLayoutMode();
@@ -42,12 +47,30 @@ export default function DiscoverScreen() {
         ? 'Search plants or parks…'
         : 'Search animals or parks…';
 
+  const onRefresh = async () => {
+    setPullRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setPullRefreshing(false);
+    }
+  };
+
   return (
     <TabScreenWithLogout
       title="Discover"
       subtitle="Florida state parks, plants, and wildlife."
       hideLogout
-      titleAccessory={<AppGuideButton accessibilityLabel="How to use Discover and the app" />}>
+      titleAccessory={<AppGuideButton accessibilityLabel="How to use Discover and the app" />}
+      refreshControl={
+        <RefreshControl
+          refreshing={pullRefreshing}
+          onRefresh={() => void onRefresh()}
+          tintColor={theme.colors.textPrimary}
+          colors={[theme.colors.textPrimary]}
+        />
+      }
+      backgroundRefreshing={isLoading && !pullRefreshing && parks.length > 0}>
       <DiscoverBrowseCollapsible
         browseMode={browseMode}
         onBrowseModeChange={setBrowseMode}
@@ -78,6 +101,7 @@ export default function DiscoverScreen() {
           deviceCoords={coords}
           layoutMode={layoutMode}
           gridColumns={columns}
+          onClearSearch={() => setSearchQuery('')}
           onRetry={() => void refetch()}
         />
       ) : browseMode === 'plants' ? (
@@ -90,6 +114,7 @@ export default function DiscoverScreen() {
           searchQuery={debouncedSearchQuery}
           layoutMode={layoutMode}
           gridColumns={columns}
+          onClearSearch={() => setSearchQuery('')}
           onRetry={() => void refetch()}
         />
       ) : (
@@ -102,6 +127,7 @@ export default function DiscoverScreen() {
           searchQuery={debouncedSearchQuery}
           layoutMode={layoutMode}
           gridColumns={columns}
+          onClearSearch={() => setSearchQuery('')}
           onRetry={() => void refetch()}
         />
       )}

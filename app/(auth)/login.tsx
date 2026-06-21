@@ -103,7 +103,7 @@ export default function LoginScreen() {
       <AuthLinkRow
         prompt="Just browsing?"
         href={routes.explorerBoardTab}
-        linkText="View Explorer Board"
+        linkText="View Rankings"
       />
 
       <ThemedMessageModal

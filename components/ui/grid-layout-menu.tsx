@@ -10,7 +10,7 @@ import {
 
 import { HeroIcon } from '@/components/ui/hero-icon';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { useTheme } from '@/hooks/useTheme';
 import {
   GALLERY_GRID_COLUMN_OPTIONS,
   GRID_LAYOUT_MENU_TITLE,
@@ -26,9 +26,9 @@ import { clampPopoverLeft } from '@/lib/ui/clampPopoverLeft';
 type Props = {
   value: GalleryGridColumns;
   onChange: (columns: GalleryGridColumns) => void;
-  /** Distinguishes gallery vs Explorer Board in the trigger accessibility label. */
-  context?: 'gallery' | 'explorer board';
-  /** Defaults to gallery options (1, 2, 4, 8). Explorer Board passes [1, 2, 4]. */
+  /** Distinguishes gallery vs Rankings in the trigger accessibility label. */
+  context?: 'gallery' | 'rankings';
+  /** Defaults to gallery options (1, 2, 4, 8). Rankings passes [1, 2, 4]. */
   columnOptions?: readonly GalleryGridColumns[];
 };
 
@@ -44,9 +44,10 @@ export function GridLayoutMenu({
   context = 'gallery',
   columnOptions = GALLERY_GRID_COLUMN_OPTIONS,
 }: Props) {
+  const { theme } = useTheme();
   const [open, setOpen] = useState(false);
   const [menuTop, setMenuTop] = useState(0);
-  const [menuLeft, setMenuLeft] = useState<number>(authSpacing.lg);
+  const [menuLeft, setMenuLeft] = useState<number>(theme.spacing.lg);
   const triggerRef = useRef<View>(null);
 
   const close = useCallback(() => setOpen(false), []);
@@ -55,10 +56,10 @@ export function GridLayoutMenu({
     triggerRef.current?.measureInWindow((x, y, width, height) => {
       const screenW = Dimensions.get('window').width;
       setMenuTop(y + height + 4);
-      setMenuLeft(clampPopoverLeft(x, width, MENU_WIDTH, screenW, authSpacing.sm));
+      setMenuLeft(clampPopoverLeft(x, width, MENU_WIDTH, screenW, theme.spacing.sm));
       setOpen(true);
     });
-  }, []);
+  }, [theme.spacing.sm]);
 
   const select = useCallback(
     (n: GalleryGridColumns) => {
@@ -68,19 +69,21 @@ export function GridLayoutMenu({
     [close, onChange],
   );
 
-  const contextLabel = context === 'explorer board' ? 'Explorer Board' : 'Gallery';
+  const contextLabel = context === 'rankings' ? 'Rankings' : 'Gallery';
 
   const layoutLabel =
-    context === 'explorer board'
+    context === 'rankings'
       ? explorerBoardLayoutAccessibilityLabel(value as ExplorerBoardColumns)
       : gridLayoutAccessibilityLabel(value);
 
-  const menuTitle = context === 'explorer board' ? 'Members per row' : GRID_LAYOUT_MENU_TITLE;
+  const menuTitle = context === 'rankings' ? 'Members per row' : GRID_LAYOUT_MENU_TITLE;
 
   const optionLabel = (n: GalleryGridColumns) =>
-    context === 'explorer board'
+    context === 'rankings'
       ? explorerBoardLayoutAccessibilityLabel(n as ExplorerBoardColumns)
       : gridLayoutAccessibilityLabel(n);
+
+  const cellSize = (MENU_WIDTH - theme.spacing.sm * 2 - CELL_GAP) / 2;
 
   return (
     <>
@@ -91,8 +94,8 @@ export function GridLayoutMenu({
           accessibilityHint="Opens grid size menu"
           hitSlop={10}
           onPress={openMenu}
-          style={({ pressed }) => [styles.trigger, pressed && styles.triggerPressed]}>
-          <IconSymbol name="square.grid.2x2" size={22} color={authColors.textMuted} />
+          style={({ pressed }) => [styles.trigger, { padding: theme.spacing.xs }, pressed && styles.triggerPressed]}>
+          <IconSymbol name="square.grid.2x2" size={22} color={theme.colors.textSecondary} />
         </Pressable>
       </View>
 
@@ -106,10 +109,15 @@ export function GridLayoutMenu({
                 top: menuTop,
                 left: menuLeft,
                 width: MENU_WIDTH,
+                backgroundColor: theme.colors.background,
+                borderColor: theme.colors.border,
+                padding: theme.spacing.sm,
               },
             ]}
             accessibilityViewIsModal>
-            <Text style={styles.menuTitle}>{menuTitle}</Text>
+            <Text style={[styles.menuTitle, { color: theme.colors.textSecondary, marginBottom: theme.spacing.sm }]}>
+              {menuTitle}
+            </Text>
             <View style={[styles.grid, { gap: CELL_GAP, width: cellSize * 2 + CELL_GAP }]}>
               {columnOptions.map((n) => {
                 const active = n === value;
@@ -122,15 +130,26 @@ export function GridLayoutMenu({
                     onPress={() => select(n)}
                     style={({ pressed }) => [
                       styles.cell,
-                      active && styles.cellActive,
+                      {
+                        width: cellSize,
+                        height: cellSize,
+                        borderColor: active ? theme.colors.textPrimary : theme.colors.border,
+                        backgroundColor: active ? theme.colors.textPrimary : theme.colors.background,
+                      },
                       pressed && !active && styles.cellPressed,
                     ]}>
-                    <Text style={[styles.cellLabel, active && styles.cellLabelActive]}>{n}</Text>
+                    <Text
+                      style={[
+                        styles.cellLabel,
+                        { color: active ? theme.colors.background : theme.colors.textSecondary },
+                      ]}>
+                      {n}
+                    </Text>
                     {active ? (
                       <HeroIcon
                         name="check"
                         size={14}
-                        color={authColors.background}
+                        color={theme.colors.background}
                         style={styles.check}
                       />
                     ) : null}
@@ -145,12 +164,8 @@ export function GridLayoutMenu({
   );
 }
 
-const cellSize = (MENU_WIDTH - authSpacing.sm * 2 - CELL_GAP) / 2;
-
 const styles = StyleSheet.create({
-  trigger: {
-    padding: authSpacing.xs,
-  },
+  trigger: {},
   triggerPressed: {
     opacity: 0.75,
   },
@@ -163,10 +178,7 @@ const styles = StyleSheet.create({
   },
   menu: {
     position: 'absolute',
-    backgroundColor: authColors.background,
     borderWidth: 1,
-    borderColor: authColors.border,
-    padding: authSpacing.sm,
     elevation: 6,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -175,44 +187,27 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   menuTitle: {
-    ...authTypography.label,
     fontSize: 12,
     fontWeight: '600',
     textAlign: 'center',
-    marginBottom: authSpacing.sm,
-    color: authColors.textMuted,
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    width: cellSize * 2 + CELL_GAP,
     alignSelf: 'center',
   },
   cell: {
-    width: cellSize,
-    height: cellSize,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: authColors.border,
     borderRadius: 0,
-    backgroundColor: authColors.background,
-  },
-  cellActive: {
-    backgroundColor: authColors.text,
-    borderColor: authColors.text,
   },
   cellPressed: {
     opacity: 0.88,
   },
   cellLabel: {
-    ...authTypography.body,
     fontSize: 18,
     fontWeight: '600',
-    color: authColors.textMuted,
-  },
-  cellLabelActive: {
-    color: authColors.background,
   },
   check: {
     position: 'absolute',

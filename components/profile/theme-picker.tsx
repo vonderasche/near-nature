@@ -29,7 +29,10 @@ export function ThemePicker({ onThemeSelected }: Props) {
             key={name}
             accessibilityRole="button"
             accessibilityState={{ selected }}
-            accessibilityLabel={`${THEME_LABELS[name]} theme`}
+            accessibilityLabel={
+              selected ? `${THEME_LABELS[name]} theme, selected` : `${THEME_LABELS[name]} theme`
+            }
+            accessibilityHint={selected ? undefined : 'Apply this appearance theme'}
             onPress={() => selectTheme(name)}
             style={({ pressed }) => [
               {

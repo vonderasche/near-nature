@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { authColors, authSpacing } from '@/constants/auth-theme';
+import { useTheme } from '@/hooks/useTheme';
 
 type ErrorRetryBlockProps = {
   message: string;
@@ -14,12 +14,22 @@ export function ErrorRetryBlock({
   onRetry,
   retryLabel = 'Try again',
 }: ErrorRetryBlockProps) {
+  const { theme } = useTheme();
+
   return (
-    <View style={styles.block}>
+    <View style={[styles.block, { gap: theme.spacing.sm }]}>
       <ThemedText style={styles.message}>{message}</ThemedText>
       <Pressable
         onPress={onRetry}
-        style={({ pressed }) => [styles.retryButton, pressed && styles.retryPressed]}
+        style={({ pressed }) => [
+          styles.retryButton,
+          {
+            borderColor: theme.colors.border,
+            paddingVertical: theme.spacing.xs,
+            paddingHorizontal: theme.spacing.sm,
+          },
+          pressed && styles.retryPressed,
+        ]}
         accessibilityRole="button"
         accessibilityLabel={retryLabel}>
         <ThemedText type="defaultSemiBold">{retryLabel}</ThemedText>
@@ -29,19 +39,14 @@ export function ErrorRetryBlock({
 }
 
 const styles = StyleSheet.create({
-  block: {
-    gap: authSpacing.sm,
-  },
+  block: {},
   message: {
     fontSize: 15,
   },
   retryButton: {
     alignSelf: 'flex-start',
-    paddingVertical: authSpacing.xs,
-    paddingHorizontal: authSpacing.sm,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: authColors.border,
   },
   retryPressed: {
     opacity: 0.7,

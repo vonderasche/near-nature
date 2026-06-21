@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { useTheme } from '@/hooks/useTheme';
 import {
   minGalleryTileSize,
   type GalleryGridColumns,
@@ -22,16 +22,17 @@ type Props = {
 };
 
 export function DiscoverItemGrid({ items, columnCount }: Props) {
+  const { theme } = useTheme();
   const { width: windowWidth } = useWindowDimensions();
-  const tileGap = authSpacing.sm;
+  const tileGap = theme.spacing.sm;
   const tileSize = useMemo(() => {
-    const horizontalPadding = authSpacing.lg * 2;
+    const horizontalPadding = theme.spacing.lg * 2;
     const inner = Math.max(0, windowWidth - horizontalPadding);
     return Math.max(
       minGalleryTileSize(columnCount),
       Math.floor((inner - tileGap * (columnCount - 1)) / columnCount),
     );
-  }, [columnCount, tileGap, windowWidth]);
+  }, [columnCount, theme.spacing.lg, tileGap, windowWidth]);
 
   return (
     <View style={[styles.grid, { gap: tileGap }]}>
@@ -43,22 +44,28 @@ export function DiscoverItemGrid({ items, columnCount }: Props) {
           onPress={item.onPress}
           style={({ pressed }) => [
             styles.tile,
-            { width: tileSize },
+            { width: tileSize, gap: theme.spacing.xs },
             pressed && styles.tilePressed,
           ]}>
           {item.imageUrl ? (
             <Image
               source={{ uri: item.imageUrl }}
-              style={[styles.image, { width: tileSize, height: tileSize }]}
+              style={[styles.image, { width: tileSize, height: tileSize, backgroundColor: theme.colors.border }]}
               contentFit="cover"
               cachePolicy="memory-disk"
               recyclingKey={item.key}
               transition={200}
             />
           ) : (
-            <View style={[styles.image, styles.imagePlaceholder, { width: tileSize, height: tileSize }]} />
+            <View
+              style={[
+                styles.image,
+                styles.imagePlaceholder,
+                { width: tileSize, height: tileSize, backgroundColor: theme.colors.border },
+              ]}
+            />
           )}
-          <Text style={styles.title} numberOfLines={2}>
+          <Text style={[styles.title, { color: theme.colors.textPrimary }]} numberOfLines={2}>
             {item.title}
           </Text>
         </Pressable>
@@ -72,22 +79,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
-  tile: {
-    gap: authSpacing.xs,
-  },
+  tile: {},
   tilePressed: {
     opacity: 0.88,
   },
   image: {
     borderRadius: 4,
-    backgroundColor: authColors.border,
   },
   imagePlaceholder: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    opacity: 0.35,
   },
   title: {
-    ...authTypography.subtitle,
     fontSize: 12,
-    color: authColors.text,
+    fontWeight: '600',
+    lineHeight: 16,
   },
 });

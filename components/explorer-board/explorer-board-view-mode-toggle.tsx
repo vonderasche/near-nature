@@ -21,7 +21,7 @@ export function ExplorerBoardViewModeToggle({ value, onChange }: Props) {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`Explorer Board layout, ${explorerBoardLayoutLabel(value)}`}
+      accessibilityLabel={`Rankings layout, ${explorerBoardLayoutLabel(value)}`}
       accessibilityHint={`Switch to ${explorerBoardLayoutLabel(next)}`}
       hitSlop={10}
       onPress={() => onChange(next)}

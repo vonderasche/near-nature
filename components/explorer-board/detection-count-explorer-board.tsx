@@ -115,7 +115,7 @@ export function DetectionCountExplorerBoard({
     return (
       <CenteredActivityIndicator
         color={theme.colors.textSecondary}
-        accessibilityLabel="Loading Explorer Board"
+        accessibilityLabel="Loading Rankings"
       />
     );
   }
@@ -129,7 +129,7 @@ export function DetectionCountExplorerBoard({
   }
 
   return (
-    <View accessibilityLabel="Explorer Board, ranked by native species discovered">
+    <View accessibilityLabel="Rankings, sorted by native species discovered">
       <View style={styles.listWrap}>
         <FlashList
           data={rows}
@@ -156,7 +156,7 @@ export function DetectionCountExplorerBoard({
               variant="outline"
               onPress={onLoadMore}
               fillParent
-              accessibilityLabel="Load more Explorer Board rankings"
+              accessibilityLabel="Load more Rankings"
             />
           )}
         </View>

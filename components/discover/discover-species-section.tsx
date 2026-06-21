@@ -3,14 +3,21 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 
 import { DiscoverItemGrid, type DiscoverGridItem } from '@/components/discover/discover-item-grid';
+import { DiscoverSpeciesSubcategoryChips } from '@/components/discover/discover-species-subcategory-chips';
 import { SpeciesListItem } from '@/components/discover/species-list-item';
 import { discoverSpeciesFilterSummary } from '@/components/discover/discover-species-filter-content';
 import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
+import { ActiveFilterChip } from '@/components/shared/active-filter-chip';
 import { CenteredActivityIndicator } from '@/components/shared/centered-activity-indicator';
+import { ListEmptyActions } from '@/components/shared/list-empty-actions';
 import { useListSectionSupportingStyles } from '@/components/shared/list-detail-card';
 import { useDiscoverSpeciesBrowse } from '@/context/DiscoverSpeciesBrowseContext';
 import { useTheme } from '@/hooks/useTheme';
-import { filterDiscoverSpecies, sortDiscoverSpecies } from '@/lib/discover/discoverSpeciesFilter';
+import {
+  DEFAULT_DISCOVER_SPECIES_FILTER,
+  filterDiscoverSpecies,
+  sortDiscoverSpecies,
+} from '@/lib/discover/discoverSpeciesFilter';
 import { stageDiscoverSpecies } from '@/lib/discover/discoverRouteCache';
 import { routeDiscoverSpecies } from '@/lib/routing/routes';
 import { isSearchQueryActive } from '@/lib/search/normalizeSearchQuery';
@@ -27,6 +34,7 @@ type Props = {
   searchQuery: string;
   layoutMode: GalleryLayoutMode;
   gridColumns: GalleryGridColumns;
+  onClearSearch: () => void;
   onRetry: () => void;
 };
 
@@ -39,12 +47,13 @@ export function DiscoverSpeciesSection({
   searchQuery,
   layoutMode,
   gridColumns,
+  onClearSearch,
   onRetry,
 }: Props) {
   const router = useRouter();
   const { theme } = useTheme();
   const listSectionSupportingStyles = useListSectionSupportingStyles();
-  const { getFilter, getSort } = useDiscoverSpeciesBrowse();
+  const { getFilter, getSort, setFilter } = useDiscoverSpeciesBrowse();
   const searchActive = isSearchQueryActive(searchQuery);
   const kindLabel = kind === 'plant' ? 'plant' : 'animal';
   const kindLabelPlural = kind === 'plant' ? 'plants' : 'animals';
@@ -82,6 +91,17 @@ export function DiscoverSpeciesSection({
 
   return (
     <View style={[styles.wrap, { gap: theme.spacing.sm }]}>
+      <DiscoverSpeciesSubcategoryChips
+        kind={kind}
+        entries={entries}
+        filter={filter}
+        onFilterChange={(next) => setFilter(kind, next)}
+      />
+
+      <Text style={[styles.hint, { color: theme.colors.textSecondary }]}>
+        Categories are estimated from species names.
+      </Text>
+
       {totalCount > 0 ? (
         <Text style={[styles.resultCount, { color: theme.colors.textSecondary }]}>
           {searchActive || filterActive
@@ -95,9 +115,10 @@ export function DiscoverSpeciesSection({
       ) : null}
 
       {filterActive ? (
-        <Text style={[styles.filterSummary, { color: theme.colors.textSecondary }]}>
-          {discoverSpeciesFilterSummary(filter)}
-        </Text>
+        <ActiveFilterChip
+          label={discoverSpeciesFilterSummary(filter)}
+          onClear={() => setFilter(kind, DEFAULT_DISCOVER_SPECIES_FILTER)}
+        />
       ) : null}
 
       {visibleEntries.length === 0 ? (
@@ -107,6 +128,19 @@ export function DiscoverSpeciesSection({
               ? `No ${kindLabelPlural} match your filters. Try another category or search.`
               : `No featured ${kindLabelPlural} are available right now.`}
           </Text>
+          <ListEmptyActions
+            onClearSearch={searchActive ? onClearSearch : undefined}
+            onClearFilter={filterActive ? () => setFilter(kind, DEFAULT_DISCOVER_SPECIES_FILTER) : undefined}
+            onShowAll={
+              searchActive || filterActive
+                ? () => {
+                    onClearSearch();
+                    setFilter(kind, DEFAULT_DISCOVER_SPECIES_FILTER);
+                  }
+                : undefined
+            }
+            showAllLabel="Show all species"
+          />
         </View>
       ) : layoutMode === 'grid' ? (
         <DiscoverItemGrid items={gridItems} columnCount={gridColumns} />
@@ -121,12 +155,11 @@ export function DiscoverSpeciesSection({
 
 const styles = StyleSheet.create({
   wrap: {},
+  hint: {
+    fontSize: 12,
+  },
   resultCount: {
     fontSize: 14,
-    fontWeight: '400',
-  },
-  filterSummary: {
-    fontSize: 13,
     fontWeight: '400',
   },
 });

@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { openDiscoverParkFromNames } from '@/components/discover/park-detail-screen-body';
+import { ListThumbnail } from '@/components/shared/list-thumbnail';
 import { Section } from '@/components/ui/Section';
 import { Screen } from '@/components/ui/Screen';
 import { StackScreenHeader } from '@/components/ui/StackScreenHeader';
@@ -11,6 +12,7 @@ import { Text } from '@/components/ui/Text';
 import { HeroIcon } from '@/components/ui/hero-icon';
 import { useTheme } from '@/hooks/useTheme';
 import { getDiscoverSubcategoryLabel } from '@/lib/discover/discoverSpeciesSubcategories';
+import { resolveParkListImageUrl } from '@/lib/parks/parkSpeciesHighlights';
 import type { DiscoverSpeciesEntry } from '@/types/discover-species';
 import type { FloridaStatePark } from '@/types/florida-state-park';
 
@@ -19,6 +21,10 @@ type Props = {
   allParks: readonly FloridaStatePark[];
   loading?: boolean;
 };
+
+function findParkByName(parks: readonly FloridaStatePark[], parkName: string): FloridaStatePark | undefined {
+  return parks.find((park) => park.parkName === parkName);
+}
 
 export function SpeciesDetailScreenBody({ entry, allParks, loading = false }: Props) {
   const router = useRouter();
@@ -41,15 +47,20 @@ export function SpeciesDetailScreenBody({ entry, allParks, loading = false }: Pr
         parkRow: {
           flexDirection: 'row',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: theme.spacing.sm,
-          paddingVertical: theme.spacing.md,
-          paddingHorizontal: theme.spacing.md,
+          gap: theme.spacing.md,
+          paddingVertical: theme.spacing.sm,
+          paddingHorizontal: theme.spacing.sm,
           borderRadius: theme.radii.md,
           backgroundColor: theme.colors.surfaceRaised,
+          minHeight: 56,
         },
         parkRowPressed: {
           opacity: 0.9,
+        },
+        parkBody: {
+          flex: 1,
+          minWidth: 0,
+          gap: 2,
         },
       }),
     [theme],
@@ -105,24 +116,39 @@ export function SpeciesDetailScreenBody({ entry, allParks, loading = false }: Pr
               ? 'Featured at 1 Florida state park'
               : `Featured at ${entry.parkCount} Florida state parks`}
           </Text>
+          <Text variant="caption" color="secondary">
+            Category is estimated from the species name.
+          </Text>
         </Section>
 
         <Section title="Look for it at" spaced>
           <View style={{ gap: theme.spacing.sm }}>
-            {entry.parkNames.map((parkName) => (
-              <Pressable
-                key={parkName}
-                accessibilityRole="button"
-                accessibilityLabel={`Open ${parkName}`}
-                accessibilityHint="Opens park details"
-                onPress={() => openDiscoverParkFromNames(router, allParks, parkName)}
-                style={({ pressed }) => [styles.parkRow, pressed && styles.parkRowPressed]}>
-                <Text variant="body" color="primary" style={{ flex: 1 }}>
-                  {parkName}
-                </Text>
-                <HeroIcon name="chevron-right" size={18} color={theme.colors.textSecondary} />
-              </Pressable>
-            ))}
+            {entry.parkNames.map((parkName) => {
+              const park = findParkByName(allParks, parkName);
+              const imageUrl = park ? resolveParkListImageUrl(park) : null;
+              return (
+                <Pressable
+                  key={parkName}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open ${parkName}`}
+                  accessibilityHint="Opens park details"
+                  onPress={() => openDiscoverParkFromNames(router, allParks, parkName)}
+                  style={({ pressed }) => [styles.parkRow, pressed && styles.parkRowPressed]}>
+                  <ListThumbnail uri={imageUrl} recyclingKey={`species-park-${parkName}`} />
+                  <View style={styles.parkBody}>
+                    <Text variant="body" color="primary">
+                      {parkName}
+                    </Text>
+                    {park?.county ? (
+                      <Text variant="caption" color="secondary">
+                        {park.county} County
+                      </Text>
+                    ) : null}
+                  </View>
+                  <HeroIcon name="chevron-right" size={18} color={theme.colors.textSecondary} />
+                </Pressable>
+              );
+            })}
           </View>
         </Section>
       </ScrollView>

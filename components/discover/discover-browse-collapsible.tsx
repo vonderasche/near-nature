@@ -6,8 +6,9 @@ import { DiscoverParkSortChips } from '@/components/discover/discover-park-sort-
 import { DiscoverSpeciesSortChips } from '@/components/discover/discover-species-sort-chips';
 import { discoverSpeciesFilterSummary } from '@/components/discover/discover-species-filter-content';
 import { HeroIcon } from '@/components/ui/hero-icon';
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
 import { useDiscoverSpeciesBrowse } from '@/context/DiscoverSpeciesBrowseContext';
+import { useTheme } from '@/hooks/useTheme';
+import { animateCollapsibleToggle } from '@/lib/ui/collapsibleAnimation';
 import { discoverBrowseLabel, type DiscoverBrowseMode } from '@/lib/discover/discoverBrowseMode';
 import { discoverParkSortLabel, type DiscoverParkSortMode } from '@/lib/parks/discoverParkSort';
 import { discoverSpeciesSortLabel } from '@/lib/discover/discoverSpeciesSort';
@@ -45,6 +46,7 @@ export function DiscoverBrowseCollapsible({
   parkSortMode,
   onParkSortModeChange,
 }: Props) {
+  const { theme } = useTheme();
   const [expanded, setExpanded] = useState(false);
   const { getFilter, getSort, setSort } = useDiscoverSpeciesBrowse();
 
@@ -61,28 +63,41 @@ export function DiscoverBrowseCollapsible({
     [browseMode, getFilter, getSort, parkSortMode],
   );
 
+  const toggleExpanded = () => {
+    animateCollapsibleToggle();
+    setExpanded((open) => !open);
+  };
+
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, { gap: theme.spacing.sm, marginBottom: theme.spacing.sm }]}>
       <Pressable
-        onPress={() => setExpanded((open) => !open)}
+        onPress={toggleExpanded}
         accessibilityRole="button"
         accessibilityState={{ expanded }}
         accessibilityLabel={expanded ? 'Hide browse and sort options' : 'Show browse and sort options'}
         accessibilityHint={summary}
-        style={({ pressed }) => [styles.trigger, pressed && styles.triggerPressed]}>
+        style={({ pressed }) => [
+          styles.trigger,
+          {
+            gap: theme.spacing.sm,
+            paddingVertical: theme.spacing.sm,
+            paddingHorizontal: theme.spacing.xs,
+          },
+          pressed && styles.triggerPressed,
+        ]}>
         <View style={styles.triggerText}>
-          <Text style={styles.label}>Browse & sort</Text>
-          <Text style={styles.summary} numberOfLines={2}>
+          <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Browse & sort</Text>
+          <Text style={[styles.summary, { color: theme.colors.textPrimary }]} numberOfLines={2}>
             {summary}
           </Text>
         </View>
         <View style={expanded ? styles.chevronExpanded : undefined}>
-          <HeroIcon name="chevron-down" size={20} color={authColors.textMuted} />
+          <HeroIcon name="chevron-down" size={20} color={theme.colors.textSecondary} />
         </View>
       </Pressable>
 
       {expanded ? (
-        <View style={styles.panel}>
+        <View style={[styles.panel, { gap: theme.spacing.xs, paddingBottom: theme.spacing.xs }]}>
           <DiscoverBrowseChips value={browseMode} onChange={onBrowseModeChange} />
           {browseMode === 'parks' ? (
             <DiscoverParkSortChips value={parkSortMode} onChange={onParkSortModeChange} />
@@ -104,17 +119,11 @@ export function DiscoverBrowseCollapsible({
 }
 
 const styles = StyleSheet.create({
-  wrap: {
-    gap: authSpacing.sm,
-    marginBottom: authSpacing.sm,
-  },
+  wrap: {},
   trigger: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: authSpacing.sm,
-    paddingVertical: authSpacing.sm,
-    paddingHorizontal: authSpacing.xs,
   },
   triggerPressed: {
     opacity: 0.88,
@@ -125,19 +134,15 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   label: {
-    ...authTypography.label,
     fontSize: 12,
-    color: authColors.textMuted,
+    fontWeight: '600',
   },
   summary: {
-    ...authTypography.body,
-    color: authColors.text,
+    fontSize: 16,
+    fontWeight: '400',
   },
   chevronExpanded: {
     transform: [{ rotate: '180deg' }],
   },
-  panel: {
-    gap: authSpacing.xs,
-    paddingBottom: authSpacing.xs,
-  },
+  panel: {},
 });

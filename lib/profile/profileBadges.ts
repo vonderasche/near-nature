@@ -4,6 +4,7 @@ import {
   TIER_SPECIES_THRESHOLDS,
   mainMilestoneAwardKey,
   type CategoryTierId,
+  type MainCategoryId,
 } from '@/constants/naturalist-categories';
 import type { HeroIconName } from '@/components/ui/hero-icon';
 import type { BadgeProgress, MainCategoryProgress } from '@/lib/profile/categoryProgressTypes';
@@ -34,6 +35,13 @@ const VOYAGER_ICON_BY_MAIN = {
   ornithologist: 'eye',
   mammalogist: 'user',
 } as const;
+
+const MAIN_SHORT_LABELS: Record<MainCategoryId, string> = {
+  botanist: 'Botanist',
+  herpetologist: 'Herps',
+  ornithologist: 'Birds',
+  mammalogist: 'Mammals',
+};
 
 function buildProgressByAward(
   badgeProgress: readonly BadgeProgress[] | undefined,
@@ -97,7 +105,7 @@ function buildMainDisciplineBadges(
     return {
       id: explorerKey,
       label: badgeProgress?.label?.replace(/\s+Explorer$/i, '') || main.label,
-      shortLabel: main.label,
+      shortLabel: MAIN_SHORT_LABELS[main.id],
       icon: VOYAGER_ICON_BY_MAIN[main.id],
       earned,
       points: badgeProgress?.points ?? MAIN_TIER_POINTS.explorer,
@@ -123,12 +131,6 @@ export function buildProfileBadgeSections(
   ];
 }
 
-function shortLabelFrom(text: string, max = 4): string {
-  const trimmed = text.trim();
-  if (trimmed.length <= max) return trimmed;
-  return trimmed.slice(0, max);
-}
-
 /** Compact row for the profile collapsible header: earned badges, or dimmed placeholders. */
 export function buildProfileBadgePreviewRow(
   mains: readonly MainCategoryProgress[],
@@ -146,7 +148,7 @@ export function buildProfileBadgePreviewRow(
   return MAIN_CATEGORIES.map((main) => ({
     id: `preview:${main.id}`,
     label: main.label,
-    shortLabel: shortLabelFrom(main.label),
+    shortLabel: MAIN_SHORT_LABELS[main.id],
     icon: VOYAGER_ICON_BY_MAIN[main.id],
     earned: false,
     points: MAIN_TIER_POINTS.explorer,
@@ -167,3 +169,6 @@ export function buildEarnedProfileBadgeSections(
 }
 
 export const PROFILE_BADGE_GRID_COLUMNS = 4;
+
+/** Minimum tile height for accessible touch targets in the badge grid. */
+export const PROFILE_BADGE_TILE_MIN_HEIGHT = 72;

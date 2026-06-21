@@ -5,8 +5,13 @@ import { DetectionGalleryGrid } from '@/components/profile/detection-gallery-gri
 import { DetectionGalleryList } from '@/components/profile/detection-gallery-list';
 import { GalleryGridColumnsPicker } from '@/components/profile/gallery-grid-columns-picker';
 import { GalleryLayoutToggle } from '@/components/profile/gallery-layout-toggle';
-import { SpeciesSubcategoryFilterButton } from '@/components/profile/species-subcategory-filter';
-import { ScreenSearchField } from '@/components/ui/screen-search-field';
+import {
+  SpeciesSubcategoryFilterButton,
+  speciesSubcategoryFilterSummary,
+} from '@/components/profile/species-subcategory-filter';
+import { ActiveFilterChip } from '@/components/shared/active-filter-chip';
+import { ListSearchToolbar } from '@/components/shared/list-search-toolbar';
+import { SEARCH_DEBOUNCE_MS } from '@/constants/search';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useGalleryGridColumns } from '@/hooks/useGalleryGridColumns';
 import { useGalleryLayoutMode } from '@/hooks/useGalleryLayoutMode';
@@ -68,7 +73,7 @@ export const UserDetectionGallerySection = forwardRef<
   });
   const categoryFilter = controlledCategoryFilter ?? localCategoryFilter;
   const setCategoryFilter = onCategoryFilterChange ?? setLocalCategoryFilter;
-  const debouncedSearch = useDebouncedValue(searchQuery, 280);
+  const debouncedSearch = useDebouncedValue(searchQuery, SEARCH_DEBOUNCE_MS);
   const {
     items,
     isLoading,
@@ -96,8 +101,8 @@ export const UserDetectionGallerySection = forwardRef<
 
   useImperativeHandle(ref, () => ({ refetch }), [refetch]);
 
-  const filterOrSearchActive =
-    isSearchQueryActive(debouncedSearch) || categoryFilter.kind !== 'all';
+  const filterActive = categoryFilter.kind !== 'all';
+  const filterOrSearchActive = isSearchQueryActive(debouncedSearch) || filterActive;
   const resolvedEmptyMessage =
     filterOrSearchActive && totalCount === 0 && !isLoading
       ? 'No identifications match your search or filter.'
@@ -123,25 +128,30 @@ export const UserDetectionGallerySection = forwardRef<
 
   return (
     <View style={[styles.wrap, { gap: theme.spacing.sm }]}>
-      <View style={[styles.searchRow, { gap: theme.spacing.sm }]}>
-        {userId ? (
-          <ScreenSearchField
-            borderless
-            containerStyle={styles.searchField}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder={searchPlaceholder}
-            accessibilityLabel="Search profile gallery"
-          />
-        ) : (
-          <View style={styles.searchField} />
-        )}
-        <SpeciesSubcategoryFilterButton value={categoryFilter} onPress={onOpenCategoryFilter} />
-        <GalleryLayoutToggle value={layoutMode} onChange={setLayoutMode} />
-        {layoutMode === 'grid' ? (
-          <GalleryGridColumnsPicker value={columns} onChange={setColumnCount} />
-        ) : null}
-      </View>
+      {userId ? (
+        <ListSearchToolbar
+          searchQuery={searchQuery}
+          onSearchQueryChange={setSearchQuery}
+          placeholder={searchPlaceholder}
+          accessibilityLabel="Search profile gallery"
+          trailing={
+            <>
+              <SpeciesSubcategoryFilterButton value={categoryFilter} onPress={onOpenCategoryFilter} />
+              <GalleryLayoutToggle value={layoutMode} onChange={setLayoutMode} />
+              {layoutMode === 'grid' ? (
+                <GalleryGridColumnsPicker value={columns} onChange={setColumnCount} />
+              ) : null}
+            </>
+          }
+        />
+      ) : null}
+
+      {filterActive ? (
+        <ActiveFilterChip
+          label={speciesSubcategoryFilterSummary(categoryFilter)}
+          onClear={() => setCategoryFilter({ kind: 'all' })}
+        />
+      ) : null}
 
       {layoutMode === 'list' ? (
         <DetectionGalleryList {...sharedGalleryProps} />
@@ -154,12 +164,4 @@ export const UserDetectionGallerySection = forwardRef<
 
 const styles = StyleSheet.create({
   wrap: {},
-  searchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  searchField: {
-    flex: 1,
-    minWidth: 0,
-  },
 });

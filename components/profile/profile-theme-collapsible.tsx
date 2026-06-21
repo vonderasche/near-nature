@@ -5,16 +5,27 @@ import { ThemePicker } from '@/components/profile/theme-picker';
 import { HeroIcon } from '@/components/ui/hero-icon';
 import { THEME_LABELS } from '@/constants/theme-preferences';
 import { useTheme } from '@/hooks/useTheme';
+import { animateCollapsibleToggle } from '@/lib/ui/collapsibleAnimation';
 
 export function ProfileThemeCollapsible() {
   const { theme, themeName } = useTheme();
   const [expanded, setExpanded] = useState(false);
   const summary = useMemo(() => THEME_LABELS[themeName], [themeName]);
 
+  const toggleExpanded = () => {
+    animateCollapsibleToggle();
+    setExpanded((open) => !open);
+  };
+
+  const collapse = () => {
+    animateCollapsibleToggle();
+    setExpanded(false);
+  };
+
   return (
     <View style={[styles.wrap, { gap: theme.spacing.sm }]}>
       <Pressable
-        onPress={() => setExpanded((open) => !open)}
+        onPress={toggleExpanded}
         accessibilityRole="button"
         accessibilityState={{ expanded }}
         accessibilityLabel={expanded ? 'Hide appearance options' : 'Show appearance options'}
@@ -35,7 +46,7 @@ export function ProfileThemeCollapsible() {
 
       {expanded ? (
         <View style={styles.panel}>
-          <ThemePicker onThemeSelected={() => setExpanded(false)} />
+          <ThemePicker onThemeSelected={collapse} />
         </View>
       ) : null}
     </View>

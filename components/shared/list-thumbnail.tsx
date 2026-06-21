@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { StyleSheet, View } from 'react-native';
 
-import { authColors } from '@/constants/auth-theme';
+import { useTheme } from '@/hooks/useTheme';
 
 export const LIST_THUMB_SIZE = 56;
 
@@ -11,6 +11,7 @@ type Props = {
 };
 
 export function ListThumbnail({ uri, recyclingKey }: Props) {
+  const { theme } = useTheme();
   const trimmed = uri?.trim();
 
   return (
@@ -18,14 +19,23 @@ export function ListThumbnail({ uri, recyclingKey }: Props) {
       {trimmed ? (
         <Image
           source={{ uri: trimmed }}
-          style={styles.thumb}
+          style={[
+            styles.thumb,
+            { borderColor: theme.colors.border, backgroundColor: theme.colors.background },
+          ]}
           contentFit="cover"
           cachePolicy="memory-disk"
           recyclingKey={recyclingKey ?? trimmed}
           transition={200}
         />
       ) : (
-        <View style={[styles.thumb, styles.placeholder]} />
+        <View
+          style={[
+            styles.thumb,
+            styles.placeholder,
+            { borderColor: theme.colors.border, backgroundColor: theme.colors.background },
+          ]}
+        />
       )}
     </View>
   );
@@ -41,10 +51,8 @@ const styles = StyleSheet.create({
     width: LIST_THUMB_SIZE,
     height: LIST_THUMB_SIZE,
     borderWidth: 1,
-    borderColor: authColors.border,
-    backgroundColor: authColors.background,
   },
   placeholder: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    opacity: 0.35,
   },
 });

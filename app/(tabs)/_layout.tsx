@@ -68,7 +68,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="explorer-board"
         options={{
-          title: 'Explorer Board',
+          title: 'Rankings',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="chart.bar.fill" color={color} />,
         }}
       />

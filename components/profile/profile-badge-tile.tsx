@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { HeroIcon, type HeroIconName } from '@/components/ui/hero-icon';
 import { useTheme } from '@/hooks/useTheme';
 import type { ProfileBadgeItem } from '@/lib/profile/profileBadges';
+import { PROFILE_BADGE_TILE_MIN_HEIGHT } from '@/lib/profile/profileBadges';
 
 type Props = {
   badge: ProfileBadgeItem;
@@ -25,7 +26,12 @@ export function ProfileBadgeTile({ badge, size, compact = false }: Props) {
       accessibilityLabel={`${badge.label}, ${active ? 'earned' : 'not yet earned'}${badge.requirement ? `, ${badge.requirement}` : ''}, ${badge.points} points`}
       style={[
         styles.tile,
-        { width: size, minHeight: size, paddingVertical: theme.spacing.sm, paddingHorizontal: theme.spacing.xs },
+        {
+          width: size,
+          minHeight: Math.max(size, PROFILE_BADGE_TILE_MIN_HEIGHT),
+          paddingVertical: theme.spacing.sm,
+          paddingHorizontal: theme.spacing.xs,
+        },
         !active && styles.tileIdle,
         badge.featured && [styles.tileFeatured, { gap: theme.spacing.md, paddingVertical: theme.spacing.md }],
       ]}>

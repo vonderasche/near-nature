@@ -5,6 +5,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { DiscoverItemGrid, type DiscoverGridItem } from '@/components/discover/discover-item-grid';
 import { ParkListItem } from '@/components/discover/park-list-item';
 import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
+import { ListEmptyActions } from '@/components/shared/list-empty-actions';
 import { CenteredActivityIndicator } from '@/components/shared/centered-activity-indicator';
 import { useListSectionSupportingStyles } from '@/components/shared/list-detail-card';
 import { useTheme } from '@/hooks/useTheme';
@@ -31,6 +32,7 @@ type Props = {
   deviceCoords: DeviceCoordinates | null;
   layoutMode: GalleryLayoutMode;
   gridColumns: GalleryGridColumns;
+  onClearSearch: () => void;
   onRetry: () => void;
 };
 
@@ -45,6 +47,7 @@ export function DiscoverParksSection({
   deviceCoords,
   layoutMode,
   gridColumns,
+  onClearSearch,
   onRetry,
 }: Props) {
   const router = useRouter();
@@ -113,6 +116,9 @@ export function DiscoverParksSection({
               ? 'No parks match your search. Try a county, city, or species name.'
               : 'No park data is available right now.'}
           </Text>
+          {searchActive ? (
+            <ListEmptyActions onClearSearch={onClearSearch} showAllLabel="Show all parks" onShowAll={onClearSearch} />
+          ) : null}
         </View>
       ) : layoutMode === 'grid' ? (
         <DiscoverItemGrid items={gridItems} columnCount={gridColumns} />
