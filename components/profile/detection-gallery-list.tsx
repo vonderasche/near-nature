@@ -31,6 +31,7 @@ type DetectionGalleryListProps = {
   onDeleteItem?: (item: DetectionGalleryItem) => Promise<UserFacingResult>;
   deletingId?: string | null;
   onViewMemberProfile?: (userId: string) => void;
+  onOpenDetection?: (item: DetectionGalleryItem) => void;
 };
 
 /**
@@ -51,6 +52,7 @@ export function DetectionGalleryList({
   onDeleteItem,
   deletingId = null,
   onViewMemberProfile,
+  onOpenDetection,
 }: DetectionGalleryListProps) {
   const [selected, setSelected] = useState<DetectionGalleryItem | null>(null);
   const [pendingDelete, setPendingDelete] = useState<DetectionGalleryItem | null>(null);
@@ -94,9 +96,14 @@ export function DetectionGalleryList({
   const handlePressItemId = useCallback(
     (itemId: string) => {
       const item = itemsById.get(itemId);
-      if (item) setSelected(item);
+      if (!item) return;
+      if (onOpenDetection) {
+        onOpenDetection(item);
+        return;
+      }
+      setSelected(item);
     },
-    [itemsById],
+    [itemsById, onOpenDetection],
   );
 
   const handleLongPressItemId = useCallback(
@@ -184,7 +191,7 @@ export function DetectionGalleryList({
       ) : null}
 
       <DetectionGalleryDetailModal
-        visible={selected !== null}
+        visible={!onOpenDetection && selected !== null}
         item={selected}
         onClose={() => setSelected(null)}
         deletable={Boolean(deletable && onDeleteItem)}

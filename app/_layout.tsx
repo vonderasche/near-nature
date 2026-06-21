@@ -1,8 +1,6 @@
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { DarkTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { StatusBar } from 'expo-status-bar';
 import { StyleSheet } from 'react-native';
 import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -11,6 +9,7 @@ WebBrowser.maybeCompleteAuthSession();
 
 import { AuthGate } from '@/components/layout/auth-gate';
 import { LocalDatabaseErrorBanner } from '@/components/layout/local-database-error-banner';
+import { NavigationThemeBridge } from '@/components/layout/navigation-theme-bridge';
 import { FirstLoginWelcomeModal } from '@/components/welcome/first-login-welcome-modal';
 import { AuthProvider } from '@/context/AuthContext';
 import { LocalDatabaseProvider } from '@/context/LocalDatabaseContext';
@@ -21,20 +20,6 @@ export const unstable_settings = {
   initialRouteName: '(tabs)',
 };
 
-/** Stack / header chrome: black surface, light text (matches `authColors`). */
-const navigationTheme = {
-  ...DarkTheme,
-  colors: {
-    ...DarkTheme.colors,
-    primary: '#0a7ea4',
-    background: '#000000',
-    card: '#000000',
-    text: '#ffffff',
-    border: '#3d3d3d',
-    notification: '#0a7ea4',
-  },
-};
-
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.root}>
@@ -42,19 +27,18 @@ export default function RootLayout() {
         <AuthProvider>
           <LocalDatabaseProvider>
             <AppThemeProvider>
-            <ThemeProvider value={navigationTheme}>
-              <AuthGate>
-                <LocalDatabaseErrorBanner />
-                <Stack>
-                  <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                  <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
-                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                  <Stack.Screen name="user/[userId]" options={{ title: 'Member' }} />
-                </Stack>
-              </AuthGate>
-              <FirstLoginWelcomeModal />
-              <StatusBar style="light" />
-            </ThemeProvider>
+              <NavigationThemeBridge>
+                <AuthGate>
+                  <LocalDatabaseErrorBanner />
+                  <Stack>
+                    <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                    <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
+                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                    <Stack.Screen name="user" options={{ headerShown: false }} />
+                  </Stack>
+                </AuthGate>
+                <FirstLoginWelcomeModal />
+              </NavigationThemeBridge>
             </AppThemeProvider>
           </LocalDatabaseProvider>
         </AuthProvider>

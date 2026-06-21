@@ -1,4 +1,4 @@
-import { createContext, useCallback, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import {
   defaultThemeName,
@@ -6,34 +6,51 @@ import {
   type AppTheme,
   type ThemeName,
 } from '@/constants/themes';
+import { usePersistedThemeName } from '@/hooks/usePersistedThemeName';
 
 type ThemeContextValue = {
   theme: AppTheme;
   themeName: ThemeName;
   setThemeName: (name: ThemeName) => void;
+  ready: boolean;
 };
 
 export const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 type Props = {
   children: ReactNode;
-  initialThemeName?: ThemeName;
 };
 
-export function AppThemeProvider({ children, initialThemeName = defaultThemeName }: Props) {
-  const [themeName, setThemeNameState] = useState<ThemeName>(initialThemeName);
+export function AppThemeProvider({ children }: Props) {
+  const {
+    value: persistedThemeName,
+    setValue: setPersistedThemeName,
+    ready,
+  } = usePersistedThemeName();
+  const [themeName, setThemeNameState] = useState<ThemeName>(defaultThemeName);
 
-  const setThemeName = useCallback((name: ThemeName) => {
-    setThemeNameState(name);
-  }, []);
+  useEffect(() => {
+    if (ready) {
+      setThemeNameState(persistedThemeName);
+    }
+  }, [persistedThemeName, ready]);
+
+  const setThemeName = useCallback(
+    (name: ThemeName) => {
+      setThemeNameState(name);
+      setPersistedThemeName(name);
+    },
+    [setPersistedThemeName],
+  );
 
   const value = useMemo<ThemeContextValue>(
     () => ({
       theme: themes[themeName],
       themeName,
       setThemeName,
+      ready,
     }),
-    [themeName, setThemeName],
+    [ready, setThemeName, themeName],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

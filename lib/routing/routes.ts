@@ -3,8 +3,12 @@
  */
 export const routes = {
   tabs: '/(tabs)',
-  /** Own profile tab (see `app/(tabs)/profile.tsx`). */
+  /** Own profile tab (see `app/(tabs)/profile/`). */
   profileTab: '/(tabs)/profile',
+  profileSettings: '/(tabs)/profile/settings',
+  profileEditMotto: '/(tabs)/profile/edit-motto',
+  profileEditState: '/(tabs)/profile/edit-state',
+  profileGalleryFilter: '/(tabs)/profile/gallery-filter',
   login: '/login',
   signup: '/signup',
   /** Session exists but `public.users` has no row — sign out or fix DB (e.g. backfill). */
@@ -26,7 +30,28 @@ export function routeCameraIdentification(params: { uri: string; userState?: str
   };
 }
 
-/** Another member’s public profile (`app/user/[userId].tsx`). */
+export function routeProfileDetection(params: { detectionId: string }) {
+  return {
+    pathname: '/(tabs)/profile/detection/[detectionId]' as const,
+    params,
+  };
+}
+
+/** Another member’s public profile (`app/user/[userId]/index.tsx`). */
 export function routePublicUserProfile(userId: string) {
   return { pathname: '/user/[userId]' as const, params: { userId } };
+}
+
+export function routePublicUserGalleryFilter(userId: string) {
+  return {
+    pathname: '/user/[userId]/gallery-filter' as const,
+    params: { userId },
+  };
+}
+
+export function routePublicUserDetection(params: { userId: string; detectionId: string }) {
+  return {
+    pathname: '/user/[userId]/detection/[detectionId]' as const,
+    params,
+  };
 }

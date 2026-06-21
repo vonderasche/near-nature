@@ -1,0 +1,41 @@
+import { Redirect, useRouter } from 'expo-router';
+import { ScrollView } from 'react-native';
+
+import { MottoEditForm } from '@/components/profile/motto-edit-form';
+import { Screen } from '@/components/ui/Screen';
+import { StackScreenHeader } from '@/components/ui/StackScreenHeader';
+import { useAuthContext } from '@/context/AuthContext';
+import { useMottoSave } from '@/hooks/useMottoSave';
+import { useTheme } from '@/hooks/useTheme';
+import { useUser } from '@/hooks/useUser';
+import { routes } from '@/lib/routing/routes';
+
+export default function EditMottoScreen() {
+  const router = useRouter();
+  const { theme } = useTheme();
+  const { isAuthenticated, isLoading: authLoading } = useAuthContext();
+  const { user, update } = useUser();
+  const { saveMotto, saving } = useMottoSave(update);
+
+  if (!authLoading && !isAuthenticated) {
+    return <Redirect href={routes.login} />;
+  }
+
+  if (!user) {
+    return null;
+  }
+
+  return (
+    <Screen>
+      <ScrollView contentContainerStyle={{ paddingBottom: theme.spacing.xxl }}>
+        <StackScreenHeader title="Edit motto" />
+        <MottoEditForm
+          initialMotto={user.motto}
+          onSave={saveMotto}
+          saving={saving}
+          onCancel={() => router.back()}
+        />
+      </ScrollView>
+    </Screen>
+  );
+}

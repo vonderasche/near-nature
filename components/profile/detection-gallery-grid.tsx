@@ -36,6 +36,7 @@ type DetectionGalleryGridProps = {
   onDeleteItem?: (item: DetectionGalleryItem) => Promise<UserFacingResult>;
   deletingId?: string | null;
   onViewMemberProfile?: (userId: string) => void;
+  onOpenDetection?: (item: DetectionGalleryItem) => void;
 };
 
 /**
@@ -57,6 +58,7 @@ export function DetectionGalleryGrid({
   onDeleteItem,
   deletingId = null,
   onViewMemberProfile,
+  onOpenDetection,
 }: DetectionGalleryGridProps) {
   const { width: windowWidth } = useWindowDimensions();
   const [selected, setSelected] = useState<DetectionGalleryItem | null>(null);
@@ -101,9 +103,14 @@ export function DetectionGalleryGrid({
   const handlePressItemId = useCallback(
     (itemId: string) => {
       const item = itemsById.get(itemId);
-      if (item) setSelected(item);
+      if (!item) return;
+      if (onOpenDetection) {
+        onOpenDetection(item);
+        return;
+      }
+      setSelected(item);
     },
-    [itemsById],
+    [itemsById, onOpenDetection],
   );
 
   const handleLongPressItemId = useCallback(
@@ -217,7 +224,7 @@ export function DetectionGalleryGrid({
       ) : null}
 
       <DetectionGalleryDetailModal
-        visible={selected !== null}
+        visible={!onOpenDetection && selected !== null}
         item={selected}
         onClose={() => setSelected(null)}
         deletable={Boolean(deletable && onDeleteItem)}

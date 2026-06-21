@@ -1,10 +1,14 @@
 import { useFocusEffect } from '@react-navigation/native';
-import { Redirect } from 'expo-router';
+import { Redirect, useRouter, type Href } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import { useAuthContext } from '@/context/AuthContext';
-import { routes } from '@/lib/routing/routes';
+import { useProfileGalleryPrefs } from '@/context/ProfileGalleryContext';
+import {
+  routeProfileDetection,
+  routes,
+} from '@/lib/routing/routes';
 
 import { TabScreenWithLogout } from '@/components/layout/tab-screen-with-logout';
 import {
@@ -12,52 +16,46 @@ import {
   type ProfileScoringCollapsibleHandle,
 } from '@/components/profile/profile-scoring-collapsible';
 import { CenteredActivityIndicator } from '@/components/shared/centered-activity-indicator';
-import { ProfileOverflowMenu } from '@/components/profile/profile-overflow-menu';
+import { ProfileSettingsButton } from '@/components/profile/profile-settings-button';
 import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
+import { Button } from '@/components/ui/Button';
+import { THEME_LABELS } from '@/constants/theme-preferences';
 import {
   UserDetectionGallerySection,
   type UserDetectionGallerySectionHandle,
 } from '@/components/profile/user-detection-gallery-section';
-import { MottoEditModal } from '@/components/profile/motto-edit-modal';
-import { StateEditModal } from '@/components/profile/state-edit-modal';
 import { ProfileStatStrip } from '@/components/profile/profile-stat-strip';
 import { profileStatStripPropsFromPublicProfile } from '@/lib/profile/profileStatStripFromPublicProfile';
 import { ProfileUserIdentity } from '@/components/profile/profile-user-identity';
 import { UserAvatar } from '@/components/profile/user-avatar';
 import { UserProfileSummary } from '@/components/profile/user-profile-summary';
-import { ThemedConfirmModal, ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
+import { useTheme } from '@/hooks/useTheme';
 import { useAvatarFromGallery } from '@/hooks/useAvatarFromGallery';
 import { useDeleteDetection } from '@/hooks/useDeleteDetection';
-import { useMottoSave } from '@/hooks/useMottoSave';
-import { useStateSave } from '@/hooks/useStateSave';
 import { useUser } from '@/hooks/useUser';
 import { requestExplorerBoardRefresh } from '@/lib/explorerBoard/explorerBoardRefresh';
+import { stageGalleryItem } from '@/lib/gallery/galleryItemRouteCache';
 import type { DetectionGalleryItem } from '@/types';
 
 export default function ProfileScreen() {
+  const { theme, themeName } = useTheme();
+  const router = useRouter();
+  const { categoryFilter, setCategoryFilter } = useProfileGalleryPrefs();
   const { isAuthenticated, isLoading: authLoading } = useAuthContext();
   const {
     user,
     stats,
     loading,
     refreshing: profileRefreshing,
-    deleting,
     error,
     refresh,
     update,
-    remove: deleteAccount,
   } = useUser();
-  const { saveMotto, saving: mottoSaving } = useMottoSave(update);
-  const { saveState, saving: stateSaving } = useStateSave(update);
   const { deleteById, deletingId } = useDeleteDetection();
   const galleryRef = useRef<UserDetectionGallerySectionHandle>(null);
   const scoringRef = useRef<ProfileScoringCollapsibleHandle>(null);
-  const [mottoModalVisible, setMottoModalVisible] = useState(false);
-  const [stateModalVisible, setStateModalVisible] = useState(false);
   const [avatarPickError, setAvatarPickError] = useState<string | null>(null);
-  const [deleteProfileOpen, setDeleteProfileOpen] = useState(false);
-  const [deleteProfileError, setDeleteProfileError] = useState<string | null>(null);
   const { pickAndSetAvatar, busy: avatarBusy } = useAvatarFromGallery(user?.id, update);
 
   const onAvatarPress = useCallback(() => {
@@ -105,17 +103,13 @@ export default function ProfileScreen() {
     [deleteById, refresh],
   );
 
-  const confirmDeleteProfile = useCallback(() => {
-    setDeleteProfileOpen(true);
-  }, []);
-
-  const runDeleteProfile = useCallback(async () => {
-    const result = await deleteAccount();
-    setDeleteProfileOpen(false);
-    if (!result.ok) {
-      setDeleteProfileError(result.message);
-    }
-  }, [deleteAccount]);
+  const openDetection = useCallback(
+    (item: DetectionGalleryItem) => {
+      stageGalleryItem(item);
+      router.push(routeProfileDetection({ detectionId: item.id }) as unknown as Href);
+    },
+    [router],
+  );
 
   const statsSlot = stats ? (
     <ProfileStatStrip {...profileStatStripPropsFromPublicProfile(stats)} />
@@ -129,22 +123,21 @@ export default function ProfileScreen() {
     <TabScreenWithLogout
       title="Profile"
       hideLogout={Boolean(user)}
-      titleAccessory={
-        user ? (
-          <ProfileOverflowMenu onDeleteProfile={confirmDeleteProfile} deleteBusy={deleting} />
-        ) : undefined
-      }
+      titleAccessory={user ? <ProfileSettingsButton /> : undefined}
       refreshControl={
         <RefreshControl
           refreshing={pullRefreshing}
           onRefresh={onRefresh}
-          tintColor={authColors.text}
-          colors={[authColors.text]}
+          tintColor={theme.colors.textPrimary}
+          colors={[theme.colors.textPrimary]}
         />
       }
       backgroundRefreshing={profileRefreshing && !pullRefreshing}>
       {loading && !user ? (
-        <CenteredActivityIndicator color={authColors.text} accessibilityLabel="Loading profile" />
+        <CenteredActivityIndicator
+          color={theme.colors.textPrimary}
+          accessibilityLabel="Loading profile"
+        />
       ) : null}
 
       {error ? (
@@ -153,7 +146,7 @@ export default function ProfileScreen() {
 
       {user ? (
         <>
-          <View style={styles.profileHero}>
+          <View style={[styles.profileHero, { gap: theme.spacing.sm, marginBottom: theme.spacing.md }]}>
             <UserAvatar storedUrl={user.avatar_url} onPress={onAvatarPress} busy={avatarBusy} />
 
             <ProfileUserIdentity
@@ -163,11 +156,19 @@ export default function ProfileScreen() {
               email={user.email}
               motto={user.motto}
               state={user.state}
-              onMottoPress={() => setMottoModalVisible(true)}
-              onStatePress={() => setStateModalVisible(true)}
+              onMottoPress={() => router.push(routes.profileEditMotto as Href)}
+              onStatePress={() => router.push(routes.profileEditState as Href)}
             />
 
             <UserProfileSummary statsSlot={statsSlot} />
+
+            <Button
+              title={`Appearance: ${THEME_LABELS[themeName]}`}
+              variant="outline"
+              fillParent
+              onPress={() => router.push(routes.profileSettings as Href)}
+              accessibilityHint="Opens theme and account settings"
+            />
           </View>
 
           <ProfileScoringCollapsible ref={scoringRef} userId={user.id} />
@@ -179,25 +180,14 @@ export default function ProfileScreen() {
             deletable
             onDeleteItem={handleGalleryDelete}
             deletingId={deletingId}
-          />
-
-          <MottoEditModal
-            visible={mottoModalVisible}
-            initialMotto={user.motto}
-            onClose={() => setMottoModalVisible(false)}
-            onSave={saveMotto}
-            saving={mottoSaving}
-          />
-          <StateEditModal
-            visible={stateModalVisible}
-            initialState={user.state}
-            onClose={() => setStateModalVisible(false)}
-            onSave={saveState}
-            saving={stateSaving}
+            categoryFilter={categoryFilter}
+            onCategoryFilterChange={setCategoryFilter}
+            onOpenCategoryFilter={() => router.push(routes.profileGalleryFilter as Href)}
+            onOpenDetection={openDetection}
           />
         </>
       ) : !loading && !error ? (
-        <Text style={styles.emptyHint}>Sign in to load your profile.</Text>
+        <Text style={[styles.emptyHint, { color: theme.colors.textSecondary }]}>Sign in to load your profile.</Text>
       ) : null}
 
       <ThemedMessageModal
@@ -206,21 +196,6 @@ export default function ProfileScreen() {
         message={avatarPickError ?? ''}
         onDismiss={() => setAvatarPickError(null)}
       />
-      <ThemedConfirmModal
-        visible={deleteProfileOpen}
-        title="Delete profile"
-        message="This permanently deletes your account and profile data. You cannot undo this."
-        confirmLabel="Delete profile"
-        onCancel={() => setDeleteProfileOpen(false)}
-        onConfirm={runDeleteProfile}
-        confirmLoading={deleting}
-      />
-      <ThemedMessageModal
-        visible={deleteProfileError !== null}
-        title="Could not delete profile"
-        message={deleteProfileError ?? ''}
-        onDismiss={() => setDeleteProfileError(null)}
-      />
     </TabScreenWithLogout>
   );
 }
@@ -228,13 +203,9 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   profileHero: {
     alignItems: 'center',
-    gap: authSpacing.sm,
-    marginBottom: authSpacing.md,
   },
   emptyHint: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
     textAlign: 'center',
-    paddingVertical: authSpacing.sm,
+    paddingVertical: 12,
   },
 });

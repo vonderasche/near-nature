@@ -5,10 +5,8 @@ import { DetectionGalleryGrid } from '@/components/profile/detection-gallery-gri
 import { DetectionGalleryList } from '@/components/profile/detection-gallery-list';
 import { GalleryGridColumnsPicker } from '@/components/profile/gallery-grid-columns-picker';
 import { GalleryLayoutToggle } from '@/components/profile/gallery-layout-toggle';
-import {
-  SpeciesSubcategoryFilterButton,
-  SpeciesSubcategoryFilterModal,
-} from '@/components/profile/species-subcategory-filter';
+import { SpeciesSubcategoryFilterButton } from '@/components/profile/species-subcategory-filter';
+import { SpeciesSubcategoryFilterModal } from '@/components/profile/species-subcategory-filter-modal';
 import { ScreenSearchField } from '@/components/ui/screen-search-field';
 import { authSpacing } from '@/constants/auth-theme';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
@@ -33,6 +31,11 @@ type UserDetectionGallerySectionProps = {
   deletable?: boolean;
   onDeleteItem?: (item: DetectionGalleryItem) => Promise<UserFacingResult>;
   deletingId?: string | null;
+  categoryFilter?: GalleryCategoryFilter;
+  onCategoryFilterChange?: (value: GalleryCategoryFilter) => void;
+  onOpenCategoryFilter?: () => void;
+  onOpenDetection?: (item: DetectionGalleryItem) => void;
+  onViewMemberProfile?: (userId: string) => void;
 };
 
 /**
@@ -51,12 +54,21 @@ export const UserDetectionGallerySection = forwardRef<
     deletable = false,
     onDeleteItem,
     deletingId = null,
+    categoryFilter: controlledCategoryFilter,
+    onCategoryFilterChange,
+    onOpenCategoryFilter,
+    onOpenDetection,
+    onViewMemberProfile,
   },
   ref,
 ) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<GalleryCategoryFilter>({ kind: 'all' });
+  const [localCategoryFilter, setLocalCategoryFilter] = useState<GalleryCategoryFilter>({
+    kind: 'all',
+  });
   const [categoryFilterOpen, setCategoryFilterOpen] = useState(false);
+  const categoryFilter = controlledCategoryFilter ?? localCategoryFilter;
+  const setCategoryFilter = onCategoryFilterChange ?? setLocalCategoryFilter;
   const debouncedSearch = useDebouncedValue(searchQuery, 280);
   const {
     items,
@@ -78,8 +90,10 @@ export const UserDetectionGallerySection = forwardRef<
 
   useEffect(() => {
     setSearchQuery('');
-    setCategoryFilter({ kind: 'all' });
-  }, [userId, publicOnly]);
+    if (!controlledCategoryFilter) {
+      setLocalCategoryFilter({ kind: 'all' });
+    }
+  }, [controlledCategoryFilter, userId, publicOnly]);
 
   useImperativeHandle(ref, () => ({ refetch }), [refetch]);
 
@@ -89,6 +103,24 @@ export const UserDetectionGallerySection = forwardRef<
     filterOrSearchActive && totalCount === 0 && !isLoading
       ? 'No identifications match your search or filter.'
       : emptyMessage;
+
+  const sharedGalleryProps = {
+    items,
+    sourceItemCount: totalCount ?? items.length,
+    searchQuery,
+    loading: isLoading,
+    isLoadingMore,
+    hasMore,
+    onLoadMore: () => void loadMore(),
+    error,
+    onRetry: () => void refetch(),
+    emptyMessage: resolvedEmptyMessage,
+    deletable,
+    onDeleteItem,
+    deletingId,
+    onOpenDetection,
+    onViewMemberProfile,
+  };
 
   return (
     <View style={styles.wrap}>
@@ -107,7 +139,13 @@ export const UserDetectionGallerySection = forwardRef<
         )}
         <SpeciesSubcategoryFilterButton
           value={categoryFilter}
-          onPress={() => setCategoryFilterOpen(true)}
+          onPress={() => {
+            if (onOpenCategoryFilter) {
+              onOpenCategoryFilter();
+              return;
+            }
+            setCategoryFilterOpen(true);
+          }}
         />
         <GalleryLayoutToggle value={layoutMode} onChange={setLayoutMode} />
         {layoutMode === 'grid' ? (
@@ -115,46 +153,19 @@ export const UserDetectionGallerySection = forwardRef<
         ) : null}
       </View>
 
-      <SpeciesSubcategoryFilterModal
-        visible={categoryFilterOpen}
-        value={categoryFilter}
-        onChange={setCategoryFilter}
-        onClose={() => setCategoryFilterOpen(false)}
-      />
+      {!onOpenCategoryFilter ? (
+        <SpeciesSubcategoryFilterModal
+          visible={categoryFilterOpen}
+          value={categoryFilter}
+          onChange={setCategoryFilter}
+          onClose={() => setCategoryFilterOpen(false)}
+        />
+      ) : null}
 
       {layoutMode === 'list' ? (
-        <DetectionGalleryList
-          items={items}
-          sourceItemCount={totalCount ?? items.length}
-          searchQuery={searchQuery}
-          loading={isLoading}
-          isLoadingMore={isLoadingMore}
-          hasMore={hasMore}
-          onLoadMore={() => void loadMore()}
-          error={error}
-          onRetry={() => void refetch()}
-          emptyMessage={resolvedEmptyMessage}
-          deletable={deletable}
-          onDeleteItem={onDeleteItem}
-          deletingId={deletingId}
-        />
+        <DetectionGalleryList {...sharedGalleryProps} />
       ) : (
-        <DetectionGalleryGrid
-          items={items}
-          sourceItemCount={totalCount ?? items.length}
-          searchQuery={searchQuery}
-          columnCount={columns}
-          loading={isLoading}
-          isLoadingMore={isLoadingMore}
-          hasMore={hasMore}
-          onLoadMore={() => void loadMore()}
-          error={error}
-          onRetry={() => void refetch()}
-          emptyMessage={resolvedEmptyMessage}
-          deletable={deletable}
-          onDeleteItem={onDeleteItem}
-          deletingId={deletingId}
-        />
+        <DetectionGalleryGrid {...sharedGalleryProps} columnCount={columns} />
       )}
     </View>
   );

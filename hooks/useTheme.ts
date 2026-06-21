@@ -13,5 +13,6 @@ export function useTheme() {
     theme: themes[defaultThemeName],
     themeName: defaultThemeName,
     setThemeName: () => {},
+    ready: true,
   };
 }
