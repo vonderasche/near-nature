@@ -6,6 +6,11 @@ import { CameraControlButton } from '@/components/camera/camera-control-button';
 import { CameraControlGroup } from '@/components/camera/camera-control-group';
 import { authSpacing } from '@/constants/auth-theme';
 import type { PhotoFlashMode } from '@/lib/camera/photoFlashMode';
+import { isMvpCaptureEnabled } from '@/lib/camera/tflite/mvp/isMvpCaptureEnabled';
+import {
+  mvpPreviewModeCaption,
+  type MvpPreviewMode,
+} from '@/lib/camera/tflite/mvp/mvpPreviewMode';
 import {
   photoFlashAccessibilityLabel,
   photoFlashCaption,
@@ -37,6 +42,8 @@ type Props = {
   onLevelPress: () => void;
   liveClassifierEnabled: boolean;
   onLiveClassifierPress: () => void;
+  previewMode?: MvpPreviewMode;
+  onPreviewModePress?: () => void;
   onMenuExpandedChange?: (expanded: boolean) => void;
 };
 
@@ -75,8 +82,12 @@ export function CameraTopControls({
   onLevelPress,
   liveClassifierEnabled,
   onLiveClassifierPress,
+  previewMode = 'scene_gate',
+  onPreviewModePress,
   onMenuExpandedChange,
 }: Props) {
+  const showPreviewModeToggle =
+    isMvpCaptureEnabled() && liveClassifierEnabled && onPreviewModePress != null;
   const [lightingExpanded, setLightingExpanded] = useState(false);
   const [displayExpanded, setDisplayExpanded] = useState(false);
 
@@ -197,6 +208,19 @@ export function CameraTopControls({
             active={levelEnabled}
             caption={`Level ${toggleCaption(levelEnabled)}`}
           />
+          {showPreviewModeToggle ? (
+            <CameraControlButton
+              icon={previewMode === 'kingdom' ? 'eye' : 'magnifying-glass'}
+              accessibilityLabel={
+                previewMode === 'kingdom'
+                  ? 'Live preview shows kingdom. Switch to scene gate.'
+                  : 'Live preview shows scene gate. Switch to kingdom.'
+              }
+              onPress={onPreviewModePress}
+              active={previewMode === 'kingdom'}
+              caption={mvpPreviewModeCaption(previewMode)}
+            />
+          ) : null}
         </CameraControlGroup>
 
         <CameraControlButton

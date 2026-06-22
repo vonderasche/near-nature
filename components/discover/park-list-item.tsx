@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useRouter } from 'expo-router';
 
 import { ListDetailCard } from '@/components/shared/list-detail-card';
@@ -15,7 +16,7 @@ type Props = {
   showDistance?: boolean;
 };
 
-export function ParkListItem({ park, deviceCoords = null, showDistance = false }: Props) {
+function ParkListItemComponent({ park, deviceCoords = null, showDistance = false }: Props) {
   const router = useRouter();
   const wildlifePreview =
     formatSpeciesPreview(speciesHighlightNames(park.topAnimals)) ??
@@ -51,3 +52,5 @@ export function ParkListItem({ park, deviceCoords = null, showDistance = false }
     />
   );
 }
+
+export const ParkListItem = memo(ParkListItemComponent);

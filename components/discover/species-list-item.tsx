@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useRouter } from 'expo-router';
 
 import { ListDetailCard } from '@/components/shared/list-detail-card';
@@ -25,7 +26,7 @@ function formatMeta(entry: DiscoverSpeciesEntry): string {
   return `${getDiscoverSubcategoryLabel(entry.subcategoryId)} · ${parks}`;
 }
 
-export function SpeciesListItem({ entry }: Props) {
+function SpeciesListItemComponent({ entry }: Props) {
   const router = useRouter();
 
   const openDetail = () => {
@@ -50,3 +51,5 @@ export function SpeciesListItem({ entry }: Props) {
     />
   );
 }
+
+export const SpeciesListItem = memo(SpeciesListItemComponent);

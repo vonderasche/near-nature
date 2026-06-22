@@ -36,6 +36,7 @@ export default function DiscoverScreen() {
     animalCount,
     totalCount,
     isLoading,
+    isRefreshing,
     error,
     refetch,
   } = useFloridaStateParks(debouncedSearchQuery, sortMode, coords);
@@ -50,7 +51,7 @@ export default function DiscoverScreen() {
   const onRefresh = async () => {
     setPullRefreshing(true);
     try {
-      await refetch();
+      await refetch({ force: true });
     } finally {
       setPullRefreshing(false);
     }
@@ -70,7 +71,7 @@ export default function DiscoverScreen() {
           colors={[theme.colors.textPrimary]}
         />
       }
-      backgroundRefreshing={isLoading && !pullRefreshing && parks.length > 0}>
+      backgroundRefreshing={isRefreshing && !pullRefreshing && parks.length > 0}>
       <DiscoverBrowseCollapsible
         browseMode={browseMode}
         onBrowseModeChange={setBrowseMode}

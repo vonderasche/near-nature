@@ -1,0 +1,25 @@
+{
+  "architecture": "efficientnet_lite0",
+  "checkpoint": "E:\\PROGRAMMING\\Portfolio\\NearNature\\python\\models\\v3\\step01_scene_gate\\best.pt",
+  "inputSize": 224,
+  "numClasses": 2,
+  "tfliteFile": "scene_gate.tflite",
+  "inputLayout": "NHWC",
+  "inputDtype": "float32",
+  "weightDtype": "float32",
+  "normalization": {
+    "mean": [
+      0.485,
+      0.456,
+      0.406
+    ],
+    "std": [
+      0.229,
+      0.224,
+      0.225
+    ]
+  },
+  "outputActivation": "softmax",
+  "val_acc": 0.9998281393217232,
+  "epoch": 1
+}

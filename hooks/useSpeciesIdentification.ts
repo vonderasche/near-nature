@@ -3,7 +3,7 @@
 // Web fallback: Gemini vision API.
 
 import { deleteAsync, readLocalFileAsBase64 } from '@/lib/fs/legacyFileSystem';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import { identifySpeciesInImage } from '@/api/gemini';
 import type { SpeciesWikiData } from '@/api/wikipedia';
@@ -38,6 +38,7 @@ interface UseSpeciesIdentificationResult {
 export function useSpeciesIdentification(): UseSpeciesIdentificationResult {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const requestIdRef = useRef(0);
   const { resizeForUpload } = useResizeImageForUpload({ maxEdge: 1280 });
 
   const identify = useCallback(async (
@@ -45,6 +46,7 @@ export function useSpeciesIdentification(): UseSpeciesIdentificationResult {
     userState: string,
     userId?: string,
   ): Promise<IdentifySpeciesOutcome> => {
+    const requestId = ++requestIdRef.current;
     setIsLoading(true);
     setError(null);
 
@@ -113,7 +115,9 @@ export function useSpeciesIdentification(): UseSpeciesIdentificationResult {
       if (resizedUri && resizedUri !== photoUri) {
         await deleteAsync(resizedUri, { idempotent: true }).catch(() => {});
       }
-      setIsLoading(false);
+      if (requestId === requestIdRef.current) {
+        setIsLoading(false);
+      }
     }
   }, [resizeForUpload]);
 

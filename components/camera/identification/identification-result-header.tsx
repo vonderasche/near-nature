@@ -26,7 +26,7 @@ export function IdentificationResultHeader({
 }: Props) {
   const { theme } = useTheme();
 
-  if (identifying) {
+  if (identifying && classifications.length === 0) {
     return (
       <View style={{ marginBottom: theme.spacing.lg }}>
         <LoadingHintRow label="Running on-device models…" />
@@ -34,8 +34,28 @@ export function IdentificationResultHeader({
     );
   }
 
+  if (identifying && classifications.length > 0) {
+    return (
+      <View style={{ marginBottom: theme.spacing.lg }}>
+        <LoadingHintRow label="Looking up species details…" />
+      </View>
+    );
+  }
+
   if (classifications.length === 0) {
-    return null;
+    const notice = tfliteMeta?.notice?.trim();
+    if (!notice) {
+      return null;
+    }
+
+    return (
+      <View style={{ gap: theme.spacing.xs, marginBottom: theme.spacing.lg }}>
+        <Title>No match found</Title>
+        <Text variant="body" color="secondary">
+          {notice}
+        </Text>
+      </View>
+    );
   }
 
   const top = classifications[0]!;

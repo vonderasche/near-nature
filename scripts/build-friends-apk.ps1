@@ -40,22 +40,55 @@ function Clear-NativeCxxCaches([string]$ProjectRoot) {
         }
 }
 
-function Set-FrameProcessorsEnabled([string]$GradlePropsPath, [bool]$Enabled) {
+function Set-GradleProperty([string]$GradlePropsPath, [string]$Name, [string]$Value) {
     if (-not (Test-Path $GradlePropsPath)) { return }
-    $value = if ($Enabled) { 'true' } else { 'false' }
     $props = Get-Content $GradlePropsPath -Raw
-    if ($props -match 'VisionCamera_enableFrameProcessors\s*=') {
-        $props = $props -replace 'VisionCamera_enableFrameProcessors\s*=\s*\w+', "VisionCamera_enableFrameProcessors=$value"
+    if ($props -match ([regex]::Escape($Name) + '\s*=')) {
+        $props = $props -replace ([regex]::Escape($Name) + '\s*=\s*\S+'), "$Name=$Value"
     } else {
-        $props = $props.TrimEnd() + "`r`nVisionCamera_enableFrameProcessors=$value`r`n"
+        $props = $props.TrimEnd() + "`r`n$Name=$Value`r`n"
     }
     Set-Content -Path $GradlePropsPath -Value $props -NoNewline
+}
+
+function Set-FrameProcessorsEnabled([string]$GradlePropsPath, [bool]$Enabled) {
+    $value = if ($Enabled) { 'true' } else { 'false' }
+    Set-GradleProperty $GradlePropsPath 'VisionCamera_enableFrameProcessors' $value
     Write-Host "VisionCamera_enableFrameProcessors=$value" -ForegroundColor Cyan
+}
+
+function Set-ReleasePackagingForDevices([string]$GradlePropsPath) {
+    # Extract .so at install time — avoids 16 KB page alignment crashes on Android 15+ / Pixel 9+.
+    Set-GradleProperty $GradlePropsPath 'expo.useLegacyPackaging' 'true'
+    Write-Host "expo.useLegacyPackaging=true (16 KB page / sideload compatibility)" -ForegroundColor Cyan
+}
+
+function Test-ReleaseBundleHasSupabase([string]$ApkPath) {
+    $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("nn_apk_" + [guid]::NewGuid().ToString("n"))
+    New-Item -ItemType Directory -Force -Path $tmp | Out-Null
+    try {
+        Push-Location $tmp
+        jar xf $ApkPath assets/index.android.bundle 2>$null
+        $bundle = Join-Path $tmp 'assets\index.android.bundle'
+        if (-not (Test-Path $bundle)) {
+            Write-Warning "Could not verify JS bundle in APK (assets/index.android.bundle missing)."
+            return
+        }
+        $text = [System.IO.File]::ReadAllText($bundle)
+        if ($text -notmatch 'https://[a-z0-9]+\.supabase\.co') {
+            Write-Error "Release bundle is missing EXPO_PUBLIC_SUPABASE_URL. Rebuild after syncing .env to the build root."
+        }
+        Write-Host "Release bundle: Supabase URL embedded." -ForegroundColor DarkGray
+    } finally {
+        Pop-Location
+        Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue
+    }
 }
 
 function Invoke-FriendsApkGradle([string]$ProjectRoot, [bool]$FrameProcessorsEnabled) {
     $gradleProps = Join-Path $ProjectRoot "android\gradle.properties"
     Set-FrameProcessorsEnabled $gradleProps $FrameProcessorsEnabled
+    Set-ReleasePackagingForDevices $gradleProps
 
     if ($FrameProcessorsEnabled) {
         Clear-NativeCxxCaches $ProjectRoot
@@ -80,20 +113,15 @@ function Invoke-FriendsApkGradle([string]$ProjectRoot, [bool]$FrameProcessorsEna
         }
     }
 
-    $proc = Start-Process `
-        -FilePath $gradlew `
-        -ArgumentList @(
-            'assembleRelease',
-            '-x', 'lint',
-            '--no-daemon',
-            '--no-parallel',
-            '-PreactNativeArchitectures=arm64-v8a'
-        ) `
-        -WorkingDirectory $androidDir `
-        -Wait `
-        -PassThru `
-        -NoNewWindow
-    return $proc.ExitCode
+    Push-Location $androidDir
+    try {
+        # Physical phones only (arm). x86 emulators cannot run this APK.
+        & $gradlew assembleRelease -x lint --no-daemon --no-parallel '-PreactNativeArchitectures=armeabi-v7a,arm64-v8a'
+        if ($null -eq $LASTEXITCODE) { return 0 }
+        return $LASTEXITCODE
+    } finally {
+        Pop-Location
+    }
 }
 
 Set-Location $Root
@@ -118,12 +146,14 @@ if ($UsedMirror) {
     Write-Host "Using preview build root (no spaces): $BuildRoot" -ForegroundColor Cyan
 }
 
+Copy-Item -Force $EnvFile (Join-Path $BuildRoot '.env')
+
 if (-not $wantPreview) {
-    Write-Host "Building release APK (arm64, live preview OFF)..." -ForegroundColor Yellow
+    Write-Host "Building release APK (arm phones, live preview OFF)..." -ForegroundColor Yellow
     $exitCode = Invoke-FriendsApkGradle $BuildRoot $false
     $livePreviewInApk = $false
 } else {
-    Write-Host "Building release APK (arm64, live preview ON)..." -ForegroundColor Cyan
+    Write-Host "Building release APK (arm phones, live preview ON)..." -ForegroundColor Cyan
     $exitCode = Invoke-FriendsApkGradle $BuildRoot $true
     $livePreviewInApk = ($exitCode -eq 0)
 }
@@ -131,8 +161,10 @@ if (-not $wantPreview) {
 if ($exitCode -ne 0) {
     Write-Host ""
     Write-Host "Build failed." -ForegroundColor Red
-    if ($wantPreview -and (Test-PathHasSpaces $Root)) {
-        Write-Host "  Run once: npm run setup:preview-build-root" -ForegroundColor Yellow
+    if ($wantPreview -and ($UsedMirror -or (Test-PathHasSpaces $Root) -or (Test-PathTooLongForNativeBuild $Root))) {
+        if (-not $UsedMirror) {
+            Write-Host "  Run: npm run setup:preview-build-root" -ForegroundColor Yellow
+        }
     }
     if ($wantPreview) {
         Write-Host "  Or build on Linux: eas build --platform android" -ForegroundColor Yellow
@@ -153,6 +185,7 @@ $outDir = Join-Path $Root "dist"
 New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 $dest = Join-Path $outDir "near_nature-friends.apk"
 Copy-Item -Force $apk $dest
+Test-ReleaseBundleHasSupabase $dest
 
 Write-Host ""
 Write-Host "Done." -ForegroundColor Green
@@ -172,4 +205,4 @@ Write-Host "  1. .\scripts\beta-production-setup.ps1  (SQL order)"
 Write-Host "  2. .\scripts\deploy-identify-species.ps1"
 Write-Host "  3. Do not put EXPO_PUBLIC_GEMINI_API_KEY in .env for friends builds"
 Write-Host ""
-Write-Host "Friends: copy APK to phone, open it, allow install from unknown sources if asked." -ForegroundColor Cyan
+Write-Host "Friends: copy APK to a physical Android phone (ARM). It will not run on x86 PC emulators." -ForegroundColor Cyan

@@ -1,30 +1,40 @@
-import { Image } from 'expo-image';
-import { useMemo } from 'react';
-import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
+import { useCallback, useMemo } from 'react';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
+import { DiscoverGridRow } from '@/components/discover/discover-grid-row';
 import { useTheme } from '@/hooks/useTheme';
+import {
+  buildDiscoverGridRows,
+  type DiscoverGridItem,
+  type DiscoverGridRowEntry,
+} from '@/lib/discover/buildDiscoverGridRows';
+import {
+  discoverGridFlashListRowHeight,
+  DISCOVER_FLASH_LIST_DRAW_DISTANCE,
+} from '@/lib/discover/discoverFlashListLayout';
 import {
   minGalleryTileSize,
   type GalleryGridColumns,
 } from '@/lib/detections/galleryGridColumns';
 
-export type DiscoverGridItem = {
-  key: string;
-  title: string;
-  imageUrl?: string | null;
-  onPress: () => void;
-  accessibilityLabel: string;
-};
+export type { DiscoverGridItem } from '@/lib/discover/buildDiscoverGridRows';
 
 type Props = {
   items: readonly DiscoverGridItem[];
   columnCount: GalleryGridColumns;
+  accessibilityLabel?: string;
 };
 
-export function DiscoverItemGrid({ items, columnCount }: Props) {
+export function DiscoverItemGrid({
+  items,
+  columnCount,
+  accessibilityLabel = 'Discover grid',
+}: Props) {
   const { theme } = useTheme();
   const { width: windowWidth } = useWindowDimensions();
   const tileGap = theme.spacing.sm;
+  const titleGap = theme.spacing.xs;
   const tileSize = useMemo(() => {
     const horizontalPadding = theme.spacing.lg * 2;
     const inner = Math.max(0, windowWidth - horizontalPadding);
@@ -34,64 +44,47 @@ export function DiscoverItemGrid({ items, columnCount }: Props) {
     );
   }, [columnCount, theme.spacing.lg, tileGap, windowWidth]);
 
+  const listData = useMemo(
+    () => buildDiscoverGridRows(items, columnCount),
+    [columnCount, items],
+  );
+
+  const rowHeight = discoverGridFlashListRowHeight(tileSize, tileGap, titleGap);
+
+  const renderItem = useCallback(
+    ({ item }: { item: DiscoverGridRowEntry }) => (
+      <DiscoverGridRow row={item} tileSize={tileSize} tileGap={tileGap} rowHeight={rowHeight} />
+    ),
+    [rowHeight, tileGap, tileSize],
+  );
+
+  const overrideItemLayout = useCallback(
+    (layout: { span?: number; size?: number }) => {
+      layout.size = rowHeight;
+    },
+    [rowHeight],
+  );
+
+  if (items.length === 0) {
+    return null;
+  }
+
   return (
-    <View style={[styles.grid, { gap: tileGap }]}>
-      {items.map((item) => (
-        <Pressable
-          key={item.key}
-          accessibilityRole="button"
-          accessibilityLabel={item.accessibilityLabel}
-          onPress={item.onPress}
-          style={({ pressed }) => [
-            styles.tile,
-            { width: tileSize, gap: theme.spacing.xs },
-            pressed && styles.tilePressed,
-          ]}>
-          {item.imageUrl ? (
-            <Image
-              source={{ uri: item.imageUrl }}
-              style={[styles.image, { width: tileSize, height: tileSize, backgroundColor: theme.colors.border }]}
-              contentFit="cover"
-              cachePolicy="memory-disk"
-              recyclingKey={item.key}
-              transition={200}
-            />
-          ) : (
-            <View
-              style={[
-                styles.image,
-                styles.imagePlaceholder,
-                { width: tileSize, height: tileSize, backgroundColor: theme.colors.border },
-              ]}
-            />
-          )}
-          <Text style={[styles.title, { color: theme.colors.textPrimary }]} numberOfLines={2}>
-            {item.title}
-          </Text>
-        </Pressable>
-      ))}
+    <View accessibilityLabel={accessibilityLabel} style={styles.listWrap}>
+      <FlashList
+        data={listData}
+        renderItem={renderItem}
+        keyExtractor={(entry) => entry.id}
+        scrollEnabled={false}
+        drawDistance={DISCOVER_FLASH_LIST_DRAW_DISTANCE}
+        overrideItemLayout={overrideItemLayout}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  tile: {},
-  tilePressed: {
-    opacity: 0.88,
-  },
-  image: {
-    borderRadius: 4,
-  },
-  imagePlaceholder: {
-    opacity: 0.35,
-  },
-  title: {
-    fontSize: 12,
-    fontWeight: '600',
-    lineHeight: 16,
+  listWrap: {
+    minHeight: 2,
   },
 });

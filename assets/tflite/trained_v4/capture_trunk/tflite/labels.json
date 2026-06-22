@@ -1,0 +1,54 @@
+{
+  "model": "tf_efficientnet_b2.ns_jft_in1k",
+  "groupCount": 11,
+  "groups": [
+    {
+      "index": 0,
+      "name": "birds"
+    },
+    {
+      "index": 1,
+      "name": "dryland_plants"
+    },
+    {
+      "index": 2,
+      "name": "ferns_mosses"
+    },
+    {
+      "index": 3,
+      "name": "fish"
+    },
+    {
+      "index": 4,
+      "name": "fungi"
+    },
+    {
+      "index": 5,
+      "name": "herbaceous"
+    },
+    {
+      "index": 6,
+      "name": "herps"
+    },
+    {
+      "index": 7,
+      "name": "insects_arachnids"
+    },
+    {
+      "index": 8,
+      "name": "lepidoptera"
+    },
+    {
+      "index": 9,
+      "name": "mammals"
+    },
+    {
+      "index": 10,
+      "name": "trees_shrubs"
+    }
+  ],
+  "outputs": [
+    "gate_confirm",
+    "group_logits"
+  ]
+}

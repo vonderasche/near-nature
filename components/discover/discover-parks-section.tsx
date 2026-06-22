@@ -1,7 +1,8 @@
 import { useRouter, type Href } from 'expo-router';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { DiscoverDetailFlashList } from '@/components/discover/discover-detail-flash-list';
 import { DiscoverItemGrid, type DiscoverGridItem } from '@/components/discover/discover-item-grid';
 import { ParkListItem } from '@/components/discover/park-list-item';
 import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
@@ -16,6 +17,7 @@ import type { DeviceCoordinatesStatus } from '@/hooks/useDeviceCoordinates';
 import type { DeviceCoordinates } from '@/lib/parks/sortFloridaStateParks';
 import { resolveParkListImageUrl } from '@/lib/parks/parkSpeciesHighlights';
 import { stageDiscoverPark } from '@/lib/discover/discoverRouteCache';
+import { DISCOVER_PARK_LIST_ROW_HEIGHT } from '@/lib/discover/discoverFlashListLayout';
 import { routeDiscoverPark } from '@/lib/routing/routes';
 import type { GalleryGridColumns } from '@/lib/detections/galleryGridColumns';
 import type { GalleryLayoutMode } from '@/lib/detections/galleryLayoutMode';
@@ -83,6 +85,13 @@ export function DiscoverParksSection({
     [parks, router],
   );
 
+  const renderParkItem = useCallback(
+    (park: FloridaStatePark) => (
+      <ParkListItem park={park} deviceCoords={deviceCoords} showDistance={showDistance} />
+    ),
+    [deviceCoords, showDistance],
+  );
+
   if (loading && parks.length === 0) {
     return <CenteredActivityIndicator accessibilityLabel="Loading Florida state parks" />;
   }
@@ -121,16 +130,19 @@ export function DiscoverParksSection({
           ) : null}
         </View>
       ) : layoutMode === 'grid' ? (
-        <DiscoverItemGrid items={gridItems} columnCount={gridColumns} />
+        <DiscoverItemGrid
+          items={gridItems}
+          columnCount={gridColumns}
+          accessibilityLabel="Florida state parks grid"
+        />
       ) : (
-        parks.map((park) => (
-          <ParkListItem
-            key={floridaStateParkListKey(park)}
-            park={park}
-            deviceCoords={deviceCoords}
-            showDistance={showDistance}
-          />
-        ))
+        <DiscoverDetailFlashList
+          data={parks}
+          keyExtractor={floridaStateParkListKey}
+          renderItem={renderParkItem}
+          rowHeight={DISCOVER_PARK_LIST_ROW_HEIGHT}
+          accessibilityLabel="Florida state parks list"
+        />
       )}
     </View>
   );

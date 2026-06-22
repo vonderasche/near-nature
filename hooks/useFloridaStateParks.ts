@@ -1,7 +1,17 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 
+import { FLORIDA_PARKS_CACHE_MAX_AGE_MS } from '@/constants/florida-parks-cache';
+import { useCacheFirstFetch } from '@/hooks/useCacheFirstFetch';
 import { aggregateDiscoverSpecies, searchDiscoverSpecies } from '@/lib/parks/aggregateDiscoverSpecies';
-import { loadFloridaStateParks } from '@/lib/parks/loadFloridaStateParks';
+import {
+  loadCachedFloridaStateParksEntry,
+  saveCachedFloridaStateParks,
+} from '@/lib/parks/floridaStateParksCache';
+import {
+  clearInMemoryFloridaStateParks,
+  loadFloridaStateParksFromBundledCsv,
+  setInMemoryFloridaStateParks,
+} from '@/lib/parks/loadFloridaStateParks';
 import type { DiscoverParkSortMode } from '@/lib/parks/discoverParkSort';
 import { searchFloridaStateParks } from '@/lib/parks/searchFloridaStateParks';
 import { sortFloridaStateParks, type DeviceCoordinates } from '@/lib/parks/sortFloridaStateParks';
@@ -20,38 +30,59 @@ export function useFloridaStateParks(
   animalCount: number;
   totalCount: number;
   isLoading: boolean;
+  isRefreshing: boolean;
   error: string | null;
-  refetch: () => Promise<void>;
+  refetch: (options?: { force?: boolean }) => Promise<void>;
 } {
-  const [allParks, setAllParks] = useState<FloridaStatePark[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: allParks,
+    loading: isLoading,
+    refreshing: isRefreshing,
+    error,
+    refetch: refetchParks,
+  } = useCacheFirstFetch<FloridaStatePark[]>({
+    enabled: true,
+    maxAgeMs: FLORIDA_PARKS_CACHE_MAX_AGE_MS,
+    loadCache: async () => {
+      const entry = await loadCachedFloridaStateParksEntry();
+      if (entry) {
+        setInMemoryFloridaStateParks(entry.value);
+      }
+      return entry;
+    },
+    fetchFresh: async () => {
+      clearInMemoryFloridaStateParks();
+      const parks = await loadFloridaStateParksFromBundledCsv();
+      setInMemoryFloridaStateParks(parks);
+      return parks;
+    },
+    saveCache: saveCachedFloridaStateParks,
+    onFresh: (parks) => {
+      setInMemoryFloridaStateParks(parks);
+    },
+    mapError: (err) =>
+      err instanceof Error ? err.message : 'Could not load Florida state parks.',
+  });
 
-  const refetch = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const parks = await loadFloridaStateParks();
-      setAllParks(parks);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Could not load Florida state parks.';
-      setError(message);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const refetch = useCallback(
+    async (options?: { force?: boolean }) => {
+      if (options?.force) {
+        clearInMemoryFloridaStateParks();
+      }
+      await refetchParks({ force: options?.force });
+    },
+    [refetchParks],
+  );
 
-  useEffect(() => {
-    void refetch();
-  }, [refetch]);
+  const parksSource = allParks ?? [];
 
   const parks = useMemo(() => {
-    const filtered = searchFloridaStateParks(allParks, searchQuery);
+    const filtered = searchFloridaStateParks(parksSource, searchQuery);
     return sortFloridaStateParks(filtered, sortMode, deviceCoords);
-  }, [allParks, deviceCoords, searchQuery, sortMode]);
+  }, [deviceCoords, parksSource, searchQuery, sortMode]);
 
-  const allPlants = useMemo(() => aggregateDiscoverSpecies(allParks, 'plant'), [allParks]);
-  const allAnimals = useMemo(() => aggregateDiscoverSpecies(allParks, 'animal'), [allParks]);
+  const allPlants = useMemo(() => aggregateDiscoverSpecies(parksSource, 'plant'), [parksSource]);
+  const allAnimals = useMemo(() => aggregateDiscoverSpecies(parksSource, 'animal'), [parksSource]);
 
   const plants = useMemo(
     () => searchDiscoverSpecies(allPlants, searchQuery),
@@ -68,8 +99,9 @@ export function useFloridaStateParks(
     animals,
     plantCount: allPlants.length,
     animalCount: allAnimals.length,
-    totalCount: allParks.length,
+    totalCount: parksSource.length,
     isLoading,
+    isRefreshing,
     error,
     refetch,
   };

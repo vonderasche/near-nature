@@ -1,4 +1,5 @@
-import { Redirect, useRouter, type Href } from 'expo-router';
+import { Redirect, usePathname, useRouter, type Href } from 'expo-router';
+import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,27 +15,56 @@ import { CameraZoomChips } from '@/components/camera/camera-zoom-chips';
 import { useCameraCaptureFormat } from '@/hooks/useCameraCaptureFormat';
 import { useCameraPreferences } from '@/hooks/useCameraPreferences';
 import { useCameraZoom } from '@/hooks/useCameraZoom';
+import { useMvpCaptureSessionActive } from '@/hooks/useMvpCaptureSessionActive';
+import { useMvpLivePreviewSuspended } from '@/hooks/useMvpLivePreviewSuspended';
 import { CenteredActivityIndicator } from '@/components/shared/centered-activity-indicator';
 import { ScreenCenter } from '@/components/shared/screen-center';
 import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { useTheme } from '@/hooks/useTheme';
 import { useCameraScreen } from '@/hooks/useCameraScreen';
 import { usePickPhotoFromGallery } from '@/hooks/usePickPhotoFromGallery';
+import { areFrameProcessorsAvailable } from '@/lib/camera/areFrameProcessorsAvailable';
+import { isMvpCaptureEnabled } from '@/lib/camera/tflite/mvp/isMvpCaptureEnabled';
+import {
+  beginMvpCaptureSession,
+  ensureMvpPreviewResumableOnCameraFocus,
+  resumeCameraHardwarePreview,
+  suspendMvpPreviewBeforeCapture,
+} from '@/lib/camera/tflite/mvp/mvpTfliteMemory';
 import { contentInsetsPadding } from '@/lib/screen/contentInsets';
 
 export default function CameraScreen() {
   const { theme } = useTheme();
   const { isAuthenticated, isLoading } = useAuthContext();
   const router = useRouter();
+  const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const [pickerNotice, setPickerNotice] = useState<{ title: string; message: string } | null>(null);
   const [controlMenusOpen, setControlMenusOpen] = useState(false);
 
   const navigateToIdentification = useCallback(
     (uri: string) => {
+      if (isMvpCaptureEnabled()) {
+        beginMvpCaptureSession();
+      }
       router.push(routeCameraIdentification({ uri }) as unknown as Href);
     },
     [router],
+  );
+
+  const isFocused = useIsFocused();
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!isMvpCaptureEnabled()) return;
+      resumeCameraHardwarePreview();
+      const timer = setTimeout(() => {
+        if (!pathname.includes('/camera/identification')) {
+          ensureMvpPreviewResumableOnCameraFocus();
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    }, [pathname]),
   );
 
   const onPhotoCaptured = useCallback(
@@ -71,6 +101,8 @@ export default function CameraScreen() {
     toggleLevel,
     liveClassifierEnabled,
     toggleLiveClassifier,
+    previewMode,
+    togglePreviewMode,
   } = useCameraPreferences();
 
   const {
@@ -99,11 +131,36 @@ export default function CameraScreen() {
     isResumingPreview,
   } = useCameraScreen({ onPhotoCaptured, enableShutterSound: shutterSoundEnabled });
 
-  const { format, photoHdr, hdrSupported, stabilizationSupported } = useCameraCaptureFormat(
-    device ?? undefined,
-    { hdrEnabled, stabilizationEnabled },
-  );
+  const livePreviewSuspended = useMvpLivePreviewSuspended();
+  const captureSessionActive = useMvpCaptureSessionActive();
+  const livePreviewPipelineActive =
+    isFocused &&
+    liveClassifierEnabled &&
+    !livePreviewSuspended &&
+    !captureSessionActive &&
+    areFrameProcessorsAvailable();
+  const effectiveLiveClassifierEnabled =
+    isFocused && liveClassifierEnabled && !livePreviewSuspended && !captureSessionActive;
+
+  const {
+    format,
+    photoHdr,
+    hdrSupported,
+    stabilizationSupported,
+    stabilizationEnabled: stabilizationActiveForCamera,
+  } = useCameraCaptureFormat(device ?? undefined, {
+    hdrEnabled,
+    stabilizationEnabled,
+    livePreviewEnabled: livePreviewPipelineActive,
+  });
   const { zoom, setZoom, chips, activeChipId, selectChip } = useCameraZoom(device ?? undefined);
+
+  const handleCapture = useCallback(async () => {
+    if (isMvpCaptureEnabled()) {
+      await suspendMvpPreviewBeforeCapture();
+    }
+    await takePicture();
+  }, [takePicture]);
 
   if (!isLoading && !isAuthenticated) {
     return <Redirect href={routes.login} />;
@@ -189,14 +246,15 @@ export default function CameraScreen() {
               zoom={zoom}
               onZoomChange={setZoom}
               torch={torchOn ? 'on' : 'off'}
-              isActive={isPreviewActive}
+              isActive={isPreviewActive && !captureSessionActive}
               previewKey={previewKey}
               isResumingPreview={isResumingPreview}
               gridVisible={gridVisible}
               levelVisible={levelEnabled}
-              stabilizationEnabled={stabilizationEnabled}
+              stabilizationEnabled={stabilizationActiveForCamera}
               stabilizationSupported={stabilizationSupported}
-              liveClassifierEnabled={liveClassifierEnabled}
+              liveClassifierEnabled={effectiveLiveClassifierEnabled}
+              previewMode={previewMode}
               onFocusPoint={focusAt}
               controlMenusOpen={controlMenusOpen}
               onDismissControlMenus={() => setControlMenusOpen(false)}
@@ -224,6 +282,8 @@ export default function CameraScreen() {
               onLevelPress={toggleLevel}
               liveClassifierEnabled={liveClassifierEnabled}
               onLiveClassifierPress={toggleLiveClassifier}
+              previewMode={previewMode}
+              onPreviewModePress={togglePreviewMode}
               onMenuExpandedChange={setControlMenusOpen}
             />
             <CameraZoomChips
@@ -243,7 +303,7 @@ export default function CameraScreen() {
         <CameraBottomToolbar
           insets={insets}
           onFlip={toggleFacing}
-          onCapture={takePicture}
+          onCapture={handleCapture}
           capturing={capturing}
           onPickGallery={handlePickGallery}
           pickingGallery={pickingGallery}

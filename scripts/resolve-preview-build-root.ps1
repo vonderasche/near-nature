@@ -9,6 +9,11 @@ function Test-PathHasSpaces([string]$Path) {
     return $Path -match '\s'
 }
 
+function Test-PathTooLongForNativeBuild([string]$Path) {
+    # Windows CMake/ninja object paths blow up under long repo roots (limit ~250 chars).
+    return $Path.Length -ge 48
+}
+
 function Get-ConfiguredPreviewBuildRoot() {
     if ($env:NEAR_NATURE_PREVIEW_BUILD_ROOT) {
         return (Resolve-Path $env:NEAR_NATURE_PREVIEW_BUILD_ROOT -ErrorAction Stop).Path
@@ -27,11 +32,13 @@ function Sync-ProjectToPreviewBuildRoot([string]$SourceRoot, [string]$DestRoot) 
     Write-Host "  From: $SourceRoot"
     Write-Host "  To:   $DestRoot"
 
+    # /MIR deletes stale files in the mirror (e.g. old discover.tsx after moving to discover/).
+    # /XD dirs are excluded from copy and purge (android/ stays for prebuild; node_modules stays installed).
     $robocopyArgs = @(
         $SourceRoot,
         $DestRoot,
-        '/E',
-        '/XD', 'node_modules', '.git', 'dist', 'android\app\build', 'android\build', 'android\.cxx',
+        '/MIR',
+        '/XD', 'node_modules', '.git', 'dist', 'android',
         '/NFL', '/NDL', '/NJH', '/NJS', '/nc', '/ns', '/np'
     )
     & robocopy @robocopyArgs | Out-Null
@@ -87,7 +94,13 @@ function Resolve-PreviewBuildRoot {
         }
     }
 
-    if (-not (Test-PathHasSpaces $sourceRoot)) {
+    $destRoot = Get-ConfiguredPreviewBuildRoot
+    $needsMirror = (Test-PathHasSpaces $sourceRoot) -or (Test-PathTooLongForNativeBuild $sourceRoot)
+    if ($env:OS -eq 'Windows_NT' -and $sourceRoot -ne $destRoot) {
+        # Native CMake paths exceed MAX_PATH on most Windows repo locations; always mirror unless already there.
+        $needsMirror = $true
+    }
+    if (-not $needsMirror) {
         return @{
             BuildRoot = $sourceRoot
             UsedMirror = $false
@@ -95,7 +108,6 @@ function Resolve-PreviewBuildRoot {
         }
     }
 
-    $destRoot = Get-ConfiguredPreviewBuildRoot
     if (Test-PathHasSpaces $destRoot) {
         throw @"
 Preview build root must not contain spaces.

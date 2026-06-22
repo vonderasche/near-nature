@@ -33,6 +33,8 @@ type Props = {
   levelVisible?: boolean;
   stabilizationEnabled?: boolean;
   stabilizationSupported?: boolean;
+  /** Keep YUV video pipeline active while the live classifier loads (avoids session reconfigure errors). */
+  videoPipelineEnabled?: boolean;
   frameProcessor?: CameraFrameProcessor;
   onFocusPoint: (point: Point) => void | Promise<void>;
   /** When true, preview tap dismisses menus only (no focus). */
@@ -60,13 +62,16 @@ export function CameraLivePreview({
   levelVisible = false,
   stabilizationEnabled = false,
   stabilizationSupported = false,
+  videoPipelineEnabled = false,
   frameProcessor,
   onFocusPoint,
   controlMenusOpen = false,
   onDismissControlMenus,
 }: Props) {
+  const useVideoPipeline = videoPipelineEnabled || frameProcessor != null;
   const stabilizationMode =
-    stabilizationEnabled && stabilizationSupported ? 'auto' : 'off';
+    !useVideoPipeline && stabilizationEnabled && stabilizationSupported ? 'auto' : 'off';
+  const effectivePhotoHdr = useVideoPipeline ? false : photoHdr;
   const [layout, setLayout] = useState({ width: 0, height: 0 });
   const [focusRing, setFocusRing] = useState<FocusRingState | null>(null);
 
@@ -148,10 +153,10 @@ export function CameraLivePreview({
             format={format}
             isActive
             photo
-            video={frameProcessor != null}
-            pixelFormat={frameProcessor != null ? 'yuv' : 'rgb'}
+            video={useVideoPipeline}
+            pixelFormat={useVideoPipeline ? 'yuv' : 'rgb'}
             photoQualityBalance="quality"
-            photoHdr={photoHdr}
+            photoHdr={effectivePhotoHdr}
             videoStabilizationMode={stabilizationMode}
             zoom={zoom}
             torch={torch}

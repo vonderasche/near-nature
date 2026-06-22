@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 
+import { DiscoverDetailFlashList } from '@/components/discover/discover-detail-flash-list';
 import { DiscoverItemGrid, type DiscoverGridItem } from '@/components/discover/discover-item-grid';
 import { DiscoverSpeciesSubcategoryChips } from '@/components/discover/discover-species-subcategory-chips';
 import { SpeciesListItem } from '@/components/discover/species-list-item';
@@ -19,6 +20,7 @@ import {
   sortDiscoverSpecies,
 } from '@/lib/discover/discoverSpeciesFilter';
 import { stageDiscoverSpecies } from '@/lib/discover/discoverRouteCache';
+import { DISCOVER_SPECIES_LIST_ROW_HEIGHT } from '@/lib/discover/discoverFlashListLayout';
 import { routeDiscoverSpecies } from '@/lib/routing/routes';
 import { isSearchQueryActive } from '@/lib/search/normalizeSearchQuery';
 import type { GalleryGridColumns } from '@/lib/detections/galleryGridColumns';
@@ -77,6 +79,11 @@ export function DiscoverSpeciesSection({
         },
       })),
     [router, visibleEntries],
+  );
+
+  const renderSpeciesItem = useCallback(
+    (entry: DiscoverSpeciesEntry) => <SpeciesListItem entry={entry} />,
+    [],
   );
 
   if (loading && entries.length === 0) {
@@ -143,11 +150,19 @@ export function DiscoverSpeciesSection({
           />
         </View>
       ) : layoutMode === 'grid' ? (
-        <DiscoverItemGrid items={gridItems} columnCount={gridColumns} />
+        <DiscoverItemGrid
+          items={gridItems}
+          columnCount={gridColumns}
+          accessibilityLabel={`Featured ${kindLabelPlural} grid`}
+        />
       ) : (
-        visibleEntries.map((entry) => (
-          <SpeciesListItem key={`${entry.kind}-${entry.name}`} entry={entry} />
-        ))
+        <DiscoverDetailFlashList
+          data={visibleEntries}
+          keyExtractor={(entry) => `${entry.kind}-${entry.name}`}
+          renderItem={renderSpeciesItem}
+          rowHeight={DISCOVER_SPECIES_LIST_ROW_HEIGHT}
+          accessibilityLabel={`Featured ${kindLabelPlural} list`}
+        />
       )}
     </View>
   );

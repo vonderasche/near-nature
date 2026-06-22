@@ -25,7 +25,7 @@ import { mergeIdentificationSpecies } from '@/lib/identification/mergeIdentifica
 type Props = {
   photoUri: string;
   /** Return to the live camera (retake flow). */
-  onRetake: () => void;
+  onRetake: () => void | Promise<void>;
   /** Shown on the camera screen if a background save fails after leaving this view. */
   onBackgroundSaveError?: (message: string) => void;
 };
@@ -93,7 +93,9 @@ export function CameraIdentificationPanel({
       : [];
   const primaryLatinName = displaySpecies[safeIndex]?.latinName ?? classifications[safeIndex]?.latinName;
   const showAboutSection = Boolean(primaryLatinName) && classifications.length > 0 && !identifying;
-  const showDetailsSection = classifications.length > 0 || identifying || identifyError;
+  const identificationNotice = tfliteMeta?.notice?.trim() ?? null;
+  const showDetailsSection =
+    classifications.length > 0 || identifying || identifyError != null || identificationNotice != null;
 
   return (
     <Screen>

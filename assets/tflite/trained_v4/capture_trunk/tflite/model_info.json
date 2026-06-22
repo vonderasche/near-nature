@@ -1,0 +1,56 @@
+{
+  "architecture": "tf_efficientnet_b2.ns_jft_in1k",
+  "model_type": "capture_trunk",
+  "checkpoint": "E:\\PROGRAMMING\\Portfolio\\NearNature\\python\\models\\v4\\capture_trunk\\best.pt",
+  "inputSize": 260,
+  "numGroups": 11,
+  "tfliteFile": "capture_trunk.tflite",
+  "inputLayout": "NHWC",
+  "inputDtype": "float32",
+  "weightDtype": "float32",
+  "bundleBytes": 30900504,
+  "float16Bytes": 15537060,
+  "float32Bytes": 30900504,
+  "normalization": {
+    "mean": [
+      0.485,
+      0.456,
+      0.406
+    ],
+    "std": [
+      0.229,
+      0.224,
+      0.225
+    ]
+  },
+  "outputs": {
+    "gate_confirm": {
+      "activation": "sigmoid",
+      "description": "organism confidence on capture"
+    },
+    "group_logits": {
+      "activation": "softmax",
+      "description": "specialist group routing"
+    }
+  },
+  "group_to_kingdom": {
+    "trees_shrubs": "plantae",
+    "herbaceous": "plantae",
+    "ferns_mosses": "plantae",
+    "dryland_plants": "plantae",
+    "birds": "animalia",
+    "herps": "animalia",
+    "lepidoptera": "animalia",
+    "insects_arachnids": "animalia",
+    "fish": "animalia",
+    "mammals": "animalia",
+    "fungi": "fungi"
+  },
+  "val_combined_acc": 0.9251512562029293,
+  "val_gate_acc": 0.9989766764087072,
+  "val_router_acc": 0.8513258359971513,
+  "epoch": 1,
+  "temperature_gate": null,
+  "temperature_router": null,
+  "mobileNote": "Canonical bundle is full float32 (~31 MB). float16 sidecar (~15 MB) is not supported by react-native-fast-tflite on Android."
+}

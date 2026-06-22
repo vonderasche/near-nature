@@ -1,19 +1,12 @@
 import * as ImageManipulator from 'expo-image-manipulator';
 import { decode } from 'jpeg-js';
-import { Image } from 'react-native';
 
 import { ensureLocalImageUri } from '@/lib/camera/tflite/ensureLocalImageUri';
 import {
-  V3_B1_RESIZE_SHORT_EDGE,
-  V3_IMAGENET_NORM,
-  V3_INPUT_224,
-  V3_INPUT_240,
-} from '@/lib/camera/tflite/v3/v3CascadeConfig';
-import {
-  centerCropRgba,
-  resizeShortEdgeDimensions,
-  rgbaToNormalizedFloat32Nhwc,
-} from '@/lib/camera/tflite/v3/v3ImageTransforms';
+  MVP_IMAGENET_NORM,
+  MVP_INPUT_224,
+} from '@/lib/camera/tflite/mvp/mvpCaptureConfig';
+import { rgbaToNormalizedFloat32Nhwc } from '@/lib/camera/tflite/v3/v3ImageTransforms';
 
 function base64ToUint8Array(base64: string): Uint8Array {
   const binary = atob(base64);
@@ -22,16 +15,6 @@ function base64ToUint8Array(base64: string): Uint8Array {
     bytes[i] = binary.charCodeAt(i);
   }
   return bytes;
-}
-
-async function getImageSize(uri: string): Promise<{ width: number; height: number }> {
-  return new Promise((resolve, reject) => {
-    Image.getSize(
-      uri,
-      (width, height) => resolve({ width, height }),
-      (error) => reject(error),
-    );
-  });
 }
 
 async function loadRgbaFromResizedUri(
@@ -62,22 +45,8 @@ export async function buildV3Input224Square(imageUri: string): Promise<ArrayBuff
   const localUri = await ensureLocalImageUri(imageUri);
   const { data, width, height } = await loadRgbaFromResizedUri(
     localUri,
-    V3_INPUT_224,
-    V3_INPUT_224,
+    MVP_INPUT_224,
+    MVP_INPUT_224,
   );
-  return rgbaToNormalizedFloat32Nhwc(data, width, height, V3_IMAGENET_NORM);
-}
-
-/** Resize short edge 255, center crop 240×240, ImageNet-normalized NHWC float32. */
-export async function buildV3Input240B1Crop(imageUri: string): Promise<ArrayBuffer> {
-  const localUri = await ensureLocalImageUri(imageUri);
-  const { width, height } = await getImageSize(localUri);
-  const resizedDims = resizeShortEdgeDimensions(width, height, V3_B1_RESIZE_SHORT_EDGE);
-  const { data, width: resizedWidth, height: resizedHeight } = await loadRgbaFromResizedUri(
-    localUri,
-    resizedDims.width,
-    resizedDims.height,
-  );
-  const cropped = centerCropRgba(data, resizedWidth, resizedHeight, V3_INPUT_240);
-  return rgbaToNormalizedFloat32Nhwc(cropped, V3_INPUT_240, V3_INPUT_240, V3_IMAGENET_NORM);
+  return rgbaToNormalizedFloat32Nhwc(data, width, height, MVP_IMAGENET_NORM);
 }

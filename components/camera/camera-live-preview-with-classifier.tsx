@@ -5,9 +5,11 @@ import { CameraLivePredictionsOverlay } from '@/components/camera/camera-live-pr
 import { CameraLivePreview } from '@/components/camera/camera-live-preview';
 import { useLivePreviewFrameProcessor } from '@/hooks/useLivePreviewFrameProcessor';
 import { areFrameProcessorsAvailable } from '@/lib/camera/areFrameProcessorsAvailable';
+import type { MvpPreviewMode } from '@/lib/camera/tflite/mvp/mvpPreviewMode';
 
 type Props = ComponentProps<typeof CameraLivePreview> & {
   liveClassifierEnabled: boolean;
+  previewMode?: MvpPreviewMode;
   bottomInset: number;
 };
 
@@ -16,6 +18,7 @@ const LIVE_PREVIEW_UNAVAILABLE_HINT =
 
 export function CameraLivePreviewWithClassifier({
   liveClassifierEnabled,
+  previewMode = 'scene_gate',
   bottomInset,
   ...previewProps
 }: Props) {
@@ -42,6 +45,7 @@ export function CameraLivePreviewWithClassifier({
     <CameraLivePreviewWithClassifierActive
       {...previewProps}
       liveClassifierEnabled={liveClassifierEnabled}
+      previewMode={previewMode}
       bottomInset={bottomInset}
     />
   );
@@ -49,19 +53,25 @@ export function CameraLivePreviewWithClassifier({
 
 function CameraLivePreviewWithClassifierActive({
   liveClassifierEnabled,
+  previewMode = 'scene_gate',
   bottomInset,
   ...previewProps
 }: Props) {
-  // Guard against VisionCameraProxy "view not found" crashes during preview remount/resume.
   const frameProcessingActive =
     previewProps.isActive && !previewProps.isResumingPreview && liveClassifierEnabled;
 
-  const { frameProcessor, modelState, modelError, predictions } =
-    useLivePreviewFrameProcessor(frameProcessingActive);
+  const { frameProcessor, modelState, modelError, predictions } = useLivePreviewFrameProcessor(
+    frameProcessingActive,
+    previewMode,
+  );
 
   return (
     <View style={styles.previewRoot} pointerEvents="box-none">
-      <CameraLivePreview {...previewProps} frameProcessor={frameProcessor} />
+      <CameraLivePreview
+        {...previewProps}
+        videoPipelineEnabled
+        frameProcessor={frameProcessor}
+      />
       <CameraLivePredictionsOverlay
         enabled={liveClassifierEnabled}
         bottomInset={bottomInset}

@@ -62,8 +62,8 @@ describe('searchFloridaStateParks', () => {
     expect(monroe.some((park) => park.parkId === 'bahia-honda')).toBe(true);
 
     const manatee = searchFloridaStateParks(parks, 'manatee');
-    expect(manatee.some((park) => park.topAnimals.join(' ').toLowerCase().includes('manatee'))).toBe(
-      true,
-    );
+    expect(manatee.some((park) =>
+      park.topAnimals.some((item) => item.name.toLowerCase().includes('manatee')),
+    )).toBe(true);
   });
 });

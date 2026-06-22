@@ -2,8 +2,6 @@ import {
   previewLabelToSubcategory,
   previewLabelToTaxonGroup,
 } from '@/lib/camera/mobilenet/previewLabelTaxonomy';
-import { identifyPhotoWithV3Cascade } from '@/lib/camera/tflite/v3/identifyPhotoWithV3Cascade';
-import { isV3CascadeEnabled } from '@/lib/camera/tflite/v3/isV3CascadeEnabled';
 import { resolveSpecialistForPreviewLabel } from '@/lib/camera/mobilenet/tfliteRouting';
 import { getSpecialistDefinition } from '@/lib/camera/mobilenet/specialistModelRegistry';
 import { runCaptureRouting, runSpecialistCapture } from '@/lib/camera/tflite/cachedModels';
@@ -56,16 +54,11 @@ function genusToClassification(
 
 /**
  * On-device identification for camera capture and gallery picks.
- * V3: scene gate → kingdom → plant router → specialist (when enabled).
- * Legacy: MobileViT routing → v2 specialist.
+ * MobileViT routing → inat2021_specialists_v2 specialist.
  */
 export async function identifyPhotoWithTflite(
   photoUri: string,
 ): Promise<TfliteIdentificationResult> {
-  if (isV3CascadeEnabled()) {
-    return identifyPhotoWithV3Cascade(photoUri);
-  }
-
   return identifyPhotoWithLegacyTflite(photoUri);
 }
 

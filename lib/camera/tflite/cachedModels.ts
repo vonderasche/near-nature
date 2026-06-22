@@ -16,6 +16,20 @@ import {
 const modelCache = new Map<string, Promise<TfliteModel>>();
 const specialistModelPromises: Partial<Record<SpecialistAssetFolder, Promise<TfliteModel>>> = {};
 let mobilevitRoutingModelPromise: Promise<TfliteModel> | null = null;
+const evictionListeners = new Set<() => void>();
+
+export function subscribeTfliteModelEviction(listener: () => void): () => void {
+  evictionListeners.add(listener);
+  return () => {
+    evictionListeners.delete(listener);
+  };
+}
+
+export function notifyTfliteModelEviction(): void {
+  for (const listener of evictionListeners) {
+    listener();
+  }
+}
 
 export function getCachedTfliteModel(
   modelAsset: number,
@@ -28,6 +42,25 @@ export function getCachedTfliteModel(
   const pending = loadBundledTfliteModel(modelAsset, delegates);
   modelCache.set(cacheKey, pending);
   return pending;
+}
+
+/** Remove a cached model entry so the next load creates a fresh native instance (best-effort RAM relief). */
+export function evictCachedTfliteModel(
+  modelAsset: number,
+  delegates: TensorflowModelDelegate[] = [],
+): void {
+  const cacheKey = `${modelAsset}:${delegates.join(',')}`;
+  modelCache.delete(cacheKey);
+}
+
+/** Drop all JS-cached model promises before a heavy capture load (best-effort native RAM relief). */
+export function evictAllCachedTfliteModels(): void {
+  modelCache.clear();
+  for (const key of Object.keys(specialistModelPromises) as SpecialistAssetFolder[]) {
+    delete specialistModelPromises[key];
+  }
+  mobilevitRoutingModelPromise = null;
+  notifyTfliteModelEviction();
 }
 
 export async function loadMobileVitRoutingModel(): Promise<TfliteModel> {

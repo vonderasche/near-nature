@@ -59,18 +59,17 @@ assets/tflite/near_nature_app_bundle/**/train.log
 assets/tflite/near_nature_app_bundle/**/train.err.log
 assets/tflite/near_nature_app_bundle/**/*.log
 
-# duplicate specialist exports at trained_v3 root (canonical: step05_specialists/)
-assets/tflite/trained_v3/birds/
-assets/tflite/trained_v3/herbaceous/
-
-# trained_v3 training/export artifacts (runtime bundle keeps .tflite + labels/metadata)
-assets/tflite/trained_v3/**/tflite/tflite_out/
-assets/tflite/trained_v3/**/tflite/_docker_onnx2tflite.py
-assets/tflite/trained_v3/**/tflite/export_dummy_input.npy
-assets/tflite/trained_v3/**/*.onnx
-assets/tflite/trained_v3/**/*.pt
-assets/tflite/trained_v3/**/train.log
-assets/tflite/trained_v3/**/train.err.log
+# trained_v4 training/export artifacts (runtime bundle keeps .tflite + labels/metadata)
+assets/tflite/trained_v4/**/tflite/tflite_out/
+assets/tflite/trained_v4/**/tflite/_docker_onnx2tflite.py
+assets/tflite/trained_v4/**/tflite/export_dummy_input.npy
+assets/tflite/trained_v4/**/*.onnx
+assets/tflite/trained_v4/**/*.pt
+assets/tflite/trained_v4/**/train.log
+assets/tflite/trained_v4/**/train.err.log
+# Optional export sidecars (runtime uses canonical *.tflite only; keeps APK/repo lean)
+assets/tflite/trained_v4/**/*_float32.tflite
+assets/tflite/trained_v4/**/*_float16.tflite
 
 # local tooling scratch
 supabase/.temp/

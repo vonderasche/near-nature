@@ -1,8 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { NitroModules } from 'react-native-nitro-modules';
 import type { TensorflowModelDelegate, TfliteModel } from 'react-native-fast-tflite';
 
-import { getCachedTfliteModel } from '@/lib/camera/tflite/cachedModels';
+import {
+  evictCachedTfliteModel,
+  getCachedTfliteModel,
+  subscribeTfliteModelEviction,
+} from '@/lib/camera/tflite/cachedModels';
 import type { TfliteModelConfig } from '@/lib/camera/tflite/modelTypes';
 
 type ModelLoadState =
@@ -20,11 +24,25 @@ export function useRegisteredTfliteModel(
     model: undefined,
     error: undefined,
   });
+  const [reloadGeneration, setReloadGeneration] = useState(0);
+  const enabledRef = useRef(enabled);
+
+  enabledRef.current = enabled;
 
   const delegatesKey = delegates.join(',');
 
   useEffect(() => {
+    return subscribeTfliteModelEviction(() => {
+      setLoadState({ state: 'loading', model: undefined, error: undefined });
+      if (enabledRef.current) {
+        setReloadGeneration((generation) => generation + 1);
+      }
+    });
+  }, []);
+
+  useEffect(() => {
     if (!enabled) {
+      evictCachedTfliteModel(config.model, delegates);
       setLoadState({ state: 'loading', model: undefined, error: undefined });
       return;
     }
@@ -55,7 +73,7 @@ export function useRegisteredTfliteModel(
     return () => {
       cancelled = true;
     };
-  }, [config.id, config.model, delegatesKey, enabled]);
+  }, [config.id, config.model, delegatesKey, enabled, reloadGeneration]);
 
   const boxedModel = useMemo(() => {
     if (loadState.state !== 'loaded') {

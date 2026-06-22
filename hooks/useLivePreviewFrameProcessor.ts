@@ -1,10 +1,13 @@
 import { useMemo } from 'react';
 
 import { useMlFrameProcessor } from '@/hooks/useMlFrameProcessor';
-import { useV3PreviewFrameProcessor } from '@/hooks/useV3PreviewFrameProcessor';
+import { useMvpLivePreviewSuspended } from '@/hooks/useMvpLivePreviewSuspended';
+import { useMvpPreviewFrameProcessor } from '@/hooks/useMvpPreviewFrameProcessor';
 import type { LiveClassifierModelState, LiveClassifierPrediction } from '@/lib/camera/liveClassifierTypes';
 import { formatMobileNetError } from '@/lib/camera/mobilenet/formatMobileNetError';
-import { isV3CascadeEnabled } from '@/lib/camera/tflite/v3/isV3CascadeEnabled';
+import { isMvpCaptureEnabled } from '@/lib/camera/tflite/mvp/isMvpCaptureEnabled';
+import { isMvpCaptureSessionActive } from '@/lib/camera/tflite/mvp/mvpTfliteMemory';
+import type { MvpPreviewMode } from '@/lib/camera/tflite/mvp/mvpPreviewMode';
 import { efficientnetB0LivePreviewConfig } from '@/lib/camera/tflite/modelConfigs';
 
 type UseLivePreviewFrameProcessorResult = {
@@ -18,11 +21,15 @@ export type LivePreviewPrediction = LiveClassifierPrediction;
 
 export function useLivePreviewFrameProcessor(
   active: boolean,
+  previewMode: MvpPreviewMode = 'scene_gate',
 ): UseLivePreviewFrameProcessorResult {
-  const useV3 = isV3CascadeEnabled();
-  const v3 = useV3PreviewFrameProcessor(active && useV3);
-  const legacy = useLegacyEfficientNetPreview(active && !useV3);
-  return useV3 ? v3 : legacy;
+  const livePreviewSuspended = useMvpLivePreviewSuspended();
+  const useMvp = isMvpCaptureEnabled();
+  const previewActive =
+    active && !livePreviewSuspended && !(useMvp && isMvpCaptureSessionActive());
+  const mvp = useMvpPreviewFrameProcessor(previewActive && useMvp, previewMode);
+  const legacy = useLegacyEfficientNetPreview(previewActive && !useMvp);
+  return useMvp ? mvp : legacy;
 }
 
 function useLegacyEfficientNetPreview(active: boolean): UseLivePreviewFrameProcessorResult {
