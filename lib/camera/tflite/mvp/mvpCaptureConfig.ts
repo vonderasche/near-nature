@@ -32,23 +32,6 @@ export const MVP_KINGDOM_LABELS = labelsFromBundle(kingdomLabelsJson as LabelsBu
 export const MVP_ORGANISM_LABEL = 'organism';
 export const MVP_NOT_ORGANISM_LABEL = 'not_organism';
 
-/** Specialist group ids shared with v3 taxonomy mapping (capture uses legacy v2 models). */
-export const MVP_SPECIALIST_GROUPS = [
-  'birds',
-  'dryland_plants',
-  'ferns_mosses',
-  'fish',
-  'fungi',
-  'herbaceous',
-  'herps',
-  'insects_arachnids',
-  'lepidoptera',
-  'mammals',
-  'trees_shrubs',
-] as const;
-
-export type MvpSpecialistGroup = (typeof MVP_SPECIALIST_GROUPS)[number];
-
 export const MVP_MODEL_ASSETS = {
   sceneGate: require('@/assets/tflite/trained_v4/step01_scene_gate/tflite/scene_gate.tflite'),
   kingdom: require('@/assets/tflite/trained_v4/step02_kingdom/tflite/kingdom.tflite'),

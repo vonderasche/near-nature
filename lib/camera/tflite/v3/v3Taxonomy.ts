@@ -1,7 +1,23 @@
 import type { SubcategoryId } from '@/constants/naturalist-categories';
 import type { ClassificationResult } from '@/types';
 import type { VisionTaxonGroup } from '@/types';
-import type { MvpSpecialistGroup } from '@/lib/camera/tflite/mvp/mvpCaptureConfig';
+
+/** Router group ids used for kingdom-preview subcategory mapping. */
+export const V3_SPECIALIST_GROUPS = [
+  'birds',
+  'dryland_plants',
+  'ferns_mosses',
+  'fish',
+  'fungi',
+  'herbaceous',
+  'herps',
+  'insects_arachnids',
+  'lepidoptera',
+  'mammals',
+  'trees_shrubs',
+] as const;
+
+export type V3SpecialistGroup = (typeof V3_SPECIALIST_GROUPS)[number];
 
 export function v3KingdomToTaxonGroup(kingdom: string): VisionTaxonGroup {
   if (kingdom === 'plantae') return 'plants';
@@ -27,7 +43,7 @@ const PLANT_GROUP_TO_SUBCATEGORY: Readonly<Record<string, SubcategoryId>> = {
   herbaceous: 'wildflowers',
 };
 
-const ANIMAL_GROUP_TO_SUBCATEGORY: Readonly<Partial<Record<MvpSpecialistGroup, SubcategoryId>>> =
+const ANIMAL_GROUP_TO_SUBCATEGORY: Readonly<Partial<Record<V3SpecialistGroup, SubcategoryId>>> =
   {
     birds: 'songbirds',
     herps: 'lizards',
@@ -38,11 +54,11 @@ export function v3PlantGroupToSubcategory(group: string): SubcategoryId | undefi
   return PLANT_GROUP_TO_SUBCATEGORY[group];
 }
 
-export function v3AnimalGroupToSubcategory(group: MvpSpecialistGroup): SubcategoryId | undefined {
+export function v3AnimalGroupToSubcategory(group: V3SpecialistGroup): SubcategoryId | undefined {
   return ANIMAL_GROUP_TO_SUBCATEGORY[group];
 }
 
-export function v3SpecialistGroupToSubcategory(group: MvpSpecialistGroup): SubcategoryId | undefined {
+export function v3SpecialistGroupToSubcategory(group: V3SpecialistGroup): SubcategoryId | undefined {
   if (group === 'fungi') return 'other_fungi';
   if ((PLANT_GROUP_TO_SUBCATEGORY as Record<string, SubcategoryId>)[group]) {
     return PLANT_GROUP_TO_SUBCATEGORY[group];

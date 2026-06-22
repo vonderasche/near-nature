@@ -1,6 +1,6 @@
 {
   "architecture": "efficientnet_lite0",
-  "checkpoint": "E:\\PROGRAMMING\\Portfolio\\NearNature\\python\\models\\v3\\step01_scene_gate\\best.pt",
+  "checkpoint": "E:\\PROGRAMMING\\Portfolio\\NearNature\\python\\models\\v4\\step01_scene_gate\\best.pt",
   "inputSize": 224,
   "numClasses": 2,
   "tfliteFile": "scene_gate.tflite",
@@ -20,6 +20,6 @@
     ]
   },
   "outputActivation": "softmax",
-  "val_acc": 0.9998281393217232,
-  "epoch": 1
+  "val_acc": 0.9922784654982229,
+  "epoch": 8
 }

@@ -182,7 +182,7 @@ export function awaitFinishMvpCaptureSession(): Promise<void> {
 
 /**
  * Tear down capture models and wait for native RAM to settle before returning to camera.
- * Call from Retake so preview does not reload while trunk memory is still resident.
+ * Call from Retake so preview does not reload while capture routing memory is still resident.
  */
 export async function completeMvpCaptureSessionAndWait(cooldownMs = 2000): Promise<void> {
   if (!captureSessionActive && !livePreviewSuspended) {
