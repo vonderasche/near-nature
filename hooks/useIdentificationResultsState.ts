@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { SpeciesWikiData } from '@/api/wikipedia';
 import { identifyPhotoWithGemini } from '@/lib/identification/identifyPhotoWithGemini';
+import { devLog } from '@/lib/devLog';
+import { proposeCloudCatalogFromGemini } from '@/lib/identification/proposeCloudCatalogIfMissing';
 import { isCloudReclassifyAvailable } from '@/lib/identification/isCloudReclassifyAvailable';
 import { enrichSpeciesFromApis } from '@/lib/identification/enrichSpeciesFromApis';
 import { hasNoSpeciesFound } from '@/lib/image/imageFilters';
@@ -62,6 +64,7 @@ export function useIdentificationResultsState(
   const [tfliteMeta, setTfliteMeta] = useState<TfliteIdentificationMeta | null>(
     emptyIdentificationResults.tfliteMeta,
   );
+  const [identifying, setIdentifying] = useState(false);
   const [alternatesEnriching, setAlternatesEnriching] = useState(false);
   const [reclassifyError, setReclassifyError] = useState<string | null>(null);
   const [cloudReclassifyReady, setCloudReclassifyReady] = useState(false);
@@ -108,17 +111,25 @@ export function useIdentificationResultsState(
     setCloudReclassifyReady(false);
     setSpeciesIdBase(0);
 
+    setIdentifying(true);
+
     let cancelled = false;
     void (async () => {
-      const results = await identify(photoUri, userState, userId);
-      if (!cancelled) {
-        speciesIdBaseRef.current = results.speciesIdBase;
-        setSpeciesIdBase(results.speciesIdBase);
-        setSpecies(results.species);
-        setClassifications(results.classifications);
-        setWikiByLatinName(results.wikiByLatinName);
-        setWikiError(results.wikiError);
-        setTfliteMeta(results.tfliteMeta);
+      try {
+        const results = await identify(photoUri, userState, userId);
+        if (!cancelled) {
+          speciesIdBaseRef.current = results.speciesIdBase;
+          setSpeciesIdBase(results.speciesIdBase);
+          setSpecies(results.species);
+          setClassifications(results.classifications);
+          setWikiByLatinName(results.wikiByLatinName);
+          setWikiError(results.wikiError);
+          setTfliteMeta(results.tfliteMeta);
+        }
+      } finally {
+        if (!cancelled) {
+          setIdentifying(false);
+        }
       }
     })();
     return () => {
@@ -157,6 +168,10 @@ export function useIdentificationResultsState(
       setWikiError(enrichError);
       setTfliteMeta(null);
       setReclassifiedWithCloud(true);
+
+      void proposeCloudCatalogFromGemini(cloudClassifications, wiki).catch((error) => {
+        devLog('[species_catalog] Gemini cloud save failed', error);
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Cloud identification failed';
       setReclassifyError(message);
@@ -166,7 +181,10 @@ export function useIdentificationResultsState(
   }, [photoUri, reclassifiedWithCloud, userId, userState]);
 
   const canReclassifyWithCloud =
-    tfliteMeta != null && !reclassifiedWithCloud && cloudReclassifyReady && classifications.length > 0;
+    cloudReclassifyReady &&
+    !reclassifiedWithCloud &&
+    !identifying &&
+    ((classifications.length > 0 && tfliteMeta != null) || classifications.length === 0);
 
   return {
     species,

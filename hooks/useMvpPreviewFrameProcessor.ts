@@ -1,14 +1,14 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { useMlFrameProcessor } from '@/hooks/useMlFrameProcessor';
 import type { LiveClassifierModelState, LiveClassifierPrediction } from '@/lib/camera/liveClassifierTypes';
 import { formatMobileNetError } from '@/lib/camera/mobilenet/formatMobileNetError';
 import {
-  MVP_KINGDOM_TOP1_THRESHOLD,
-  MVP_ORGANISM_LABEL,
-  MVP_SCENE_GATE_ORGANISM_THRESHOLD,
-  formatMvpSceneGatePreviewLabel,
-} from '@/lib/camera/tflite/mvp/mvpCaptureConfig';
+  type MvpSceneGateDisplayState,
+  mvpSceneGateDisplayStateToLabel,
+  resolveMvpSceneGateDisplayState,
+} from '@/lib/camera/tflite/mvp/mvpSceneGateDisplay';
+import { MVP_KINGDOM_TOP1_THRESHOLD, MVP_ORGANISM_LABEL } from '@/lib/camera/tflite/mvp/mvpCaptureConfig';
 import { setActiveMvpPreviewMode, releaseMvpPreviewModels } from '@/lib/camera/tflite/mvp/mvpCachedModels';
 import { mvpKingdomPreviewConfig } from '@/lib/camera/tflite/mvp/mvpKingdomPreviewConfig';
 import type { MvpPreviewMode } from '@/lib/camera/tflite/mvp/mvpPreviewMode';
@@ -44,6 +44,14 @@ export function useMvpPreviewFrameProcessor(
     frameSkippingEnabled: true,
   });
 
+  const sceneGateDisplayStateRef = useRef<MvpSceneGateDisplayState>('searching');
+
+  useEffect(() => {
+    if (!active || previewMode !== 'scene_gate') {
+      sceneGateDisplayStateRef.current = 'searching';
+    }
+  }, [active, previewMode]);
+
   const { predictions, organismDetected } = useMemo(() => {
     if (result?.type !== 'classification') {
       return { predictions: [], organismDetected: false };
@@ -71,14 +79,18 @@ export function useMvpPreviewFrameProcessor(
 
     const organismRow = result.predictions.find((row) => row.label === MVP_ORGANISM_LABEL);
     const organismConfidence = organismRow?.confidence ?? 0;
-    const found = organismConfidence >= MVP_SCENE_GATE_ORGANISM_THRESHOLD;
+    const displayState = resolveMvpSceneGateDisplayState(
+      organismConfidence,
+      sceneGateDisplayStateRef.current,
+    );
+    sceneGateDisplayStateRef.current = displayState;
 
     return {
-      organismDetected: found,
+      organismDetected: displayState === 'found',
       predictions: [
         {
           classIndex: 0,
-          label: formatMvpSceneGatePreviewLabel(organismConfidence),
+          label: mvpSceneGateDisplayStateToLabel(displayState),
           confidence: organismConfidence,
         },
       ],

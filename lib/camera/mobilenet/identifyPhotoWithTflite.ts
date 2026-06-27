@@ -5,6 +5,8 @@ import {
 import { resolveSpecialistForPreviewLabel } from '@/lib/camera/mobilenet/tfliteRouting';
 import { getSpecialistDefinition } from '@/lib/camera/mobilenet/specialistModelRegistry';
 import { runCaptureRouting, runSpecialistCapture } from '@/lib/camera/tflite/cachedModels';
+import { isMvpCaptureEnabled } from '@/lib/camera/tflite/mvp/isMvpCaptureEnabled';
+import { prepareMvpCaptureMemory } from '@/lib/camera/tflite/mvp/mvpTfliteMemory';
 import { mobilevitRoutingCaptureConfig } from '@/lib/camera/tflite/modelConfigs';
 import type { ClassificationPrediction } from '@/lib/camera/tflite/modelTypes';
 import type { ClassificationResult } from '@/types';
@@ -65,6 +67,10 @@ export async function identifyPhotoWithTflite(
 async function identifyPhotoWithLegacyTflite(
   photoUri: string,
 ): Promise<TfliteIdentificationResult> {
+  if (isMvpCaptureEnabled()) {
+    await prepareMvpCaptureMemory();
+  }
+
   const { predictions: routingPredictions } = await runCaptureRouting(photoUri);
   const previewTop = toPreviewPredictions(
     routingPredictions,

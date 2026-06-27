@@ -9,7 +9,7 @@ import {
 } from '@/lib/parks/floridaStateParksCache';
 import {
   clearInMemoryFloridaStateParks,
-  loadFloridaStateParksFromBundledCsv,
+  loadFloridaStateParksFresh,
   setInMemoryFloridaStateParks,
 } from '@/lib/parks/loadFloridaStateParks';
 import type { DiscoverParkSortMode } from '@/lib/parks/discoverParkSort';
@@ -52,7 +52,7 @@ export function useFloridaStateParks(
     },
     fetchFresh: async () => {
       clearInMemoryFloridaStateParks();
-      const parks = await loadFloridaStateParksFromBundledCsv();
+      const parks = await loadFloridaStateParksFresh();
       setInMemoryFloridaStateParks(parks);
       return parks;
     },

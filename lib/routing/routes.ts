@@ -29,7 +29,10 @@ export type AppRoute = (typeof routes)[keyof typeof routes];
 export function routeCameraIdentification(params: { uri: string; userState?: string }) {
   return {
     pathname: '/(tabs)/camera/identification' as const,
-    params,
+    params: {
+      ...params,
+      uri: encodeURIComponent(params.uri),
+    },
   };
 }
 

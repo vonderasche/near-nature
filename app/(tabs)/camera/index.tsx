@@ -29,7 +29,6 @@ import {
   beginMvpCaptureSession,
   ensureMvpPreviewResumableOnCameraFocus,
   resumeCameraHardwarePreview,
-  suspendMvpPreviewBeforeCapture,
 } from '@/lib/camera/tflite/mvp/mvpTfliteMemory';
 import { contentInsetsPadding } from '@/lib/screen/contentInsets';
 
@@ -156,9 +155,6 @@ export default function CameraScreen() {
   const { zoom, setZoom, chips, activeChipId, selectChip } = useCameraZoom(device ?? undefined);
 
   const handleCapture = useCallback(async () => {
-    if (isMvpCaptureEnabled()) {
-      await suspendMvpPreviewBeforeCapture();
-    }
     await takePicture();
   }, [takePicture]);
 

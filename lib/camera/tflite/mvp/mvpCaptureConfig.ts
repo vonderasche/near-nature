@@ -11,11 +11,8 @@ type LabelsBundle = {
   labels: { index: number; name: string }[];
 };
 
-/** python/training/v3/experiments/cascades/mvp_capture.json */
-export const MVP_SCENE_GATE_ORGANISM_MAYBE_THRESHOLD = 0.45;
-export const MVP_SCENE_GATE_ORGANISM_THRESHOLD = 0.7;
+export { formatMvpSceneGatePreviewLabel, MVP_SCENE_GATE_ORGANISM_MAYBE_THRESHOLD, MVP_SCENE_GATE_ORGANISM_THRESHOLD } from '@/lib/camera/tflite/mvp/mvpSceneGateDisplay';
 
-/** Kingdom preview threshold for plantae|animalia|fungi top-1. */
 export const MVP_KINGDOM_TOP1_THRESHOLD = 0.65;
 
 export const MVP_INPUT_224 = 224;
@@ -41,14 +38,4 @@ function labelsFromBundle(bundle: LabelsBundle): string[] {
   return [...bundle.labels]
     .sort((a, b) => a.index - b.index)
     .map((entry) => entry.name);
-}
-
-export function formatMvpSceneGatePreviewLabel(organismConfidence: number): string {
-  if (organismConfidence < MVP_SCENE_GATE_ORGANISM_MAYBE_THRESHOLD) {
-    return 'Searching…';
-  }
-  if (organismConfidence < MVP_SCENE_GATE_ORGANISM_THRESHOLD) {
-    return 'Maybe…';
-  }
-  return 'Subject found';
 }

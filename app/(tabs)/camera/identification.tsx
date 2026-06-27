@@ -36,7 +36,9 @@ export default function IdentificationScreen() {
       }
       finishMvpCaptureSession();
     };
-  }, []);  if (!photoUri) {
+  }, []);
+
+  if (!photoUri) {
     return <Redirect href={routes.cameraTab} />;
   }
 

@@ -1,4 +1,5 @@
 import { devLog } from '@/lib/devLog';
+import { syncSpeciesCatalogFromCloud } from '@/lib/db/syncSpeciesCatalogFromCloud';
 import { warmDiscoverCaches } from '@/lib/discover/warmDiscoverCaches';
 import { warmSavedSpeciesSession } from '@/lib/identification/savedSpeciesSessionCache';
 import { loadCachedOwnProfile, saveCachedOwnProfile } from '@/lib/profile/ownProfileCache';
@@ -8,6 +9,9 @@ import { getPublicUserProfile, getUser } from '@/services/userService';
 export async function warmAuthUserCaches(userId: string): Promise<void> {
   void warmSavedSpeciesSession(userId).catch(() => {});
   void warmDiscoverCaches().catch(() => {});
+  void syncSpeciesCatalogFromCloud().catch((error) => {
+    devLog('[species_catalog] background sync failed', error);
+  });
 
   const cached = await loadCachedOwnProfile(userId);
   if (cached) return;

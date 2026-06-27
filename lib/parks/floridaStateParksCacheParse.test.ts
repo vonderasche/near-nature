@@ -3,6 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
+import { FLORIDA_PARKS_CACHE_VERSION } from '@/constants/florida-parks-cache';
 import { parseFloridaStateParksCsv } from '@/lib/parks/parseFloridaStateParksCsv';
 import { parseCachedFloridaStateParks } from '@/lib/parks/floridaStateParksCacheParse';
 
@@ -14,7 +15,7 @@ const csvPath = join(
 describe('parseCachedFloridaStateParks', () => {
   it('round-trips parsed parks through cache JSON', () => {
     const parks = parseFloridaStateParksCsv(readFileSync(csvPath, 'utf8'));
-    const json = JSON.stringify({ v: 1, parks, cachedAt: Date.now() });
+    const json = JSON.stringify({ v: FLORIDA_PARKS_CACHE_VERSION, parks, cachedAt: Date.now() });
     const cached = parseCachedFloridaStateParks(json);
     expect(cached?.parks.length).toBe(parks.length);
     expect(cached?.parks[0]?.parkName).toBe(parks[0]?.parkName);

@@ -43,6 +43,9 @@ All `.sql` scripts here are written to be **safe to re-run** (they drop/recreate
 | `get_user_scoring_snapshot.sql` | RPC: one JSON payload — score rows, awards, sub/main species counts (profile scoring) |
 | `get_public_user_awards.sql` | RPC: earned badge rows for any member (public profile) |
 | `add_detection_search.sql` | `species_metadata`, search columns/indexes on detections, `search_user_detections` RPC |
+| `create_species_catalog.sql` | Shared genus catalog in cloud + sync/propose RPCs for community species from Gemini |
+| `create_florida_state_parks.sql` | Florida state parks reference table (Discover tab parks + top plants/animals) |
+| `patch_florida_state_parks_species_images.sql` | Add `top_plant_images` / `top_animal_images` columns on existing parks table |
 | `pg_trgm_bootstrap.sql` | Enable `pg_trgm` + helpers for trigram GIN indexes (run before search SQL if index creation fails) |
 | `optimize_detection_gallery.sql` | Gallery indexes, faster search RPC, SQL category filter, alias refresh trigger |
 | `check_category_milestones.sql` | Milestone / badge awards after first species discovery (trigger calls this) |
@@ -87,9 +90,11 @@ Use for a **new** Supabase project or when you intentionally recreate the `publi
 | 13 | `get_user_scoring_snapshot.sql` | Owner scoring snapshot RPC |
 | 14 | `get_public_user_awards.sql` | Public earned-badges RPC |
 | 15 | `add_detection_search.sql` | Gallery search (FTS, trigram, aliases) |
-| 16 | `optimize_detection_gallery.sql` | Gallery browse/search performance (existing DBs) |
-| 17 | `drop_streak_client_update_policy.sql` | Policy cleanup (harmless on fresh DB) |
-| 18 | `harden_security_linter.sql` | Security hardening (see below) |
+| 16 | `create_species_catalog.sql` | Cloud species catalog + community propose/sync RPCs |
+| 17 | `create_florida_state_parks.sql` | Parks catalog; then `npm run seed:florida-parks` |
+| 18 | `optimize_detection_gallery.sql` | Gallery browse/search performance (existing DBs) |
+| 19 | `drop_streak_client_update_policy.sql` | Policy cleanup (harmless on fresh DB) |
+| 20 | `harden_security_linter.sql` | Security hardening (see below) |
 
 ### After rebuild
 
@@ -128,7 +133,11 @@ If tables already exist and you only need to refresh objects:
 | Explorer Board discovery search | `search_public_detections.sql` (after `add_detection_search.sql`) |
 | Explorer Board search error: permission denied for table users | `fix_search_public_detections_rls.sql` (or re-run `search_public_detections.sql` after hardening) |
 | Explorer Board search returns nothing | `fix_public_detection_search.sql`, then `search_public_detections.sql` |
-| Gallery search slow / filter incomplete | `optimize_detection_gallery.sql` (after `add_detection_search.sql`) |
+| Species catalog in cloud | `create_species_catalog.sql`, then `npm run seed:species-catalog` |
+| Gemini catalog sharing | `patch_propose_species_catalog_enrichment.sql` (after species catalog) |
+| Verify catalog + parks RPCs | `npm run verify:species-catalog` |
+| Florida parks in cloud | `create_florida_state_parks.sql`, then `npm run seed:florida-parks` |
+| Parks table missing image columns | `patch_florida_state_parks_species_images.sql` |
 | Supabase Dashboard security linter warnings | `harden_security_linter.sql` |
 
 Then reload the schema cache and run `npm run verify:supabase`.

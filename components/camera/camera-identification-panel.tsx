@@ -95,7 +95,11 @@ export function CameraIdentificationPanel({
   const showAboutSection = Boolean(primaryLatinName) && classifications.length > 0 && !identifying;
   const identificationNotice = tfliteMeta?.notice?.trim() ?? null;
   const showDetailsSection =
-    classifications.length > 0 || identifying || identifyError != null || identificationNotice != null;
+    classifications.length > 0 ||
+    identifying ||
+    identifyError != null ||
+    identificationNotice != null ||
+    canReclassifyWithCloud;
 
   return (
     <Screen>

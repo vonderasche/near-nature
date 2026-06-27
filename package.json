@@ -19,7 +19,10 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "verify:supabase": "node scripts/verify-supabase-signup.mjs && node scripts/verify-supabase-explorer-board.mjs && node scripts/verify-supabase-app-paths.mjs && node scripts/verify-supabase-scoring.mjs && node scripts/verify-supabase-search-profile.mjs"
+    "verify:supabase": "node scripts/verify-supabase-signup.mjs && node scripts/verify-supabase-explorer-board.mjs && node scripts/verify-supabase-app-paths.mjs && node scripts/verify-supabase-scoring.mjs && node scripts/verify-supabase-search-profile.mjs && node scripts/verify-supabase-species-catalog.mjs",
+    "verify:species-catalog": "node scripts/verify-supabase-species-catalog.mjs",
+    "seed:species-catalog": "node scripts/seed-species-catalog-to-supabase.mjs",
+    "seed:florida-parks": "node scripts/seed-florida-state-parks-to-supabase.mjs"
   },
   "dependencies": {
     "@expo/ngrok": "^4.1.3",

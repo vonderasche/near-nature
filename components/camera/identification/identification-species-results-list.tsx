@@ -105,6 +105,18 @@ export function IdentificationSpeciesResultsList({
   };
 
   if (!identifying && classifications.length === 0 && !identifyError) {
+    if (canReclassifyWithCloud) {
+      return (
+        <AuthButton
+          variant="outline"
+          title={alternatesEnriching ? 'Identifying with cloud AI…' : 'Identify with cloud AI'}
+          onPress={() => void handleReclassifyWithCloud()}
+          disabled={alternatesEnriching}
+          fillParent
+          accessibilityHint="Runs cloud species identification when on-device models found no match"
+        />
+      );
+    }
     return <Text style={listSectionSupportingStyles.muted}>No species returned.</Text>;
   }
 

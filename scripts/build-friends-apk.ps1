@@ -115,8 +115,8 @@ function Invoke-FriendsApkGradle([string]$ProjectRoot, [bool]$FrameProcessorsEna
 
     Push-Location $androidDir
     try {
-        # Physical phones only (arm). x86 emulators cannot run this APK.
-        & $gradlew assembleRelease -x lint --no-daemon --no-parallel '-PreactNativeArchitectures=armeabi-v7a,arm64-v8a'
+        # Physical phones: arm64 only on Windows (dual-arch often fails after .cxx clean).
+        & $gradlew assembleRelease -x lint --no-daemon --no-parallel '-PreactNativeArchitectures=arm64-v8a'
         if ($null -eq $LASTEXITCODE) { return 0 }
         return $LASTEXITCODE
     } finally {

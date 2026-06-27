@@ -28,6 +28,8 @@ $core = @(
   "get_user_score_by_category.sql",
   "get_user_scoring_snapshot.sql",
   "add_detection_search.sql",
+  "create_species_catalog.sql",
+  "create_florida_state_parks.sql",
   "drop_streak_client_update_policy.sql"
 )
 
@@ -53,6 +55,8 @@ Write-Host "  sql/add_species_subcategories.sql" -ForegroundColor White
 Write-Host "  sql/add_naturalist_category_enums.sql" -ForegroundColor White
 Write-Host "  sql/create_point_awards.sql (if not in core rebuild)" -ForegroundColor White
 Write-Host "  sql/check_category_milestones.sql" -ForegroundColor White
+Write-Host "  sql/create_species_catalog.sql (cloud genus catalog + Gemini community rows)" -ForegroundColor White
+Write-Host "  sql/create_florida_state_parks.sql + npm run seed:florida-parks" -ForegroundColor White
 Write-Host "  Re-run sql/create_discoveries.sql to wire milestone trigger" -ForegroundColor White
 Write-Host "  sql/get_public_user_awards.sql (member profile earned badges)" -ForegroundColor White
 Write-Host "  sql/get_user_scoring_snapshot.sql (own profile scoring tab)" -ForegroundColor White

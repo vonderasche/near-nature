@@ -1,5 +1,5 @@
 import { parseCsv } from '@/lib/parks/parseCsv';
-import { zipSpeciesHighlights } from '@/lib/parks/parkSpeciesHighlights';
+import { floridaStateParkFromSnakeFields } from '@/lib/parks/floridaStateParkFromSnakeFields';
 import type { FloridaStatePark } from '@/types/florida-state-park';
 
 const CSV_COLUMNS = [
@@ -34,17 +34,6 @@ const CSV_COLUMNS = [
 
 type CsvColumn = (typeof CSV_COLUMNS)[number];
 
-function parseOptionalNumber(raw: string): number | null {
-  const trimmed = raw.trim();
-  if (!trimmed) return null;
-  const value = Number(trimmed);
-  return Number.isFinite(value) ? value : null;
-}
-
-function parseBoolean(raw: string): boolean {
-  return raw.trim().toLowerCase() === 'true';
-}
-
 export function splitPipeList(raw: string): string[] {
   return raw
     .split('|')
@@ -61,33 +50,7 @@ function rowToRecord(cells: string[]): Record<CsvColumn, string> {
 }
 
 function mapRow(record: Record<CsvColumn, string>): FloridaStatePark {
-  return {
-    parkId: record.park_id,
-    unitId: record.unit_id,
-    parkName: record.park_name,
-    webAlias: record.web_alias,
-    county: record.county,
-    district: parseOptionalNumber(record.district),
-    acreage: parseOptionalNumber(record.acreage),
-    address: record.address,
-    city: record.city,
-    state: record.state,
-    latitude: parseOptionalNumber(record.latitude),
-    longitude: parseOptionalNumber(record.longitude),
-    gpsSource: record.gps_source,
-    hasGps: parseBoolean(record.has_gps),
-    parkPageUrl: record.park_page_url,
-    imageUrl: record.image_url,
-    imageSource: record.image_source,
-    imageLicense: record.image_license,
-    imageAttribution: record.image_attribution,
-    description: record.description,
-    topPlants: zipSpeciesHighlights(splitPipeList(record.top_plants), splitPipeList(record.top_plant_images)),
-    topAnimals: zipSpeciesHighlights(splitPipeList(record.top_animals), splitPipeList(record.top_animal_images)),
-    publicAccess: record.public_access,
-    dataSource: record.data_source,
-    updatedAt: record.updated_at,
-  };
+  return floridaStateParkFromSnakeFields(record);
 }
 
 export function parseFloridaStateParksCsv(csvText: string): FloridaStatePark[] {
