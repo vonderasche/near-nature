@@ -5,7 +5,6 @@ import usaMap from '@svg-maps/usa';
 
 import {
   REGION_PACK_IDS,
-  isRegionLive,
   regionLabel,
   regionPackForState,
   statesInRegion,
@@ -13,6 +12,7 @@ import {
 } from '@/constants/regions';
 import type { UsStateCode } from '@/constants/us-states';
 import { useTheme } from '@/hooks/useTheme';
+import { isRegionReady, regionAvailabilityBadge } from '@/lib/region/regionReadiness';
 import {
   USA_CONUS_ASPECT_RATIO,
   USA_CONUS_VIEW_BOX_STRING,
@@ -41,9 +41,9 @@ function regionFillColor(
   muted: string,
 ): string {
   const selected = regionId === activeRegionId;
-  const live = isRegionLive(regionId);
+  const ready = isRegionReady(regionId);
   if (selected) return `${accent}66`;
-  if (live) return `${accent}28`;
+  if (ready) return `${accent}28`;
   return `${muted}30`;
 }
 
@@ -106,7 +106,7 @@ export function UsRegionMap({ activeRegionId, onSelectRegion }: Props) {
                   accessibilityLabel={
                     mapped
                       ? `${location.name}, ${regionLabel(regionId)}${
-                          isRegionLive(regionId) ? '' : ', coming soon'
+                          isRegionReady(regionId) ? '' : ', in progress'
                         }`
                       : `${location.name}, not in a regional pack yet`
                   }
@@ -120,14 +120,15 @@ export function UsRegionMap({ activeRegionId, onSelectRegion }: Props) {
       <View style={styles.legend}>
         {REGION_PACK_IDS.map((regionId) => {
           const selected = regionId === activeRegionId;
-          const live = isRegionLive(regionId);
+          const ready = isRegionReady(regionId);
+          const badge = regionAvailabilityBadge(regionId);
           const states = statesInRegion(regionId).join(', ');
           return (
             <Pressable
               key={regionId}
               accessibilityRole="button"
               accessibilityState={{ selected }}
-              accessibilityLabel={`${regionLabel(regionId)}, states ${states}${live ? '' : ', coming soon'}`}
+              accessibilityLabel={`${regionLabel(regionId)}, states ${states}, ${badge.toLowerCase()}`}
               onPress={() => onSelectRegion(regionId)}
               style={({ pressed }) => [
                 styles.legendRow,
@@ -143,7 +144,7 @@ export function UsRegionMap({ activeRegionId, onSelectRegion }: Props) {
                 style={[
                   styles.legendSwatch,
                   {
-                    backgroundColor: live ? theme.colors.accent : theme.colors.textSecondary,
+                    backgroundColor: ready ? theme.colors.accent : theme.colors.textSecondary,
                   },
                 ]}
               />
@@ -159,9 +160,9 @@ export function UsRegionMap({ activeRegionId, onSelectRegion }: Props) {
                   <Text
                     style={[
                       styles.legendBadge,
-                      { color: live ? theme.colors.accent : theme.colors.textSecondary },
+                      { color: ready ? theme.colors.accent : theme.colors.textSecondary },
                     ]}>
-                    {live ? 'Live' : 'Coming soon'}
+                    {badge}
                   </Text>
                 </View>
                 <Text style={[styles.legendStates, { color: theme.colors.textSecondary }]}>

@@ -12,6 +12,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { routes } from '@/lib/routing/routes';
 import { statesInRegion } from '@/constants/regions';
 import { usStateLabel } from '@/constants/us-states';
+import { regionProfileDescription } from '@/lib/region/regionReadiness';
 
 export default function ProfileRegionScreen() {
   const router = useRouter();
@@ -32,8 +33,7 @@ export default function ProfileRegionScreen() {
       <ScrollView contentContainerStyle={{ paddingBottom: theme.spacing.xxl, gap: theme.spacing.lg }}>
         <StackScreenHeader title="Region" />
         <Text variant="body" color="secondary">
-          Your region sets which parks, species, and identification models load. Southeast is live
-          for Florida testing; other regions are coming soon.
+          {regionProfileDescription()}
         </Text>
         <UsRegionMap activeRegionId={activeRegion.regionId} onSelectRegion={setRegionManual} />
         <View style={{ gap: theme.spacing.xs }}>

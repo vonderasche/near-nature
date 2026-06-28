@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -12,7 +13,6 @@ import {
 import { ACTIVE_REGION_OVERRIDE_STORAGE_KEY } from '@/constants/region-storage';
 import {
   DEFAULT_REGION_PACK_ID,
-  isRegionLive,
   isRegionPackId,
   regionDisplayLabel,
   regionLabel,
@@ -20,6 +20,11 @@ import {
   type RegionPackId,
 } from '@/constants/regions';
 import { useUserHomeState } from '@/hooks/useUserHomeState';
+import {
+  ensureRegionalModels,
+  onActiveRegionChanged,
+} from '@/lib/region/regionalModelBundle';
+import { isRegionReady } from '@/lib/region/regionReadiness';
 
 export type RegionSource = 'auto' | 'manual';
 
@@ -44,7 +49,7 @@ function buildActiveRegion(regionId: RegionPackId, source: RegionSource): Active
   return {
     regionId,
     source,
-    isLive: isRegionLive(regionId),
+    isLive: isRegionReady(regionId),
     label: regionLabel(regionId),
     displayLabel: regionDisplayLabel(regionId),
   };
@@ -78,6 +83,17 @@ export function RegionProvider({ children }: { children: ReactNode }) {
     }
     return buildActiveRegion(autoRegionId, 'auto');
   }, [autoRegionId, manualOverride]);
+
+  const previousRegionIdRef = useRef<RegionPackId | null>(null);
+  useEffect(() => {
+    const previous = previousRegionIdRef.current;
+    const next = activeRegion.regionId;
+    if (previous !== null && previous !== next) {
+      onActiveRegionChanged(previous, next);
+    }
+    previousRegionIdRef.current = next;
+    void ensureRegionalModels(next);
+  }, [activeRegion.regionId]);
 
   const setRegionManual = useCallback((regionId: RegionPackId) => {
     setManualOverride(regionId);

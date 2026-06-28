@@ -36,7 +36,7 @@ import { useActiveRegion } from '@/context/RegionContext';
 
 export default function CameraScreen() {
   const { theme } = useTheme();
-  const { isLive, displayLabel } = useActiveRegion();
+  const { isLive } = useActiveRegion();
   const { isAuthenticated, isLoading } = useAuthContext();
   const router = useRouter();
   const pathname = usePathname();
@@ -168,11 +168,7 @@ export default function CameraScreen() {
   if (!isLive) {
     return (
       <View style={[styles.fill, { backgroundColor: theme.colors.background }, contentInsetsPadding(insets)]}>
-        <RegionComingSoon
-          title="Identification coming soon"
-          message={`On-device identification models for ${displayLabel} are not available yet. Change your region in Profile to use Southeast for Florida testing.`}
-          showProfileAction
-        />
+        <RegionComingSoon feature="camera" />
       </View>
     );
   }

@@ -19,10 +19,11 @@ import { useTheme } from '@/hooks/useTheme';
 import { discoverBrowseLabel } from '@/lib/discover/discoverBrowseMode';
 import { RegionComingSoon } from '@/components/shared/region-coming-soon';
 import { useActiveRegion } from '@/context/RegionContext';
+import { regionDiscoverSubtitle } from '@/lib/region/regionReadiness';
 
 export default function DiscoverScreen() {
   const { theme } = useTheme();
-  const { displayLabel, isLive } = useActiveRegion();
+  const { regionId, isLive } = useActiveRegion();
   const [searchQuery, setSearchQuery] = useState('');
   const [pullRefreshing, setPullRefreshing] = useState(false);
   const { browseMode, setBrowseMode } = useDiscoverBrowseMode();
@@ -64,14 +65,10 @@ export default function DiscoverScreen() {
     return (
       <TabScreenWithLogout
         title="Discover"
-        subtitle={`${displayLabel} — coming soon.`}
+        subtitle={regionDiscoverSubtitle(regionId)}
         hideLogout
         titleAccessory={<AppGuideButton accessibilityLabel="How to use Discover and the app" />}>
-        <RegionComingSoon
-          title="Coming soon"
-          message={`${displayLabel} parks, plants, and animals are on the way. Switch to Southeast in Profile to explore Florida.`}
-          showProfileAction
-        />
+        <RegionComingSoon feature="discover" />
       </TabScreenWithLogout>
     );
   }
@@ -79,7 +76,7 @@ export default function DiscoverScreen() {
   return (
     <TabScreenWithLogout
       title="Discover"
-      subtitle={isLive ? "Florida state parks, plants, and wildlife." : `${displayLabel} — coming soon.`}
+      subtitle={regionDiscoverSubtitle(regionId)}
       hideLogout
       titleAccessory={<AppGuideButton accessibilityLabel="How to use Discover and the app" />}
       refreshControl={

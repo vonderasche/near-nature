@@ -7,7 +7,7 @@ import { routes } from '@/lib/routing/routes';
 
 export function ProfileRegionRow() {
   const router = useRouter();
-  const { displayLabel } = useActiveRegion();
+  const { label } = useActiveRegion();
 
   return (
     <Pressable
@@ -17,7 +17,7 @@ export function ProfileRegionRow() {
       style={({ pressed }) => [styles.wrap, pressed && styles.pressed]}>
       <Text style={styles.label}>Region</Text>
       <Text style={styles.value} numberOfLines={1}>
-        {displayLabel}
+        {label}
       </Text>
     </Pressable>
   );

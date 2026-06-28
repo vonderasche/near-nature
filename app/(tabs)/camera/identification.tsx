@@ -15,7 +15,7 @@ import { useActiveRegion } from '@/context/RegionContext';
 
 export default function IdentificationScreen() {
   const router = useRouter();
-  const { isLive, displayLabel } = useActiveRegion();
+  const { isLive } = useActiveRegion();
   const { photoUri } = useIdentificationRouteParams();
   const { reportBackgroundSaveError } = useCameraFlowContext();
   const retakeCleanupStartedRef = useRef(false);
@@ -47,11 +47,7 @@ export default function IdentificationScreen() {
 
   if (!isLive) {
     return (
-      <RegionComingSoon
-        title="Identification coming soon"
-        message={`On-device identification models for ${displayLabel} are not available yet.`}
-        showProfileAction
-      />
+      <RegionComingSoon feature="camera" showProfileAction />
     );
   }
 

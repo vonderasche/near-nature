@@ -7,34 +7,40 @@ import { Text } from '@/components/ui/Text';
 import { Title } from '@/components/ui/Title';
 import { useActiveRegion } from '@/context/RegionContext';
 import { useTheme } from '@/hooks/useTheme';
+import {
+  regionUnavailableMessage,
+  regionUnavailableTitle,
+  type RegionFeature,
+} from '@/lib/region/regionReadiness';
 import { routes } from '@/lib/routing/routes';
 
 type Props = {
+  feature?: RegionFeature;
   title?: string;
   message?: string;
   showProfileAction?: boolean;
 };
 
 export function RegionComingSoon({
+  feature = 'discover',
   title,
   message,
   showProfileAction = true,
 }: Props) {
   const { theme } = useTheme();
   const router = useRouter();
-  const { displayLabel } = useActiveRegion();
+  const { regionId } = useActiveRegion();
 
   return (
     <ScreenCenter paddingHorizontal={theme.spacing.lg}>
       <View style={{ gap: theme.spacing.md, maxWidth: 420, alignItems: 'center' }}>
-        <Title>{title ?? 'Coming soon'}</Title>
+        <Title>{title ?? regionUnavailableTitle(regionId, feature)}</Title>
         <Text variant="body" color="secondary" style={{ textAlign: 'center' }}>
-          {message ??
-            `${displayLabel} parks, species, and identification models are not available yet. Change your region in Profile when Southeast is live for Florida.`}
+          {message ?? regionUnavailableMessage(regionId)}
         </Text>
         {showProfileAction ? (
           <Button
-            title="Open Profile"
+            title="Change region"
             variant="outline"
             onPress={() => router.push(routes.profileRegion as Href)}
           />

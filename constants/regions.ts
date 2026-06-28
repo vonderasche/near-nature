@@ -67,8 +67,7 @@ export function regionLabel(regionId: RegionPackId): string {
 }
 
 export function regionDisplayLabel(regionId: RegionPackId): string {
-  const label = regionLabel(regionId);
-  return isRegionLive(regionId) ? label : `${label} (Coming soon)`;
+  return regionLabel(regionId);
 }
 
 export function statesInRegion(regionId: RegionPackId): readonly UsStateCode[] {
