@@ -10,6 +10,8 @@ import type { SpeciesWikiData } from '@/api/wikipedia';
 import { useResizeImageForUpload } from '@/hooks/useResizeImageForUpload';
 import { identifyPhotoWithTflite } from '@/lib/camera/mobilenet/identifyPhotoWithTflite';
 import { isTfliteIdentificationAvailable } from '@/lib/camera/mobilenet/isTfliteIdentificationAvailable';
+import { useActiveRegion } from '@/context/RegionContext';
+import { isRegionalIdentificationAvailable } from '@/lib/region/regionalIdentification';
 import { enrichSpeciesFromApis } from '@/lib/identification/enrichSpeciesFromApis';
 import { devLog } from '@/lib/devLog';
 import { filterClassifications, hasNoSpeciesFound } from '@/lib/image/imageFilters';
@@ -36,6 +38,7 @@ interface UseSpeciesIdentificationResult {
 }
 
 export function useSpeciesIdentification(): UseSpeciesIdentificationResult {
+  const { regionId } = useActiveRegion();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const requestIdRef = useRef(0);
@@ -56,7 +59,7 @@ export function useSpeciesIdentification(): UseSpeciesIdentificationResult {
       let classifications: ClassificationResult[] = [];
       let tfliteMeta: TfliteIdentificationMeta | null = null;
 
-      if (isTfliteIdentificationAvailable()) {
+      if (isTfliteIdentificationAvailable() && isRegionalIdentificationAvailable(regionId)) {
         const pipeline = await identifyPhotoWithTflite(photoUri);
         tfliteMeta = pipeline.meta;
         classifications = pipeline.classifications.slice(0, 1);

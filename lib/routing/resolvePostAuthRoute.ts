@@ -1,4 +1,6 @@
-import { routes, type AppRoute } from '@/lib/routing/routes';
+import type { Href } from 'expo-router';
+
+import { routes } from '@/lib/routing/routes';
 
 export type PostAuthRouteInput = {
   isPasswordRecovery: boolean;
@@ -7,9 +9,9 @@ export type PostAuthRouteInput = {
 };
 
 /** First in-app route after sign-in once the profile gate has resolved. */
-export function resolvePostAuthRoute(input: PostAuthRouteInput): AppRoute | null {
+export function resolvePostAuthRoute(input: PostAuthRouteInput): Href | null {
   if (!input.profileGateResolved) return null;
-  if (input.isPasswordRecovery) return routes.resetPassword;
-  if (!input.hasProfile) return routes.needsProfile;
-  return routes.tabs;
+  if (input.isPasswordRecovery) return routes.resetPassword as Href;
+  if (!input.hasProfile) return routes.needsProfile as Href;
+  return routes.tabs as Href;
 }

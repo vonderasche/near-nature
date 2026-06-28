@@ -12,14 +12,17 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useDeviceCoordinates } from '@/hooks/useDeviceCoordinates';
 import { useDiscoverBrowseMode } from '@/hooks/useDiscoverBrowseMode';
 import { useDiscoverParkSort } from '@/hooks/useDiscoverParkSort';
-import { useFloridaStateParks } from '@/hooks/useFloridaStateParks';
+import { useRegionalParks } from '@/hooks/useRegionalParks';
 import { useGalleryGridColumns } from '@/hooks/useGalleryGridColumns';
 import { useGalleryLayoutMode } from '@/hooks/useGalleryLayoutMode';
 import { useTheme } from '@/hooks/useTheme';
 import { discoverBrowseLabel } from '@/lib/discover/discoverBrowseMode';
+import { RegionComingSoon } from '@/components/shared/region-coming-soon';
+import { useActiveRegion } from '@/context/RegionContext';
 
 export default function DiscoverScreen() {
   const { theme } = useTheme();
+  const { displayLabel, isLive } = useActiveRegion();
   const [searchQuery, setSearchQuery] = useState('');
   const [pullRefreshing, setPullRefreshing] = useState(false);
   const { browseMode, setBrowseMode } = useDiscoverBrowseMode();
@@ -39,7 +42,7 @@ export default function DiscoverScreen() {
     isRefreshing,
     error,
     refetch,
-  } = useFloridaStateParks(debouncedSearchQuery, sortMode, coords);
+  } = useRegionalParks(debouncedSearchQuery, sortMode, coords);
 
   const searchPlaceholder =
     browseMode === 'parks'
@@ -57,10 +60,26 @@ export default function DiscoverScreen() {
     }
   };
 
+  if (!isLive) {
+    return (
+      <TabScreenWithLogout
+        title="Discover"
+        subtitle={`${displayLabel} — coming soon.`}
+        hideLogout
+        titleAccessory={<AppGuideButton accessibilityLabel="How to use Discover and the app" />}>
+        <RegionComingSoon
+          title="Coming soon"
+          message={`${displayLabel} parks, plants, and animals are on the way. Switch to Southeast in Profile to explore Florida.`}
+          showProfileAction
+        />
+      </TabScreenWithLogout>
+    );
+  }
+
   return (
     <TabScreenWithLogout
       title="Discover"
-      subtitle="Florida state parks, plants, and wildlife."
+      subtitle={isLive ? "Florida state parks, plants, and wildlife." : `${displayLabel} — coming soon.`}
       hideLogout
       titleAccessory={<AppGuideButton accessibilityLabel="How to use Discover and the app" />}
       refreshControl={

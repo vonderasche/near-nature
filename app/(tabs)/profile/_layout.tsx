@@ -13,6 +13,7 @@ export default function ProfileStackLayout() {
         <Stack.Screen name="settings" />
         <Stack.Screen name="edit-motto" />
         <Stack.Screen name="edit-state" />
+        <Stack.Screen name="region" />
         <Stack.Screen name="gallery-filter" />
         <Stack.Screen name="detection/[detectionId]" />
       </Stack>

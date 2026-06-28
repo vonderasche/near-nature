@@ -26,6 +26,7 @@ import {
 } from '@/components/profile/user-detection-gallery-section';
 import { ProfileStatStrip } from '@/components/profile/profile-stat-strip';
 import { profileStatStripPropsFromPublicProfile } from '@/lib/profile/profileStatStripFromPublicProfile';
+import { ProfileRegionRow } from '@/components/profile/profile-region-row';
 import { ProfileUserIdentity } from '@/components/profile/profile-user-identity';
 import { UserAvatar } from '@/components/profile/user-avatar';
 import { UserProfileSummary } from '@/components/profile/user-profile-summary';
@@ -159,6 +160,8 @@ export default function ProfileScreen() {
               onMottoPress={() => router.push(routes.profileEditMotto as Href)}
               onStatePress={() => router.push(routes.profileEditState as Href)}
             />
+
+            <ProfileRegionRow />
 
             <UserProfileSummary statsSlot={statsSlot} />
 

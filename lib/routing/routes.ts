@@ -8,6 +8,7 @@ export const routes = {
   profileSettings: '/(tabs)/profile/settings',
   profileEditMotto: '/(tabs)/profile/edit-motto',
   profileEditState: '/(tabs)/profile/edit-state',
+  profileRegion: '/(tabs)/profile/region',
   profileGalleryFilter: '/(tabs)/profile/gallery-filter',
   login: '/login',
   signup: '/signup',
@@ -50,7 +51,7 @@ export function routeCameraDetection(params: { detectionId: string }) {
   };
 }
 
-/** Another member’s public profile (`app/user/[userId]/index.tsx`). */
+/** Another member's public profile (`app/user/[userId]/index.tsx`). */
 export function routePublicUserProfile(userId: string) {
   return { pathname: '/user/[userId]' as const, params: { userId } };
 }
@@ -93,3 +94,4 @@ export function routeDiscoverSpeciesFilter(params: { kind: 'plant' | 'animal' })
     params,
   };
 }
+

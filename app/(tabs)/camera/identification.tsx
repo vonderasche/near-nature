@@ -10,9 +10,12 @@ import {
   finishMvpCaptureSession,
 } from '@/lib/camera/tflite/mvp/mvpTfliteMemory';
 import { routes } from '@/lib/routing/routes';
+import { RegionComingSoon } from '@/components/shared/region-coming-soon';
+import { useActiveRegion } from '@/context/RegionContext';
 
 export default function IdentificationScreen() {
   const router = useRouter();
+  const { isLive, displayLabel } = useActiveRegion();
   const { photoUri } = useIdentificationRouteParams();
   const { reportBackgroundSaveError } = useCameraFlowContext();
   const retakeCleanupStartedRef = useRef(false);
@@ -40,6 +43,16 @@ export default function IdentificationScreen() {
 
   if (!photoUri) {
     return <Redirect href={routes.cameraTab} />;
+  }
+
+  if (!isLive) {
+    return (
+      <RegionComingSoon
+        title="Identification coming soon"
+        message={`On-device identification models for ${displayLabel} are not available yet.`}
+        showProfileAction
+      />
+    );
   }
 
   return (

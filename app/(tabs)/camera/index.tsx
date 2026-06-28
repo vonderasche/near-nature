@@ -31,9 +31,12 @@ import {
   resumeCameraHardwarePreview,
 } from '@/lib/camera/tflite/mvp/mvpTfliteMemory';
 import { contentInsetsPadding } from '@/lib/screen/contentInsets';
+import { RegionComingSoon } from '@/components/shared/region-coming-soon';
+import { useActiveRegion } from '@/context/RegionContext';
 
 export default function CameraScreen() {
   const { theme } = useTheme();
+  const { isLive, displayLabel } = useActiveRegion();
   const { isAuthenticated, isLoading } = useAuthContext();
   const router = useRouter();
   const pathname = usePathname();
@@ -160,6 +163,18 @@ export default function CameraScreen() {
 
   if (!isLoading && !isAuthenticated) {
     return <Redirect href={routes.login} />;
+  }
+
+  if (!isLive) {
+    return (
+      <View style={[styles.fill, { backgroundColor: theme.colors.background }, contentInsetsPadding(insets)]}>
+        <RegionComingSoon
+          title="Identification coming soon"
+          message={`On-device identification models for ${displayLabel} are not available yet. Change your region in Profile to use Southeast for Florida testing.`}
+          showProfileAction
+        />
+      </View>
+    );
   }
 
   const messageModal = (

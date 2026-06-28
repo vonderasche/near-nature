@@ -13,10 +13,10 @@ import { NavigationThemeBridge } from '@/components/layout/navigation-theme-brid
 import { FirstLoginWelcomeModal } from '@/components/welcome/first-login-welcome-modal';
 import { AuthProvider } from '@/context/AuthContext';
 import { LocalDatabaseProvider } from '@/context/LocalDatabaseContext';
+import { RegionProvider } from '@/context/RegionContext';
 import { AppThemeProvider } from '@/context/ThemeContext';
 
 export const unstable_settings = {
-  /** Guests land on Explorer Board; signed-in users are routed to Camera via tabs index. */
   initialRouteName: '(tabs)',
 };
 
@@ -27,18 +27,20 @@ export default function RootLayout() {
         <AuthProvider>
           <LocalDatabaseProvider>
             <AppThemeProvider>
-              <NavigationThemeBridge>
-                <AuthGate>
-                  <LocalDatabaseErrorBanner />
-                  <Stack>
-                    <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                    <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
-                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                    <Stack.Screen name="user" options={{ headerShown: false }} />
-                  </Stack>
-                </AuthGate>
-                <FirstLoginWelcomeModal />
-              </NavigationThemeBridge>
+              <RegionProvider>
+                <NavigationThemeBridge>
+                  <AuthGate>
+                    <LocalDatabaseErrorBanner />
+                    <Stack>
+                      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                      <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
+                      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                      <Stack.Screen name="user" options={{ headerShown: false }} />
+                    </Stack>
+                  </AuthGate>
+                  <FirstLoginWelcomeModal />
+                </NavigationThemeBridge>
+              </RegionProvider>
             </AppThemeProvider>
           </LocalDatabaseProvider>
         </AuthProvider>
