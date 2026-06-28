@@ -11,6 +11,7 @@ import {
   type RegionPackId,
 } from '@/constants/regions';
 import type { UsStateCode } from '@/constants/us-states';
+import { useActiveRegion } from '@/context/RegionContext';
 import { useTheme } from '@/hooks/useTheme';
 import { isRegionReady, regionAvailabilityBadge } from '@/lib/region/regionReadiness';
 import {
@@ -34,28 +35,22 @@ function svgStateIdToCode(id: string): UsStateCode {
   return id.toUpperCase() as UsStateCode;
 }
 
-function regionFillColor(
-  regionId: RegionPackId,
-  activeRegionId: RegionPackId,
-  accent: string,
-  muted: string,
-): string {
-  const selected = regionId === activeRegionId;
-  const ready = isRegionReady(regionId);
-  if (selected) return `${accent}66`;
-  if (ready) return `${accent}28`;
-  return `${muted}30`;
-}
-
 export function UsRegionMap({ activeRegionId, onSelectRegion }: Props) {
   const { theme } = useTheme();
+  const { isLive: activeRegionLive } = useActiveRegion();
+  const mapTheme = theme.map;
 
-  const locations = useMemo(
+  const regionReady = useMemo(
     () =>
-      (usaMap.locations as UsaMapLocation[]).filter(
-        (location) => !USA_HIDDEN_STATE_IDS.has(location.id),
-      ),
-    [],
+      Object.fromEntries(
+        REGION_PACK_IDS.map((regionId) => [
+          regionId,
+          regionId === activeRegionId
+            ? activeRegionLive
+            : isRegionReady(regionId),
+        ]),
+      ) as Record<RegionPackId, boolean>,
+    [activeRegionId, activeRegionLive],
   );
 
   return (
@@ -77,36 +72,36 @@ export function UsRegionMap({ activeRegionId, onSelectRegion }: Props) {
           accessibilityRole="image"
           accessibilityLabel="Map of the United States with regional packs highlighted">
           <G>
-            {locations.map((location) => {
+            {((usaMap.locations as UsaMapLocation[]).filter(
+              (location) => !USA_HIDDEN_STATE_IDS.has(location.id),
+            )).map((location) => {
               const stateCode = svgStateIdToCode(location.id);
               const regionId = regionPackForState(stateCode);
               const selected = regionId === activeRegionId;
               const mapped = regionId != null;
+              const ready = mapped ? regionReady[regionId] : false;
 
               const fill = mapped
-                ? regionFillColor(
-                    regionId,
-                    activeRegionId,
-                    theme.colors.accent,
-                    theme.colors.textSecondary,
-                  )
-                : theme.colors.surfaceRaised;
+                ? selected
+                  ? mapTheme.stateFillSelected
+                  : ready
+                    ? mapTheme.stateFillReady
+                    : mapTheme.stateFillPending
+                : mapTheme.unmappedFill;
 
               return (
                 <Path
                   key={location.id}
                   d={location.path}
                   fill={fill}
-                  stroke={
-                    selected && mapped ? theme.colors.accent : theme.colors.border
-                  }
+                  stroke={selected && mapped ? mapTheme.stateStrokeSelected : mapTheme.stateStroke}
                   strokeWidth={selected && mapped ? 2 : 0.75}
                   strokeLinejoin="round"
                   onPress={mapped ? () => onSelectRegion(regionId) : undefined}
                   accessibilityLabel={
                     mapped
                       ? `${location.name}, ${regionLabel(regionId)}${
-                          isRegionReady(regionId) ? '' : ', in progress'
+                          ready ? '' : ', in progress'
                         }`
                       : `${location.name}, not in a regional pack yet`
                   }
@@ -120,8 +115,8 @@ export function UsRegionMap({ activeRegionId, onSelectRegion }: Props) {
       <View style={styles.legend}>
         {REGION_PACK_IDS.map((regionId) => {
           const selected = regionId === activeRegionId;
-          const ready = isRegionReady(regionId);
-          const badge = regionAvailabilityBadge(regionId);
+          const ready = regionReady[regionId];
+          const badge = regionAvailabilityBadge(regionId, ready);
           const states = statesInRegion(regionId).join(', ');
           return (
             <Pressable
@@ -133,9 +128,9 @@ export function UsRegionMap({ activeRegionId, onSelectRegion }: Props) {
               style={({ pressed }) => [
                 styles.legendRow,
                 {
-                  borderColor: selected ? theme.colors.accent : theme.colors.border,
+                  borderColor: selected ? mapTheme.legendBorderSelected : theme.colors.border,
                   backgroundColor: selected
-                    ? `${theme.colors.accent}18`
+                    ? mapTheme.legendBackgroundSelected
                     : theme.colors.surfaceRaised,
                   opacity: pressed ? 0.88 : 1,
                 },
@@ -144,7 +139,9 @@ export function UsRegionMap({ activeRegionId, onSelectRegion }: Props) {
                 style={[
                   styles.legendSwatch,
                   {
-                    backgroundColor: ready ? theme.colors.accent : theme.colors.textSecondary,
+                    backgroundColor: ready
+                      ? mapTheme.legendSwatchReady
+                      : mapTheme.legendSwatchPending,
                   },
                 ]}
               />
@@ -153,14 +150,20 @@ export function UsRegionMap({ activeRegionId, onSelectRegion }: Props) {
                   <Text
                     style={[
                       styles.legendTitle,
-                      { color: selected ? theme.colors.accent : theme.colors.textPrimary },
+                      {
+                        color: selected
+                          ? mapTheme.legendTitleSelected
+                          : theme.colors.textPrimary,
+                      },
                     ]}>
                     {regionLabel(regionId)}
                   </Text>
                   <Text
                     style={[
                       styles.legendBadge,
-                      { color: ready ? theme.colors.accent : theme.colors.textSecondary },
+                      {
+                        color: ready ? mapTheme.legendBadgeReady : theme.colors.textSecondary,
+                      },
                     ]}>
                     {badge}
                   </Text>

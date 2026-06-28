@@ -1,5 +1,7 @@
 import bundleRoutingRoot from '@/assets/tflite/near_nature_app_bundle/inat2021_specialists_v2/routing.json';
 
+import type { RegionPackId } from '@/constants/regions';
+
 export type SpecialistAssetFolder =
   | 'birds'
   | 'trees'
@@ -34,9 +36,37 @@ export type TfliteRoutingConfig = {
   specialists: TfliteRoutingSpecialist[];
 };
 
-export const TFLITE_ROUTING: TfliteRoutingConfig = bundleRoutingRoot as unknown as TfliteRoutingConfig;
+const BUNDLED_ROUTING: TfliteRoutingConfig = bundleRoutingRoot as unknown as TfliteRoutingConfig;
 
-const SPECIALIST_BY_ID = new Map(TFLITE_ROUTING.specialists.map((s) => [s.id, s]));
+const regionalRoutingCache: Partial<Record<RegionPackId, TfliteRoutingConfig>> = {};
+
+/** @deprecated Use `getTfliteRouting(regionId)` — kept for tests and bundled fallback. */
+export const TFLITE_ROUTING: TfliteRoutingConfig = BUNDLED_ROUTING;
+
+export function getBundledTfliteRouting(): TfliteRoutingConfig {
+  return BUNDLED_ROUTING;
+}
+
+export function setRegionalRoutingConfig(regionId: RegionPackId, config: TfliteRoutingConfig): void {
+  regionalRoutingCache[regionId] = config;
+}
+
+export function clearRegionalRoutingCache(regionId?: RegionPackId): void {
+  if (regionId) {
+    delete regionalRoutingCache[regionId];
+    return;
+  }
+  for (const key of Object.keys(regionalRoutingCache) as RegionPackId[]) {
+    delete regionalRoutingCache[key];
+  }
+}
+
+export function getTfliteRouting(regionId?: RegionPackId): TfliteRoutingConfig {
+  if (regionId && regionalRoutingCache[regionId]) {
+    return regionalRoutingCache[regionId]!;
+  }
+  return BUNDLED_ROUTING;
+}
 
 /** Routing specialist id → on-disk folder under `inat2021_specialists/`. */
 const ROUTING_ID_TO_ASSET_FOLDER: Record<string, SpecialistAssetFolder> = {
@@ -69,12 +99,20 @@ export function resolveAssetFolderForRoutingSpecialist(
   return ROUTING_ID_TO_ASSET_FOLDER[routingId] ?? null;
 }
 
-export function getRoutingSpecialist(routingId: string): TfliteRoutingSpecialist | undefined {
-  return SPECIALIST_BY_ID.get(routingId);
+export function getRoutingSpecialist(
+  routingId: string,
+  regionId?: RegionPackId,
+): TfliteRoutingSpecialist | undefined {
+  const routing = getTfliteRouting(regionId);
+  return routing.specialists.find((s) => s.id === routingId);
 }
 
-export function resolveSpecialistForPreviewLabel(previewLabel: string): PreviewRoutingResolution {
-  const routingId = TFLITE_ROUTING.preview_to_specialist[previewLabel] ?? null;
+export function resolveSpecialistForPreviewLabel(
+  previewLabel: string,
+  regionId?: RegionPackId,
+): PreviewRoutingResolution {
+  const routing = getTfliteRouting(regionId);
+  const routingId = routing.preview_to_specialist[previewLabel] ?? null;
   if (!routingId) {
     return {
       routingId: null,
@@ -85,7 +123,7 @@ export function resolveSpecialistForPreviewLabel(previewLabel: string): PreviewR
     };
   }
 
-  const specialist = getRoutingSpecialist(routingId);
+  const specialist = getRoutingSpecialist(routingId, regionId);
   const assetFolder = resolveAssetFolderForRoutingSpecialist(routingId);
   const inferenceMode: SpecialistInferenceMode =
     specialist?.inference_mode === 'species_rollup' ? 'species_rollup' : 'genus_direct';

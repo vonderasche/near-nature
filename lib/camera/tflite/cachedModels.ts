@@ -1,6 +1,10 @@
 import type { TensorflowModelDelegate, TfliteModel } from 'react-native-fast-tflite';
 
-import { loadBundledTfliteModel } from '@/lib/camera/tflite/loadBundledTfliteModel';
+import { DEFAULT_REGION_PACK_ID, type RegionPackId } from '@/constants/regions';
+import {
+  loadBundledTfliteModel,
+  loadTfliteModelFromUri,
+} from '@/lib/camera/tflite/loadBundledTfliteModel';
 import {
   mobilevitRoutingCaptureConfig,
   specialistCaptureConfig,
@@ -12,11 +16,33 @@ import {
   getSpecialistDefinition,
   type SpecialistModelDefinition,
 } from '@/lib/camera/mobilenet/specialistModelRegistry';
+import {
+  getSpecialistModelRelativePath,
+  resolveRegionalModelUri,
+} from '@/lib/region/resolveRegionalModelUri';
 
 const modelCache = new Map<string, Promise<TfliteModel>>();
-const specialistModelPromises: Partial<Record<SpecialistAssetFolder, Promise<TfliteModel>>> = {};
+const specialistModelPromises: Partial<Record<string, Promise<TfliteModel>>> = {};
 let mobilevitRoutingModelPromise: Promise<TfliteModel> | null = null;
 const evictionListeners = new Set<() => void>();
+
+let activeRegionIdForModels: RegionPackId = DEFAULT_REGION_PACK_ID;
+
+export function setActiveRegionForTfliteCache(regionId: RegionPackId): void {
+  activeRegionIdForModels = regionId;
+}
+
+export function getActiveRegionForTfliteCache(): RegionPackId {
+  return activeRegionIdForModels;
+}
+
+function specialistCacheKey(regionId: RegionPackId, assetFolder: SpecialistAssetFolder): string {
+  return `${regionId}:${assetFolder}`;
+}
+
+function uriCacheKey(uri: string, delegates: TensorflowModelDelegate[]): string {
+  return `uri:${uri}:${delegates.join(',')}`;
+}
 
 export function subscribeTfliteModelEviction(listener: () => void): () => void {
   evictionListeners.add(listener);
@@ -35,11 +61,24 @@ export function getCachedTfliteModel(
   modelAsset: number,
   delegates: TensorflowModelDelegate[] = [],
 ): Promise<TfliteModel> {
-  const cacheKey = `${modelAsset}:${delegates.join(',')}`;
+  const cacheKey = `bundled:${modelAsset}:${delegates.join(',')}`;
   const existing = modelCache.get(cacheKey);
   if (existing) return existing;
 
   const pending = loadBundledTfliteModel(modelAsset, delegates);
+  modelCache.set(cacheKey, pending);
+  return pending;
+}
+
+export function getCachedTfliteModelFromUri(
+  fileUri: string,
+  delegates: TensorflowModelDelegate[] = [],
+): Promise<TfliteModel> {
+  const cacheKey = uriCacheKey(fileUri, delegates);
+  const existing = modelCache.get(cacheKey);
+  if (existing) return existing;
+
+  const pending = loadTfliteModelFromUri(fileUri, delegates);
   modelCache.set(cacheKey, pending);
   return pending;
 }
@@ -49,14 +88,14 @@ export function evictCachedTfliteModel(
   modelAsset: number,
   delegates: TensorflowModelDelegate[] = [],
 ): void {
-  const cacheKey = `${modelAsset}:${delegates.join(',')}`;
+  const cacheKey = `bundled:${modelAsset}:${delegates.join(',')}`;
   modelCache.delete(cacheKey);
 }
 
 /** Drop all JS-cached model promises before a heavy capture load (best-effort native RAM relief). */
 export function evictAllCachedTfliteModels(): void {
   modelCache.clear();
-  for (const key of Object.keys(specialistModelPromises) as SpecialistAssetFolder[]) {
+  for (const key of Object.keys(specialistModelPromises)) {
     delete specialistModelPromises[key];
   }
   mobilevitRoutingModelPromise = null;
@@ -72,15 +111,27 @@ export async function loadMobileVitRoutingModel(): Promise<TfliteModel> {
 
 export async function loadSpecialistModel(
   assetFolder: SpecialistAssetFolder,
+  regionId: RegionPackId = activeRegionIdForModels,
 ): Promise<TfliteModel> {
-  if (!specialistModelPromises[assetFolder]) {
+  const cacheKey = specialistCacheKey(regionId, assetFolder);
+  if (!specialistModelPromises[cacheKey]) {
     const specialist = getSpecialistDefinition(assetFolder);
     if (!specialist) {
       throw new Error(`Missing specialist model for ${assetFolder}.`);
     }
-    specialistModelPromises[assetFolder] = loadBundledTfliteModel(specialist.model, []);
+
+    specialistModelPromises[cacheKey] = (async () => {
+      const relativePath = specialist.modelRelativePath ?? getSpecialistModelRelativePath(assetFolder);
+      const uri = await resolveRegionalModelUri(regionId, relativePath);
+      if (!uri) {
+        throw new Error(
+          `Regional specialist model not found for ${assetFolder} (${regionId}). Download your region pack first.`,
+        );
+      }
+      return getCachedTfliteModelFromUri(uri, []);
+    })();
   }
-  return specialistModelPromises[assetFolder]!;
+  return specialistModelPromises[cacheKey]!;
 }
 
 export async function runCaptureRouting(

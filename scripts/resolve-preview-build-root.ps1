@@ -48,8 +48,14 @@ function Sync-ProjectToPreviewBuildRoot([string]$SourceRoot, [string]$DestRoot) 
     }
 
     $destModules = Join-Path $DestRoot 'node_modules'
-    if (-not (Test-Path $destModules)) {
-        Write-Host "First sync: installing npm dependencies at build root (one-time)..." -ForegroundColor Yellow
+    $sourceLock = Join-Path $SourceRoot 'package-lock.json'
+    $destLock = Join-Path $DestRoot 'package-lock.json'
+    $needInstall = -not (Test-Path $destModules)
+    if (-not $needInstall -and (Test-Path $sourceLock) -and (Test-Path $destLock)) {
+        $needInstall = (Get-Item $sourceLock).LastWriteTimeUtc -gt (Get-Item $destModules).LastWriteTimeUtc
+    }
+    if ($needInstall) {
+        Write-Host "Installing npm dependencies at build root..." -ForegroundColor Yellow
         Push-Location $DestRoot
         try {
             npm install

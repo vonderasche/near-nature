@@ -102,9 +102,10 @@ export default function CameraScreen() {
     levelEnabled,
     toggleLevel,
     liveClassifierEnabled,
-    toggleLiveClassifier,
     previewMode,
-    togglePreviewMode,
+    selectLivePreviewModel,
+    disableLivePreview,
+    frameProcessorsAvailable,
   } = useCameraPreferences();
 
   const {
@@ -288,9 +289,10 @@ export default function CameraScreen() {
               levelEnabled={levelEnabled}
               onLevelPress={toggleLevel}
               liveClassifierEnabled={liveClassifierEnabled}
-              onLiveClassifierPress={toggleLiveClassifier}
+              frameProcessorsAvailable={frameProcessorsAvailable}
               previewMode={previewMode}
-              onPreviewModePress={togglePreviewMode}
+              onSelectPreviewModel={selectLivePreviewModel}
+              onDisableLivePreview={disableLivePreview}
               onMenuExpandedChange={setControlMenusOpen}
             />
             <CameraZoomChips

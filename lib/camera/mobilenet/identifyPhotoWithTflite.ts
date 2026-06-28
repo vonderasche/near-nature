@@ -4,7 +4,7 @@ import {
 } from '@/lib/camera/mobilenet/previewLabelTaxonomy';
 import { resolveSpecialistForPreviewLabel } from '@/lib/camera/mobilenet/tfliteRouting';
 import { getSpecialistDefinition } from '@/lib/camera/mobilenet/specialistModelRegistry';
-import { runCaptureRouting, runSpecialistCapture } from '@/lib/camera/tflite/cachedModels';
+import { runCaptureRouting, runSpecialistCapture, getActiveRegionForTfliteCache } from '@/lib/camera/tflite/cachedModels';
 import { isMvpCaptureEnabled } from '@/lib/camera/tflite/mvp/isMvpCaptureEnabled';
 import { prepareMvpCaptureMemory } from '@/lib/camera/tflite/mvp/mvpTfliteMemory';
 import { mobilevitRoutingCaptureConfig } from '@/lib/camera/tflite/modelConfigs';
@@ -108,7 +108,7 @@ async function identifyPhotoWithLegacyTflite(
     };
   }
 
-  const routing = resolveSpecialistForPreviewLabel(topPreview.label);
+  const routing = resolveSpecialistForPreviewLabel(topPreview.label, getActiveRegionForTfliteCache());
 
   if (!routing.assetFolder) {
     return {

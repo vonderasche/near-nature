@@ -71,6 +71,10 @@ assets/tflite/trained_v4/**/train.err.log
 assets/tflite/trained_v4/**/*_float32.tflite
 assets/tflite/trained_v4/**/*_float16.tflite
 
+# Regional specialist weights download from Supabase — keep labels/routing JSON in APK for dev fallback
+assets/tflite/near_nature_app_bundle/inat2021_specialists_v2/**/tflite/*.tflite
+assets/tflite/near_nature_app_bundle/inat2021_specialists/**/*.tflite
+
 # local tooling scratch
 supabase/.temp/
 build-log.txt

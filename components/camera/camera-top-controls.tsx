@@ -1,16 +1,16 @@
 import * as Haptics from 'expo-haptics';
-import { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { CameraControlButton } from '@/components/camera/camera-control-button';
 import { CameraControlGroup } from '@/components/camera/camera-control-group';
 import { authSpacing } from '@/constants/auth-theme';
 import type { PhotoFlashMode } from '@/lib/camera/photoFlashMode';
-import { isMvpCaptureEnabled } from '@/lib/camera/tflite/mvp/isMvpCaptureEnabled';
 import {
-  mvpPreviewModeCaption,
-  type MvpPreviewMode,
-} from '@/lib/camera/tflite/mvp/mvpPreviewMode';
+  listPreviewModelsForPicker,
+  previewModelCaption,
+  type PreviewModelId,
+} from '@/lib/camera/tflite/preview';
 import {
   photoFlashAccessibilityLabel,
   photoFlashCaption,
@@ -41,9 +41,10 @@ type Props = {
   levelEnabled: boolean;
   onLevelPress: () => void;
   liveClassifierEnabled: boolean;
-  onLiveClassifierPress: () => void;
-  previewMode?: MvpPreviewMode;
-  onPreviewModePress?: () => void;
+  frameProcessorsAvailable: boolean;
+  previewMode: PreviewModelId;
+  onSelectPreviewModel: (modelId: PreviewModelId) => void;
+  onDisableLivePreview: () => void;
   onMenuExpandedChange?: (expanded: boolean) => void;
 };
 
@@ -58,6 +59,8 @@ function hapticToggle() {
     /* haptics unavailable */
   }
 }
+
+const PREVIEW_MODELS = listPreviewModelsForPicker();
 
 export function CameraTopControls({
   insets,
@@ -81,24 +84,25 @@ export function CameraTopControls({
   levelEnabled,
   onLevelPress,
   liveClassifierEnabled,
-  onLiveClassifierPress,
-  previewMode = 'scene_gate',
-  onPreviewModePress,
+  frameProcessorsAvailable,
+  previewMode,
+  onSelectPreviewModel,
+  onDisableLivePreview,
   onMenuExpandedChange,
 }: Props) {
-  const showPreviewModeToggle =
-    isMvpCaptureEnabled() && liveClassifierEnabled && onPreviewModePress != null;
   const [lightingExpanded, setLightingExpanded] = useState(false);
   const [displayExpanded, setDisplayExpanded] = useState(false);
+  const [aiExpanded, setAiExpanded] = useState(false);
 
   const collapseAll = useCallback(() => {
     setLightingExpanded(false);
     setDisplayExpanded(false);
+    setAiExpanded(false);
   }, []);
 
   useEffect(() => {
-    onMenuExpandedChange?.(lightingExpanded || displayExpanded);
-  }, [displayExpanded, lightingExpanded, onMenuExpandedChange]);
+    onMenuExpandedChange?.(lightingExpanded || displayExpanded || aiExpanded);
+  }, [aiExpanded, displayExpanded, lightingExpanded, onMenuExpandedChange]);
 
   const showFlash = facing === 'back' || flashSupported;
   const showTorch = facing === 'back';
@@ -107,10 +111,19 @@ export function CameraTopControls({
   const lightingActive = (flashSupported && flashMode !== 'off') || torchOn;
   const displayActive = gridVisible || (hdrSupported && hdrEnabled) || levelEnabled;
 
+  const aiCaption = useMemo(() => {
+    if (!frameProcessorsAvailable) return 'AI';
+    if (!liveClassifierEnabled) return 'AI';
+    return previewModelCaption(previewMode);
+  }, [frameProcessorsAvailable, liveClassifierEnabled, previewMode]);
+
   const toggleLightingExpanded = useCallback(() => {
     hapticToggle();
     setLightingExpanded((open) => {
-      if (!open) setDisplayExpanded(false);
+      if (!open) {
+        setDisplayExpanded(false);
+        setAiExpanded(false);
+      }
       return !open;
     });
   }, []);
@@ -118,10 +131,37 @@ export function CameraTopControls({
   const toggleDisplayExpanded = useCallback(() => {
     hapticToggle();
     setDisplayExpanded((open) => {
-      if (!open) setLightingExpanded(false);
+      if (!open) {
+        setLightingExpanded(false);
+        setAiExpanded(false);
+      }
       return !open;
     });
   }, []);
+
+  const toggleAiExpanded = useCallback(() => {
+    hapticToggle();
+    setAiExpanded((open) => {
+      if (!open) {
+        setLightingExpanded(false);
+        setDisplayExpanded(false);
+      }
+      return !open;
+    });
+  }, []);
+
+  const handleSelectPreviewModel = useCallback(
+    (modelId: PreviewModelId) => {
+      onSelectPreviewModel(modelId);
+      collapseAll();
+    },
+    [collapseAll, onSelectPreviewModel],
+  );
+
+  const handleDisableLivePreview = useCallback(() => {
+    onDisableLivePreview();
+    collapseAll();
+  }, [collapseAll, onDisableLivePreview]);
 
   return (
     <View style={[styles.bar, { paddingTop: insets.top + authSpacing.sm }]} pointerEvents="box-none">
@@ -208,19 +248,53 @@ export function CameraTopControls({
             active={levelEnabled}
             caption={`Level ${toggleCaption(levelEnabled)}`}
           />
-          {showPreviewModeToggle ? (
+        </CameraControlGroup>
+
+        <CameraControlGroup
+          expanded={aiExpanded}
+          onToggleExpanded={toggleAiExpanded}
+          onCollapse={collapseAll}
+          anchor={
             <CameraControlButton
-              icon={previewMode === 'kingdom' ? 'eye' : 'magnifying-glass'}
+              icon="sparkles"
               accessibilityLabel={
-                previewMode === 'kingdom'
-                  ? 'Live preview shows kingdom. Switch to scene gate.'
-                  : 'Live preview shows scene gate. Switch to kingdom.'
+                frameProcessorsAvailable
+                  ? liveClassifierEnabled
+                    ? `Live preview: ${previewModelCaption(previewMode)}. Tap to change model.`
+                    : 'Live preview off. Tap to choose a model.'
+                  : 'Live preview not available in this build'
               }
-              onPress={onPreviewModePress}
-              active={previewMode === 'kingdom'}
-              caption={mvpPreviewModeCaption(previewMode)}
+              onPress={() => {}}
+              active={liveClassifierEnabled}
+              disabled={!frameProcessorsAvailable}
+              caption={aiCaption}
             />
-          ) : null}
+          }>
+          <View style={styles.aiFlyoutScroll}>
+            <ScrollView
+              nestedScrollEnabled
+              showsVerticalScrollIndicator={false}
+              bounces={false}
+              style={styles.aiFlyoutScrollInner}>
+              <CameraControlButton
+                icon="x-mark"
+                accessibilityLabel="Turn live preview off"
+                onPress={handleDisableLivePreview}
+                active={!liveClassifierEnabled}
+                caption="Off"
+              />
+              {PREVIEW_MODELS.map((model) => (
+                <CameraControlButton
+                  key={model.id}
+                  icon="eye"
+                  accessibilityLabel={`${model.shortName}: ${model.description}`}
+                  onPress={() => handleSelectPreviewModel(model.id)}
+                  active={liveClassifierEnabled && previewMode === model.id}
+                  caption={model.shortName}
+                />
+              ))}
+            </ScrollView>
+          </View>
         </CameraControlGroup>
 
         <CameraControlButton
@@ -239,15 +313,6 @@ export function CameraTopControls({
           onPress={onShutterSoundPress}
           active={shutterSoundEnabled}
           caption={`Sound ${toggleCaption(shutterSoundEnabled)}`}
-        />
-        <CameraControlButton
-          icon="sparkles"
-          accessibilityLabel={
-            liveClassifierEnabled ? 'Turn live classifier off' : 'Turn live classifier on'
-          }
-          onPress={onLiveClassifierPress}
-          active={liveClassifierEnabled}
-          caption={`AI ${toggleCaption(liveClassifierEnabled)}`}
         />
       </View>
     </View>
@@ -272,5 +337,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: authSpacing.sm,
     overflow: 'visible',
+  },
+  aiFlyoutScroll: {
+    maxHeight: 320,
+  },
+  aiFlyoutScrollInner: {
+    flexGrow: 0,
   },
 });

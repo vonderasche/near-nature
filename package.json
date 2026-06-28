@@ -11,6 +11,7 @@
     "android:install": "powershell -ExecutionPolicy Bypass -File ./scripts/run-android-device.ps1 -InstallOnly",
     "android:apk": "cd android && gradlew.bat assembleRelease",
     "android:friends-apk": "powershell -ExecutionPolicy Bypass -File ./scripts/build-friends-apk.ps1",
+    "android:preview-apk": "powershell -ExecutionPolicy Bypass -File ./scripts/build-preview-apk.ps1",
     "setup:preview-build-root": "powershell -ExecutionPolicy Bypass -File ./scripts/setup-preview-build-root.ps1",
     "android:device-test-apk": "powershell -ExecutionPolicy Bypass -File ./scripts/build-device-test-apk.ps1",
     "ios": "expo run:ios",
@@ -22,7 +23,9 @@
     "verify:supabase": "node scripts/verify-supabase-signup.mjs && node scripts/verify-supabase-explorer-board.mjs && node scripts/verify-supabase-app-paths.mjs && node scripts/verify-supabase-scoring.mjs && node scripts/verify-supabase-search-profile.mjs && node scripts/verify-supabase-species-catalog.mjs",
     "verify:species-catalog": "node scripts/verify-supabase-species-catalog.mjs",
     "seed:species-catalog": "node scripts/seed-species-catalog-to-supabase.mjs",
-    "seed:florida-parks": "node scripts/seed-florida-state-parks-to-supabase.mjs"
+    "seed:florida-parks": "node scripts/seed-florida-state-parks-to-supabase.mjs",
+    "upload:region-models": "node scripts/upload-region-model-bundle.mjs",
+    "fetch:preview-models": "node scripts/fetch-preview-model-assets.mjs"
   },
   "dependencies": {
     "@expo/ngrok": "^4.1.3",

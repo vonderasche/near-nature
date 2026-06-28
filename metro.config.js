@@ -1,3 +1,4 @@
+const path = require('path');
 const { getDefaultConfig } = require('expo/metro-config');
 
 /** @type {import('expo/metro-config').MetroConfig} */
@@ -19,6 +20,32 @@ if (!config.resolver.assetExts.includes('tflite')) {
 
 if (!config.resolver.assetExts.includes('csv')) {
   config.resolver.assetExts.push('csv');
+}
+
+// Release slim APK: only `assets/tflite/preview_models/**/*.tflite` in the bundle.
+// Other .tflite requires resolve to scene_gate (capture routing stays buildable; weights load from Supabase at runtime).
+if (process.env.EXPO_PUBLIC_SLIM_APK === '1') {
+  const previewTfliteRoot = /assets[\\/]tflite[\\/]preview_models[\\/]/;
+  const redirectTflite = path.resolve(
+    __dirname,
+    'assets/tflite/preview_models/scene_gate/tflite/scene_gate.tflite',
+  );
+  const previousResolveRequest = config.resolver.resolveRequest;
+  config.resolver.resolveRequest = (context, moduleName, platform) => {
+    const normalized =
+      typeof moduleName === 'string' ? moduleName.replace(/\\/g, '/') : moduleName;
+    if (
+      typeof normalized === 'string' &&
+      normalized.endsWith('.tflite') &&
+      !previewTfliteRoot.test(normalized)
+    ) {
+      return context.resolveRequest(context, redirectTflite, platform);
+    }
+    if (previousResolveRequest) {
+      return previousResolveRequest(context, moduleName, platform);
+    }
+    return context.resolveRequest(context, moduleName, platform);
+  };
 }
 
 module.exports = config;

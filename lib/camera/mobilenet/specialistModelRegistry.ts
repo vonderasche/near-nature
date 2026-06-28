@@ -1,7 +1,8 @@
 import type { ModelLabelsJson } from '@/lib/camera/mobilenet/parseModelLabels';
 import { buildLabelLookup } from '@/lib/camera/mobilenet/parseModelLabels';
 import type { SpecialistAssetFolder, SpecialistInferenceMode } from '@/lib/camera/mobilenet/tfliteRouting';
-import { TFLITE_ROUTING } from '@/lib/camera/mobilenet/tfliteRouting';
+import { getTfliteRouting } from '@/lib/camera/mobilenet/tfliteRouting';
+import { getSpecialistModelRelativePath } from '@/lib/region/resolveRegionalModelUri';
 
 import arachnidsLabels from '@/assets/tflite/near_nature_app_bundle/inat2021_specialists_v2/arachnids/tflite/labels.json';
 import birdsLabels from '@/assets/tflite/near_nature_app_bundle/inat2021_specialists_v2/birds/tflite/labels.json';
@@ -20,7 +21,8 @@ import woodyLabels from '@/assets/tflite/near_nature_app_bundle/inat2021_special
 export type SpecialistModelDefinition = {
   assetFolder: SpecialistAssetFolder;
   displayName: string;
-  model: number;
+  /** Relative path under `regions/{regionId}/` for the genus `.tflite` file. */
+  modelRelativePath: string;
   labelLookup: readonly string[];
   inferenceMode: SpecialistInferenceMode;
 };
@@ -29,97 +31,97 @@ const specialistEntries: SpecialistModelDefinition[] = [
   {
     assetFolder: 'birds',
     displayName: 'Birds',
-    model: require('@/assets/tflite/near_nature_app_bundle/inat2021_specialists_v2/birds/tflite/birds_genus.tflite'),
+    modelRelativePath: getSpecialistModelRelativePath('birds'),
     labelLookup: buildLabelLookup(birdsLabels as ModelLabelsJson),
     inferenceMode: 'genus_direct',
   },
   {
     assetFolder: 'fish',
     displayName: 'Fish',
-    model: require('@/assets/tflite/near_nature_app_bundle/inat2021_specialists_v2/fish/tflite/fish_genus.tflite'),
+    modelRelativePath: getSpecialistModelRelativePath('fish'),
     labelLookup: buildLabelLookup(fishLabels as ModelLabelsJson),
     inferenceMode: 'genus_direct',
   },
   {
     assetFolder: 'fungi',
     displayName: 'Fungi',
-    model: require('@/assets/tflite/near_nature_app_bundle/inat2021_specialists_v2/fungi/tflite/fungi_genus.tflite'),
+    modelRelativePath: getSpecialistModelRelativePath('fungi'),
     labelLookup: buildLabelLookup(fungiLabels as ModelLabelsJson),
     inferenceMode: 'genus_direct',
   },
   {
     assetFolder: 'herbaceous_plants',
     displayName: 'Herbaceous plants',
-    model: require('@/assets/tflite/near_nature_app_bundle/inat2021_specialists_v2/herbaceous_plants/tflite/herbaceous_plants_genus.tflite'),
+    modelRelativePath: getSpecialistModelRelativePath('herbaceous_plants'),
     labelLookup: buildLabelLookup(herbaceousLabels as ModelLabelsJson),
     inferenceMode: 'genus_direct',
   },
   {
     assetFolder: 'forbs_ferns',
     displayName: 'Forbs & ferns',
-    model: require('@/assets/tflite/near_nature_app_bundle/inat2021_specialists_v2/forbs_ferns/tflite/forbs_ferns_genus.tflite'),
+    modelRelativePath: getSpecialistModelRelativePath('forbs_ferns'),
     labelLookup: buildLabelLookup(forbsFernsLabels as ModelLabelsJson),
     inferenceMode: 'genus_direct',
   },
   {
     assetFolder: 'dryland_plants',
     displayName: 'Dryland plants',
-    model: require('@/assets/tflite/near_nature_app_bundle/inat2021_specialists_v2/dryland_plants/tflite/dryland_plants_genus.tflite'),
+    modelRelativePath: getSpecialistModelRelativePath('dryland_plants'),
     labelLookup: buildLabelLookup(drylandPlantsLabels as ModelLabelsJson),
     inferenceMode: 'genus_direct',
   },
   {
     assetFolder: 'herps',
     displayName: 'Reptiles & amphibians',
-    model: require('@/assets/tflite/near_nature_app_bundle/inat2021_specialists_v2/herps/tflite/herps_genus.tflite'),
+    modelRelativePath: getSpecialistModelRelativePath('herps'),
     labelLookup: buildLabelLookup(herpsLabels as ModelLabelsJson),
     inferenceMode: 'genus_direct',
   },
   {
     assetFolder: 'insects_arachnids',
     displayName: 'Insects & arachnids',
-    model: require('@/assets/tflite/near_nature_app_bundle/inat2021_specialists_v2/insects_arachnids/tflite/insects_arachnids_genus.tflite'),
+    modelRelativePath: getSpecialistModelRelativePath('insects_arachnids'),
     labelLookup: buildLabelLookup(insectsArachnidsLabels as ModelLabelsJson),
     inferenceMode: 'genus_direct',
   },
   {
     assetFolder: 'insects',
     displayName: 'Insects',
-    model: require('@/assets/tflite/near_nature_app_bundle/inat2021_specialists_v2/insects/tflite/insects_genus.tflite'),
+    modelRelativePath: getSpecialistModelRelativePath('insects'),
     labelLookup: buildLabelLookup(insectsLabels as ModelLabelsJson),
     inferenceMode: 'genus_direct',
   },
   {
     assetFolder: 'arachnids',
     displayName: 'Arachnids',
-    model: require('@/assets/tflite/near_nature_app_bundle/inat2021_specialists_v2/arachnids/tflite/arachnids_genus.tflite'),
+    modelRelativePath: getSpecialistModelRelativePath('arachnids'),
     labelLookup: buildLabelLookup(arachnidsLabels as ModelLabelsJson),
     inferenceMode: 'genus_direct',
   },
   {
     assetFolder: 'mammals_domestic',
     displayName: 'Domestic mammals',
-    model: require('@/assets/tflite/near_nature_app_bundle/inat2021_specialists_v2/mammals_domestic/tflite/mammals_domestic_genus.tflite'),
+    modelRelativePath: getSpecialistModelRelativePath('mammals_domestic'),
     labelLookup: buildLabelLookup(mammalsLabels as ModelLabelsJson),
     inferenceMode: 'genus_direct',
   },
   {
     assetFolder: 'trees',
     displayName: 'Trees',
-    model: require('@/assets/tflite/near_nature_app_bundle/inat2021_specialists_v2/trees/tflite/trees_genus.tflite'),
+    modelRelativePath: getSpecialistModelRelativePath('trees'),
     labelLookup: buildLabelLookup(treesLabels as ModelLabelsJson),
     inferenceMode: 'genus_direct',
   },
   {
     assetFolder: 'woody_plants',
     displayName: 'Shrubs & woody plants',
-    model: require('@/assets/tflite/near_nature_app_bundle/inat2021_specialists_v2/woody_plants/tflite/woody_plants_genus.tflite'),
+    modelRelativePath: getSpecialistModelRelativePath('woody_plants'),
     labelLookup: buildLabelLookup(woodyLabels as ModelLabelsJson),
     inferenceMode: 'genus_direct',
   },
 ];
 
-for (const specialist of TFLITE_ROUTING.specialists) {
+for (const specialist of getTfliteRouting().specialists) {
   const entry = specialistEntries.find((row) => row.assetFolder === specialist.id);
   if (entry) entry.displayName = specialist.title;
 }

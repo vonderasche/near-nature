@@ -1,5 +1,5 @@
 import mobilevitMeta from '@/assets/tflite/near_nature_app_bundle/routing_capture/mobilevit_routing/tflite/labels.json';
-import efficientnetMeta from '@/assets/tflite/near_nature_app_bundle/preview_live/efficientnet_b0/tflite/labels.json';
+import efficientnetMeta from '@/assets/tflite/preview_models/efficientnet_b0_imagenet/tflite/labels.json';
 
 import type { ClassificationModelConfig } from '@/lib/camera/tflite/modelTypes';
 import type { SpecialistModelDefinition } from '@/lib/camera/mobilenet/specialistModelRegistry';
@@ -49,7 +49,7 @@ export const efficientnetB0LivePreviewConfig: ClassificationModelConfig = {
   name: 'EfficientNet B0 (ImageNet)',
   task: 'classification',
   labels: efficientnetLabels,
-  model: require('@/assets/tflite/near_nature_app_bundle/preview_live/efficientnet_b0/tflite/efficientnet_b0_imagenet1k.tflite'),
+  model: require('@/assets/tflite/preview_models/efficientnet_b0_imagenet/tflite/efficientnet_b0_imagenet1k.tflite'),
   input: {
     width: 224,
     height: 224,
@@ -76,7 +76,7 @@ export function specialistCaptureConfig(
     name: specialist.displayName,
     task: 'classification',
     labels: [...specialist.labelLookup],
-    model: specialist.model,
+    model: 0,
     input: {
       width: 224,
       height: 224,

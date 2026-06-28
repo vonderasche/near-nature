@@ -28,6 +28,7 @@ All `.sql` scripts here are written to be **safe to re-run** (they drop/recreate
 | `create_streaks.sql` | `public.streaks`, streak trigger on insert |
 | `create_discoveries.sql` | `public.discoveries`, first-species bonus trigger |
 | `storage_bucket_detections.sql` | Storage bucket + policies |
+| `storage_bucket_region_models.sql` | Public `region-models` bucket (anon read for regional TFLite packs) |
 | `get_detection_count_leaderboard.sql` | RPC: Explorer Board rankings (paginated) |
 | `search_public_detections.sql` | RPC: community identification search for Explorer Board discovery lens |
 | `get_public_user_profile.sql` | RPC: public profile + stats |

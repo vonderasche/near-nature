@@ -4,12 +4,27 @@
  */
 import {
   deleteAsync,
+  documentDirectory,
+  downloadAsync,
   EncodingType,
   getInfoAsync,
+  makeDirectoryAsync,
+  moveAsync,
   readAsStringAsync,
+  writeAsStringAsync,
 } from 'expo-file-system/legacy';
 
-export { deleteAsync, EncodingType, getInfoAsync, readAsStringAsync };
+export {
+  deleteAsync,
+  documentDirectory,
+  downloadAsync,
+  EncodingType,
+  getInfoAsync,
+  makeDirectoryAsync,
+  moveAsync,
+  readAsStringAsync,
+  writeAsStringAsync,
+};
 
 export async function readLocalFileAsBase64(uri: string): Promise<string> {
   return readAsStringAsync(uri, { encoding: EncodingType.Base64 });

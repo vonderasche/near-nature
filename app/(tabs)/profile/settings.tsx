@@ -5,6 +5,7 @@ import { Section } from '@/components/ui/Section';
 import { Screen } from '@/components/ui/Screen';
 import { StackScreenHeader } from '@/components/ui/StackScreenHeader';
 import { Button } from '@/components/ui/Button';
+import { ThemePicker } from '@/components/settings/theme-picker';
 import { ThemedConfirmModal, ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { useTheme } from '@/hooks/useTheme';
 import { useLogout } from '@/hooks/useLogout';
@@ -28,7 +29,11 @@ export default function ProfileSettingsScreen() {
   return (
     <Screen>
       <ScrollView contentContainerStyle={{ paddingBottom: theme.spacing.xxl }}>
-        <StackScreenHeader title="Settings" subtitle="Account" />
+        <StackScreenHeader title="Settings" subtitle="Account & appearance" />
+
+        <Section title="Appearance">
+          <ThemePicker />
+        </Section>
 
         <Section title="Account">
           <View style={{ gap: theme.spacing.sm }}>

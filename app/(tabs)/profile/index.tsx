@@ -18,7 +18,6 @@ import {
 import { CenteredActivityIndicator } from '@/components/shared/centered-activity-indicator';
 import { ProfileHeaderActions } from '@/components/profile/profile-header-actions';
 import { AppGuideButton } from '@/components/shared/app-guide-button';
-import { ProfileThemeCollapsible } from '@/components/profile/profile-theme-collapsible';
 import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
 import {
   UserDetectionGallerySection,
@@ -164,8 +163,6 @@ export default function ProfileScreen() {
             <ProfileRegionRow />
 
             <UserProfileSummary statsSlot={statsSlot} />
-
-            <ProfileThemeCollapsible />
           </View>
 
           <ProfileScoringCollapsible ref={scoringRef} userId={user.id} />

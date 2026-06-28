@@ -16,8 +16,10 @@ import {
   DEFAULT_CAMERA_SHUTTER_SOUND,
   DEFAULT_CAMERA_STABILIZATION,
 } from '@/constants/camera-preferences';
-import { parseMvpPreviewMode, nextMvpPreviewMode, type MvpPreviewMode } from '@/lib/camera/tflite/mvp/mvpPreviewMode';
-import { isMvpCaptureEnabled } from '@/lib/camera/tflite/mvp/isMvpCaptureEnabled';
+import {
+  parsePreviewModelId,
+  type PreviewModelId,
+} from '@/lib/camera/tflite/preview';
 import { usePersistedPreference } from '@/hooks/usePersistedPreference';
 
 function parseBool(raw: string | null, fallback: boolean): boolean {
@@ -50,7 +52,7 @@ export function useCameraPreferences() {
   );
   const previewModePref = usePersistedPreference(
     CAMERA_PREF_PREVIEW_MODE,
-    (r) => parseMvpPreviewMode(r),
+    (r) => parsePreviewModelId(r),
     DEFAULT_CAMERA_PREVIEW_MODE,
   );
 
@@ -78,23 +80,29 @@ export function useCameraPreferences() {
     hapticTap();
     level.setValue(!level.value);
   }, [level, hapticTap]);
-  const toggleLiveClassifier = useCallback(() => {
-    hapticTap();
-    if (!areFrameProcessorsAvailable() && !liveClassifier.value) {
-      return;
-    }
-    liveClassifier.setValue(!liveClassifier.value);
-  }, [hapticTap, liveClassifier]);
+  const selectLivePreviewModel = useCallback(
+    (modelId: PreviewModelId) => {
+      hapticTap();
+      if (!areFrameProcessorsAvailable()) {
+        return;
+      }
+      previewModePref.setValue(modelId);
+      if (!liveClassifier.value) {
+        liveClassifier.setValue(true);
+      }
+    },
+    [hapticTap, liveClassifier, previewModePref],
+  );
 
-  const togglePreviewMode = useCallback(() => {
-    if (!isMvpCaptureEnabled()) return;
+  const disableLivePreview = useCallback(() => {
     hapticTap();
-    previewModePref.setValue(nextMvpPreviewMode(previewModePref.value));
-  }, [hapticTap, previewModePref]);
+    liveClassifier.setValue(false);
+  }, [hapticTap, liveClassifier]);
 
   const liveClassifierEnabled =
     liveClassifier.value && areFrameProcessorsAvailable();
-  const previewMode: MvpPreviewMode = previewModePref.value;
+  const previewMode: PreviewModelId = previewModePref.value;
+  const frameProcessorsAvailable = areFrameProcessorsAvailable();
 
   return {
     hdrEnabled: hdr.value,
@@ -106,9 +114,10 @@ export function useCameraPreferences() {
     levelEnabled: level.value,
     toggleLevel,
     liveClassifierEnabled,
-    toggleLiveClassifier,
     previewMode,
-    togglePreviewMode,
+    selectLivePreviewModel,
+    disableLivePreview,
+    frameProcessorsAvailable,
     ready:
       hdr.ready &&
       stabilization.ready &&

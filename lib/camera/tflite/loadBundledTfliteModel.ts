@@ -49,7 +49,11 @@ async function assertMvpModelNotStaleFloat16(localUri: string): Promise<void> {
 
 async function ensureBundledAssetReady(modelAsset: number): Promise<string> {
   const metroUri = Image.resolveAssetSource(modelAsset).uri;
-  const asset = Asset.fromModule(modelAsset);
+  const asset = Asset.fromModule(modelAsset) as Asset & {
+    uri: string;
+    downloaded: boolean;
+    localUri: string | null;
+  };
 
   const shouldFetchFromMetro =
     __DEV__ && typeof metroUri === 'string' && /^https?:\/\//i.test(metroUri);
@@ -96,16 +100,7 @@ export async function loadBundledTfliteModel(
 ): Promise<TfliteModel> {
   const load = async () => {
     const localUri = await ensureBundledAssetReady(modelAsset);
-
-    try {
-      if (!hasUrlProtocol(localUri)) {
-        throw new Error('Model file URI is missing a file/http scheme.');
-      }
-      return await loadTensorflowModel({ url: localUri }, delegates);
-    } catch (loadError) {
-      const detail = loadError instanceof Error ? loadError.message : String(loadError);
-      throw new Error(`TFLite createModel failed: ${detail}`);
-    }
+    return loadTfliteModelFromResolvedUri(localUri, delegates);
   };
 
   const promise = modelLoadChain.then(load, load);
@@ -114,4 +109,36 @@ export async function loadBundledTfliteModel(
     () => undefined,
   );
   return promise;
+}
+
+/**
+ * Load a .tflite from an on-disk `file://` or remote `http(s)://` URI (e.g. regional download cache).
+ */
+export async function loadTfliteModelFromUri(
+  fileUri: string,
+  delegates: TensorflowModelDelegate[] = [],
+): Promise<TfliteModel> {
+  const load = async () => loadTfliteModelFromResolvedUri(fileUri, delegates);
+
+  const promise = modelLoadChain.then(load, load);
+  modelLoadChain = promise.then(
+    () => undefined,
+    () => undefined,
+  );
+  return promise;
+}
+
+async function loadTfliteModelFromResolvedUri(
+  localUri: string,
+  delegates: TensorflowModelDelegate[],
+): Promise<TfliteModel> {
+  try {
+    if (!hasUrlProtocol(localUri)) {
+      throw new Error('Model file URI is missing a file/http scheme.');
+    }
+    return await loadTensorflowModel({ url: localUri }, delegates);
+  } catch (loadError) {
+    const detail = loadError instanceof Error ? loadError.message : String(loadError);
+    throw new Error(`TFLite createModel failed: ${detail}`);
+  }
 }

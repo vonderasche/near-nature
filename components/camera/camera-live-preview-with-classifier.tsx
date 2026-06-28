@@ -5,11 +5,11 @@ import { CameraLivePredictionsOverlay } from '@/components/camera/camera-live-pr
 import { CameraLivePreview } from '@/components/camera/camera-live-preview';
 import { useLivePreviewFrameProcessor } from '@/hooks/useLivePreviewFrameProcessor';
 import { areFrameProcessorsAvailable } from '@/lib/camera/areFrameProcessorsAvailable';
-import type { MvpPreviewMode } from '@/lib/camera/tflite/mvp/mvpPreviewMode';
+import type { PreviewModelId } from '@/lib/camera/tflite/preview';
 
 type Props = ComponentProps<typeof CameraLivePreview> & {
   liveClassifierEnabled: boolean;
-  previewMode?: MvpPreviewMode;
+  previewMode?: PreviewModelId;
   bottomInset: number;
 };
 

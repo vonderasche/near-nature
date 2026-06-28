@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { ScreenCenter } from '@/components/shared/screen-center';
 import { Text } from '@/components/ui/Text';
 import { Title } from '@/components/ui/Title';
-import { useActiveRegion } from '@/context/RegionContext';
+import { useActiveRegion, useRegionDownloadState } from '@/context/RegionContext';
 import { useTheme } from '@/hooks/useTheme';
 import {
   regionUnavailableMessage,
@@ -30,14 +30,22 @@ export function RegionComingSoon({
   const { theme } = useTheme();
   const router = useRouter();
   const { regionId } = useActiveRegion();
+  const { downloadState, downloadProgress, retryDownload } = useRegionDownloadState();
+
+  const resolvedTitle = title ?? regionUnavailableTitle(regionId, feature, downloadState);
+  const resolvedMessage =
+    message ?? regionUnavailableMessage(regionId, downloadState, downloadProgress);
 
   return (
     <ScreenCenter paddingHorizontal={theme.spacing.lg}>
       <View style={{ gap: theme.spacing.md, maxWidth: 420, alignItems: 'center' }}>
-        <Title>{title ?? regionUnavailableTitle(regionId, feature)}</Title>
+        <Title>{resolvedTitle}</Title>
         <Text variant="body" color="secondary" style={{ textAlign: 'center' }}>
-          {message ?? regionUnavailableMessage(regionId)}
+          {resolvedMessage}
         </Text>
+        {downloadState === 'error' ? (
+          <Button title="Retry download" variant="primary" onPress={retryDownload} />
+        ) : null}
         {showProfileAction ? (
           <Button
             title="Change region"

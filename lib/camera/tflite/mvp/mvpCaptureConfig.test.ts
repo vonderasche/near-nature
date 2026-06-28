@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import sceneGateLabelsJson from '@/assets/tflite/trained_v4/step01_scene_gate/tflite/labels.json';
-import kingdomLabelsJson from '@/assets/tflite/trained_v4/step02_kingdom/tflite/labels.json';
+import sceneGateLabelsJson from '@/assets/tflite/preview_models/scene_gate/tflite/labels.json';
+import kingdomLabelsJson from '@/assets/tflite/preview_models/kingdom/tflite/labels.json';
 
 describe('MVP preview labels bundle', () => {
   it('loads scene gate organism / not_organism labels', () => {

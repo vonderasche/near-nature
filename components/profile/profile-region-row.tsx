@@ -2,12 +2,15 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 
 import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
-import { useActiveRegion } from '@/context/RegionContext';
+import { useActiveRegion, useRegionDownloadState } from '@/context/RegionContext';
+import { regionProfileDownloadLabel } from '@/lib/region/regionReadiness';
 import { routes } from '@/lib/routing/routes';
 
 export function ProfileRegionRow() {
   const router = useRouter();
-  const { label } = useActiveRegion();
+  const { regionId } = useActiveRegion();
+  const { downloadState } = useRegionDownloadState();
+  const label = regionProfileDownloadLabel(regionId, downloadState);
 
   return (
     <Pressable

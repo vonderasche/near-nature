@@ -9,12 +9,31 @@
 #   npm run setup:preview-build-root
 
 param(
-    [switch]$SkipLivePreview
+    [switch]$SkipLivePreview,
+    [switch]$PreviewModelsOnly
 )
 
 $ErrorActionPreference = "Stop"
 $Root = (Resolve-Path (Split-Path -Parent $PSScriptRoot)).Path
 . (Join-Path $PSScriptRoot "resolve-preview-build-root.ps1")
+
+function Set-EnvVar([string]$Name, [string]$Value, [string]$EnvFile) {
+    $lines = @(Get-Content $EnvFile -ErrorAction SilentlyContinue)
+    $pattern = "^\s*$([regex]::Escape($Name))\s*="
+    $found = $false
+    $out = foreach ($line in $lines) {
+        if ($line -match $pattern) {
+            $found = $true
+            "$Name=$Value"
+        } else {
+            $line
+        }
+    }
+    if (-not $found) {
+        $out += "$Name=$Value"
+    }
+    $out | Set-Content -Encoding utf8 $EnvFile
+}
 
 function Test-EnvVar([string]$Name, [string]$EnvFile) {
     $line = Get-Content $EnvFile -ErrorAction SilentlyContinue | Where-Object { $_ -match "^\s*$([regex]::Escape($Name))\s*=" } | Select-Object -First 1
@@ -85,7 +104,62 @@ function Test-ReleaseBundleHasSupabase([string]$ApkPath) {
     }
 }
 
-function Invoke-FriendsApkGradle([string]$ProjectRoot, [bool]$FrameProcessorsEnabled) {
+function Resolve-JavaHome {
+    if ($env:JAVA_HOME -and (Test-Path (Join-Path $env:JAVA_HOME 'bin\java.exe'))) {
+        return $env:JAVA_HOME
+    }
+    foreach ($candidate in @(
+            "${env:ProgramFiles}\Android\Android Studio\jbr",
+            "${env:LOCALAPPDATA}\Programs\Android\Android Studio\jbr",
+            "${env:ProgramFiles}\Java\jdk*",
+            "${env:ProgramFiles}\Eclipse Adoptium\jdk*"
+        )) {
+        $resolved = @(Resolve-Path $candidate -ErrorAction SilentlyContinue)
+        foreach ($path in $resolved) {
+            if (Test-Path (Join-Path $path 'bin\java.exe')) {
+                return $path.Path
+            }
+        }
+    }
+    return $null
+}
+
+function Resolve-AndroidSdk {
+    if ($env:ANDROID_HOME -and (Test-Path $env:ANDROID_HOME)) {
+        return $env:ANDROID_HOME
+    }
+    if ($env:ANDROID_SDK_ROOT -and (Test-Path $env:ANDROID_SDK_ROOT)) {
+        return $env:ANDROID_SDK_ROOT
+    }
+    $defaultSdk = Join-Path $env:LOCALAPPDATA 'Android\Sdk'
+    if (Test-Path $defaultSdk) {
+        return $defaultSdk
+    }
+    return $null
+}
+
+function Ensure-AndroidLocalProperties([string]$ProjectRoot) {
+    $sdk = Resolve-AndroidSdk
+    if (-not $sdk) {
+        Write-Error "Android SDK not found. Install Android Studio or set ANDROID_HOME."
+    }
+    $env:ANDROID_HOME = $sdk
+    $env:ANDROID_SDK_ROOT = $sdk
+    $sdkDir = $sdk -replace '\\', '/'
+    $localProps = Join-Path $ProjectRoot 'android\local.properties'
+    "sdk.dir=$sdkDir" | Set-Content -Encoding utf8 $localProps
+    Write-Host "ANDROID_HOME=$sdk" -ForegroundColor DarkGray
+}
+
+function Invoke-FriendsApkGradle([string]$ProjectRoot, [bool]$FrameProcessorsEnabled, [switch]$ForceJsRebundle) {
+    $javaHome = Resolve-JavaHome
+    if (-not $javaHome) {
+        Write-Error "JAVA_HOME is not set and no JDK was found. Install Android Studio or set JAVA_HOME."
+    }
+    $env:JAVA_HOME = $javaHome
+    $env:Path = (Join-Path $javaHome 'bin') + ';' + $env:Path
+    Write-Host "JAVA_HOME=$javaHome" -ForegroundColor DarkGray
+
     $gradleProps = Join-Path $ProjectRoot "android\gradle.properties"
     Set-FrameProcessorsEnabled $gradleProps $FrameProcessorsEnabled
     Set-ReleasePackagingForDevices $gradleProps
@@ -99,6 +173,10 @@ function Invoke-FriendsApkGradle([string]$ProjectRoot, [bool]$FrameProcessorsEna
 
     $env:CMAKE_BUILD_PARALLEL_LEVEL = '1'
     $env:NODE_ENV = 'production'
+    $shortGradleHome = if ($env:GRADLE_USER_HOME) { $env:GRADLE_USER_HOME } else { 'C:\dev\gradle-home' }
+    New-Item -ItemType Directory -Force -Path $shortGradleHome | Out-Null
+    $env:GRADLE_USER_HOME = $shortGradleHome
+    Write-Host "GRADLE_USER_HOME=$shortGradleHome" -ForegroundColor DarkGray
 
     $androidDir = Join-Path $ProjectRoot "android"
     $gradlew = Join-Path $androidDir "gradlew.bat"
@@ -107,6 +185,20 @@ function Invoke-FriendsApkGradle([string]$ProjectRoot, [bool]$FrameProcessorsEna
         try {
             Write-Host "Generating android/ (expo prebuild)..." -ForegroundColor Yellow
             npx expo prebuild --platform android --no-install
+            if ($LASTEXITCODE -ne 0) { return $LASTEXITCODE }
+        } finally {
+            Pop-Location
+        }
+    }
+
+    Ensure-AndroidLocalProperties $ProjectRoot
+
+    if ($ForceJsRebundle) {
+        $env:EXPO_PUBLIC_SLIM_APK = '1'
+        Write-Host "Rebundling JS (EXPO_PUBLIC_SLIM_APK=1, preview_models only)..." -ForegroundColor Cyan
+        Push-Location $androidDir
+        try {
+            & $gradlew :app:createBundleReleaseJsAndAssets --rerun-tasks --no-daemon
             if ($LASTEXITCODE -ne 0) { return $LASTEXITCODE }
         } finally {
             Pop-Location
@@ -137,6 +229,13 @@ if ($missing.Count -gt 0) {
     Write-Error ("Missing or empty in .env: " + ($missing -join ', '))
 }
 
+if ($PreviewModelsOnly) {
+    Set-EnvVar 'EXPO_PUBLIC_SLIM_APK' '1' $EnvFile
+    Write-Host "EXPO_PUBLIC_SLIM_APK=1 (bundle preview_models TFLite only)" -ForegroundColor Yellow
+} else {
+    Set-EnvVar 'EXPO_PUBLIC_SLIM_APK' '0' $EnvFile
+}
+
 $wantPreview = -not $SkipLivePreview
 $resolved = Resolve-PreviewBuildRoot -SourceRoot $Root -RequireNoSpaces:$wantPreview
 $BuildRoot = $resolved.BuildRoot
@@ -150,11 +249,11 @@ Copy-Item -Force $EnvFile (Join-Path $BuildRoot '.env')
 
 if (-not $wantPreview) {
     Write-Host "Building release APK (arm phones, live preview OFF)..." -ForegroundColor Yellow
-    $exitCode = Invoke-FriendsApkGradle $BuildRoot $false
+    $exitCode = Invoke-FriendsApkGradle $BuildRoot $false $PreviewModelsOnly
     $livePreviewInApk = $false
 } else {
     Write-Host "Building release APK (arm phones, live preview ON)..." -ForegroundColor Cyan
-    $exitCode = Invoke-FriendsApkGradle $BuildRoot $true
+    $exitCode = Invoke-FriendsApkGradle $BuildRoot $true $PreviewModelsOnly
     $livePreviewInApk = ($exitCode -eq 0)
 }
 
@@ -183,7 +282,8 @@ if (-not (Test-Path $apk)) {
 
 $outDir = Join-Path $Root "dist"
 New-Item -ItemType Directory -Force -Path $outDir | Out-Null
-$dest = Join-Path $outDir "near_nature-friends.apk"
+$apkName = if ($PreviewModelsOnly) { 'near_nature-preview.apk' } else { 'near_nature-friends.apk' }
+$dest = Join-Path $outDir $apkName
 Copy-Item -Force $apk $dest
 Test-ReleaseBundleHasSupabase $dest
 
@@ -195,6 +295,9 @@ if ($livePreviewInApk) {
     Write-Host "  Live camera AI: ON" -ForegroundColor Green
 } else {
     Write-Host "  Live camera AI: OFF" -ForegroundColor Yellow
+}
+if ($PreviewModelsOnly) {
+    Write-Host "  Bundled TFLite: preview_models only (specialists download per region)" -ForegroundColor Green
 }
 if ($UsedMirror) {
     Write-Host "  Built from: $BuildRoot" -ForegroundColor DarkGray
