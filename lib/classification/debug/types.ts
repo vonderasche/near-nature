@@ -58,6 +58,12 @@ export type CloudReclassifyRawContext = {
 export type SaveLinkedRawContext = {
   detectionId: string;
   selectedIndex: number;
+  userFeedback?: {
+    kind: 'selected_alternate';
+    selectedIndex: number;
+    selectedLatin: string;
+    topLatin: string | null;
+  };
 };
 
 export type LivePreviewSampleRawContext = {

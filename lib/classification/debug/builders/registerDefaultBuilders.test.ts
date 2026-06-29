@@ -5,6 +5,7 @@ import {
   captureIdentifyBuilder,
   cloudReclassifyBuilder,
   livePreviewSampleBuilder,
+  saveLinkedBuilder,
 } from '@/lib/classification/debug/builders/registerDefaultBuilders';
 import { evaluateFlags } from '@/lib/classification/debug/flagEvaluatorRegistry';
 import type {
@@ -75,6 +76,23 @@ describe('classification debug builders', () => {
     expect(event.flags).toContain('user_reclassified');
     expect(event.flags).toContain('reclassify_mismatch');
     expect(event.payload.reclassify_mismatch).toBe(true);
+  });
+
+  it('flags user feedback when saving an alternate species', () => {
+    const draft = saveLinkedBuilder(ctx, {
+      detectionId: '22222222-2222-2222-2222-222222222222',
+      selectedIndex: 2,
+      userFeedback: {
+        kind: 'selected_alternate',
+        selectedIndex: 2,
+        selectedLatin: 'Anolis',
+        topLatin: 'Turdus',
+      },
+    })!;
+    const event = finalize(draft);
+    expect(event.flags).toContain('user_feedback');
+    expect(event.flags).toContain('user_selected_alternate');
+    expect(event.payload.user_feedback).toMatchObject({ selectedLatin: 'Anolis' });
   });
 
   it('flags kingdom uncertain live preview sample', () => {

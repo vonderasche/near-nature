@@ -76,6 +76,7 @@ export function useSpeciesIdentification(): UseSpeciesIdentificationResult {
           classifications,
           tfliteMeta,
         });
+        debugSession?.registerCapturePhoto(photoUri);
       } else {
         const resized = await resizeForUpload(photoUri);
         resizedUri = resized.uri;
@@ -90,6 +91,7 @@ export function useSpeciesIdentification(): UseSpeciesIdentificationResult {
           classifications,
           filterSummary,
         });
+        debugSession?.registerCapturePhoto(photoUri);
       }
 
       if (hasNoSpeciesFound(classifications)) {

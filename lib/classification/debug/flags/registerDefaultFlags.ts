@@ -56,3 +56,14 @@ registerFlagEvaluator(
     return event.payload.top_label === 'Uncertain';
   }),
 );
+
+registerFlagEvaluator(
+  defineFlag('user_feedback', (event) => event.payload.user_feedback != null),
+);
+
+registerFlagEvaluator(
+  defineFlag('user_selected_alternate', (event) => {
+    const feedback = event.payload.user_feedback as { kind?: string } | undefined;
+    return feedback?.kind === 'selected_alternate';
+  }),
+);

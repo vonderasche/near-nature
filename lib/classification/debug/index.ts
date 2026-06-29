@@ -4,7 +4,11 @@ export {
   createClassificationDebugSession,
   getGlobalClassificationDebugSession,
 } from '@/lib/classification/debug/ClassificationDebugSession';
-export { isClassificationDebugEnabled } from '@/lib/classification/debug/isClassificationDebugEnabled';
+export {
+  isClassificationDebugEnabled,
+  isClassificationDebugFeatureAvailable,
+  isClassificationDebugThumbnailsEnabled,
+} from '@/lib/classification/debug/isClassificationDebugEnabled';
 export type {
   CaptureIdentifyRawContext,
   CloudReclassifyRawContext,

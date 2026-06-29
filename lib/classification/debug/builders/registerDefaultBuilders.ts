@@ -117,6 +117,7 @@ export const cloudReclassifyBuilder: EventBuilder = (ctx, raw) => {
 
 export const saveLinkedBuilder: EventBuilder = (ctx, raw) => {
   const data = raw as SaveLinkedRawContext;
+  const feedback = data.userFeedback;
   return baseFields(ctx, {
     event_name: 'save_linked',
     pipeline: 'none',
@@ -125,7 +126,9 @@ export const saveLinkedBuilder: EventBuilder = (ctx, raw) => {
     payload: {
       detection_id: data.detectionId,
       selected_index: data.selectedIndex,
+      ...(feedback ? { user_feedback: feedback } : {}),
     },
+    flagHints: feedback ? ['user_feedback', 'user_selected_alternate'] : undefined,
   });
 };
 

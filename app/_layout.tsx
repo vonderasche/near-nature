@@ -8,6 +8,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 WebBrowser.maybeCompleteAuthSession();
 
 import { AuthGate } from '@/components/layout/auth-gate';
+import { ClassificationDebugPreferenceBootstrap } from '@/components/layout/classification-debug-preference-bootstrap';
 import { LocalDatabaseErrorBanner } from '@/components/layout/local-database-error-banner';
 import { NavigationThemeBridge } from '@/components/layout/navigation-theme-bridge';
 import { FirstLoginWelcomeModal } from '@/components/welcome/first-login-welcome-modal';
@@ -25,6 +26,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <SafeAreaProvider>
         <AuthProvider>
+          <ClassificationDebugPreferenceBootstrap />
           <LocalDatabaseProvider>
             <AppThemeProvider>
               <RegionProvider>

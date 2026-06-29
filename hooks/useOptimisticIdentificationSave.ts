@@ -88,6 +88,16 @@ export function useOptimisticIdentificationSave({
         debugSession?.emit('save_linked', {
           detectionId: result.result.detectionId,
           selectedIndex: index,
+          ...(index !== 0
+            ? {
+                userFeedback: {
+                  kind: 'selected_alternate' as const,
+                  selectedIndex: index,
+                  selectedLatin: primary.latinName,
+                  topLatin: classifications[0]?.latinName ?? null,
+                },
+              }
+            : {}),
         });
         void refetchHistory();
         requestProfileRefresh();

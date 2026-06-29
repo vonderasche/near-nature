@@ -6,10 +6,12 @@ import { Screen } from '@/components/ui/Screen';
 import { StackScreenHeader } from '@/components/ui/StackScreenHeader';
 import { Button } from '@/components/ui/Button';
 import { ThemePicker } from '@/components/settings/theme-picker';
+import { ClassificationDebugSettings } from '@/components/settings/classification-debug-settings';
 import { ThemedConfirmModal, ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { useTheme } from '@/hooks/useTheme';
 import { useLogout } from '@/hooks/useLogout';
 import { useUser } from '@/hooks/useUser';
+import { isClassificationDebugFeatureAvailable } from '@/lib/classification/debug/isClassificationDebugEnabled';
 
 export default function ProfileSettingsScreen() {
   const { theme } = useTheme();
@@ -34,6 +36,12 @@ export default function ProfileSettingsScreen() {
         <Section title="Appearance">
           <ThemePicker />
         </Section>
+
+        {isClassificationDebugFeatureAvailable() ? (
+          <Section title="Identification feedback">
+            <ClassificationDebugSettings />
+          </Section>
+        ) : null}
 
         <Section title="Account">
           <View style={{ gap: theme.spacing.sm }}>

@@ -30,6 +30,7 @@ All `.sql` scripts here are written to be **safe to re-run** (they drop/recreate
 | `storage_bucket_detections.sql` | Storage bucket + policies |
 | `storage_bucket_region_models.sql` | Public `region-models` bucket (anon read for regional TFLite packs) |
 | `create_ml_telemetry_events.sql` | ML classification debug events + batch insert RPC |
+| `storage_bucket_ml_telemetry.sql` | Private bucket for optional debug thumbnails |
 | `ml_telemetry_reports.sql` | Telemetry reporting views + daily rollup refresh |
 | `get_detection_count_leaderboard.sql` | RPC: Explorer Board rankings (paginated) |
 | `search_public_detections.sql` | RPC: community identification search for Explorer Board discovery lens |
@@ -139,6 +140,7 @@ If tables already exist and you only need to refresh objects:
 | Species catalog in cloud | `create_species_catalog.sql`, then `npm run seed:species-catalog` |
 | Gemini catalog sharing | `patch_propose_species_catalog_enrichment.sql` (after species catalog) |
 | Classification debug telemetry | `create_ml_telemetry_events.sql`, then `ml_telemetry_reports.sql` |
+| Debug telemetry thumbnails | `storage_bucket_ml_telemetry.sql` (optional; Settings toggle) |
 | ML telemetry error reports | `npm run report:ml-telemetry` (requires `SUPABASE_SERVICE_ROLE_KEY`) |
 | Purge old telemetry rows | `purge_ml_telemetry_events.sql` |
 | Verify catalog + parks RPCs | `npm run verify:species-catalog` |
