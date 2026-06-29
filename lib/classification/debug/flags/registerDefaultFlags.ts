@@ -40,7 +40,11 @@ registerFlagEvaluator(
 );
 
 registerFlagEvaluator(
-  defineFlag('reclassify_mismatch', (event) => event.payload.reclassify_mismatch === true),
+  defineFlag('reclassify_mismatch', (event) => {
+    if (event.payload.reclassify_mismatch === true) return true;
+    const comparison = event.payload.comparison as { reclassify_mismatch?: boolean | null } | undefined;
+    return comparison?.reclassify_mismatch === true;
+  }),
 );
 
 registerFlagEvaluator(

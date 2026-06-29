@@ -1,3 +1,6 @@
+import type { ClassificationResult } from '@/types';
+import type { TfliteIdentificationMeta } from '@/types/tfliteIdentification';
+import { hasNoSpeciesFound } from '@/lib/image/imageFilters';
 import type {
   CaptureIdentifyRawContext,
   CloudReclassifyRawContext,
@@ -7,7 +10,6 @@ import type {
   SaveLinkedRawContext,
   TelemetryBuildContext,
 } from '@/lib/classification/debug/types';
-import { hasNoSpeciesFound } from '@/lib/image/imageFilters';
 
 function baseFields(
   ctx: TelemetryBuildContext,
@@ -32,6 +34,79 @@ function predictionsFromClassifications(
     confidence: row.confidence,
     classIndex,
   }));
+}
+
+type PredictionTop = {
+  latin_name: string | null;
+  common_name: string | null;
+  confidence: number | null;
+};
+
+function buildTflitePredictionSummary(
+  meta: TfliteIdentificationMeta | null,
+  priorClassifications: ClassificationResult[] | undefined,
+) {
+  const topFromUi = priorClassifications?.[0];
+  const topFromGenus = meta?.genusTop[0];
+  const top: PredictionTop | null = topFromUi
+    ? {
+        latin_name: topFromUi.latinName,
+        common_name: topFromUi.commonName,
+        confidence: topFromUi.confidence,
+      }
+    : topFromGenus
+      ? {
+          latin_name: topFromGenus.genus,
+          common_name: topFromGenus.genus,
+          confidence: topFromGenus.confidence,
+        }
+      : null;
+
+  return {
+    routing_label: meta?.routedPreviewLabel ?? null,
+    specialist_id: meta?.specialistId ?? null,
+    specialist_display_name: meta?.specialistDisplayName ?? null,
+    preview_top: meta?.previewTop ?? [],
+    genus_top: meta?.genusTop ?? [],
+    top,
+  };
+}
+
+function buildGeminiPredictionSummary(classifications: ClassificationResult[]) {
+  const predictions = classifications.map((row) => ({
+    latin_name: row.latinName,
+    common_name: row.commonName,
+    confidence: row.confidence,
+    taxon_group: row.taxonGroup,
+  }));
+
+  return {
+    top: predictions[0] ?? null,
+    predictions,
+  };
+}
+
+function buildGeminiFallbackComparison(
+  meta: TfliteIdentificationMeta | null,
+  priorClassifications: ClassificationResult[] | undefined,
+  cloudClassifications: ClassificationResult[],
+) {
+  const tflite_prediction = buildTflitePredictionSummary(meta, priorClassifications);
+  const gemini_prediction = buildGeminiPredictionSummary(cloudClassifications);
+  const tfliteLatin = tflite_prediction.top?.latin_name?.toLowerCase() ?? null;
+  const geminiLatin = gemini_prediction.top?.latin_name?.toLowerCase() ?? null;
+  const hasBoth = tfliteLatin != null && tfliteLatin.length > 0 && geminiLatin != null && geminiLatin.length > 0;
+
+  return {
+    tflite_prediction,
+    gemini_prediction,
+    comparison: {
+      tflite_top_latin: tfliteLatin,
+      gemini_top_latin: geminiLatin,
+      latin_match: hasBoth ? tfliteLatin === geminiLatin : null,
+      reclassify_mismatch: hasBoth ? tfliteLatin !== geminiLatin : null,
+    },
+  };
 }
 
 export const captureIdentifyBuilder: EventBuilder = (ctx, raw) => {
@@ -80,6 +155,12 @@ export const captureIdentifyBuilder: EventBuilder = (ctx, raw) => {
 
 export const cloudReclassifyBuilder: EventBuilder = (ctx, raw) => {
   const data = raw as CloudReclassifyRawContext;
+  const fallback = buildGeminiFallbackComparison(
+    data.priorTfliteMeta,
+    data.priorClassifications,
+    data.cloudClassifications,
+  );
+
   if (data.error) {
     return baseFields(ctx, {
       event_name: 'cloud_reclassify',
@@ -88,16 +169,16 @@ export const cloudReclassifyBuilder: EventBuilder = (ctx, raw) => {
       error_message: data.error,
       payload: {
         prior_tflite_meta: data.priorTfliteMeta,
+        tflite_prediction: fallback.tflite_prediction,
+        gemini_prediction: fallback.gemini_prediction,
+        comparison: fallback.comparison,
       },
-      flagHints: ['identify_exception'],
+      flagHints: ['identify_exception', 'user_reclassified'],
     });
   }
 
   const empty = hasNoSpeciesFound(data.cloudClassifications);
-  const priorGenus = data.priorTfliteMeta?.genusTop[0]?.genus?.toLowerCase() ?? null;
-  const cloudTop = data.cloudClassifications[0]?.latinName?.toLowerCase() ?? null;
-  const mismatch =
-    priorGenus != null && cloudTop != null && priorGenus.length > 0 && priorGenus !== cloudTop;
+  const mismatch = fallback.comparison.reclassify_mismatch === true;
 
   return baseFields(ctx, {
     event_name: 'cloud_reclassify',
@@ -108,10 +189,17 @@ export const cloudReclassifyBuilder: EventBuilder = (ctx, raw) => {
       routing_label: data.priorTfliteMeta?.routedPreviewLabel ?? null,
       specialist_id: data.priorTfliteMeta?.specialistId ?? null,
       reclassify_mismatch: mismatch,
+      tflite_prediction: fallback.tflite_prediction,
+      gemini_prediction: fallback.gemini_prediction,
+      comparison: fallback.comparison,
       top_predictions: predictionsFromClassifications(data.cloudClassifications),
       classifications: data.cloudClassifications,
     },
-    flagHints: empty ? ['empty_result', 'user_reclassified'] : ['user_reclassified'],
+    flagHints: empty
+      ? ['empty_result', 'user_reclassified']
+      : mismatch
+        ? ['user_reclassified', 'reclassify_mismatch']
+        : ['user_reclassified'],
   });
 };
 

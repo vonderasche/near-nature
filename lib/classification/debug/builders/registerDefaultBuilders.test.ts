@@ -54,7 +54,7 @@ describe('classification debug builders', () => {
   it('flags reclassify mismatch', () => {
     const raw: CloudReclassifyRawContext = {
       priorTfliteMeta: {
-        previewTop: [],
+        previewTop: [{ label: 'Bird', confidence: 0.9, classIndex: 2 }],
         routedPreviewLabel: 'Bird',
         specialistId: 'birds',
         specialistDisplayName: 'Birds',
@@ -62,6 +62,14 @@ describe('classification debug builders', () => {
         usedSpecialist: true,
         notice: null,
       },
+      priorClassifications: [
+        {
+          latinName: 'Turdus',
+          commonName: 'Turdus',
+          confidence: 0.8,
+          taxonGroup: 'animals',
+        },
+      ],
       cloudClassifications: [
         {
           latinName: 'Anolis',
@@ -76,6 +84,57 @@ describe('classification debug builders', () => {
     expect(event.flags).toContain('user_reclassified');
     expect(event.flags).toContain('reclassify_mismatch');
     expect(event.payload.reclassify_mismatch).toBe(true);
+    expect(event.payload.tflite_prediction).toMatchObject({
+      routing_label: 'Bird',
+      specialist_id: 'birds',
+      top: { latin_name: 'Turdus', confidence: 0.8 },
+    });
+    expect(event.payload.gemini_prediction).toMatchObject({
+      top: { latin_name: 'Anolis', confidence: 0.77 },
+    });
+    expect(event.payload.comparison).toMatchObject({
+      tflite_top_latin: 'turdus',
+      gemini_top_latin: 'anolis',
+      latin_match: false,
+      reclassify_mismatch: true,
+    });
+  });
+
+  it('records gemini fallback when predictions agree', () => {
+    const raw: CloudReclassifyRawContext = {
+      priorTfliteMeta: {
+        previewTop: [],
+        routedPreviewLabel: 'Bird',
+        specialistId: 'birds',
+        specialistDisplayName: 'Birds',
+        genusTop: [{ genus: 'Turdus', confidence: 0.8, classIndex: 0 }],
+        usedSpecialist: true,
+        notice: null,
+      },
+      priorClassifications: [
+        {
+          latinName: 'Turdus',
+          commonName: 'American Robin',
+          confidence: 0.8,
+          taxonGroup: 'animals',
+        },
+      ],
+      cloudClassifications: [
+        {
+          latinName: 'Turdus',
+          commonName: 'American Robin',
+          confidence: 0.91,
+          taxonGroup: 'animals',
+        },
+      ],
+    };
+    const event = finalize(cloudReclassifyBuilder(ctx, raw)!);
+    expect(event.flags).toContain('user_reclassified');
+    expect(event.flags).not.toContain('reclassify_mismatch');
+    expect(event.payload.comparison).toMatchObject({
+      latin_match: true,
+      reclassify_mismatch: false,
+    });
   });
 
   it('flags user feedback when saving an alternate species', () => {

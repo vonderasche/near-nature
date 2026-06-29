@@ -30,8 +30,9 @@ All `.sql` scripts here are written to be **safe to re-run** (they drop/recreate
 | `storage_bucket_detections.sql` | Storage bucket + policies |
 | `storage_bucket_region_models.sql` | Public `region-models` bucket (anon read for regional TFLite packs) |
 | `create_ml_telemetry_events.sql` | ML classification debug events + batch insert RPC |
-| `storage_bucket_ml_telemetry.sql` | Private bucket for optional debug thumbnails |
 | `ml_telemetry_reports.sql` | Telemetry reporting views + daily rollup refresh |
+| `storage_bucket_ml_telemetry.sql` | Private bucket for optional debug thumbnails |
+| `purge_ml_telemetry_events.sql` | Delete telemetry rows older than 90 days (maintenance) |
 | `get_detection_count_leaderboard.sql` | RPC: Explorer Board rankings (paginated) |
 | `search_public_detections.sql` | RPC: community identification search for Explorer Board discovery lens |
 | `get_public_user_profile.sql` | RPC: public profile + stats |
@@ -98,7 +99,11 @@ Use for a **new** Supabase project or when you intentionally recreate the `publi
 | 17 | `create_florida_state_parks.sql` | Parks catalog; then `npm run seed:florida-parks` |
 | 18 | `optimize_detection_gallery.sql` | Gallery browse/search performance (existing DBs) |
 | 19 | `drop_streak_client_update_policy.sql` | Policy cleanup (harmless on fresh DB) |
-| 20 | `harden_security_linter.sql` | Security hardening (see below) |
+| 20 | `create_ml_telemetry_events.sql` | ML telemetry table + batch insert / link RPCs |
+| 21 | `ml_telemetry_reports.sql` | Reporting views + `refresh_ml_telemetry_daily_rollups` |
+| 22 | `storage_bucket_ml_telemetry.sql` | Optional: private bucket for debug thumbnails (Settings toggle) |
+| 23 | `storage_bucket_region_models.sql` | Public `region-models` bucket (regional TFLite downloads) |
+| 24 | `harden_security_linter.sql` | Security hardening (see below) |
 
 ### After rebuild
 
@@ -108,6 +113,8 @@ Use for a **new** Supabase project or when you intentionally recreate the `publi
 | Species identification in app | Native: bundled TFLite models (no Edge). Web: `.\scripts\deploy-identify-species.ps1` and `GEMINI_API_KEY` in Edge secrets |
 | Delete account in app | Deploy `delete-account` Edge Function (not SQL) |
 | Confirm RPCs | `npm run verify:supabase` |
+| Classification debug telemetry (app) | Set `EXPO_PUBLIC_CLASSIFICATION_DEBUG=1`, rebuild; user opts in under **Settings → Identification feedback** |
+| ML telemetry reports (CLI) | `npm run report:ml-telemetry` (requires `SUPABASE_SERVICE_ROLE_KEY`) |
 
 Do **not** put `EXPO_PUBLIC_GEMINI_API_KEY` in production app `.env` for release builds — use the Edge Function on web only.
 
@@ -139,16 +146,39 @@ If tables already exist and you only need to refresh objects:
 | Explorer Board search returns nothing | `fix_public_detection_search.sql`, then `search_public_detections.sql` |
 | Species catalog in cloud | `create_species_catalog.sql`, then `npm run seed:species-catalog` |
 | Gemini catalog sharing | `patch_propose_species_catalog_enrichment.sql` (after species catalog) |
-| Classification debug telemetry | `create_ml_telemetry_events.sql`, then `ml_telemetry_reports.sql` |
-| Debug telemetry thumbnails | `storage_bucket_ml_telemetry.sql` (optional; Settings toggle) |
-| ML telemetry error reports | `npm run report:ml-telemetry` (requires `SUPABASE_SERVICE_ROLE_KEY`) |
-| Purge old telemetry rows | `purge_ml_telemetry_events.sql` |
+| Classification debug telemetry | See **[Classification debug telemetry (run order)](#classification-debug-telemetry-run-order)** below |
+| Purge old telemetry rows | `purge_ml_telemetry_events.sql` (maintenance; not part of bootstrap) |
 | Verify catalog + parks RPCs | `npm run verify:species-catalog` |
 | Florida parks in cloud | `create_florida_state_parks.sql`, then `npm run seed:florida-parks` |
 | Parks table missing image columns | `patch_florida_state_parks_species_images.sql` |
 | Supabase Dashboard security linter warnings | `harden_security_linter.sql` |
 
 Then reload the schema cache and run `npm run verify:supabase`.
+
+---
+
+## Classification debug telemetry (run order)
+
+Use this when enabling on-device / cloud classification feedback in the app (`EXPO_PUBLIC_CLASSIFICATION_DEBUG=1` in `.env`). Requires **`create_user.sql`** first (telemetry rows reference `public.users`).
+
+| Step | File | Required? | Notes |
+|------|------|-----------|--------|
+| 1 | `create_ml_telemetry_events.sql` | **Yes** | Table `ml_telemetry_events`, RLS, `insert_ml_telemetry_events`, `link_ml_telemetry_session` |
+| 2 | `ml_telemetry_reports.sql` | **Yes** | Views (`ml_telemetry_flag_counts_30d`, routing misses, reclassify rate, mismatches) + daily rollup table. Views use `security_invoker = true` (RLS-safe). |
+| 3 | `storage_bucket_ml_telemetry.sql` | Optional | Only if users enable **Include debug thumbnails** in Settings |
+
+After all required steps:
+
+1. **Settings → API → Reload schema cache**
+2. `npm run verify:supabase` (includes `verify-supabase-ml-telemetry.mjs`)
+3. Rebuild the app with `EXPO_PUBLIC_CLASSIFICATION_DEBUG=1`
+4. In the app: **Settings → Identification feedback → Share classification feedback**
+
+**Maintenance (not bootstrap):** `purge_ml_telemetry_events.sql` — run on a schedule to delete rows older than 90 days.
+
+**Reports:** `npm run report:ml-telemetry` — prints top flags and mismatch samples (needs `SUPABASE_SERVICE_ROLE_KEY` in `.env`).
+
+---
 
 ### `extensions.gin_trgm_ops does not exist`
 
@@ -235,6 +265,7 @@ SQL: `create_point_awards.sql`, `check_category_milestones.sql` (runs after each
 | Motto / profile edit fails | `update_own_user_profile.sql` (SECURITY DEFINER patch RPC) |
 | Sign in with email or username | RPC `resolve_login_email` |
 | Save / delete photo | `public.detections` + Storage |
+| Classification debug telemetry | `ml_telemetry_events` + RPCs; optional `ml-telemetry` Storage bucket |
 | Explorer Board | RPC `get_detection_count_leaderboard` |
 | View another member | RPC `get_public_user_profile`, `get_public_user_awards` |
 | Own profile scoring / badges | RPC `get_user_scoring_snapshot` (fallback: `get_user_score_by_category` + `point_awards`) |

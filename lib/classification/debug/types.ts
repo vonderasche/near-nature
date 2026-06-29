@@ -51,6 +51,7 @@ export type CaptureIdentifyRawContext = {
 
 export type CloudReclassifyRawContext = {
   priorTfliteMeta: TfliteIdentificationMeta | null;
+  priorClassifications?: ClassificationResult[];
   cloudClassifications: ClassificationResult[];
   error?: string | null;
 };

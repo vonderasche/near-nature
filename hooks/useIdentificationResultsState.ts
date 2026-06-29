@@ -147,6 +147,7 @@ export function useIdentificationResultsState(
     setReclassifyError(null);
 
     const priorTfliteMeta = tfliteMeta;
+    const priorClassifications = classifications;
 
     try {
       const cloudClassifications = await identifyPhotoWithGemini(photoUri);
@@ -154,6 +155,7 @@ export function useIdentificationResultsState(
       if (hasNoSpeciesFound(cloudClassifications)) {
         getGlobalClassificationDebugSession()?.emit('cloud_reclassify', {
           priorTfliteMeta,
+          priorClassifications,
           cloudClassifications: [],
           error: 'Cloud identification did not find a species in this photo.',
         });
@@ -170,6 +172,7 @@ export function useIdentificationResultsState(
 
       getGlobalClassificationDebugSession()?.emit('cloud_reclassify', {
         priorTfliteMeta,
+        priorClassifications,
         cloudClassifications,
       });
 
@@ -189,6 +192,7 @@ export function useIdentificationResultsState(
       const message = error instanceof Error ? error.message : 'Cloud identification failed';
       getGlobalClassificationDebugSession()?.emit('cloud_reclassify', {
         priorTfliteMeta,
+        priorClassifications,
         cloudClassifications: [],
         error: message,
       });
@@ -196,7 +200,7 @@ export function useIdentificationResultsState(
     } finally {
       setAlternatesEnriching(false);
     }
-  }, [photoUri, reclassifiedWithCloud, tfliteMeta, userId, userState]);
+  }, [classifications, photoUri, reclassifiedWithCloud, tfliteMeta, userId, userState]);
 
   const canReclassifyWithCloud =
     cloudReclassifyReady &&

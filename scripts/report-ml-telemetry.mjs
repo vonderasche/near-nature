@@ -105,7 +105,7 @@ printSection('Reclassify rate by region', reclassify);
 
 const { data: mismatches, error: mismatchError } = await supabase
   .from('ml_telemetry_reclassify_mismatches_30d')
-  .select('created_at, region_id, routing_label, tflite_top_genus, cloud_top_latin')
+  .select('created_at, region_id, routing_label, tflite_top_latin, gemini_top_latin, comparison')
   .limit(10);
 
 if (mismatchError) throw mismatchError;
