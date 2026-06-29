@@ -8,6 +8,7 @@ export { isClassificationDebugEnabled } from '@/lib/classification/debug/isClass
 export type {
   CaptureIdentifyRawContext,
   CloudReclassifyRawContext,
+  LivePreviewSampleRawContext,
   MlTelemetryEventName,
   SaveLinkedRawContext,
 } from '@/lib/classification/debug/types';

@@ -3,6 +3,7 @@ import type {
   CloudReclassifyRawContext,
   EventBuilder,
   EventBuilderResult,
+  LivePreviewSampleRawContext,
   SaveLinkedRawContext,
   TelemetryBuildContext,
 } from '@/lib/classification/debug/types';
@@ -125,5 +126,33 @@ export const saveLinkedBuilder: EventBuilder = (ctx, raw) => {
       detection_id: data.detectionId,
       selected_index: data.selectedIndex,
     },
+  });
+};
+
+export const livePreviewSampleBuilder: EventBuilder = (ctx, raw) => {
+  const data = raw as LivePreviewSampleRawContext;
+  const top = data.predictions[0];
+  const topLabel = top?.label ?? null;
+  const uncertain = topLabel === 'Uncertain';
+  const noOrganism =
+    topLabel === 'No Plant or Animal' ||
+    topLabel === 'No organism' ||
+    topLabel === 'Searching…';
+
+  return baseFields(ctx, {
+    event_name: 'live_preview_sample',
+    pipeline: 'preview',
+    outcome: uncertain || noOrganism || data.predictions.length === 0 ? 'empty' : 'success',
+    payload: {
+      model_id: data.modelId,
+      top_label: topLabel,
+      top_confidence: top?.confidence ?? null,
+      predictions: data.predictions,
+    },
+    flagHints: uncertain
+      ? ['kingdom_uncertain']
+      : noOrganism
+        ? ['routing_no_organism']
+        : undefined,
   });
 };

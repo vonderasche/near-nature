@@ -1,6 +1,7 @@
 import {
   captureIdentifyBuilder,
   cloudReclassifyBuilder,
+  livePreviewSampleBuilder,
   saveLinkedBuilder,
 } from '@/lib/classification/debug/builders/registerDefaultBuilders';
 import type { EventBuilder, MlTelemetryEventName } from '@/lib/classification/debug/types';
@@ -19,6 +20,7 @@ export function registerDefaultEventBuilders(): void {
   registerEventBuilder('capture_identify', captureIdentifyBuilder);
   registerEventBuilder('cloud_reclassify', cloudReclassifyBuilder);
   registerEventBuilder('save_linked', saveLinkedBuilder);
+  registerEventBuilder('live_preview_sample', livePreviewSampleBuilder);
 }
 
 registerDefaultEventBuilders();

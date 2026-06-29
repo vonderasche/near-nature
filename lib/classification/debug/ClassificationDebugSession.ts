@@ -30,9 +30,13 @@ export class ClassificationDebugSession {
     this.queue = new TelemetryQueue(sink);
   }
 
-  emit(eventName: MlTelemetryEventName, raw: MlTelemetryRawContext): void {
+  emit(
+    eventName: MlTelemetryEventName,
+    raw: MlTelemetryRawContext,
+    opts?: { forceSample?: boolean },
+  ): void {
     if (this.disposed || !isClassificationDebugEnabled()) return;
-    if (!shouldSampleEvent(eventName)) return;
+    if (!shouldSampleEvent(eventName, { force: opts?.forceSample })) return;
 
     const builder = getEventBuilder(eventName);
     if (!builder) return;

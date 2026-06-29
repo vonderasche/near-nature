@@ -13,6 +13,7 @@ import { CameraLivePreviewWithClassifier } from '@/components/camera/camera-live
 import { CameraTopControls } from '@/components/camera/camera-top-controls';
 import { CameraZoomChips } from '@/components/camera/camera-zoom-chips';
 import { useCameraCaptureFormat } from '@/hooks/useCameraCaptureFormat';
+import { useCameraPreviewDebugSession } from '@/hooks/useCameraPreviewDebugSession';
 import { useCameraPreferences } from '@/hooks/useCameraPreferences';
 import { useCameraZoom } from '@/hooks/useCameraZoom';
 import { useMvpCaptureSessionActive } from '@/hooks/useMvpCaptureSessionActive';
@@ -24,6 +25,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useCameraScreen } from '@/hooks/useCameraScreen';
 import { usePickPhotoFromGallery } from '@/hooks/usePickPhotoFromGallery';
 import { areFrameProcessorsAvailable } from '@/lib/camera/areFrameProcessorsAvailable';
+import { isClassificationDebugEnabled } from '@/lib/classification/debug';
 import { isMvpCaptureEnabled } from '@/lib/camera/tflite/mvp/isMvpCaptureEnabled';
 import {
   beginMvpCaptureSession,
@@ -43,6 +45,8 @@ export default function CameraScreen() {
   const insets = useSafeAreaInsets();
   const [pickerNotice, setPickerNotice] = useState<{ title: string; message: string } | null>(null);
   const [controlMenusOpen, setControlMenusOpen] = useState(false);
+
+  useCameraPreviewDebugSession(isClassificationDebugEnabled());
 
   const navigateToIdentification = useCallback(
     (uri: string) => {

@@ -49,3 +49,10 @@ registerFlagEvaluator(
     return typeof summary?.dropped === 'number' && summary.dropped > 0;
   }),
 );
+
+registerFlagEvaluator(
+  defineFlag('kingdom_uncertain', (event) => {
+    if (event.event_name !== 'live_preview_sample') return false;
+    return event.payload.top_label === 'Uncertain';
+  }),
+);

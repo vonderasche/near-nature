@@ -4,11 +4,13 @@ import '@/lib/classification/debug/flags/registerDefaultFlags';
 import {
   captureIdentifyBuilder,
   cloudReclassifyBuilder,
+  livePreviewSampleBuilder,
 } from '@/lib/classification/debug/builders/registerDefaultBuilders';
 import { evaluateFlags } from '@/lib/classification/debug/flagEvaluatorRegistry';
 import type {
   CaptureIdentifyRawContext,
   CloudReclassifyRawContext,
+  LivePreviewSampleRawContext,
   TelemetryBuildContext,
 } from '@/lib/classification/debug/types';
 
@@ -73,5 +75,17 @@ describe('classification debug builders', () => {
     expect(event.flags).toContain('user_reclassified');
     expect(event.flags).toContain('reclassify_mismatch');
     expect(event.payload.reclassify_mismatch).toBe(true);
+  });
+
+  it('flags kingdom uncertain live preview sample', () => {
+    const raw: LivePreviewSampleRawContext = {
+      modelId: 'kingdom',
+      predictions: [{ label: 'Uncertain', confidence: 0.55, classIndex: -1 }],
+    };
+    const draft = livePreviewSampleBuilder(ctx, raw)!;
+    const event = finalize(draft);
+    expect(event.outcome).toBe('empty');
+    expect(event.flags).toContain('kingdom_uncertain');
+    expect(event.pipeline).toBe('preview');
   });
 });

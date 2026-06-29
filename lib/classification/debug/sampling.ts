@@ -7,7 +7,11 @@ const SAMPLE_RATES: Partial<Record<MlTelemetryEventName, number>> = {
   live_preview_sample: 0.08,
 };
 
-export function shouldSampleEvent(eventName: MlTelemetryEventName): boolean {
+export function shouldSampleEvent(
+  eventName: MlTelemetryEventName,
+  opts?: { force?: boolean },
+): boolean {
+  if (opts?.force) return true;
   const rate = SAMPLE_RATES[eventName] ?? 1;
   if (rate >= 1) return true;
   if (rate <= 0) return false;
