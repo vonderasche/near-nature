@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { HeroIcon } from '@/components/ui/hero-icon';
-import { authColors, authRadii, authSpacing, authTypography } from '@/constants/auth-theme';
+import type { AppTheme } from '@/constants/themes';
+import { useTheme } from '@/hooks/useTheme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 
 type AuthFieldProps = {
   label: string;
@@ -21,6 +23,52 @@ type AuthFieldProps = {
   helperTone?: 'muted' | 'error';
 };
 
+function createAuthFieldStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    wrap: {
+      gap: theme.spacing.xs,
+    },
+    label: {
+      ...theme.typography.label,
+      color: theme.colors.textPrimary,
+    },
+    inputRow: {
+      position: 'relative',
+      justifyContent: 'center',
+    },
+    input: {
+      ...theme.typography.body,
+      color: theme.colors.textPrimary,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      borderRadius: theme.radii.field,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: theme.spacing.sm,
+      backgroundColor: 'transparent',
+    },
+    inputWithToggle: {
+      paddingRight: theme.spacing.xl + theme.spacing.sm,
+    },
+    inputError: {
+      borderColor: theme.colors.danger,
+    },
+    toggle: {
+      position: 'absolute',
+      right: theme.spacing.sm,
+      height: '100%',
+      justifyContent: 'center',
+    },
+    helperMuted: {
+      ...theme.typography.subtitle,
+      color: theme.colors.textMuted,
+    },
+    helperError: {
+      ...theme.typography.subtitle,
+      color: theme.colors.danger,
+    },
+  });
+}
+
 export function AuthField({
   label,
   value,
@@ -35,6 +83,8 @@ export function AuthField({
   helperText,
   helperTone = 'muted',
 }: AuthFieldProps) {
+  const styles = useThemedStyles(createAuthFieldStyles);
+  const { theme } = useTheme();
   const [passwordVisible, setPasswordVisible] = useState(false);
   const isPasswordField = Boolean(secureTextEntry);
   const canToggleVisibility = isPasswordField && allowShowPassword;
@@ -48,7 +98,7 @@ export function AuthField({
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor={authColors.textMuted}
+          placeholderTextColor={theme.colors.textMuted}
           secureTextEntry={hidden}
           autoCapitalize={autoCapitalize}
           keyboardType={keyboardType}
@@ -69,7 +119,7 @@ export function AuthField({
             <HeroIcon
               name={passwordVisible ? 'eye-slash' : 'eye'}
               size={22}
-              color={authColors.textMuted}
+              color={theme.colors.textMuted}
             />
           </Pressable>
         ) : null}
@@ -80,47 +130,3 @@ export function AuthField({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: {
-    gap: authSpacing.xs,
-  },
-  label: {
-    ...authTypography.label,
-    color: authColors.text,
-  },
-  inputRow: {
-    position: 'relative',
-    justifyContent: 'center',
-  },
-  input: {
-    ...authTypography.body,
-    color: authColors.text,
-    borderWidth: 1,
-    borderColor: authColors.border,
-    borderRadius: authRadii.field,
-    paddingHorizontal: authSpacing.sm,
-    paddingVertical: authSpacing.sm,
-    backgroundColor: 'transparent',
-  },
-  inputWithToggle: {
-    paddingRight: authSpacing.xl + authSpacing.sm,
-  },
-  inputError: {
-    borderColor: authColors.danger,
-  },
-  toggle: {
-    position: 'absolute',
-    right: authSpacing.sm,
-    height: '100%',
-    justifyContent: 'center',
-  },
-  helperMuted: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
-  },
-  helperError: {
-    ...authTypography.subtitle,
-    color: authColors.danger,
-  },
-});

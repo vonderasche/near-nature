@@ -5,15 +5,43 @@ import { StyleSheet, Text, View } from 'react-native';
 import { AuthButton } from '@/components/auth/auth-button';
 import { AuthScreen } from '@/components/auth/auth-screen';
 import { AuthScreenHeader } from '@/components/auth/auth-screen-header';
-import { authColors, authSpacing } from '@/constants/auth-theme';
+import type { AppTheme } from '@/constants/themes';
 import { useAuthContext } from '@/context/AuthContext';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { clearOrphanAuthSession } from '@/lib/auth/orphanAuthSession';
 import { supabase } from '@/lib/supabase';
 import { routes } from '@/lib/routing/routes';
 import { signOut } from '@/services/authService';
 import { ensurePublicUserProfile, resolveUserProfile } from '@/services/userService';
 
+function createNeedsProfileStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    body: {
+      marginBottom: theme.spacing.lg,
+    },
+    p: {
+      color: theme.colors.textMuted,
+      fontSize: 15,
+      lineHeight: 22,
+    },
+    mono: {
+      fontFamily: 'monospace',
+      color: theme.colors.textPrimary,
+    },
+    warn: {
+      marginTop: theme.spacing.md,
+      color: '#ffb020',
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    logoutWrap: {
+      marginTop: theme.spacing.sm,
+    },
+  });
+}
+
 export default function NeedsProfileScreen() {
+  const styles = useThemedStyles(createNeedsProfileStyles);
   const { refreshProfile } = useAuthContext();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -88,31 +116,10 @@ export default function NeedsProfileScreen() {
         {message ? <Text style={styles.warn}>{message}</Text> : null}
       </View>
       <AuthButton title="Try again" onPress={onTryAgain} loading={busy} disabled={busy} />
-      <View style={{ marginTop: authSpacing.sm }}>
+      <View style={styles.logoutWrap}>
         <AuthButton title="Log out" onPress={onLogout} loading={busy} disabled={busy} variant="outline" />
       </View>
     </AuthScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  body: {
-    marginBottom: authSpacing.lg,
-  },
-  p: {
-    color: authColors.textMuted,
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  mono: {
-    fontFamily: 'monospace',
-    color: authColors.text,
-  },
-  warn: {
-    marginTop: authSpacing.md,
-    color: '#ffb020',
-    fontSize: 14,
-    lineHeight: 20,
-  },
-});
 

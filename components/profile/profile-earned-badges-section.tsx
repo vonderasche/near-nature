@@ -3,8 +3,10 @@ import { ActivityIndicator, StyleSheet, Text, useWindowDimensions, View } from '
 
 import { ErrorRetryBlock } from '@/components/profile/error-retry-block';
 import { ProfileBadgeTile } from '@/components/profile/profile-badge-tile';
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import type { AppTheme } from '@/constants/themes';
 import { usePublicUserAwards } from '@/hooks/usePublicUserAwards';
+import { useTheme } from '@/hooks/useTheme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 import {
   buildEarnedProfileBadgeSections,
   PROFILE_BADGE_GRID_COLUMNS,
@@ -18,8 +20,45 @@ export type ProfileEarnedBadgesSectionHandle = {
   refetch: () => Promise<void>;
 };
 
+function createEarnedBadgesSectionStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    wrap: {
+      gap: theme.spacing.sm,
+      marginBottom: theme.spacing.md,
+    },
+    header: {
+      paddingVertical: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.md,
+      borderWidth: 1,
+      borderRadius: 4,
+      borderColor: theme.colors.border,
+    },
+    headerTitle: {
+      ...theme.typography.subtitle,
+      fontWeight: '600',
+      color: theme.colors.textPrimary,
+    },
+    body: {
+      gap: theme.spacing.md,
+    },
+    syncRow: {
+      alignItems: 'center',
+      paddingVertical: theme.spacing.sm,
+    },
+    section: {
+      gap: theme.spacing.sm,
+    },
+    grid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+    },
+  });
+}
+
 export const ProfileEarnedBadgesSection = forwardRef<ProfileEarnedBadgesSectionHandle, Props>(
   function ProfileEarnedBadgesSection({ userId }, ref) {
+    const styles = useThemedStyles(createEarnedBadgesSectionStyles);
+    const { theme } = useTheme();
     const { awardKeys, badgeProgress, earnedCount, loading, error, refetch } =
       usePublicUserAwards(userId);
     const { width: windowWidth } = useWindowDimensions();
@@ -29,8 +68,8 @@ export const ProfileEarnedBadgesSection = forwardRef<ProfileEarnedBadgesSectionH
       [awardKeys, badgeProgress],
     );
 
-    const horizontalPadding = authSpacing.lg * 2;
-    const gap = authSpacing.sm;
+    const horizontalPadding = theme.spacing.lg * 2;
+    const gap = theme.spacing.sm;
     const cols = PROFILE_BADGE_GRID_COLUMNS;
     const innerWidth = Math.max(280, windowWidth - horizontalPadding);
     const tileSize = Math.max(64, Math.floor((innerWidth - gap * (cols - 1)) / cols));
@@ -50,7 +89,7 @@ export const ProfileEarnedBadgesSection = forwardRef<ProfileEarnedBadgesSectionH
         <View style={styles.body}>
           {loading ? (
             <View style={styles.syncRow}>
-              <ActivityIndicator size="small" color={authColors.textMuted} />
+              <ActivityIndicator size="small" color={theme.colors.textMuted} />
             </View>
           ) : null}
 
@@ -78,36 +117,3 @@ export const ProfileEarnedBadgesSection = forwardRef<ProfileEarnedBadgesSectionH
     );
   },
 );
-
-const styles = StyleSheet.create({
-  wrap: {
-    gap: authSpacing.sm,
-    marginBottom: authSpacing.md,
-  },
-  header: {
-    paddingVertical: authSpacing.sm,
-    paddingHorizontal: authSpacing.md,
-    borderWidth: 1,
-    borderRadius: 4,
-    borderColor: authColors.border,
-  },
-  headerTitle: {
-    ...authTypography.subtitle,
-    fontWeight: '600',
-    color: authColors.text,
-  },
-  body: {
-    gap: authSpacing.md,
-  },
-  syncRow: {
-    alignItems: 'center',
-    paddingVertical: authSpacing.sm,
-  },
-  section: {
-    gap: authSpacing.sm,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-});

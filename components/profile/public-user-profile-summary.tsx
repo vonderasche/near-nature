@@ -1,7 +1,8 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import type { AppTheme } from '@/constants/themes';
 import { usStateLabel } from '@/constants/us-states';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 
 type PublicUserProfileSummaryProps = {
   username: string;
@@ -9,6 +10,42 @@ type PublicUserProfileSummaryProps = {
   state: string | null | undefined;
   mottoPlaceholder?: string;
 };
+
+function createPublicProfileSummaryStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    block: {
+      alignItems: 'center',
+      gap: theme.spacing.xs,
+      maxWidth: 420,
+      paddingHorizontal: theme.spacing.md,
+    },
+    username: {
+      ...theme.typography.title,
+      fontSize: 22,
+      lineHeight: 28,
+      color: theme.colors.textPrimary,
+      textAlign: 'center',
+    },
+    meta: {
+      ...theme.typography.subtitle,
+      textAlign: 'center',
+      color: theme.colors.textMuted,
+    },
+    motto: {
+      ...theme.typography.body,
+      textAlign: 'center',
+      lineHeight: 22,
+      color: theme.colors.textMuted,
+    },
+    mottoPlaceholder: {
+      ...theme.typography.subtitle,
+      fontStyle: 'italic',
+      textAlign: 'center',
+      lineHeight: 22,
+      color: theme.colors.textMuted,
+    },
+  });
+}
 
 /**
  * Same visual rhythm as {@link UserProfileSummary} without editable rows or email.
@@ -19,6 +56,7 @@ export function PublicUserProfileSummary({
   state,
   mottoPlaceholder = 'No motto set.',
 }: PublicUserProfileSummaryProps) {
+  const styles = useThemedStyles(createPublicProfileSummaryStyles);
   const mottoTrimmed = motto?.trim();
   const stateTrimmed = state?.trim();
 
@@ -32,37 +70,3 @@ export function PublicUserProfileSummary({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  block: {
-    alignItems: 'center',
-    gap: authSpacing.xs,
-    maxWidth: 420,
-    paddingHorizontal: authSpacing.md,
-  },
-  username: {
-    ...authTypography.title,
-    fontSize: 22,
-    lineHeight: 28,
-    color: authColors.text,
-    textAlign: 'center',
-  },
-  meta: {
-    ...authTypography.subtitle,
-    textAlign: 'center',
-    color: authColors.textMuted,
-  },
-  motto: {
-    ...authTypography.body,
-    textAlign: 'center',
-    lineHeight: 22,
-    color: authColors.textMuted,
-  },
-  mottoPlaceholder: {
-    ...authTypography.subtitle,
-    fontStyle: 'italic',
-    textAlign: 'center',
-    lineHeight: 22,
-    color: authColors.textMuted,
-  },
-});

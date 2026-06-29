@@ -3,8 +3,9 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { US_STATES, usStateLabel, type UsStateCode } from '@/constants/us-states';
-import { authColors, authRadii, authSpacing, authTypography } from '@/constants/auth-theme';
+import type { AppTheme } from '@/constants/themes';
 import { detectUsStateFromLocation } from '@/lib/geo/detectUsStateFromLocation';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 
 type Props = {
   value: UsStateCode | '';
@@ -12,7 +13,107 @@ type Props = {
   disabled?: boolean;
 };
 
+function createUsStatePickerStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    wrap: {
+      gap: theme.spacing.xs,
+    },
+    label: {
+      ...theme.typography.label,
+      color: theme.colors.textPrimary,
+    },
+    hint: {
+      ...theme.typography.subtitle,
+      color: theme.colors.textMuted,
+      marginBottom: theme.spacing.xs,
+    },
+    selector: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      borderRadius: theme.radii.field,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: theme.spacing.sm,
+      backgroundColor: 'transparent',
+    },
+    selectorDisabled: {
+      opacity: 0.5,
+    },
+    selectorPressed: {
+      opacity: 0.9,
+    },
+    selectorText: {
+      ...theme.typography.body,
+      color: theme.colors.textPrimary,
+      flex: 1,
+    },
+    selectorPlaceholder: {
+      color: theme.colors.textMuted,
+    },
+    chevron: {
+      color: theme.colors.textMuted,
+      fontSize: 12,
+      marginLeft: theme.spacing.sm,
+    },
+    error: {
+      ...theme.typography.subtitle,
+      color: theme.colors.danger,
+    },
+    backdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.55)',
+    },
+    sheet: {
+      maxHeight: '70%',
+      backgroundColor: theme.colors.background,
+      borderTopLeftRadius: 12,
+      borderTopRightRadius: 12,
+      paddingHorizontal: theme.spacing.lg,
+      paddingTop: theme.spacing.md,
+      paddingBottom: theme.spacing.lg,
+      gap: theme.spacing.sm,
+    },
+    sheetTitle: {
+      ...theme.typography.title,
+      fontSize: 20,
+      color: theme.colors.textPrimary,
+      textAlign: 'center',
+    },
+    list: {
+      maxHeight: 360,
+    },
+    option: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.sm,
+      borderRadius: theme.radii.field,
+    },
+    optionSelected: {
+      backgroundColor: theme.colors.primaryFill,
+    },
+    optionPressed: {
+      opacity: 0.88,
+    },
+    optionText: {
+      ...theme.typography.body,
+      color: theme.colors.textPrimary,
+    },
+    optionCode: {
+      ...theme.typography.subtitle,
+      color: theme.colors.textMuted,
+    },
+    optionTextSelected: {
+      color: theme.colors.primaryOnFill,
+    },
+  });
+}
+
 export function UsStatePicker({ value, onChange, disabled }: Props) {
+  const styles = useThemedStyles(createUsStatePickerStyles);
   const [modalOpen, setModalOpen] = useState(false);
   const [locating, setLocating] = useState(false);
   const [locateError, setLocateError] = useState<string | null>(null);
@@ -101,100 +202,3 @@ export function UsStatePicker({ value, onChange, disabled }: Props) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: {
-    gap: authSpacing.xs,
-  },
-  label: {
-    ...authTypography.label,
-    color: authColors.text,
-  },
-  hint: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
-    marginBottom: authSpacing.xs,
-  },
-  selector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: authColors.border,
-    borderRadius: authRadii.field,
-    paddingHorizontal: authSpacing.sm,
-    paddingVertical: authSpacing.sm,
-    backgroundColor: 'transparent',
-  },
-  selectorDisabled: {
-    opacity: 0.5,
-  },
-  selectorPressed: {
-    opacity: 0.9,
-  },
-  selectorText: {
-    ...authTypography.body,
-    color: authColors.text,
-    flex: 1,
-  },
-  selectorPlaceholder: {
-    color: authColors.textMuted,
-  },
-  chevron: {
-    color: authColors.textMuted,
-    fontSize: 12,
-    marginLeft: authSpacing.sm,
-  },
-  error: {
-    ...authTypography.subtitle,
-    color: authColors.danger,
-  },
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.55)',
-  },
-  sheet: {
-    maxHeight: '70%',
-    backgroundColor: authColors.background,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-    paddingHorizontal: authSpacing.lg,
-    paddingTop: authSpacing.md,
-    paddingBottom: authSpacing.lg,
-    gap: authSpacing.sm,
-  },
-  sheetTitle: {
-    ...authTypography.title,
-    fontSize: 20,
-    color: authColors.text,
-    textAlign: 'center',
-  },
-  list: {
-    maxHeight: 360,
-  },
-  option: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: authSpacing.sm,
-    paddingHorizontal: authSpacing.sm,
-    borderRadius: authRadii.field,
-  },
-  optionSelected: {
-    backgroundColor: authColors.primaryFill,
-  },
-  optionPressed: {
-    opacity: 0.88,
-  },
-  optionText: {
-    ...authTypography.body,
-    color: authColors.text,
-  },
-  optionCode: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
-  },
-  optionTextSelected: {
-    color: authColors.primaryOnFill,
-  },
-});

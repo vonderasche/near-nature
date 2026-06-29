@@ -3,9 +3,10 @@ import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ListDetailCard } from '@/components/shared/list-detail-card';
-import { authColors } from '@/constants/auth-theme';
+import type { AppTheme } from '@/constants/themes';
 import { formatDetectedAt } from '@/lib/detections/formatDetectedAt';
 import { galleryListItemTextFields } from '@/lib/detections/galleryListItemText';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 import type { DetectionGalleryItem } from '@/types';
 
 export const GALLERY_LIST_THUMB_SIZE = 56;
@@ -17,7 +18,28 @@ type Props = {
   deletable?: boolean;
 };
 
+function createGalleryListItemStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    thumbWrap: {
+      width: GALLERY_LIST_THUMB_SIZE,
+      height: GALLERY_LIST_THUMB_SIZE,
+      flexShrink: 0,
+    },
+    thumb: {
+      width: GALLERY_LIST_THUMB_SIZE,
+      height: GALLERY_LIST_THUMB_SIZE,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      backgroundColor: theme.colors.background,
+    },
+    thumbPlaceholder: {
+      backgroundColor: theme.colors.surfaceRaised,
+    },
+  });
+}
+
 function DetectionGalleryListItemComponent({ item, onPress, onLongPress, deletable }: Props) {
+  const styles = useThemedStyles(createGalleryListItemStyles);
   const thumbUri = item.displayUrl?.trim();
 
   const leading = (
@@ -73,21 +95,3 @@ function DetectionGalleryListItemComponent({ item, onPress, onLongPress, deletab
 }
 
 export const DetectionGalleryListItem = memo(DetectionGalleryListItemComponent);
-
-const styles = StyleSheet.create({
-  thumbWrap: {
-    width: GALLERY_LIST_THUMB_SIZE,
-    height: GALLERY_LIST_THUMB_SIZE,
-    flexShrink: 0,
-  },
-  thumb: {
-    width: GALLERY_LIST_THUMB_SIZE,
-    height: GALLERY_LIST_THUMB_SIZE,
-    borderWidth: 1,
-    borderColor: authColors.border,
-    backgroundColor: authColors.background,
-  },
-  thumbPlaceholder: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
-  },
-});

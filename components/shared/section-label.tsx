@@ -1,6 +1,7 @@
 import { StyleSheet, Text, type TextStyle, View, type ViewStyle } from 'react-native';
 
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import type { AppTheme } from '@/constants/themes';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 
 type SectionLabelProps = {
   label: string;
@@ -10,24 +11,28 @@ type SectionLabelProps = {
   containerStyle?: ViewStyle;
 };
 
+function createSectionLabelStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    spaced: {
+      marginTop: theme.spacing.lg,
+    },
+    text: {
+      ...theme.typography.label,
+      color: theme.colors.textPrimary,
+      marginBottom: theme.spacing.sm,
+    },
+  });
+}
+
 /**
  * Small caps / label style section heading (lists, results, settings blocks).
  */
 export function SectionLabel({ label, spaced, style, containerStyle }: SectionLabelProps) {
+  const styles = useThemedStyles(createSectionLabelStyles);
+
   return (
     <View style={[spaced && styles.spaced, containerStyle]}>
       <Text style={[styles.text, style]}>{label}</Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  spaced: {
-    marginTop: authSpacing.lg,
-  },
-  text: {
-    ...authTypography.label,
-    color: authColors.text,
-    marginBottom: authSpacing.sm,
-  },
-});

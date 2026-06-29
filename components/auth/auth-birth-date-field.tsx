@@ -1,8 +1,9 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { AuthField } from '@/components/auth/auth-field';
+import type { AppTheme } from '@/constants/themes';
 import { ADULT_AGE_YEARS, MIN_SIGNUP_AGE_YEARS } from '@/lib/auth/validateBirthDate';
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 
 type Props = {
   month: string;
@@ -20,6 +21,41 @@ function digitsOnly(text: string, maxLen: number): string {
   return text.replace(/\D/g, '').slice(0, maxLen);
 }
 
+function createBirthDateFieldStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    wrap: {
+      gap: theme.spacing.xs,
+    },
+    label: {
+      ...theme.typography.label,
+      color: theme.colors.textPrimary,
+    },
+    hint: {
+      ...theme.typography.subtitle,
+      color: theme.colors.textMuted,
+      marginBottom: theme.spacing.xs,
+    },
+    row: {
+      flexDirection: 'row',
+      gap: theme.spacing.sm,
+    },
+    part: {
+      flex: 1,
+    },
+    yearPart: {
+      flex: 1.4,
+    },
+    error: {
+      ...theme.typography.subtitle,
+      color: theme.colors.danger,
+    },
+    minorNotice: {
+      ...theme.typography.subtitle,
+      color: theme.colors.textMuted,
+    },
+  });
+}
+
 export function AuthBirthDateField({
   month,
   day,
@@ -30,6 +66,8 @@ export function AuthBirthDateField({
   error,
   minorNotice,
 }: Props) {
+  const styles = useThemedStyles(createBirthDateFieldStyles);
+
   return (
     <View style={styles.wrap}>
       <Text style={styles.label}>Date of birth</Text>
@@ -74,36 +112,3 @@ export function AuthBirthDateField({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: {
-    gap: authSpacing.xs,
-  },
-  label: {
-    ...authTypography.label,
-    color: authColors.text,
-  },
-  hint: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
-    marginBottom: authSpacing.xs,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: authSpacing.sm,
-  },
-  part: {
-    flex: 1,
-  },
-  yearPart: {
-    flex: 1.4,
-  },
-  error: {
-    ...authTypography.subtitle,
-    color: authColors.danger,
-  },
-  minorNotice: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
-  },
-});

@@ -1,17 +1,24 @@
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { authColors } from '@/constants/auth-theme';
+import { useTheme } from '@/hooks/useTheme';
 
 type SubtleRefreshIndicatorProps = {
   visible: boolean;
   color?: string;
 };
 
+const styles = StyleSheet.create({
+  wrap: {
+    justifyContent: 'center',
+    minHeight: 20,
+  },
+});
+
 /** Small spinner for stale-while-revalidate background fetches (not pull-to-refresh). */
-export function SubtleRefreshIndicator({
-  visible,
-  color = authColors.textMuted,
-}: SubtleRefreshIndicatorProps) {
+export function SubtleRefreshIndicator({ visible, color }: SubtleRefreshIndicatorProps) {
+  const { theme } = useTheme();
+  const spinnerColor = color ?? theme.colors.textMuted;
+
   if (!visible) return null;
 
   return (
@@ -20,14 +27,7 @@ export function SubtleRefreshIndicator({
       accessibilityLabel="Updating"
       accessibilityLiveRegion="polite"
       importantForAccessibility="no-hide-descendants">
-      <ActivityIndicator size="small" color={color} />
+      <ActivityIndicator size="small" color={spinnerColor} />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: {
-    justifyContent: 'center',
-    minHeight: 20,
-  },
-});

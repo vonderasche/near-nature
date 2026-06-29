@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { HeroIcon } from '@/components/ui/hero-icon';
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import type { AppTheme } from '@/constants/themes';
 import { usStateLabel } from '@/constants/us-states';
+import { useTheme } from '@/hooks/useTheme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 
 type Props = {
   username: string;
@@ -28,6 +30,93 @@ function fullNameLine(firstName: string, lastName: string): string {
   return [firstName, lastName].map((s) => s.trim()).filter(Boolean).join(' ');
 }
 
+function createProfileUserIdentityStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    wrap: {
+      alignItems: 'center',
+      gap: theme.spacing.xs,
+      maxWidth: 420,
+      width: '100%',
+    },
+    trigger: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: theme.spacing.xs,
+      paddingVertical: theme.spacing.xs,
+      paddingHorizontal: theme.spacing.sm,
+    },
+    mottoPress: {
+      paddingHorizontal: theme.spacing.md,
+      paddingBottom: theme.spacing.xs,
+      maxWidth: '100%',
+    },
+    triggerPressed: {
+      opacity: 0.88,
+    },
+    username: {
+      ...theme.typography.title,
+      fontSize: 20,
+      lineHeight: 26,
+      color: theme.colors.textPrimary,
+      textAlign: 'center',
+    },
+    motto: {
+      ...theme.typography.body,
+      textAlign: 'center',
+      lineHeight: 22,
+      color: theme.colors.textPrimary,
+    },
+    mottoPlaceholder: {
+      ...theme.typography.subtitle,
+      fontStyle: 'italic',
+      textAlign: 'center',
+      lineHeight: 22,
+      color: theme.colors.textMuted,
+    },
+    details: {
+      alignItems: 'center',
+      gap: theme.spacing.xs,
+      paddingHorizontal: theme.spacing.md,
+      paddingTop: theme.spacing.xs,
+    },
+    statePress: {
+      alignItems: 'center',
+      gap: 2,
+      paddingTop: theme.spacing.xs,
+    },
+    stateLabel: {
+      ...theme.typography.label,
+      fontSize: 12,
+      textAlign: 'center',
+      color: theme.colors.textMuted,
+    },
+    stateValue: {
+      ...theme.typography.body,
+      textAlign: 'center',
+      color: theme.colors.textPrimary,
+    },
+    stateValuePlaceholder: {
+      fontStyle: 'italic',
+      color: theme.colors.textMuted,
+    },
+    fullName: {
+      ...theme.typography.body,
+      color: theme.colors.textPrimary,
+      textAlign: 'center',
+    },
+    email: {
+      ...theme.typography.subtitle,
+      fontSize: 13,
+      textAlign: 'center',
+      color: theme.colors.textMuted,
+    },
+    chevronExpanded: {
+      transform: [{ rotate: '180deg' }],
+    },
+  });
+}
+
 export function ProfileUserIdentity({
   username,
   firstName,
@@ -40,6 +129,8 @@ export function ProfileUserIdentity({
   onMottoPress,
   onStatePress,
 }: Props) {
+  const styles = useThemedStyles(createProfileUserIdentityStyles);
+  const { theme } = useTheme();
   const [expanded, setExpanded] = useState(false);
   const handle = formatUsername(username);
   const fullName = fullNameLine(firstName, lastName);
@@ -63,7 +154,7 @@ export function ProfileUserIdentity({
         style={({ pressed }) => [styles.trigger, pressed && styles.triggerPressed]}>
         <Text style={styles.username}>{handle}</Text>
         <View style={expanded ? styles.chevronExpanded : undefined}>
-          <HeroIcon name="chevron-down" size={20} color={authColors.textMuted} />
+          <HeroIcon name="chevron-down" size={20} color={theme.colors.textMuted} />
         </View>
       </Pressable>
 
@@ -114,88 +205,3 @@ export function ProfileUserIdentity({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: {
-    alignItems: 'center',
-    gap: authSpacing.xs,
-    maxWidth: 420,
-    width: '100%',
-  },
-  trigger: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: authSpacing.xs,
-    paddingVertical: authSpacing.xs,
-    paddingHorizontal: authSpacing.sm,
-  },
-  mottoPress: {
-    paddingHorizontal: authSpacing.md,
-    paddingBottom: authSpacing.xs,
-    maxWidth: '100%',
-  },
-  triggerPressed: {
-    opacity: 0.88,
-  },
-  username: {
-    ...authTypography.title,
-    fontSize: 20,
-    lineHeight: 26,
-    color: authColors.text,
-    textAlign: 'center',
-  },
-  motto: {
-    ...authTypography.body,
-    textAlign: 'center',
-    lineHeight: 22,
-    color: authColors.text,
-  },
-  mottoPlaceholder: {
-    ...authTypography.subtitle,
-    fontStyle: 'italic',
-    textAlign: 'center',
-    lineHeight: 22,
-    color: authColors.textMuted,
-  },
-  details: {
-    alignItems: 'center',
-    gap: authSpacing.xs,
-    paddingHorizontal: authSpacing.md,
-    paddingTop: authSpacing.xs,
-  },
-  statePress: {
-    alignItems: 'center',
-    gap: 2,
-    paddingTop: authSpacing.xs,
-  },
-  stateLabel: {
-    ...authTypography.label,
-    fontSize: 12,
-    textAlign: 'center',
-    color: authColors.textMuted,
-  },
-  stateValue: {
-    ...authTypography.body,
-    textAlign: 'center',
-    color: authColors.text,
-  },
-  stateValuePlaceholder: {
-    fontStyle: 'italic',
-    color: authColors.textMuted,
-  },
-  fullName: {
-    ...authTypography.body,
-    color: authColors.text,
-    textAlign: 'center',
-  },
-  email: {
-    ...authTypography.subtitle,
-    fontSize: 13,
-    textAlign: 'center',
-    color: authColors.textMuted,
-  },
-  chevronExpanded: {
-    transform: [{ rotate: '180deg' }],
-  },
-});

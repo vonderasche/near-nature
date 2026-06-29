@@ -1,12 +1,38 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import type { AppTheme } from '@/constants/themes';
 import { useActiveRegion, useRegionDownloadState } from '@/context/RegionContext';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { regionProfileDownloadLabel } from '@/lib/region/regionReadiness';
 import { routes } from '@/lib/routing/routes';
 
+function createProfileRegionRowStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    wrap: {
+      alignItems: 'center',
+      gap: 2,
+      paddingTop: theme.spacing.xs,
+    },
+    pressed: {
+      opacity: 0.88,
+    },
+    label: {
+      ...theme.typography.label,
+      fontSize: 12,
+      textAlign: 'center',
+      color: theme.colors.textMuted,
+    },
+    value: {
+      ...theme.typography.body,
+      textAlign: 'center',
+      color: theme.colors.textPrimary,
+    },
+  });
+}
+
 export function ProfileRegionRow() {
+  const styles = useThemedStyles(createProfileRegionRowStyles);
   const router = useRouter();
   const { regionId } = useActiveRegion();
   const { downloadState } = useRegionDownloadState();
@@ -25,25 +51,3 @@ export function ProfileRegionRow() {
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: {
-    alignItems: 'center',
-    gap: 2,
-    paddingTop: authSpacing.xs,
-  },
-  pressed: {
-    opacity: 0.88,
-  },
-  label: {
-    ...authTypography.label,
-    fontSize: 12,
-    textAlign: 'center',
-    color: authColors.textMuted,
-  },
-  value: {
-    ...authTypography.body,
-    textAlign: 'center',
-    color: authColors.text,
-  },
-});

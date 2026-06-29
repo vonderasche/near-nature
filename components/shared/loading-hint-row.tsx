@@ -1,30 +1,38 @@
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import type { AppTheme } from '@/constants/themes';
+import { useTheme } from '@/hooks/useTheme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 
 type LoadingHintRowProps = {
   label: string;
   spinnerColor?: string;
 };
 
-export function LoadingHintRow({ label, spinnerColor = authColors.text }: LoadingHintRowProps) {
+function createLoadingHintRowStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.sm,
+      marginBottom: theme.spacing.sm,
+    },
+    body: {
+      ...theme.typography.body,
+      color: theme.colors.textPrimary,
+    },
+  });
+}
+
+export function LoadingHintRow({ label, spinnerColor }: LoadingHintRowProps) {
+  const styles = useThemedStyles(createLoadingHintRowStyles);
+  const { theme } = useTheme();
+  const resolvedSpinnerColor = spinnerColor ?? theme.colors.textPrimary;
+
   return (
     <View style={styles.row}>
-      <ActivityIndicator color={spinnerColor} />
+      <ActivityIndicator color={resolvedSpinnerColor} />
       <Text style={styles.body}>{label}</Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: authSpacing.sm,
-    marginBottom: authSpacing.sm,
-  },
-  body: {
-    ...authTypography.body,
-    color: authColors.text,
-  },
-});
