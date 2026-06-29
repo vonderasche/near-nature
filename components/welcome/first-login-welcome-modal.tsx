@@ -3,10 +3,12 @@ import { useCallback } from 'react';
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { HeroIcon, type HeroIconName } from '@/components/ui/hero-icon';
-import { SheetModalShell, sheetModalShellStyles } from '@/components/ui/sheet-modal-shell';
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import { SheetModalShell, useSheetModalShellStyles } from '@/components/ui/sheet-modal-shell';
+import type { AppTheme } from '@/constants/themes';
 import { useAuthContext } from '@/context/AuthContext';
 import { useFirstLoginWelcome } from '@/hooks/useFirstLoginWelcome';
+import { useTheme } from '@/hooks/useTheme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 
 type WelcomePoint = {
   icon: HeroIconName;
@@ -32,7 +34,49 @@ const WELCOME_POINTS: readonly WelcomePoint[] = [
   },
 ];
 
+function createWelcomeStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.sm,
+    },
+    points: {
+      gap: theme.spacing.sm,
+    },
+    pointRow: {
+      flexDirection: 'row',
+      gap: theme.spacing.sm,
+    },
+    iconWrap: {
+      width: 32,
+      height: 32,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    pointText: {
+      flex: 1,
+      gap: 2,
+    },
+    pointTitle: {
+      ...theme.typography.label,
+      color: theme.colors.textPrimary,
+    },
+    pointBody: {
+      ...theme.typography.subtitle,
+      color: theme.colors.textMuted,
+      lineHeight: 18,
+    },
+  });
+}
+
 export function FirstLoginWelcomeModal() {
+  const sheetStyles = useSheetModalShellStyles();
+  const styles = useThemedStyles(createWelcomeStyles);
+  const { theme } = useTheme();
+
   const {
     userId,
     isAuthenticated,
@@ -63,11 +107,11 @@ export function FirstLoginWelcomeModal() {
   return (
     <SheetModalShell visible={visible} onRequestClose={() => void handleDismiss()} backdropDisabled>
       <View style={styles.header}>
-        <HeroIcon name="sparkles" size={26} color={authColors.text} />
-        <Text style={sheetModalShellStyles.sheetTitle}>Welcome to Near Nature</Text>
+        <HeroIcon name="sparkles" size={26} color={theme.colors.textPrimary} />
+        <Text style={sheetStyles.sheetTitle}>Welcome to Near Nature</Text>
       </View>
 
-      <Text style={sheetModalShellStyles.sheetMessage}>
+      <Text style={sheetStyles.sheetMessage}>
         Here&apos;s the quick start for capturing discoveries and earning badges.
       </Text>
 
@@ -75,7 +119,7 @@ export function FirstLoginWelcomeModal() {
         {WELCOME_POINTS.map((point) => (
           <View key={point.title} style={styles.pointRow}>
             <View style={styles.iconWrap}>
-              <HeroIcon name={point.icon} size={18} color={authColors.text} />
+              <HeroIcon name={point.icon} size={18} color={theme.colors.textPrimary} />
             </View>
             <View style={styles.pointText}>
               <Text style={styles.pointTitle}>{point.title}</Text>
@@ -89,39 +133,3 @@ export function FirstLoginWelcomeModal() {
     </SheetModalShell>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: authSpacing.sm,
-  },
-  points: {
-    gap: authSpacing.sm,
-  },
-  pointRow: {
-    flexDirection: 'row',
-    gap: authSpacing.sm,
-  },
-  iconWrap: {
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: authColors.border,
-  },
-  pointText: {
-    flex: 1,
-    gap: 2,
-  },
-  pointTitle: {
-    ...authTypography.label,
-    color: authColors.text,
-  },
-  pointBody: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
-    lineHeight: 18,
-  },
-});

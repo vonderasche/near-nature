@@ -9,9 +9,10 @@ import {
 } from 'react-native';
 
 import { HeroIcon, type HeroIconName } from '@/components/ui/hero-icon';
-import { authColors, authRadii, authSpacing, authTypography } from '@/constants/auth-theme';
+import type { AppTheme } from '@/constants/themes';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 
-/** All app buttons use design tokens (`authColors`, `authRadii`, …) for future theme switching. */
+/** All app buttons use themed tokens for appearance switching. */
 export type AuthButtonVariant = 'primary' | 'outline' | 'destructive';
 
 export type AuthButtonProps = {
@@ -21,15 +22,70 @@ export type AuthButtonProps = {
   loading?: boolean;
   variant?: AuthButtonVariant;
   testID?: string;
-  /** Span parent width (stacked sheets, equal columns in a row). */
   fillParent?: boolean;
-  /** Optional leading icon (e.g. delete-outline). */
   icon?: HeroIconName;
   accessibilityLabel?: string;
   accessibilityHint?: string;
   accessibilityRole?: AccessibilityRole;
   accessibilityState?: AccessibilityState;
 };
+
+function createAuthButtonStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    base: {
+      borderRadius: theme.radii.button,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    fillParent: {
+      alignSelf: 'stretch',
+      width: '100%',
+    },
+    primary: {
+      backgroundColor: theme.colors.primaryFill,
+      borderColor: theme.colors.primaryFill,
+    },
+    outline: {
+      backgroundColor: theme.colors.background,
+    },
+    destructive: {
+      backgroundColor: theme.colors.background,
+      borderColor: theme.colors.danger,
+    },
+    disabled: {
+      opacity: 0.45,
+    },
+    pressed: {
+      opacity: 0.85,
+    },
+    content: {
+      paddingVertical: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.md,
+      minHeight: 48,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    labelRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: theme.spacing.sm,
+    },
+    title: {
+      ...theme.typography.body,
+      fontWeight: '600',
+    },
+    titlePrimary: {
+      color: theme.colors.primaryOnFill,
+    },
+    titleOutline: {
+      color: theme.colors.textPrimary,
+    },
+    titleDestructive: {
+      color: theme.colors.danger,
+    },
+  });
+}
 
 export function AuthButton({
   title,
@@ -45,14 +101,15 @@ export function AuthButton({
   accessibilityRole = 'button',
   accessibilityState,
 }: AuthButtonProps) {
+  const styles = useThemedStyles(createAuthButtonStyles);
   const isPrimary = variant === 'primary';
   const isDestructive = variant === 'destructive';
 
   const spinnerColor = isPrimary
-    ? authColors.primaryOnFill
+    ? styles.titlePrimary.color
     : isDestructive
-      ? authColors.danger
-      : authColors.text;
+      ? styles.titleDestructive.color
+      : styles.titleOutline.color;
 
   const labelStyle = isPrimary
     ? styles.titlePrimary
@@ -91,58 +148,3 @@ export function AuthButton({
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  base: {
-    borderRadius: authRadii.button,
-    borderWidth: 1,
-    borderColor: authColors.border,
-  },
-  fillParent: {
-    alignSelf: 'stretch',
-    width: '100%',
-  },
-  primary: {
-    backgroundColor: authColors.primaryFill,
-    borderColor: authColors.primaryFill,
-  },
-  outline: {
-    backgroundColor: authColors.background,
-  },
-  destructive: {
-    backgroundColor: authColors.background,
-    borderColor: authColors.danger,
-  },
-  disabled: {
-    opacity: 0.45,
-  },
-  pressed: {
-    opacity: 0.85,
-  },
-  content: {
-    paddingVertical: authSpacing.sm,
-    paddingHorizontal: authSpacing.md,
-    minHeight: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  labelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: authSpacing.sm,
-  },
-  title: {
-    ...authTypography.body,
-    fontWeight: '600',
-  },
-  titlePrimary: {
-    color: authColors.primaryOnFill,
-  },
-  titleOutline: {
-    color: authColors.text,
-  },
-  titleDestructive: {
-    color: authColors.danger,
-  },
-});

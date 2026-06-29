@@ -26,7 +26,7 @@ import { useCameraScreen } from '@/hooks/useCameraScreen';
 import { usePickPhotoFromGallery } from '@/hooks/usePickPhotoFromGallery';
 import { areFrameProcessorsAvailable } from '@/lib/camera/areFrameProcessorsAvailable';
 import { isClassificationDebugEnabled } from '@/lib/classification/debug';
-import { isMvpCaptureEnabled } from '@/lib/camera/tflite/mvp/isMvpCaptureEnabled';
+import { isOnDevicePreviewEnabled } from '@/lib/camera/tflite/isOnDevicePreviewEnabled';
 import {
   beginMvpCaptureSession,
   ensureMvpPreviewResumableOnCameraFocus,
@@ -50,7 +50,7 @@ export default function CameraScreen() {
 
   const navigateToIdentification = useCallback(
     (uri: string) => {
-      if (isMvpCaptureEnabled()) {
+      if (isOnDevicePreviewEnabled()) {
         beginMvpCaptureSession();
       }
       router.push(routeCameraIdentification({ uri }) as unknown as Href);
@@ -62,7 +62,7 @@ export default function CameraScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      if (!isMvpCaptureEnabled()) return;
+      if (!isOnDevicePreviewEnabled()) return;
       resumeCameraHardwarePreview();
       const timer = setTimeout(() => {
         if (!pathname.includes('/camera/identification')) {

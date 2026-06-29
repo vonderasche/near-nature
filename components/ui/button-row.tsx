@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { sheetModalShellStyles } from '@/components/ui/sheet-modal-shell';
+import { useSheetModalShellStyles } from '@/components/ui/sheet-modal-shell';
 
 type ButtonRowProps = {
   children: ReactNode;
@@ -10,7 +10,8 @@ type ButtonRowProps = {
 
 /** Horizontal row of equal-width button slots (Cancel / Save, etc.). */
 export function ButtonRow({ children, style }: ButtonRowProps) {
-  return <View style={[sheetModalShellStyles.actionRow, style]}>{children}</View>;
+  const sheetStyles = useSheetModalShellStyles();
+  return <View style={[sheetStyles.actionRow, style]}>{children}</View>;
 }
 
 type ButtonRowSlotProps = {
@@ -18,5 +19,6 @@ type ButtonRowSlotProps = {
 };
 
 export function ButtonRowSlot({ children }: ButtonRowSlotProps) {
-  return <View style={sheetModalShellStyles.actionHalf}>{children}</View>;
+  const sheetStyles = useSheetModalShellStyles();
+  return <View style={sheetStyles.actionHalf}>{children}</View>;
 }

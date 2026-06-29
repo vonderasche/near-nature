@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { CameraIdentificationPanel } from '@/components/camera/camera-identification-panel';
 import { useCameraFlowContext } from '@/context/CameraFlowContext';
 import { useIdentificationRouteParams } from '@/hooks/useIdentificationRouteParams';
-import { isMvpCaptureEnabled } from '@/lib/camera/tflite/mvp/isMvpCaptureEnabled';
+import { isOnDevicePreviewEnabled } from '@/lib/camera/tflite/isOnDevicePreviewEnabled';
 import {
   completeMvpCaptureSessionAndWait,
   finishMvpCaptureSession,
@@ -27,14 +27,14 @@ export default function IdentificationScreen() {
     } else {
       router.replace(routes.cameraTab as Href);
     }
-    if (isMvpCaptureEnabled()) {
+    if (isOnDevicePreviewEnabled()) {
       void completeMvpCaptureSessionAndWait();
     }
   }, [router]);
 
   useEffect(() => {
     return () => {
-      if (!isMvpCaptureEnabled() || retakeCleanupStartedRef.current) {
+      if (!isOnDevicePreviewEnabled() || retakeCleanupStartedRef.current) {
         return;
       }
       finishMvpCaptureSession();

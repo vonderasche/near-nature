@@ -2,8 +2,9 @@ import { Image } from 'expo-image';
 import { memo, useCallback } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import type { AppTheme } from '@/constants/themes';
 import { formatGalleryNativeCategoryLabel } from '@/lib/detections/galleryNativeCategory';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 import type { DetectionGalleryItem, GalleryNativeCategory } from '@/types';
 
 type Props = {
@@ -15,6 +16,32 @@ type Props = {
   onLongPressItemId?: (itemId: string) => void;
 };
 
+function createGalleryTileStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    tile: {
+      borderRadius: 0,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      overflow: 'hidden',
+      backgroundColor: theme.colors.background,
+    },
+    ownerBadge: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      paddingHorizontal: theme.spacing.xs,
+      paddingVertical: 4,
+      backgroundColor: theme.colors.overlayScrimStrong,
+    },
+    ownerText: {
+      ...theme.typography.label,
+      fontSize: 11,
+      color: theme.colors.textPrimary,
+    },
+  });
+}
+
 function DetectionGalleryTileComponent({
   item,
   category,
@@ -23,6 +50,7 @@ function DetectionGalleryTileComponent({
   onPressItemId,
   onLongPressItemId,
 }: Props) {
+  const styles = useThemedStyles(createGalleryTileStyles);
   const onPress = useCallback(() => onPressItemId(item.id), [item.id, onPressItemId]);
   const onLongPress = useCallback(
     () => onLongPressItemId?.(item.id),
@@ -48,7 +76,6 @@ function DetectionGalleryTileComponent({
         {
           width: size,
           height: size,
-          borderColor: authColors.border,
           opacity: item.uploadStatus === 'pending' ? (pressed ? 0.75 : 0.92) : pressed ? 0.92 : 1,
         },
       ]}>
@@ -72,26 +99,3 @@ function DetectionGalleryTileComponent({
 }
 
 export const DetectionGalleryTile = memo(DetectionGalleryTileComponent);
-
-const styles = StyleSheet.create({
-  tile: {
-    borderRadius: 0,
-    borderWidth: 1,
-    overflow: 'hidden',
-    backgroundColor: authColors.background,
-  },
-  ownerBadge: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingHorizontal: authSpacing.xs,
-    paddingVertical: 4,
-    backgroundColor: authColors.overlayScrimStrong,
-  },
-  ownerText: {
-    ...authTypography.label,
-    fontSize: 11,
-    color: authColors.text,
-  },
-});

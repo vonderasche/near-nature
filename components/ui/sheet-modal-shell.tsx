@@ -10,80 +10,76 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-import { authColors, authSpacing, authTypography } from '@/constants/auth-theme';
+import type { AppTheme } from '@/constants/themes';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 
 export const SHEET_MODAL_MAX_WIDTH = 440;
 
-/**
- * Shared layout + chrome for centered “sheet” modals (dim backdrop, bordered card).
- * Use {@link SheetModalShell} for structure; extend with local `StyleSheet` for feature UI.
- */
-export const sheetModalShellStyles = StyleSheet.create({
-  root: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: authSpacing.lg,
-  },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: authColors.overlayScrim,
-  },
-  sheet: {
-    maxWidth: SHEET_MODAL_MAX_WIDTH,
-    width: '100%',
-    alignSelf: 'center',
-    backgroundColor: authColors.background,
-    borderWidth: 1,
-    borderColor: authColors.border,
-    padding: authSpacing.md,
-    gap: authSpacing.md,
-    elevation: 8,
-    shadowColor: authColors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    zIndex: 1,
-  },
-  sheetTitle: {
-    ...authTypography.title,
-    fontSize: 22,
-    color: authColors.text,
-  },
-  sheetMessage: {
-    ...authTypography.subtitle,
-    color: authColors.textMuted,
-    lineHeight: 20,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    gap: authSpacing.sm,
-  },
-  actionHalf: {
-    flex: 1,
-  },
-  keyboardRoot: {
-    flex: 1,
-  },
-});
+export function createSheetModalShellStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    root: {
+      flex: 1,
+      justifyContent: 'center',
+      paddingHorizontal: theme.spacing.lg,
+    },
+    backdrop: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: theme.colors.overlayScrim,
+    },
+    sheet: {
+      maxWidth: SHEET_MODAL_MAX_WIDTH,
+      width: '100%',
+      alignSelf: 'center',
+      backgroundColor: theme.colors.background,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      padding: theme.spacing.md,
+      gap: theme.spacing.md,
+      elevation: 8,
+      shadowColor: theme.colors.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.2,
+      shadowRadius: 8,
+      zIndex: 1,
+    },
+    sheetTitle: {
+      ...theme.typography.title,
+      fontSize: 22,
+      color: theme.colors.textPrimary,
+    },
+    sheetMessage: {
+      ...theme.typography.subtitle,
+      color: theme.colors.textMuted,
+      lineHeight: 20,
+    },
+    actionRow: {
+      flexDirection: 'row',
+      gap: theme.spacing.sm,
+    },
+    actionHalf: {
+      flex: 1,
+    },
+    keyboardRoot: {
+      flex: 1,
+    },
+  });
+}
+
+export function useSheetModalShellStyles() {
+  return useThemedStyles(createSheetModalShellStyles);
+}
 
 export type SheetModalShellProps = {
   visible: boolean;
-  /** Android hardware back / iOS swipe dismiss. */
   onRequestClose: () => void;
-  /** Backdrop tap; defaults to `onRequestClose`. */
   onBackdropPress?: () => void;
   backdropDisabled?: boolean;
   backdropAccessibilityLabel?: string;
-  /** Merged after base `sheet` styles (e.g. `{ maxHeight }` for tall content). */
   sheetStyle?: StyleProp<ViewStyle>;
-  /** Wrap the outer frame in `KeyboardAvoidingView` (forms with `TextInput`). */
   keyboardAvoiding?: boolean;
   children: ReactNode;
 };
 
-/**
- * `Modal` + dimmed backdrop + centered sheet. Children render inside the sheet container.
- */
 export function SheetModalShell({
   visible,
   onRequestClose,
@@ -94,6 +90,8 @@ export function SheetModalShell({
   keyboardAvoiding = false,
   children,
 }: SheetModalShellProps) {
+  const styles = useSheetModalShellStyles();
+
   if (!visible) {
     return null;
   }
@@ -101,14 +99,14 @@ export function SheetModalShell({
   const dismissBackdrop = onBackdropPress ?? onRequestClose;
 
   const frame = (
-    <View style={sheetModalShellStyles.root} pointerEvents="box-none">
+    <View style={styles.root} pointerEvents="box-none">
       <Pressable
-        style={sheetModalShellStyles.backdrop}
+        style={styles.backdrop}
         onPress={dismissBackdrop}
         accessibilityLabel={backdropAccessibilityLabel}
         disabled={backdropDisabled}
       />
-      <View style={[sheetModalShellStyles.sheet, sheetStyle]} accessibilityViewIsModal>
+      <View style={[styles.sheet, sheetStyle]} accessibilityViewIsModal>
         {children}
       </View>
     </View>
@@ -118,7 +116,7 @@ export function SheetModalShell({
     <Modal animationType="fade" transparent visible={visible} onRequestClose={onRequestClose}>
       {keyboardAvoiding ? (
         <KeyboardAvoidingView
-          style={sheetModalShellStyles.keyboardRoot}
+          style={styles.keyboardRoot}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           pointerEvents="box-none">
           {frame}

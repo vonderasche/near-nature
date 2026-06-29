@@ -2,7 +2,7 @@ import { Text } from 'react-native';
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { ButtonRow, ButtonRowSlot } from '@/components/ui/button-row';
-import { SheetModalShell, sheetModalShellStyles } from '@/components/ui/sheet-modal-shell';
+import { SheetModalShell, useSheetModalShellStyles } from '@/components/ui/sheet-modal-shell';
 
 export type ThemedMessageModalProps = {
   visible: boolean;
@@ -20,10 +20,12 @@ export function ThemedMessageModal({
   buttonLabel = 'OK',
   onDismiss,
 }: ThemedMessageModalProps) {
+  const sheetStyles = useSheetModalShellStyles();
+
   return (
     <SheetModalShell visible={visible} onRequestClose={onDismiss} onBackdropPress={onDismiss}>
-      <Text style={sheetModalShellStyles.sheetTitle}>{title}</Text>
-      <Text style={sheetModalShellStyles.sheetMessage}>{message}</Text>
+      <Text style={sheetStyles.sheetTitle}>{title}</Text>
+      <Text style={sheetStyles.sheetMessage}>{message}</Text>
       <AuthButton title={buttonLabel} fillParent onPress={onDismiss} />
     </SheetModalShell>
   );
@@ -54,14 +56,16 @@ export function ThemedConfirmModal({
   onConfirm,
   confirmLoading = false,
 }: ThemedConfirmModalProps) {
+  const sheetStyles = useSheetModalShellStyles();
+
   return (
     <SheetModalShell
       visible={visible}
       onRequestClose={onCancel}
       onBackdropPress={onCancel}
       backdropDisabled={confirmLoading}>
-      <Text style={sheetModalShellStyles.sheetTitle}>{title}</Text>
-      <Text style={sheetModalShellStyles.sheetMessage}>{message}</Text>
+      <Text style={sheetStyles.sheetTitle}>{title}</Text>
+      <Text style={sheetStyles.sheetMessage}>{message}</Text>
       <ButtonRow>
         <ButtonRowSlot>
           <AuthButton

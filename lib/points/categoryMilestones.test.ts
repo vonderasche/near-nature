@@ -1,14 +1,24 @@
 import { describe, expect, it } from 'vitest';
 
-import { subTierForSpeciesCount, tierForSpeciesCount } from '@/constants/naturalist-categories';
+import {
+  SUB_TIER_SPECIES_THRESHOLDS,
+  TIER_SPECIES_THRESHOLDS,
+  subTierForSpeciesCount,
+  tierForSpeciesCount,
+} from '@/constants/naturalist-categories';
 import { buildSpeciesCounts, milestonesForNewCounts } from '@/lib/points/categoryMilestones';
 
 describe('categoryMilestones', () => {
   it('maps tier thresholds', () => {
     expect(tierForSpeciesCount(0)).toBeNull();
-    expect(tierForSpeciesCount(1)).toBe('voyager');
+    expect(tierForSpeciesCount(TIER_SPECIES_THRESHOLDS.explorer - 1)).toBeNull();
+    expect(tierForSpeciesCount(TIER_SPECIES_THRESHOLDS.explorer)).toBe('explorer');
+    expect(tierForSpeciesCount(TIER_SPECIES_THRESHOLDS.adventurer)).toBe('adventurer');
+    expect(tierForSpeciesCount(TIER_SPECIES_THRESHOLDS.voyager)).toBe('voyager');
     expect(subTierForSpeciesCount(0)).toBeNull();
-    expect(subTierForSpeciesCount(1)).toBe('voyager');
+    expect(subTierForSpeciesCount(SUB_TIER_SPECIES_THRESHOLDS.explorer - 1)).toBeNull();
+    expect(subTierForSpeciesCount(SUB_TIER_SPECIES_THRESHOLDS.explorer)).toBe('explorer');
+    expect(subTierForSpeciesCount(SUB_TIER_SPECIES_THRESHOLDS.voyager)).toBe('voyager');
   });
 
   it('awards main explorer once', () => {
@@ -24,10 +34,13 @@ describe('categoryMilestones', () => {
     expect(awards.find((a) => a.awardKey === 'main:botanist:explorer')?.points).toBe(50);
   });
 
-  it('awards subcategory explorer and main explorer at one species', () => {
-    const counts = buildSpeciesCounts([
-      { latin_name: 'Species 1', category: 'wildflowers' },
-    ]);
+  it('awards subcategory explorer and main explorer at explorer threshold', () => {
+    const counts = buildSpeciesCounts(
+      Array.from({ length: TIER_SPECIES_THRESHOLDS.explorer }, (_, i) => ({
+        latin_name: `Species ${i}`,
+        category: 'wildflowers',
+      })),
+    );
 
     const awards = milestonesForNewCounts(counts, new Set());
     expect(awards.some((a) => a.awardKey === 'sub:wildflowers:explorer')).toBe(true);
@@ -41,10 +54,13 @@ describe('categoryMilestones', () => {
     expect(awards.some((a) => a.awardKey === 'sub:wildflowers:explorer')).toBe(false);
   });
 
-  it('awards subcategory explorer with one distinct species', () => {
-    const counts = buildSpeciesCounts([
-      { latin_name: 'Coreopsis leavenworthii', category: 'wildflowers' },
-    ]);
+  it('awards subcategory explorer at explorer threshold', () => {
+    const counts = buildSpeciesCounts(
+      Array.from({ length: SUB_TIER_SPECIES_THRESHOLDS.explorer }, (_, i) => ({
+        latin_name: `Coreopsis species ${i}`,
+        category: 'wildflowers',
+      })),
+    );
 
     const awards = milestonesForNewCounts(counts, new Set());
     expect(awards.some((a) => a.awardKey === 'sub:wildflowers:explorer')).toBe(true);

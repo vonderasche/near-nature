@@ -7,6 +7,7 @@ import {
   type ThemeName,
 } from '@/constants/themes';
 import { usePersistedThemeName } from '@/hooks/usePersistedThemeName';
+import { syncLegacyDesignTokens } from '@/lib/theme/syncLegacyDesignTokens';
 
 type ThemeContextValue = {
   theme: AppTheme;
@@ -34,6 +35,10 @@ export function AppThemeProvider({ children }: Props) {
       setThemeNameState(persistedThemeName);
     }
   }, [persistedThemeName, ready]);
+
+  useEffect(() => {
+    syncLegacyDesignTokens(themes[themeName].colors);
+  }, [themeName]);
 
   const setThemeName = useCallback(
     (name: ThemeName) => {
