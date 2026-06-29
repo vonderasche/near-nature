@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { randomUUID } from 'expo-crypto';
 
 import { IdentificationHeroImage } from '@/components/camera/identification/identification-hero-image';
 import { IdentificationHistorySection } from '@/components/camera/identification/identification-history-section';
@@ -14,7 +15,12 @@ import { Screen } from '@/components/ui/Screen';
 import { Section } from '@/components/ui/Section';
 import { Text } from '@/components/ui/Text';
 import { useAuthContext } from '@/context/AuthContext';
+import { useActiveRegion } from '@/context/RegionContext';
 import { useTheme } from '@/hooks/useTheme';
+import {
+  clearGlobalClassificationDebugSession,
+  createClassificationDebugSession,
+} from '@/lib/classification/debug';
 import { useUserHomeState } from '@/hooks/useUserHomeState';
 import { useIdentificationResultsState } from '@/hooks/useIdentificationResultsState';
 import { useIdentifications } from '@/hooks/useIdentifications';
@@ -36,7 +42,18 @@ export function CameraIdentificationPanel({
   onBackgroundSaveError,
 }: Props) {
   const { theme } = useTheme();
+  const { regionId } = useActiveRegion();
   const { stateCode: userState } = useUserHomeState();
+  const debugSessionRef = useRef<ReturnType<typeof createClassificationDebugSession> | null>(null);
+
+  useEffect(() => {
+    const session = createClassificationDebugSession(randomUUID(), regionId);
+    debugSessionRef.current = session;
+    return () => {
+      void session.dispose();
+      clearGlobalClassificationDebugSession(session);
+    };
+  }, [photoUri, regionId]);
 
   const { userId } = useAuthContext();
   const { identify, isLoading: identifying, error: identifyError } = useSpeciesIdentification();

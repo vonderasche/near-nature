@@ -8,6 +8,7 @@ import {
   removePendingGalleryDetection,
 } from '@/lib/detections/pendingGalleryDetection';
 import { resolveNaturalistCategoryFromClassification } from '@/lib/points/resolveNaturalistCategory';
+import { getGlobalClassificationDebugSession } from '@/lib/classification/debug';
 import { requestExplorerBoardRefresh } from '@/lib/explorerBoard/explorerBoardRefresh';
 import { requestProfileRefresh } from '@/lib/profile/profileRefresh';
 import { useSaveDetection } from '@/hooks/useSaveDetection';
@@ -82,6 +83,12 @@ export function useOptimisticIdentificationSave({
           onBackgroundSaveError?.(result.message);
           return;
         }
+        const debugSession = getGlobalClassificationDebugSession();
+        debugSession?.linkDetection(result.result.detectionId);
+        debugSession?.emit('save_linked', {
+          detectionId: result.result.detectionId,
+          selectedIndex: index,
+        });
         void refetchHistory();
         requestProfileRefresh();
         if (result.result.newSpeciesDiscovery) {

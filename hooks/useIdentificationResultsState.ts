@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { SpeciesWikiData } from '@/api/wikipedia';
 import { identifyPhotoWithGemini } from '@/lib/identification/identifyPhotoWithGemini';
+import { getGlobalClassificationDebugSession } from '@/lib/classification/debug';
 import { devLog } from '@/lib/devLog';
 import { proposeCloudCatalogFromGemini } from '@/lib/identification/proposeCloudCatalogIfMissing';
 import { isCloudReclassifyAvailable } from '@/lib/identification/isCloudReclassifyAvailable';
@@ -145,10 +146,17 @@ export function useIdentificationResultsState(
     setAlternatesEnriching(true);
     setReclassifyError(null);
 
+    const priorTfliteMeta = tfliteMeta;
+
     try {
       const cloudClassifications = await identifyPhotoWithGemini(photoUri);
 
       if (hasNoSpeciesFound(cloudClassifications)) {
+        getGlobalClassificationDebugSession()?.emit('cloud_reclassify', {
+          priorTfliteMeta,
+          cloudClassifications: [],
+          error: 'Cloud identification did not find a species in this photo.',
+        });
         setReclassifyError('Cloud identification did not find a species in this photo.');
         return;
       }
@@ -159,6 +167,11 @@ export function useIdentificationResultsState(
           wikiSpeciesLimit: cloudClassifications.length,
           enrichDepthLimit: cloudClassifications.length,
         });
+
+      getGlobalClassificationDebugSession()?.emit('cloud_reclassify', {
+        priorTfliteMeta,
+        cloudClassifications,
+      });
 
       speciesIdBaseRef.current = idBase;
       setSpeciesIdBase(idBase);
@@ -174,11 +187,16 @@ export function useIdentificationResultsState(
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Cloud identification failed';
+      getGlobalClassificationDebugSession()?.emit('cloud_reclassify', {
+        priorTfliteMeta,
+        cloudClassifications: [],
+        error: message,
+      });
       setReclassifyError(message);
     } finally {
       setAlternatesEnriching(false);
     }
-  }, [photoUri, reclassifiedWithCloud, userId, userState]);
+  }, [photoUri, reclassifiedWithCloud, tfliteMeta, userId, userState]);
 
   const canReclassifyWithCloud =
     cloudReclassifyReady &&

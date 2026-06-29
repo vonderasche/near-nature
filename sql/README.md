@@ -29,6 +29,8 @@ All `.sql` scripts here are written to be **safe to re-run** (they drop/recreate
 | `create_discoveries.sql` | `public.discoveries`, first-species bonus trigger |
 | `storage_bucket_detections.sql` | Storage bucket + policies |
 | `storage_bucket_region_models.sql` | Public `region-models` bucket (anon read for regional TFLite packs) |
+| `create_ml_telemetry_events.sql` | ML classification debug events + batch insert RPC |
+| `ml_telemetry_reports.sql` | Telemetry reporting views + daily rollup refresh |
 | `get_detection_count_leaderboard.sql` | RPC: Explorer Board rankings (paginated) |
 | `search_public_detections.sql` | RPC: community identification search for Explorer Board discovery lens |
 | `get_public_user_profile.sql` | RPC: public profile + stats |
@@ -136,6 +138,8 @@ If tables already exist and you only need to refresh objects:
 | Explorer Board search returns nothing | `fix_public_detection_search.sql`, then `search_public_detections.sql` |
 | Species catalog in cloud | `create_species_catalog.sql`, then `npm run seed:species-catalog` |
 | Gemini catalog sharing | `patch_propose_species_catalog_enrichment.sql` (after species catalog) |
+| Classification debug telemetry | `create_ml_telemetry_events.sql`, then `ml_telemetry_reports.sql` |
+| Purge old telemetry rows | `purge_ml_telemetry_events.sql` |
 | Verify catalog + parks RPCs | `npm run verify:species-catalog` |
 | Florida parks in cloud | `create_florida_state_parks.sql`, then `npm run seed:florida-parks` |
 | Parks table missing image columns | `patch_florida_state_parks_species_images.sql` |

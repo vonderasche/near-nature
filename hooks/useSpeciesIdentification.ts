@@ -10,6 +10,7 @@ import type { SpeciesWikiData } from '@/api/wikipedia';
 import { useResizeImageForUpload } from '@/hooks/useResizeImageForUpload';
 import { identifyPhotoWithTflite } from '@/lib/camera/mobilenet/identifyPhotoWithTflite';
 import { isTfliteIdentificationAvailable } from '@/lib/camera/mobilenet/isTfliteIdentificationAvailable';
+import { getGlobalClassificationDebugSession } from '@/lib/classification/debug';
 import { useActiveRegion } from '@/context/RegionContext';
 import { isRegionalIdentificationAvailable } from '@/lib/region/regionalIdentification';
 import { enrichSpeciesFromApis } from '@/lib/identification/enrichSpeciesFromApis';
@@ -58,6 +59,8 @@ export function useSpeciesIdentification(): UseSpeciesIdentificationResult {
     try {
       let classifications: ClassificationResult[] = [];
       let tfliteMeta: TfliteIdentificationMeta | null = null;
+      let filterSummary: ReturnType<typeof filterClassifications>['summary'] | undefined;
+      const debugSession = getGlobalClassificationDebugSession();
 
       if (isTfliteIdentificationAvailable() && isRegionalIdentificationAvailable(regionId)) {
         const pipeline = await identifyPhotoWithTflite(photoUri);
@@ -68,6 +71,11 @@ export function useSpeciesIdentification(): UseSpeciesIdentificationResult {
           specialist: pipeline.meta.specialistId,
           genusCount: pipeline.meta.genusTop.length,
         });
+        debugSession?.emit('capture_identify', {
+          pipeline: 'tflite',
+          classifications,
+          tfliteMeta,
+        });
       } else {
         const resized = await resizeForUpload(photoUri);
         resizedUri = resized.uri;
@@ -75,7 +83,13 @@ export function useSpeciesIdentification(): UseSpeciesIdentificationResult {
         const rawClassifications = await identifySpeciesInImage(base64, 'image/jpeg');
         const filtered = filterClassifications(rawClassifications);
         classifications = filtered.results;
+        filterSummary = filtered.summary;
         devLog('[identify] gemini filter summary', filtered.summary);
+        debugSession?.emit('capture_identify', {
+          pipeline: 'gemini',
+          classifications,
+          filterSummary,
+        });
       }
 
       if (hasNoSpeciesFound(classifications)) {
@@ -106,6 +120,14 @@ export function useSpeciesIdentification(): UseSpeciesIdentificationResult {
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Identification failed';
       setError(message);
+      getGlobalClassificationDebugSession()?.emit('capture_identify', {
+        pipeline:
+          isTfliteIdentificationAvailable() && isRegionalIdentificationAvailable(regionId)
+            ? 'tflite'
+            : 'gemini',
+        classifications: [],
+        error: message,
+      });
       return {
         species: [],
         classifications: [],
@@ -122,7 +144,7 @@ export function useSpeciesIdentification(): UseSpeciesIdentificationResult {
         setIsLoading(false);
       }
     }
-  }, [resizeForUpload]);
+  }, [regionId, resizeForUpload]);
 
   return { identify, isLoading, error };
 }

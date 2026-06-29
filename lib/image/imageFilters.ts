@@ -3,7 +3,7 @@
 
 import { ClassificationResult, Species } from '@/types';
 
-const CONFIDENCE_THRESHOLD = 0.65;
+export const CONFIDENCE_THRESHOLD = 0.65;
 
 export interface FilterSummary {
   total: number;
