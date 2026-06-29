@@ -165,4 +165,140 @@ describe('classification debug builders', () => {
     expect(event.flags).toContain('kingdom_uncertain');
     expect(event.pipeline).toBe('preview');
   });
+
+  it('flags routing_no_organism on live preview sample', () => {
+    const raw: LivePreviewSampleRawContext = {
+      modelId: 'scene_gate',
+      predictions: [{ label: 'No Plant or Animal', confidence: 0.92, classIndex: 0 }],
+    };
+    const event = finalize(livePreviewSampleBuilder(ctx, raw)!);
+    expect(event.flags).toContain('routing_no_organism');
+    expect(event.outcome).toBe('empty');
+  });
+
+  it('flags low confidence on tflite capture', () => {
+    const raw: CaptureIdentifyRawContext = {
+      pipeline: 'tflite',
+      classifications: [
+        {
+          latinName: 'Turdus',
+          commonName: 'Turdus',
+          confidence: 0.5,
+          taxonGroup: 'animals',
+        },
+      ],
+      tfliteMeta: {
+        previewTop: [{ label: 'Bird', confidence: 0.9, classIndex: 2 }],
+        routedPreviewLabel: 'Bird',
+        specialistId: 'birds',
+        specialistDisplayName: 'Birds',
+        genusTop: [{ genus: 'Turdus', confidence: 0.5, classIndex: 0 }],
+        usedSpecialist: true,
+        notice: null,
+      },
+    };
+    const event = finalize(captureIdentifyBuilder(ctx, raw)!);
+    expect(event.flags).toContain('low_confidence');
+  });
+
+  it('flags specialist_unavailable when routing has no bundled model', () => {
+    const raw: CaptureIdentifyRawContext = {
+      pipeline: 'tflite',
+      classifications: [],
+      tfliteMeta: {
+        previewTop: [{ label: 'Snake', confidence: 0.88, classIndex: 5 }],
+        routedPreviewLabel: 'Snake',
+        specialistId: 'snakes',
+        specialistDisplayName: 'Snakes',
+        genusTop: [],
+        usedSpecialist: false,
+        notice: 'Snakes does not have a bundled on-device model.',
+      },
+    };
+    const event = finalize(captureIdentifyBuilder(ctx, raw)!);
+    expect(event.flags).toContain('specialist_unavailable');
+  });
+
+  it('records tflite_prediction on gemini error using genus_top fallback', () => {
+    const raw: CloudReclassifyRawContext = {
+      priorTfliteMeta: {
+        previewTop: [{ label: 'Bird', confidence: 0.9, classIndex: 2 }],
+        routedPreviewLabel: 'Bird',
+        specialistId: 'birds',
+        specialistDisplayName: 'Birds',
+        genusTop: [{ genus: 'Turdus', confidence: 0.8, classIndex: 0 }],
+        usedSpecialist: true,
+        notice: null,
+      },
+      cloudClassifications: [],
+      error: 'Cloud identification failed',
+    };
+    const event = finalize(cloudReclassifyBuilder(ctx, raw)!);
+    expect(event.outcome).toBe('error');
+    expect(event.flags).toContain('identify_exception');
+    expect(event.flags).toContain('user_reclassified');
+    expect(event.payload.tflite_prediction).toMatchObject({
+      top: { latin_name: 'Turdus', confidence: 0.8 },
+    });
+    expect(event.payload.gemini_prediction.top).toBeNull();
+    expect(event.payload.comparison).toMatchObject({
+      tflite_top_latin: 'turdus',
+      gemini_top_latin: null,
+      latin_match: null,
+      reclassify_mismatch: null,
+    });
+  });
+
+  it('records empty gemini fallback with prior tflite context', () => {
+    const raw: CloudReclassifyRawContext = {
+      priorTfliteMeta: {
+        previewTop: [],
+        routedPreviewLabel: 'Bird',
+        specialistId: 'birds',
+        specialistDisplayName: 'Birds',
+        genusTop: [{ genus: 'Turdus', confidence: 0.8, classIndex: 0 }],
+        usedSpecialist: true,
+        notice: null,
+      },
+      priorClassifications: [
+        {
+          latinName: 'Turdus',
+          commonName: 'Turdus',
+          confidence: 0.8,
+          taxonGroup: 'animals',
+        },
+      ],
+      cloudClassifications: [],
+      error: 'Cloud identification did not find a species in this photo.',
+    };
+    const event = finalize(cloudReclassifyBuilder(ctx, raw)!);
+    expect(event.outcome).toBe('error');
+    expect(event.flags).toContain('identify_exception');
+    expect(event.payload.gemini_prediction.predictions).toEqual([]);
+    expect(event.payload.tflite_prediction.top).toMatchObject({ latin_name: 'Turdus' });
+  });
+
+  it('includes all gemini predictions in gemini_prediction payload', () => {
+    const raw: CloudReclassifyRawContext = {
+      priorTfliteMeta: null,
+      priorClassifications: [],
+      cloudClassifications: [
+        {
+          latinName: 'Anolis',
+          commonName: 'Anolis',
+          confidence: 0.77,
+          taxonGroup: 'animals',
+        },
+        {
+          latinName: 'Iguana',
+          commonName: 'Green Iguana',
+          confidence: 0.15,
+          taxonGroup: 'animals',
+        },
+      ],
+    };
+    const event = finalize(cloudReclassifyBuilder(ctx, raw)!);
+    expect(event.payload.gemini_prediction.predictions).toHaveLength(2);
+    expect(event.payload.gemini_prediction.top).toMatchObject({ latin_name: 'Anolis' });
+  });
 });
