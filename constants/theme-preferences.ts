@@ -4,6 +4,7 @@ export const THEME_STORAGE_KEY = 'near_nature:theme';
 
 const REMOVED_THEME_ALIASES: Record<string, ThemeName> = {
   forestDark: 'dark',
+  neutralGray: 'dark',
 };
 
 export function parseThemeName(raw: string | null): ThemeName {
@@ -20,8 +21,7 @@ export function parseThemeName(raw: string | null): ThemeName {
 export const THEME_LABELS: Record<ThemeName, string> = {
   dark: 'Dark',
   light: 'Light',
-  neutralGray: 'Neutral gray',
-  forestLight: 'Forest',
+  forestLight: 'Light forest',
 };
 /** Themes shown in the appearance picker. */
 export const SELECTABLE_THEME_NAMES: ThemeName[] = [...themeNames];

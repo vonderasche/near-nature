@@ -2,7 +2,6 @@ import { buildTheme } from './shared';
 import { darkThemePreset } from './dark';
 import { forestLightThemePreset } from './forestLight';
 import { lightThemePreset } from './light';
-import { neutralGrayThemePreset } from './neutralGray';
 
 export type {
   AppTheme,
@@ -26,7 +25,6 @@ export type {
 export const themeRegistry = {
   dark: buildTheme(darkThemePreset),
   light: buildTheme(lightThemePreset),
-  neutralGray: buildTheme(neutralGrayThemePreset),
   forestLight: buildTheme(forestLightThemePreset),
 } as const;
 
