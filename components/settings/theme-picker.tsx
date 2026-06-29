@@ -51,8 +51,18 @@ export function ThemePicker() {
                   backgroundColor: preview.background,
                   borderWidth: 1,
                   borderColor: preview.border,
-                }}
-              />
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                <View
+                  style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: 5,
+                    backgroundColor: preview.accent,
+                  }}
+                />
+              </View>
               <Text variant="body" color={selected ? 'primary' : 'secondary'}>
                 {THEME_LABELS[name]}
               </Text>

@@ -240,7 +240,7 @@ describe('classification debug builders', () => {
     expect(event.payload.tflite_prediction).toMatchObject({
       top: { latin_name: 'Turdus', confidence: 0.8 },
     });
-    expect(event.payload.gemini_prediction.top).toBeNull();
+    expect(event.payload.gemini_prediction).toMatchObject({ top: null });
     expect(event.payload.comparison).toMatchObject({
       tflite_top_latin: 'turdus',
       gemini_top_latin: null,
@@ -274,8 +274,8 @@ describe('classification debug builders', () => {
     const event = finalize(cloudReclassifyBuilder(ctx, raw)!);
     expect(event.outcome).toBe('error');
     expect(event.flags).toContain('identify_exception');
-    expect(event.payload.gemini_prediction.predictions).toEqual([]);
-    expect(event.payload.tflite_prediction.top).toMatchObject({ latin_name: 'Turdus' });
+    expect(event.payload.gemini_prediction).toMatchObject({ predictions: [] });
+    expect(event.payload.tflite_prediction).toMatchObject({ top: { latin_name: 'Turdus' } });
   });
 
   it('includes all gemini predictions in gemini_prediction payload', () => {
@@ -298,7 +298,10 @@ describe('classification debug builders', () => {
       ],
     };
     const event = finalize(cloudReclassifyBuilder(ctx, raw)!);
-    expect(event.payload.gemini_prediction.predictions).toHaveLength(2);
-    expect(event.payload.gemini_prediction.top).toMatchObject({ latin_name: 'Anolis' });
+    expect(event.payload.gemini_prediction).toMatchObject({
+      predictions: expect.any(Array),
+      top: { latin_name: 'Anolis' },
+    });
+    expect((event.payload.gemini_prediction as { predictions: unknown[] }).predictions).toHaveLength(2);
   });
 });

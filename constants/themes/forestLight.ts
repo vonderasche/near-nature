@@ -1,7 +1,7 @@
 import type { ThemePreset } from './types';
 
 /**
- * Near Nature — Forest morning
+ * Near Nature — Forest
  * Warm cream backgrounds, bark browns, forest green accent.
  */
 const light = {

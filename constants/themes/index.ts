@@ -1,6 +1,5 @@
 import { buildTheme } from './shared';
 import { darkThemePreset } from './dark';
-import { forestDarkThemePreset } from './forestDark';
 import { forestLightThemePreset } from './forestLight';
 import { lightThemePreset } from './light';
 import { neutralGrayThemePreset } from './neutralGray';
@@ -28,7 +27,6 @@ export const themeRegistry = {
   dark: buildTheme(darkThemePreset),
   light: buildTheme(lightThemePreset),
   neutralGray: buildTheme(neutralGrayThemePreset),
-  forestDark: buildTheme(forestDarkThemePreset),
   forestLight: buildTheme(forestLightThemePreset),
 } as const;
 
