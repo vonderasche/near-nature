@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { cameraZoomChipsBottomOffset } from '@/constants/camera-layout';
+import { cameraControlColors, cameraZoomChipsBottomOffset } from '@/constants/camera-layout';
 import { useTheme } from '@/hooks/useTheme';
 import type { ZoomChip } from '@/lib/camera/cameraZoom';
 
@@ -41,19 +41,19 @@ export function CameraZoomChips({ chips, activeChipId, onSelectChip, bottomInset
           alignItems: 'center',
         },
         chipActive: {
-          backgroundColor: theme.colors.primaryFill,
+          backgroundColor: '#ffffff',
         },
         chipPressed: {
           opacity: Platform.OS === 'ios' ? 0.88 : 1,
         },
         chipText: {
           ...theme.typography.body,
-          color: theme.colors.textPrimary,
+          color: '#ffffff',
           fontSize: 14,
           fontWeight: '600',
         },
         chipTextActive: {
-          color: theme.colors.primaryOnFill,
+          color: cameraControlColors.label,
         },
       }),
     [theme],

@@ -1,22 +1,17 @@
-import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { useTheme } from '@/hooks/useTheme';
+import { cameraControlColors } from '@/constants/camera-layout';
 
 const GRID_FRACTIONS = [1 / 3, 2 / 3] as const;
+
+const lineStyle = {
+  backgroundColor: cameraControlColors.icon,
+};
 
 /**
  * Rule-of-thirds guide over the camera preview (non-interactive).
  */
 export function CameraGridOverlay() {
-  const { theme } = useTheme();
-  const lineStyle = useMemo(
-    () => ({
-      backgroundColor: theme.colors.textPrimary,
-    }),
-    [theme],
-  );
-
   return (
     <View style={styles.root} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       {GRID_FRACTIONS.map((fraction) => (

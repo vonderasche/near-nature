@@ -2,6 +2,7 @@ import { HeroIcon } from '@/components/ui/hero-icon';
 import { useMemo } from 'react';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { cameraControlColors } from '@/constants/camera-layout';
 import { useTheme } from '@/hooks/useTheme';
 import { bottomToolbarPadding } from '@/lib/screen/contentInsets';
 
@@ -55,7 +56,7 @@ export function CameraBottomToolbar({
         },
         toolBtnText: {
           ...theme.typography.body,
-          color: theme.colors.textPrimary,
+          color: cameraControlColors.label,
           fontWeight: '600',
         },
         galleryBtn: {
@@ -65,7 +66,7 @@ export function CameraBottomToolbar({
         },
         galleryLabel: {
           ...theme.typography.subtitle,
-          color: theme.colors.textPrimary,
+          color: cameraControlColors.label,
           fontSize: 11,
           fontWeight: '600',
         },
@@ -74,7 +75,7 @@ export function CameraBottomToolbar({
           height: 72,
           borderRadius: 36,
           borderWidth: 4,
-          borderColor: theme.colors.textPrimary,
+          borderColor: cameraControlColors.shutterRing,
           alignItems: 'center',
           justifyContent: 'center',
         },
@@ -88,7 +89,7 @@ export function CameraBottomToolbar({
           width: 56,
           height: 56,
           borderRadius: 28,
-          backgroundColor: theme.colors.textPrimary,
+          backgroundColor: cameraControlColors.shutterFill,
         },
       }),
     [theme],
@@ -128,10 +129,10 @@ export function CameraBottomToolbar({
         android_ripple={{ color: 'rgba(255,255,255,0.2)' }}
         style={({ pressed }) => [styles.toolBtn, styles.galleryBtn, pressed && styles.toolBtnPressed]}>
         {pickingGallery ? (
-          <ActivityIndicator color={theme.colors.textPrimary} size="small" />
+          <ActivityIndicator color={cameraControlColors.icon} size="small" />
         ) : (
           <>
-            <HeroIcon name="photo" size={22} color={theme.colors.textPrimary} />
+            <HeroIcon name="photo" size={22} color={cameraControlColors.icon} />
             <Text style={styles.galleryLabel}>Gallery</Text>
           </>
         )}

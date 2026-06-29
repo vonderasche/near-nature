@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { HeroIcon, type HeroIconName } from '@/components/ui/hero-icon';
+import { cameraControlColors } from '@/constants/camera-layout';
 import { useTheme } from '@/hooks/useTheme';
 
 type Props = {
@@ -62,13 +63,13 @@ export function CameraControlButton({
           ...theme.typography.subtitle,
           fontSize: 10,
           fontWeight: '600',
-          color: theme.colors.textPrimary,
+          color: cameraControlColors.label,
           textTransform: 'uppercase',
           letterSpacing: 0.4,
           textAlign: 'center',
         },
         captionDisabled: {
-          color: theme.colors.textSecondary,
+          color: cameraControlColors.labelDisabled,
         },
       }),
     [theme],
@@ -95,7 +96,7 @@ export function CameraControlButton({
         <HeroIcon
           name={icon}
           size={26}
-          color={disabled ? theme.colors.textSecondary : theme.colors.textPrimary}
+          color={disabled ? cameraControlColors.iconDisabled : cameraControlColors.icon}
         />
       </Pressable>
       {caption ? (

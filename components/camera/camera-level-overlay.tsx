@@ -1,8 +1,8 @@
 import { Accelerometer } from 'expo-sensors';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { useTheme } from '@/hooks/useTheme';
+import { cameraControlColors } from '@/constants/camera-layout';
 import { isHorizonLevel, rollDegreesFromAccelerometer } from '@/lib/camera/cameraLevel';
 
 type Props = {
@@ -13,7 +13,6 @@ type Props = {
  * Rule-of-thirds-style horizon line driven by the accelerometer (portrait hold).
  */
 export function CameraLevelOverlay({ visible }: Props) {
-  const { theme } = useTheme();
   const [rollDeg, setRollDeg] = useState(0);
 
   useEffect(() => {
@@ -26,60 +25,6 @@ export function CameraLevelOverlay({ visible }: Props) {
 
     return () => sub.remove();
   }, [visible]);
-
-  const styles = useMemo(
-    () =>
-      StyleSheet.create({
-        root: {
-          ...StyleSheet.absoluteFillObject,
-          zIndex: 2,
-          alignItems: 'center',
-          justifyContent: 'center',
-        },
-        center: {
-          width: LINE_WIDTH,
-          height: LINE_WIDTH,
-          alignItems: 'center',
-          justifyContent: 'center',
-        },
-        horizon: {
-          position: 'absolute',
-          width: LINE_WIDTH,
-          height: 2,
-          borderRadius: 1,
-        },
-        horizonLevel: {
-          backgroundColor: '#4ade80',
-          opacity: 0.95,
-        },
-        horizonTilted: {
-          backgroundColor: theme.colors.textPrimary,
-          opacity: 0.55,
-        },
-        tick: {
-          position: 'absolute',
-          width: 2,
-          height: 14,
-          backgroundColor: theme.colors.textPrimary,
-          opacity: 0.4,
-        },
-        tickLevel: {
-          backgroundColor: '#4ade80',
-          opacity: 0.85,
-        },
-        tickLeft: {
-          left: 0,
-          top: '50%',
-          marginTop: -7,
-        },
-        tickRight: {
-          right: 0,
-          top: '50%',
-          marginTop: -7,
-        },
-      }),
-    [theme],
-  );
 
   if (!visible) return null;
 
@@ -103,3 +48,53 @@ export function CameraLevelOverlay({ visible }: Props) {
 }
 
 const LINE_WIDTH = 120;
+
+const styles = StyleSheet.create({
+  root: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  center: {
+    width: LINE_WIDTH,
+    height: LINE_WIDTH,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  horizon: {
+    position: 'absolute',
+    width: LINE_WIDTH,
+    height: 2,
+    borderRadius: 1,
+  },
+  horizonLevel: {
+    backgroundColor: '#4ade80',
+    opacity: 0.95,
+  },
+  horizonTilted: {
+    backgroundColor: cameraControlColors.icon,
+    opacity: 0.55,
+  },
+  tick: {
+    position: 'absolute',
+    width: 2,
+    height: 14,
+    backgroundColor: cameraControlColors.icon,
+    opacity: 0.4,
+  },
+  tickLevel: {
+    backgroundColor: '#4ade80',
+    opacity: 0.85,
+  },
+  tickLeft: {
+    left: 0,
+    top: '50%',
+    marginTop: -7,
+  },
+  tickRight: {
+    right: 0,
+    top: '50%',
+    marginTop: -7,
+  },
+});
