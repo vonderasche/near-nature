@@ -19,7 +19,7 @@ export function regionAvailabilityBadge(regionId: RegionPackId, modelBundleReady
 
 /** Discover tab subtitle — same phrasing whether ready or preparing; gates handle the rest. */
 export function regionDiscoverSubtitle(regionId: RegionPackId, modelBundleReady?: boolean): string {
-  if (regionId === 'southeast' && isRegionReady(regionId, modelBundleReady)) {
+  if (regionId === 'south' && isRegionReady(regionId, modelBundleReady)) {
     return 'Florida state parks, plants, and wildlife.';
   }
   return `${regionLabel(regionId)} parks, plants, and wildlife.`;

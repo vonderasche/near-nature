@@ -13,12 +13,12 @@ import {
 import { ACTIVE_REGION_OVERRIDE_STORAGE_KEY } from '@/constants/region-storage';
 import {
   DEFAULT_REGION_PACK_ID,
-  isRegionPackId,
   regionDisplayLabel,
   regionLabel,
   resolveRegionFromState,
   type RegionPackId,
 } from '@/constants/regions';
+import { normalizeRegionPackId } from '@/lib/region/regionPackLegacy';
 import { useUserHomeState } from '@/hooks/useUserHomeState';
 import {
   ensureRegionalModels,
@@ -91,7 +91,11 @@ export function RegionProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     void AsyncStorage.getItem(ACTIVE_REGION_OVERRIDE_STORAGE_KEY).then((raw) => {
       if (cancelled) return;
-      setManualOverride(isRegionPackId(raw) ? raw : null);
+      const regionId = normalizeRegionPackId(raw);
+      setManualOverride(regionId);
+      if (regionId && raw !== regionId) {
+        void AsyncStorage.setItem(ACTIVE_REGION_OVERRIDE_STORAGE_KEY, regionId);
+      }
       setStorageReady(true);
     });
     return () => {

@@ -1,56 +1,250 @@
 # Near Nature
 
-Expo + Supabase nature-identification app.
+A mobile nature-identification app built with **Expo**, **Supabase**, and on-device **TensorFlow Lite**. Point your camera at plants and wildlife, get genus-level suggestions enriched with Wikipedia and iNaturalist data, save discoveries to your gallery, and climb naturalist badges and community rankings.
 
-## Get started
+---
 
-1. Install dependencies
+## Features
 
-   ```bash
-   npm install
-   ```
+### Camera & identification
 
-2. Start the app
+- **Live preview inference** — optional on-device classifier on the viewfinder (scene gate, kingdom, or routing preview models); frame-sampled, not saved.
+- **Capture or gallery pick** → on-device **TFLite** cascade on iOS/Android (MobileViT routing → regional specialist models → top genus candidates).
+- **Web fallback** via Supabase Edge `identify-species` (Gemini vision) when TFLite is unavailable.
+- **Enrichment waterfall** per candidate: saved detection → local species catalog → Wikipedia cache → live Wikipedia; iNaturalist native status for the primary match.
+- **Background save** — UI returns to the camera immediately while upload and DB insert finish.
 
-   ```bash
-   npx expo start
-   ```
+### Profile, gallery & scoring
 
-In the output, you'll find options to open the app in a
+- **Personal gallery** with grid/list layouts, search, and category filters.
+- **Naturalist badges** — Explorer / Adventurer / Voyager tiers per discipline and subcategory (botanist, ornithologist, herpetologist, mammalogist, etc.).
+- **Points & streaks** from saved identifications; first-species discovery bonus.
+- **Collapsible scoring section** with discipline popovers and earned-badge tiles.
+- **Public member profiles** — view another explorer’s gallery, stats, and badges.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### Explorer Board (Rankings tab)
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+- **Leaderboard** by native-species discovery count (paginated RPC).
+- **Community search** — photo grid across public identifications when the search field is active.
+- **Stale-while-revalidate** caching for instant open, background refresh.
 
-## Get a fresh project
+### Regional modularity
 
-When you're ready, run:
+- **Four US Census regions** — South (live), Northeast, Midwest, West (coming soon).
+- **Region picker** on Profile with an interactive US map; home state drives default region.
+- **On-demand model bundles** — specialist TFLite weights download per region from Supabase Storage (slim APK ships preview models only).
 
-```bash
-npm run reset-project
+### Appearance & settings
+
+- **Themes** — Dark, Light, and Light forest (Settings → Appearance).
+- **Account** — email/username login, Google OAuth, profile motto, home state, avatar upload.
+- **Identification feedback** (opt-in, dev builds) — optional ML telemetry and misclassification review when `EXPO_PUBLIC_CLASSIFICATION_DEBUG=1`.
+
+### Offline-friendly caches
+
+- **SQLite** on device for profile, gallery metadata, scoring snapshot, species catalog, Wikipedia cache, and Explorer Board pages.
+- **Signed URLs** for private detection images in Supabase Storage.
+
+---
+
+## How to use the app
+
+### Guest vs signed in
+
+```mermaid
+flowchart TD
+  Launch([Open app]) --> Board[Rankings tab — browse leaderboard]
+  Launch --> GuestCam{Camera tab?}
+  GuestCam -->|tap| LoginPrompt[Sign in prompt]
+  Launch --> GuestProf{Profile tab?}
+  GuestProf -->|tap| LoginPrompt
+  LoginPrompt --> Auth["Login · Sign up · Google"]
+  Auth --> Tabs[Signed-in experience]
+
+  subgraph signedIn [Signed in]
+    Tabs --> Camera[Camera — identify & save]
+    Tabs --> Rankings[Rankings — leaderboard & search]
+    Tabs --> Profile[Profile — gallery & badges]
+  end
+
+  Board --> Member[View public member profiles]
+  Member --> Gallery[Their public gallery]
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### Identify and save (happy path)
 
-## Project docs
+```mermaid
+sequenceDiagram
+  participant You
+  participant Camera as Camera tab
+  participant ML as On-device TFLite
+  participant Enrich as Wiki · iNat · catalog
+  participant Cloud as Supabase
 
-- Architecture: [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)
-- SQL setup: [`sql/README.md`](./sql/README.md)
-- Local model folders (not committed): [`docs/LOCAL_MODEL_SETUP.md`](./docs/LOCAL_MODEL_SETUP.md)
+  You->>Camera: Point at subject & capture
+  Camera->>ML: Classify photo
+  ML-->>Camera: Top genus candidates
+  Camera->>Enrich: Enrich descriptions & native status
+  Enrich-->>Camera: Species results list
+  You->>Camera: Tap Save
+  Camera-->>You: Return to live camera
+  Camera->>Cloud: Upload image + insert detection
+  Cloud-->>Camera: Points · streaks · badges updated
+  You->>Profile: Gallery shows new identification
+```
 
-## Learn more
+### Main tabs
 
-To learn more about developing your project with Expo, look at the following resources:
+```mermaid
+flowchart LR
+  subgraph tabs [Bottom tabs]
+    Cam[Camera<br/>Identify & save]
+    Rank[Rankings<br/>Leaderboard & community search]
+    Prof[Profile<br/>Gallery · badges · region]
+  end
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+  Cam --> Results[Identification results]
+  Results --> Save[(Your gallery)]
 
-## Join the community
+  Rank --> LB[Species count leaderboard]
+  Rank --> Search[Public photo search]
 
-Join our community of developers creating universal apps.
+  Prof --> Score[Scoring & badges]
+  Prof --> Gal[Detection gallery]
+  Prof --> Region[Region map & download]
+  Prof --> Settings[Settings · themes]
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### Badge progress (naturalist disciplines)
+
+```mermaid
+flowchart TD
+  Save[Save a new species] --> Disc[First sighting logged in discoveries]
+  Disc --> Count[Distinct species per subcategory]
+  Count --> Tiers{Tier thresholds}
+  Tiers -->|10 species| Explorer[Explorer badge]
+  Tiers -->|25 species| Adventurer[Adventurer badge]
+  Tiers -->|50 species| Voyager[Voyager badge]
+  Explorer --> Main[Main discipline badges<br/>e.g. Botanist · Ornithologist]
+```
+
+### Image inference
+
+Three inference paths — only **capture** and **cloud** results can be saved.
+
+```mermaid
+flowchart TB
+  subgraph preview [Live preview — viewfinder only]
+    VF[Camera frames] --> PM[Preview TFLite<br/>scene gate · kingdom · routing]
+    PM --> Label[Top label overlay]
+  end
+
+  subgraph native [Capture / gallery — iOS & Android]
+    Img[Photo file] --> MV[MobileViT routing]
+    MV --> SP[Regional specialist TFLite]
+    SP --> Genus[Top 3 genus matches]
+  end
+
+  subgraph web [Web / cloud fallback]
+    Img2[Photo file] --> GM[Gemini via Edge API]
+    GM --> Species[Species suggestions]
+  end
+
+  Genus --> Enrich[Wiki · iNat · catalog enrich]
+  Species --> Enrich
+  Enrich --> Save[Save to gallery]
+  preview -.->|not saved| Skip[Display only]
+```
+
+| Path | Runs when | Models | Saved? |
+|------|-----------|--------|--------|
+| Live preview | Camera open, AI toggle on | `assets/tflite/preview_models/*` | No |
+| Capture TFLite | Shutter or gallery pick | MobileViT + regional `inat2021_specialists_v2` | After Save |
+| Cloud Gemini | Web, or no on-device model | `identify-species` edge function | After Save |
+
+See [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md#image-inference) for cascade diagrams, regional model loading, and debug telemetry.
+
+---
+
+## Get started (development)
+
+### Prerequisites
+
+- Node.js 20+
+- [Android Studio](https://developer.android.com/studio) (physical ARM device or emulator) for native builds
+- A Supabase project — copy `.env.example` → `.env` and fill `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+
+### Install & run
+
+```bash
+npm install
+npm run start:dev          # Metro + dev client (LAN)
+npm run android:install    # Build & install on connected device
+```
+
+Other useful scripts:
+
+| Script | Purpose |
+|--------|---------|
+| `npm run typecheck` | TypeScript |
+| `npm run test` | Vitest unit tests |
+| `npm run verify:supabase` | Smoke-test RPCs against your Supabase project |
+| `npm run android:preview-apk` | Release APK with preview TFLite models only |
+| `npm run seed:florida-parks` | Upsert Florida state parks into Supabase |
+| `npm run setup:ml-telemetry` | Print ML telemetry SQL order + verify |
+
+### Supabase setup
+
+Run SQL scripts in the order documented in [`sql/README.md`](./sql/README.md), then reload the schema cache and run `npm run verify:supabase`.
+
+Deploy the `identify-species` edge function and set `GEMINI_API_KEY` for web identification.
+
+### Local TFLite models
+
+Large model weights are **not committed**. See [`docs/LOCAL_MODEL_SETUP.md`](./docs/LOCAL_MODEL_SETUP.md) for folder layout and [`docs/PREVIEW_BUILD.md`](./docs/PREVIEW_BUILD.md) for slim APK builds.
+
+---
+
+## Project documentation
+
+| Doc | Contents |
+|-----|----------|
+| [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | Deep technical diagrams — auth gate, **image inference**, caches, save pipeline |
+| [`sql/README.md`](./sql/README.md) | Database setup order, RPCs, telemetry |
+| [`docs/LOCAL_MODEL_SETUP.md`](./docs/LOCAL_MODEL_SETUP.md) | Bundled vs regional TFLite assets |
+| [`docs/PREVIEW_BUILD.md`](./docs/PREVIEW_BUILD.md) | Windows APK build notes |
+| [`docs/GOOGLE_SIGN_IN.md`](./docs/GOOGLE_SIGN_IN.md) | OAuth configuration |
+
+---
+
+## Tech stack
+
+| Layer | Technology |
+|-------|------------|
+| App | Expo Router, React Native, TypeScript |
+| Auth & backend | Supabase Auth, Postgres, Storage, Edge Functions |
+| On-device ML | `react-native-fast-tflite`, Vision Camera frame processors |
+| Caching | expo-sqlite, AsyncStorage |
+| Lists | Shopify FlashList |
+| Maps | `@svg-maps/usa` region picker |
+
+---
+
+## Repository layout
+
+```
+app/                  Expo Router screens (tabs, auth, profile, camera)
+components/           UI by feature (camera, profile, auth, settings)
+lib/                  Business logic (camera, identification, parks, profile)
+services/             Supabase-facing services
+sql/                  Postgres migrations & RPCs (run in Supabase SQL Editor)
+assets/               Images, bundled CSVs, TFLite preview models
+docs/                 Architecture & setup guides
+scripts/              Seeds, APK builds, verification, telemetry reports
+```
+
+---
+
+## License
+
+Private portfolio project. Model assets and third-party data (iNaturalist, Wikipedia, Florida DEP parks) carry their own licenses — see bundled asset READMEs where applicable.

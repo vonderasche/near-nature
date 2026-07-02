@@ -30,7 +30,7 @@ export const lightThemePreset: ThemePreset = {
     stateFillSelected: 'rgba(0,0,0,0.12)',
     stateStroke: '#d1d1d6',
     stateStrokeSelected: '#1c1c1e',
-    unmappedFill: 'rgba(0,0,0,0.04)',
+    unmappedFill: 'rgba(0,0,0,0.07)',
     legendBorderSelected: '#1c1c1e',
     legendBackgroundSelected: 'rgba(0,0,0,0.04)',
     legendSwatchReady: '#1c1c1e',

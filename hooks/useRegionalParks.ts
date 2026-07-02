@@ -25,7 +25,7 @@ export function useRegionalParks(
   const { isLive, regionId } = useActiveRegion();
   const fl = useFloridaStateParks(searchQuery, sortMode, deviceCoords);
 
-  if (isLive && regionId === 'southeast') {
+  if (isLive && regionId === 'south') {
     return { ...fl, comingSoon: false };
   }
 

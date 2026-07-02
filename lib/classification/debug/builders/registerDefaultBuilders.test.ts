@@ -17,7 +17,7 @@ import type {
 
 const ctx: TelemetryBuildContext = {
   sessionId: '11111111-1111-1111-1111-111111111111',
-  regionId: 'southeast',
+  regionId: 'south',
   platform: 'test',
   appVersion: '1.0.0',
 };

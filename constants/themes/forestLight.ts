@@ -61,7 +61,7 @@ export const forestLightThemePreset: ThemePreset = {
     stateFillSelected: 'rgba(74, 124, 63, 0.18)',
     stateStroke: light.border,
     stateStrokeSelected: light.accent,
-    unmappedFill: light.surfaceRaised,
+    unmappedFill: 'rgba(44, 26, 14, 0.10)',
     legendBorderSelected: light.accent,
     legendBackgroundSelected: 'rgba(74, 124, 63, 0.10)',
     legendSwatchReady: light.accent,

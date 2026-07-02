@@ -11,7 +11,8 @@ For local classifier model folder setup (non-committed binaries), see [`docs/LOC
 |---------|--------|
 | [Startup and routing](#startup-and-routing) | AuthGate, guest vs signed-in paths |
 | [App flow](#app-flow-tabs-and-data) | Tabs, caches, stale-while-revalidate sequence |
-| [Image pipeline](#image-pipeline-capture--identify--enrich--save) | Capture → classify → enrich → save (TFLite, Gemini, enrichment waterfall) |
+| [Image inference](#image-inference) | Live preview, capture TFLite cascade, cloud Gemini fallback |
+| [Image pipeline](#image-pipeline-capture--identify--enrich--save) | Capture → classify → enrich → save (enrichment waterfall, save) |
 | [System overview](#system-overview) | App ↔ Supabase ↔ device ↔ external APIs |
 
 ---
@@ -121,6 +122,92 @@ sequenceDiagram
 
 ---
 
+## Image inference
+
+Near Nature runs **three separate inference paths**. Live preview and capture inference are independent; only capture/gallery results can be saved.
+
+```mermaid
+flowchart TB
+  subgraph live["Live preview (camera viewfinder)"]
+    Frames[Vision Camera frames] --> FP[Frame processor<br/>sampled · skipped]
+    FP --> PrevModel{Preview model}
+    PrevModel -->|scene_gate| SG[Plant/animal scene gate]
+    PrevModel -->|kingdom| KD[Kingdom labels]
+    PrevModel -->|routing_preview_v1| RP[Taxon-group hints]
+    SG --> Overlay[On-screen label overlay]
+    KD --> Overlay
+    RP --> Overlay
+  end
+
+  subgraph capture["Capture / gallery inference (native)"]
+    Photo[Still image URI] --> Prep[Resize · normalize<br/>224×224 RGB]
+    Prep --> MV[MobileViT routing model]
+    MV --> Route[routing.json + region pack]
+    Route -->|specialist available| Spec[inat2021_specialists_v2 TFLite]
+    Route -->|no model| Notice[Empty result + notice]
+    Spec --> Top3[Top genus candidates<br/>+ confidence]
+  end
+
+  subgraph cloud["Cloud inference (web / fallback)"]
+    WebPhoto[Still image URI] --> Resize[Max edge 1280 JPEG]
+    Resize --> Gemini[Edge identify-species<br/>Gemini vision]
+    Gemini --> Parsed[ClassificationResult list]
+  end
+
+  capture --> Enrich[Enrich + results UI]
+  cloud --> Enrich
+  live -.->|does not save| X[Not persisted]
+```
+
+### Inference modes compared
+
+| Mode | When | Model(s) | Output | Persisted |
+|------|------|----------|--------|-----------|
+| **Live preview** | Camera tab, viewfinder on | Bundled `assets/tflite/preview_models/*` (scene gate, kingdom, routing preview) | Top label overlay; optional debug telemetry | No |
+| **Capture TFLite** | After shutter or gallery pick (iOS/Android) | MobileViT routing → regional specialist `.tflite` | Up to 3 genus-level `ClassificationResult`s + routing meta | Yes, after Save |
+| **Cloud Gemini** | Web platform, or when TFLite unavailable | Supabase Edge `identify-species` | Filtered species list from vision API | Yes, after Save |
+
+### Capture TFLite cascade (detail)
+
+```mermaid
+flowchart LR
+  Photo[photoUri] --> Pre[preprocess for MobileViT<br/>224×224 · ImageNet norm]
+  Pre --> MV[MobileViT routing<br/>mobilevitRoutingCaptureConfig]
+  MV --> Top{Top preview label}
+  Top -->|No Plant or Animal| Empty[No results]
+  Top -->|taxon group| Resolve[resolveSpecialistForPreviewLabel<br/>active region pack]
+  Resolve -->|bundled / downloaded| Spec[specialist TFLite]
+  Resolve -->|missing| Notice[Notice: no on-device model]
+  Spec --> Genus[Top genus predictions]
+  Genus --> Out[ClassificationResult array]
+```
+
+Regional specialist weights load from the **active region pack** (`lib/region/`, Supabase `region-models` bucket). Slim APK builds bundle **preview models only**; capture routing may resolve to a specialist that must be downloaded first.
+
+### Live preview (detail)
+
+```mermaid
+flowchart LR
+  Cam[Camera stream] --> Skip[Frame skip / throttle]
+  Skip --> ML[useMlFrameProcessor]
+  ML --> Map[mapPreviewPredictions]
+  Map --> UI[CameraLivePredictionsOverlay]
+  ML -.->|opt-in debug| Tel[live_preview_sample events]
+```
+
+Preview is **suspended** during capture inference (`prepareMvpCaptureMemory`) to avoid loading two large models at once. User picks the preview model from camera top controls (AI menu).
+
+### Key modules
+
+| Path | Modules |
+|------|---------|
+| Live preview | `hooks/useLivePreviewFrameProcessor.ts`, `hooks/useMlFrameProcessor.ts`, `lib/camera/tflite/preview/` |
+| Capture TFLite | `lib/camera/mobilenet/identifyPhotoWithTflite.ts`, `lib/camera/tflite/cachedModels.ts`, `lib/camera/mobilenet/tfliteRouting.ts` |
+| Cloud | `hooks/useSpeciesIdentification.ts`, `api/gemini.ts`, Edge `identify-species` |
+| Debug telemetry | `lib/classification/debug/` — `capture_identify`, `live_preview_sample`, optional TFLite vs Gemini comparison |
+
+---
+
 ## Image pipeline (capture → identify → enrich → save)
 
 End-to-end path for a camera or gallery photo. **Full-resolution URI** is kept for save; classification uses a separate prepared image.
@@ -177,21 +264,19 @@ flowchart TB
   end
 ```
 
-### TFLite path (native)
+### TFLite path (native capture)
 
-Bundled assets under `assets/tflite/near_nature_app_bundle/`.
+Bundled routing under `assets/tflite/`; regional specialists under downloaded region packs or `assets/tflite/near_nature_app_bundle/`.
 
 ```mermaid
 flowchart LR
-  Photo[photoUri] --> Pre["preprocessImageForMobileNet<br/>224×224 RGB · ImageNet norm"]
-  Pre --> Float["Float32Array input"]
+  Photo[photoUri] --> Pre["preprocess for MobileViT<br/>224×224 RGB · ImageNet norm"]
+  Pre --> Route["MobileViT routing model<br/>taxon-group labels"]
+  Route --> Resolve["routing.json + region → specialist id"]
+  Resolve -->|no specialist| Empty[Empty result + notice]
+  Resolve -->|specialist found| Spec["Regional specialist TFLite<br/>inat2021_specialists_v2"]
 
-  Float --> Preview["Preview model<br/>20 taxon groups"]
-  Preview --> Route["routing.json → specialist id"]
-  Route -->|no bundled model| Empty[Empty result + notice]
-  Route -->|specialist found| Spec["Specialist TFLite"]
-
-  Spec --> Birds{birds?}
+  Spec --> Birds{birds specialist?}
   Birds -->|yes| Rollup["species scores → genus top-3"]
   Birds -->|no| Genus["genus top-3"]
 
@@ -201,9 +286,9 @@ flowchart LR
 
 | Stage | Model | Output |
 |-------|--------|--------|
-| Preview | `preview/preview_classifier.tflite` | Top taxon group (e.g. Bird, Butterfly) |
-| Route | `routing.json` | Specialist folder or “no model” notice |
-| Specialist | `inat2021_specialists/*/` | Top genus candidates (+ bird species rollup) |
+| Routing | MobileViT (`mobilevitRoutingCaptureConfig`) | Top taxon group (e.g. Bird, Wildflowers) |
+| Route | `routing.json` + active region | Specialist folder or “no model” notice |
+| Specialist | `inat2021_specialists_v2/*/` (per region) | Top genus candidates (+ bird species rollup) |
 
 ### Gemini path (web fallback)
 
@@ -283,8 +368,8 @@ flowchart TD
 | Step | Primary modules |
 |------|-----------------|
 | Capture | `hooks/useCameraScreen.ts`, `hooks/usePickPhotoFromGallery.ts` |
-| Classify (native) | `lib/camera/mobilenet/identifyPhotoWithTflite.ts`, `preprocessImageForMobileNet.ts` |
-| Live preview (native) | `hooks/useLivePreviewFrameProcessor.ts` — EfficientNetB0 preview model |
+| Classify (native) | `lib/camera/mobilenet/identifyPhotoWithTflite.ts`, `lib/camera/tflite/cachedModels.ts` |
+| Live preview (native) | `hooks/useLivePreviewFrameProcessor.ts`, `lib/camera/tflite/preview/previewModelRegistry.ts` — scene gate, kingdom, routing preview |
 | Classify (web) | `hooks/useSpeciesIdentification.ts`, `api/gemini.ts`, Edge `identify-species` |
 | Enrich | `lib/identification/enrichSpeciesFromApis.ts` — iNat for all candidates; wiki capped to top N; saved detection / catalog / wiki_cache tiers |
 | UI | `components/camera/camera-identification-panel.tsx` |

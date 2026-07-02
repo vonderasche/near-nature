@@ -11,7 +11,7 @@ function eventWithPayload(
     session_id: '11111111-1111-1111-1111-111111111111',
     domain: 'classification',
     pipeline: 'gemini',
-    region_id: 'southeast',
+    region_id: 'south',
     platform: 'test',
     app_version: '1.0.0',
     flags: [],

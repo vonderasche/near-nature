@@ -1,9 +1,10 @@
 import type { RegionPackId } from '@/constants/regions';
 import { getInfoAsync, readAsStringAsync } from '@/lib/fs/legacyFileSystem';
 import {
-  getRegionModelFilePath,
-  getRegionModelManifestPath,
+  getRegionModelFilePathForStorageId,
+  getRegionModelManifestPathForStorageId,
 } from '@/lib/region/regionModelPaths';
+import { getRegionModelStorageCandidates } from '@/lib/region/regionPackLegacy';
 import {
   isBundledRegion,
   setRegionalModelBundleReadyCache,
@@ -57,37 +58,59 @@ function enrichManifestUrls(manifest: RegionModelManifest): RegionModelManifest 
  * Fetch the latest manifest for a region from Supabase Storage.
  * Returns null when the region has not been published yet.
  */
-export async function fetchRegionModelManifest(regionId: RegionPackId): Promise<RegionModelManifest | null> {
-  const storagePath = `${regionId}/manifest.json`;
-  const result = await downloadRegionModelObject(storagePath);
-  if (!result.ok) {
-    return null;
-  }
-
+function parseManifestPayload(
+  regionId: RegionPackId,
+  data: ArrayBuffer,
+  storageId: string,
+): RegionModelManifest | null {
   try {
-    const text = new TextDecoder().decode(result.data);
+    const text = new TextDecoder().decode(data);
     const parsed = JSON.parse(text) as RegionModelManifest;
-    if (parsed.regionId !== regionId || !Array.isArray(parsed.files) || parsed.files.length === 0) {
+    const manifestRegionId = parsed.regionId;
+    const validRegion =
+      manifestRegionId === regionId ||
+      manifestRegionId === storageId ||
+      getRegionModelStorageCandidates(regionId).includes(manifestRegionId);
+    if (!validRegion || !Array.isArray(parsed.files) || parsed.files.length === 0) {
       return null;
     }
-    return enrichManifestUrls(parsed);
+    return enrichManifestUrls({ ...parsed, regionId });
   } catch {
     return null;
   }
 }
 
+export async function fetchRegionModelManifest(regionId: RegionPackId): Promise<RegionModelManifest | null> {
+  for (const storageId of getRegionModelStorageCandidates(regionId)) {
+    const storagePath = `${storageId}/manifest.json`;
+    const result = await downloadRegionModelObject(storagePath);
+    if (!result.ok) {
+      continue;
+    }
+    const manifest = parseManifestPayload(regionId, result.data, storageId);
+    if (manifest) {
+      return manifest;
+    }
+  }
+  return null;
+}
+
 async function readLocalManifest(regionId: RegionPackId): Promise<RegionModelManifest | null> {
-  const manifestPath = getRegionModelManifestPath(regionId);
-  const info = await getInfoAsync(manifestPath);
-  if (!info.exists) {
-    return null;
+  for (const storageId of getRegionModelStorageCandidates(regionId)) {
+    const manifestPath = getRegionModelManifestPathForStorageId(storageId);
+    const info = await getInfoAsync(manifestPath);
+    if (!info.exists) {
+      continue;
+    }
+    try {
+      const text = await readAsStringAsync(manifestPath);
+      const parsed = JSON.parse(text) as RegionModelManifest;
+      return { ...parsed, regionId };
+    } catch {
+      continue;
+    }
   }
-  try {
-    const text = await readAsStringAsync(manifestPath);
-    return JSON.parse(text) as RegionModelManifest;
-  } catch {
-    return null;
-  }
+  return null;
 }
 
 /** True when TFLite assets for this region are on-device (bundled or previously downloaded). */
@@ -102,18 +125,25 @@ export async function verifyRegionalModelBundleReady(regionId: RegionPackId): Pr
   }
 
   for (const file of manifest.files) {
-    const localPath = getRegionModelFilePath(regionId, file.path);
-    const info = await getInfoAsync(localPath);
-    if (!info.exists) {
-      return false;
+    let found = false;
+    for (const storageId of getRegionModelStorageCandidates(regionId)) {
+      const localPath = getRegionModelFilePathForStorageId(storageId, file.path);
+      const info = await getInfoAsync(localPath);
+      if (!info.exists) {
+        continue;
+      }
+      if (
+        file.sizeBytes != null &&
+        'size' in info &&
+        typeof info.size === 'number' &&
+        info.size !== file.sizeBytes
+      ) {
+        return false;
+      }
+      found = true;
+      break;
     }
-    if (
-      file.sizeBytes != null &&
-      info.exists &&
-      'size' in info &&
-      typeof info.size === 'number' &&
-      info.size !== file.sizeBytes
-    ) {
+    if (!found) {
       return false;
     }
   }

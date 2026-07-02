@@ -1,7 +1,8 @@
 import type { UsStateCode } from '@/constants/us-states';
-import { normalizeUsStateCode } from '@/constants/us-states';
+import { normalizeUsStateCode, US_STATES } from '@/constants/us-states';
 
-export const REGION_PACK_IDS = ['southeast', 'northeast', 'midwest', 'southwest'] as const;
+/** US Census Bureau regions (lower 48). */
+export const REGION_PACK_IDS = ['northeast', 'midwest', 'south', 'west'] as const;
 
 export type RegionPackId = (typeof REGION_PACK_IDS)[number];
 
@@ -14,45 +15,71 @@ export type RegionPackConfig = {
   availability: RegionAvailability;
 };
 
+/** Lower-48 states excluded from regional packs (shown off the profile map). */
+export const REGION_EXCLUDED_STATE_CODES = ['AK', 'HI'] as const satisfies readonly UsStateCode[];
+
 export const REGION_PACKS: Record<RegionPackId, RegionPackConfig> = {
-  southeast: {
-    id: 'southeast',
-    label: 'Southeast',
-    states: ['FL', 'GA', 'SC', 'NC', 'AL', 'MS', 'TN'],
-    availability: 'live',
-  },
   northeast: {
     id: 'northeast',
     label: 'Northeast',
-    states: ['NY', 'NJ', 'PA', 'CT', 'MA', 'VA', 'MD', 'OH'],
+    states: ['CT', 'ME', 'MA', 'NH', 'NJ', 'NY', 'PA', 'RI', 'VT'],
     availability: 'coming_soon',
   },
   midwest: {
     id: 'midwest',
     label: 'Midwest',
-    states: ['OH', 'IN', 'IL', 'MI', 'WI', 'MN', 'MO'],
+    states: ['IA', 'IL', 'IN', 'KS', 'MI', 'MN', 'MO', 'ND', 'NE', 'OH', 'SD', 'WI'],
     availability: 'coming_soon',
   },
-  southwest: {
-    id: 'southwest',
-    label: 'Southwest',
-    states: ['TX', 'AZ', 'NM', 'CA', 'NV', 'CO', 'UT'],
+  south: {
+    id: 'south',
+    label: 'South',
+    states: [
+      'AL',
+      'AR',
+      'DE',
+      'FL',
+      'GA',
+      'KY',
+      'LA',
+      'MD',
+      'MS',
+      'NC',
+      'OK',
+      'SC',
+      'TN',
+      'TX',
+      'VA',
+      'WV',
+    ],
+    availability: 'live',
+  },
+  west: {
+    id: 'west',
+    label: 'West',
+    states: ['AZ', 'CA', 'CO', 'ID', 'MT', 'NM', 'NV', 'OR', 'UT', 'WA', 'WY'],
     availability: 'coming_soon',
   },
 };
 
-export const DEFAULT_REGION_PACK_ID: RegionPackId = 'southeast';
+export const DEFAULT_REGION_PACK_ID: RegionPackId = 'south';
 
 const STATE_TO_REGION: Partial<Record<UsStateCode, RegionPackId>> = (() => {
   const map: Partial<Record<UsStateCode, RegionPackId>> = {};
   for (const pack of Object.values(REGION_PACKS)) {
     for (const state of pack.states) {
-      if (state === 'OH' && pack.id === 'northeast') continue;
       map[state] = pack.id;
     }
   }
   return map;
 })();
+
+/** All US state codes assigned to a regional pack (lower 48). */
+export const REGION_MAPPED_STATE_CODES: readonly UsStateCode[] = US_STATES.map((s) => s.code).filter(
+  (code): code is UsStateCode =>
+    !(REGION_EXCLUDED_STATE_CODES as readonly string[]).includes(code) &&
+    STATE_TO_REGION[code as UsStateCode] != null,
+);
 
 export function isRegionPackId(value: string | null | undefined): value is RegionPackId {
   return REGION_PACK_IDS.includes(value as RegionPackId);

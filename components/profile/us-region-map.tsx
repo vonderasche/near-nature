@@ -94,8 +94,14 @@ export function UsRegionMap({ activeRegionId, onSelectRegion }: Props) {
                   key={location.id}
                   d={location.path}
                   fill={fill}
-                  stroke={selected && mapped ? mapTheme.stateStrokeSelected : mapTheme.stateStroke}
-                  strokeWidth={selected && mapped ? 2 : 0.75}
+                  stroke={
+                    mapped
+                      ? selected
+                        ? mapTheme.stateStrokeSelected
+                        : mapTheme.stateStroke
+                      : mapTheme.stateStroke
+                  }
+                  strokeWidth={mapped ? (selected ? 2 : 0.75) : 1}
                   strokeLinejoin="round"
                   onPress={mapped ? () => onSelectRegion(regionId) : undefined}
                   accessibilityLabel={

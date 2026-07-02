@@ -1,6 +1,7 @@
 import type { RegionPackId } from '@/constants/regions';
 import { getInfoAsync } from '@/lib/fs/legacyFileSystem';
-import { getRegionModelFilePath } from '@/lib/region/regionModelPaths';
+import { getRegionModelFilePathForStorageId } from '@/lib/region/regionModelPaths';
+import { getRegionModelStorageCandidates } from '@/lib/region/regionPackLegacy';
 import type { SpecialistAssetFolder } from '@/lib/camera/mobilenet/tfliteRouting';
 
 /** Relative path under `regions/{regionId}/` for a specialist genus model. */
@@ -17,10 +18,12 @@ export async function resolveRegionalModelUri(
   regionId: RegionPackId,
   relativePath: string,
 ): Promise<string | null> {
-  const localPath = getRegionModelFilePath(regionId, relativePath);
-  const info = await getInfoAsync(localPath);
-  if (!info.exists) {
-    return null;
+  for (const storageId of getRegionModelStorageCandidates(regionId)) {
+    const localPath = getRegionModelFilePathForStorageId(storageId, relativePath);
+    const info = await getInfoAsync(localPath);
+    if (info.exists) {
+      return localPath;
+    }
   }
-  return localPath;
+  return null;
 }

@@ -18,38 +18,39 @@ describe('isRegionReady', () => {
     clearRegionalModelBundleReadyCache();
   });
 
-  it('is true for southeast when regional models are on-device', () => {
-    setRegionalModelBundleReadyCache('southeast', true);
-    expect(isRegionalModelBundleReady('southeast')).toBe(true);
-    expect(isRegionReady('southeast', true)).toBe(true);
+  it('is true for south when regional models are on-device', () => {
+    setRegionalModelBundleReadyCache('south', true);
+    expect(isRegionalModelBundleReady('south')).toBe(true);
+    expect(isRegionReady('south', true)).toBe(true);
   });
 
-  it('is false for southeast while models are downloading', () => {
-    expect(isRegionReady('southeast', false)).toBe(false);
+  it('is false for south while models are downloading', () => {
+    expect(isRegionReady('south', false)).toBe(false);
   });
 
-  it('is false for southwest until models are published', () => {
-    expect(isRegionReady('southwest')).toBe(false);
+  it('is false for west until models are published', () => {
+    expect(isRegionReady('west')).toBe(false);
   });
 });
 
 describe('region copy', () => {
   it('uses plain region names without coming soon suffix', () => {
-    expect(regionDisplayLabel('southwest')).toBe('Southwest');
+    expect(regionDisplayLabel('west')).toBe('West');
+    expect(regionDisplayLabel('south')).toBe('South');
   });
 
   it('uses consistent discover subtitles', () => {
-    expect(regionDiscoverSubtitle('southwest')).toBe('Southwest parks, plants, and wildlife.');
-    expect(regionDiscoverSubtitle('southeast', true)).toBe('Florida state parks, plants, and wildlife.');
+    expect(regionDiscoverSubtitle('west')).toBe('West parks, plants, and wildlife.');
+    expect(regionDiscoverSubtitle('south', true)).toBe('Florida state parks, plants, and wildlife.');
   });
 
   it('uses neutral availability badges', () => {
-    expect(regionAvailabilityBadge('southeast', true)).toBe('Available');
+    expect(regionAvailabilityBadge('south', true)).toBe('Available');
     expect(regionAvailabilityBadge('northeast')).toBe('In progress');
   });
 
   it('does not mention Florida testing in unavailable message', () => {
-    expect(regionUnavailableMessage('southwest')).toContain('Southwest');
-    expect(regionUnavailableMessage('southwest')).not.toContain('Florida');
+    expect(regionUnavailableMessage('west')).toContain('West');
+    expect(regionUnavailableMessage('west')).not.toContain('Florida');
   });
 });
