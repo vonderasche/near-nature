@@ -89,6 +89,8 @@ flowchart LR
     StatusC[status_cache]
     CatalogC[species_records]
     SavedC[saved-species map]
+    DetC[user_detections]
+    RegC[regions/ TFLite]
   end
 
   Prof --> ProfileC
@@ -99,12 +101,14 @@ flowchart LR
   Cam --> WikiC
   Cam --> StatusC
   Cam --> CatalogC
+  Cam --> DetC
+  Cam --> RegC
 
   Supa -->|signed URLs| Display[expo-image display]
   device -->|stale-while-revalidate| Supa
 ```
 
-**Stale-while-revalidate:** cached data paints immediately; a subtle header spinner shows during background refresh. Pull-to-refresh forces network.
+**Stale-while-revalidate** skips background network when `cachedAt` is fresh (15 minutes) — it does **not** prune on-disk rows. Eviction policy: [Local cache eviction & retention](#local-cache-eviction--retention).
 
 ```mermaid
 sequenceDiagram
@@ -185,6 +189,51 @@ flowchart LR
 ```
 
 Regional specialist weights load from the **active region pack** (`lib/region/`, Supabase `region-models` bucket). Slim APK builds bundle **preview models only**; capture routing may resolve to a specialist that must be downloaded first.
+
+#### Regional model distribution (v1 & scale path)
+
+**Today (South / legacy `southeast` pack)**
+
+| Piece | Implementation |
+|-------|----------------|
+| **Storage** | Public Supabase bucket `region-models` (`sql/storage_bucket_region_models.sql`) — **no separate CDN**; clients hit Supabase public object URLs |
+| **Layout** | `{regionId}/manifest.json` + `{regionId}/inat2021_specialists_v2/**` (routing + ~12 specialist `.tflite` + labels) + optional `genus_info/` |
+| **Publish** | `node scripts/upload-region-model-bundle.mjs <regionId> <version>` — builds manifest with per-file `sha256` + `sizeBytes`, uploads all objects (service role) |
+| **Manifest** | `version`, `builtAt`, `minAppVersion`, `totalSizeBytes`, `files[]` with `path` / `storagePath` / hashes (`RegionModelManifest` in `services/regionModelDownloadService.ts`) |
+| **Device path** | `documentDirectory/regions/{regionId}/` — written atomically after full download (`lib/region/downloadRegionModelBundle.ts`) |
+| **Ready check** | `verifyRegionalModelBundleReady` — local `manifest.json` exists, every listed file present, **size matches** (sha256 not verified on device yet) |
+| **Download trigger** | `RegionContext` → `ensureRegionalModels` on region change; skips network if local bundle passes ready check |
+
+**Gaps before multi-region rollout**
+
+1. **No stale-pack detection** — once a bundle is “ready”, the app does **not** re-fetch remote `manifest.json` to compare `version`. Publishing `2026.07.1` does not reach devices until the local bundle is incomplete or the user clears app data / switches region away and back after a forced invalidation.
+2. **Full re-download only** — `downloadRegionModelBundle` always pulls every file in the manifest; no per-file diff against local `sha256` / incremental patch.
+3. **No CDN cache layer** — every first-time (or full re-) download egresses from Supabase Storage origin; popular packs and retries scale linearly with bytes × unique client fetches.
+4. **`minAppVersion` unused** — field exists in manifest; app does not gate download or show “update app” yet.
+
+**Recommended scale path** (when Northeast / Midwest / West go live)
+
+```mermaid
+flowchart LR
+  App[App on region activate] --> Head[GET manifest.json only]
+  Head --> Cmp{remote.version > local?}
+  Cmp -->|no| Use[Use on-device pack]
+  Cmp -->|yes| Diff[Diff files by sha256]
+  Diff --> Partial[Download changed paths only]
+  Partial --> Write[Atomic manifest swap]
+  Head --> CDN[CDN edge cache<br/>immutable objects by hash]
+  CDN --> Partial
+```
+
+| Concern | v2 approach |
+|---------|-------------|
+| **Version check** | Background HEAD/fetch of remote manifest on app launch or region tab open; compare `version` (semver) or `builtAt` |
+| **Incremental update** | Intersect `files[]` by `sha256`; download missing/changed paths; prune files not in new manifest |
+| **CDN** | Front `region-models` with Cloudflare (or move blobs to R2 + CDN); cache `.tflite` with `Cache-Control: immutable` and path or query keyed by `sha256` |
+| **Integrity** | Verify `sha256` after download (manifest already carries hashes from upload script) |
+| **Cost model** | **Storage:** Σ(regions × pack MB). **Egress:** ≈ `(new installs + version bumps + region switches) × delta MB` — CDN cache hits drive repeat fetches toward zero. Rule of thumb: ~12 specialists × ~5–15 MB each ⇒ **~60–180 MB per full region pack**; 4 Census regions fully subscribed ⇒ worst-case **~240–720 MB once per device**, not per identify. Monitor Supabase Storage egress dashboard when DAU × active regions grows. |
+
+**Modules:** `services/regionModelDownloadService.ts`, `lib/region/regionalModelBundle.ts`, `lib/region/regionPackLegacy.ts` (South ↔ `southeast` storage alias), `scripts/upload-region-model-bundle.mjs`.
 
 ### Live preview (detail)
 
@@ -369,6 +418,32 @@ flowchart TD
   Upload -->|failure| Err[Modal: Dismiss or Open profile]
 ```
 
+#### Trigger fan-out & scaling
+
+Every `INSERT detections` runs this **synchronous** chain before the save RPC returns to the client:
+
+| When | Trigger / function | Rows touched |
+|------|-------------------|--------------|
+| `BEFORE INSERT` | `set_detection_points` | NEW detection row only (base points from `native_status`) |
+| `BEFORE INSERT` | `sync_detection_naturalist_categories` | NEW row (`subcategory` / `main_category`) |
+| `BEFORE INSERT` | `sync_detection_search_fields` | NEW row (`search_vector` for gallery FTS) |
+| `AFTER INSERT` | `on_detection_update_streak` → `update_streak()` | `streaks` — **one row per user** |
+| `AFTER INSERT` | `on_detection_check_discovery` → `handle_first_discovery()` | On **first** `latin_name` for user: `INSERT discoveries`, `UPDATE` same detection (+5 bonus points), then `check_category_milestones(user_id)` |
+
+`check_category_milestones` (not a separate trigger) re-scans **all** of the user’s `discoveries`, upserts every matching `user_badge_progress` row, and idempotently inserts into `point_awards` (`ON CONFLICT DO NOTHING`). Repeat saves of a species already in `discoveries` skip this path entirely.
+
+**Contention today**
+
+- Trigger writes are **scoped to the saving user** (`streaks`, `discoveries`, `user_badge_progress`, `point_awards`). Two different users saving at the same time do **not** lock the same scoring rows.
+- **Explorer Board rank is not trigger-maintained.** `get_detection_count_leaderboard` aggregates `detections` at **read** time (`STABLE` RPC). There is no shared “leaderboard bucket” row updated on insert — so cross-user save races do not directly contend on rank materialization.
+- The realistic hot spot is **one user, many concurrent first-discoveries** (rapid saves, retry storms): transactions serialize on `streaks.user_id` and may bulk-upsert the same `user_badge_progress` keys while `check_category_milestones` runs a full per-user aggregate.
+
+**Fine at current scale** — the app typically saves one detection at a time per user; each trigger step is milliseconds.
+
+**Watch signals:** rising `INSERT detections` p99; `pg_stat_activity` wait events on `streaks` or `user_badge_progress`; `check_category_milestones` showing up in slow-query logs.
+
+**Future mitigations** (if needed): defer milestone evaluation to an async worker (`pg_notify`, queue, or scheduled job) so save returns after discovery + streak only; incremental milestone checks per `main_category` / `subcategory` instead of full re-aggregate; materialized leaderboard refreshed on a schedule if the read RPC becomes expensive (separate from write contention).
+
 **DB during identify:** read from saved-species map, `species_records`, `status_cache`, `wiki_cache`. On external API miss, successful iNat/Wikipedia lookups are written back to `status_cache` / `wiki_cache` immediately (no detection row until save).
 
 ### Camera tab — key modules
@@ -443,27 +518,69 @@ Requires `sql/get_user_scoring_snapshot.sql` (or fallback RPCs) in Supabase.
 
 ## Device cache reference
 
-| Cache | Key / location | Contents | Cleared on |
-|-------|----------------|----------|------------|
-| **Auth session** | Supabase → AsyncStorage | JWT / refresh | Sign out |
-| **Own profile** | `near_nature:own_profile:{userId}` | User row + public stats | Sign out, account delete |
-| **Gallery list** | `near_nature:gallery_list:{userId}:{publicOnly}` | Detection rows (no signed URLs) | Sign out, save, delete, force refetch |
-| **Scoring snapshot** | `near_nature:scoring_snapshot:{userId}` | Mains, awards, score breakdown | Sign out, save, delete |
-| **Signed URLs** | Memory + `near_nature:signed_url:{path}` | Supabase signed image URLs | Sign out (+ memory on expiry) |
-| **Saved species session** | In-memory `Map` | Latest detection per latin name | Sign out; warmed on profile load |
-| **Explorer Board list** | `near_nature:explorer_board_list` | Accumulated leaderboard rows (scroll pages, max 120) | Never (global); skipped while searching |
-| **Explorer Board columns** | AsyncStorage preference | 2/3/4 column grid | Never (UI pref) |
-| **Gallery grid columns** | AsyncStorage preference | Column count | Never |
-| **expo-image** | OS disk | Rendered bitmaps | OS-managed |
-| **SQLite (`near_nature.db`)** | `expo-sqlite` on device | Global: `species_records`, `wiki_cache`, `status_cache`, `explorer_board_cache`. User-scoped: profile, gallery list cache, scoring snapshot, saved-species map, signed URLs, **`user_detections`** | Sign out clears user-scoped SQLite rows; global catalog + board cache kept |
+| Cache | Key / location | Contents | Refresh / cap | Eviction today | Cleared on |
+|-------|----------------|----------|---------------|----------------|------------|
+| **Auth session** | Supabase → AsyncStorage | JWT / refresh | — | Supabase client | Sign out |
+| **Own profile** | `user_profile_cache` / legacy key | User row + public stats | 15 min SWR | None | Sign out |
+| **Gallery list** | `gallery_list_cache` | Loaded detection rows (metadata) | 15 min SWR | **None** — grows with scroll + prepends | Sign out, save prepend, delete, force refetch |
+| **Scoring snapshot** | `scoring_snapshot_cache` | Mains, awards, breakdown | 15 min SWR | None | Sign out, save, delete |
+| **Signed URLs** | Memory + `signed_url_cache` | Supabase signed image URLs | Per-URL `expires_at_ms` | **Lazy** — expired rows skipped on read, not purged | Sign out (full wipe) |
+| **Saved species session** | In-memory `Map` | Latest detection per latin name | Session | None | Sign out |
+| **Saved species SQLite** | `saved_species_cache` | Per-user latin → last description/status | — | **None** — one row per unique latin | Sign out |
+| **Explorer Board list** | `explorer_board_cache` | Leaderboard rows | 15 min SWR | **Cap 120 rows** (`EXPLORER_BOARD_LIST_CACHE_MAX_ROWS`) | Never (global) |
+| **Explorer Board columns** | AsyncStorage preference | 2/3/4 column grid | — | N/A (tiny) | Never |
+| **Gallery grid columns** | AsyncStorage preference | Column count | — | N/A (tiny) | Never |
+| **`wiki_cache`** | SQLite global | Wikipedia payloads by latin name | — | **None** — unbounded over years | Never |
+| **`status_cache`** | SQLite global | iNat native status by latin + state | **90-day TTL** on read | **None** — expired rows linger until overwritten | Never |
+| **`species_records`** | SQLite global | Genus catalog + enrichment | Version bump re-seed | Bounded ~catalog size; grows slowly via enrichment | Catalog version change |
+| **`user_detections`** | SQLite user-scoped | Mirror of saved detection metadata | Sync on gallery fetch | **None** — one row per save | Sign out |
+| **`regions/`** | `documentDirectory/regions/{id}/` | Downloaded TFLite packs | Manifest version (not checked yet) | **None** — old packs kept when switching region | Manual / reinstall |
+| **expo-image** | OS disk | Rendered bitmaps | OS LRU | OS-managed | OS-managed |
 
 Stale-while-revalidate: show cache immediately, refresh in background when stale, then update cache. Device caches include `cachedAt`; entries younger than **15 minutes** skip background network unless pull-to-refresh or `force` refetch (save/delete still invalidates). Explorer Board and gallery caches are not read while a search query is active.
+
+### Local cache eviction & retention
+
+**Not urgent at current scale**, but there is **no global pruning job** — a heavy user over a year could accumulate large `wiki_cache`, `user_detections`, and gallery JSON blobs on disk.
+
+```mermaid
+flowchart LR
+  subgraph today["Today"]
+    Write[Cache write on fetch / identify] --> Store[(SQLite / disk)]
+    Store --> Read[Read path]
+    Read -->|15 min fresh| SkipNet[Skip background network]
+    Read -->|expired URL only| SkipRow[Skip stale signed URL]
+  end
+
+  subgraph gap["Gap — no scheduled prune"]
+    Store -.->|unbounded| Wiki[wiki_cache rows]
+    Store -.->|unbounded| Det[user_detections rows]
+    Store -.->|scroll growth| Gal[gallery_list_cache JSON]
+  end
+```
+
+**Highest-risk unbounded stores**
+
+| Store | Why it grows | Suggested cap (before support tickets) |
+|-------|----------------|----------------------------------------|
+| **`wiki_cache`** | Every new genus Wikipedia fetch on identify | LRU **500–1000** latin names, or purge `cached_at` older than **180 days** on app launch |
+| **`user_detections`** | Every save upserts a row; gallery sync bulk-upserts pages | Optional **sync last N** (e.g. 500) if offline gallery is not a goal; else periodic trim of rows older than cloud-confirmed deletes |
+| **`gallery_list_cache`** | Appends pages as user scrolls; prepends on save | Match Explorer Board — **cap ~120–200 rows** in JSON payload |
+| **`status_cache`** | Every new latin+state iNat miss | TTL already 90d on read — add `DELETE WHERE cached_at < now() - interval` on launch |
+| **`signed_url_cache`** | One row per distinct image path viewed | `DELETE WHERE expires_at_ms < now()` on launch (index exists) |
+| **`regions/`** | Each visited Census region downloads full pack | Delete packs inactive **>30 days** or keep **max 2** regions on disk |
+
+**Already bounded:** Explorer Board list (120 rows), `species_records` (~genus catalog), in-memory TFLite model cache (evicted on region switch), scoring/profile (single row per user).
+
+**Sign-out** clears user-scoped SQLite + legacy AsyncStorage keys (`lib/db/clearLocalUserDataOnSignOut.ts`) but **keeps** global `wiki_cache`, `status_cache`, `species_records`, and `explorer_board_cache`.
+
+**Implementation paths (eviction — not built yet):** `lib/db/wikiCacheRepository.ts`, `lib/db/statusCacheRepository.ts`, `lib/detections/galleryListCache.ts`, `lib/db/detectionRepository.ts`, `lib/region/deleteRegionModelBundle.ts`.
 
 **UI tokens:** profile, gallery, and Explorer Board leaf components read **`authColors`** from `constants/auth-theme.ts` directly instead of drilling `mutedColor` / `borderColor` through screen props.
 
 **SQLite notes:** Requires a native dev-client rebuild after installing `expo-sqlite` or adding migrations. Skipped on web (cache modules fall back to AsyncStorage). If SQLite init fails, a dismissible banner explains that caches fall back to network/AsyncStorage. Bundled genus catalog (`genus_profiles.enriched.min.json`) seeds `species_records` on first launch or when the catalog version changes — Metro logs `[db] species catalog seeded` in dev. On upgrade, legacy AsyncStorage cache keys are imported once into SQLite. **Sync model:** saves upload to Supabase then upsert locally; gallery/board/profile hooks show cached data immediately and refresh in the background.
 
-**Implementation paths:**
+**Module index:**
 
 - Local DB: `lib/db/initLocalDatabase.ts`, `context/LocalDatabaseContext.tsx`, `lib/db/speciesRepository.ts`, `lib/db/userCacheRepository.ts`, `lib/db/globalCacheRepository.ts`, `lib/db/detectionRepository.ts`
 - Profile: `lib/profile/ownProfileCache.ts`, `hooks/useUser.ts`
@@ -499,7 +616,7 @@ Stale-while-revalidate: show cache immediately, refresh in background when stale
 
 ## Server-side logic (not called from app)
 
-Postgres triggers on `detections` insert handle points, streaks, discoveries, and **`check_category_milestones`** (badges / tier awards using `subcategory` / `main_category`). The app reads results via `get_user_scoring_snapshot` and `point_awards`.
+Postgres triggers on `detections` insert handle points, streaks, discoveries, and (on first species only) **`check_category_milestones`** → `user_badge_progress` + `point_awards`. See [Trigger fan-out & scaling](#trigger-fan-out--scaling) for contention notes. The app reads results via `get_user_scoring_snapshot` and `point_awards`; Explorer Board rank is computed at read time, not on insert.
 
 ---
 
@@ -523,13 +640,15 @@ flowchart TB
 
   subgraph device["Device (SQLite + AsyncStorage)"]
     D1[profile · gallery · scoring caches]
-    D2[species_records · wiki_cache]
+    D2[species_records · wiki_cache · status_cache]
     D3[explorer_board_cache · signed URLs]
+    D4[regions/ on-disk TFLite packs]
   end
 
   subgraph supabase["Supabase"]
     SA[Auth]
     ST[Storage detections/]
+    RM[Storage region-models/<br/>manifest + TFLite packs]
     PG[(Postgres + RLS + triggers)]
     EF[Edge identify-species]
     RPC[get_* RPCs]
@@ -542,6 +661,8 @@ flowchart TB
 
   AuthGate --> SA
   Cam --> EF
+  Cam --> RM
+  RM --> D4
   Cam --> D2
   Enrich --> D2
   Enrich --> INat

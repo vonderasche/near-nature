@@ -32,7 +32,7 @@ A mobile nature-identification app built with **Expo**, **Supabase**, and on-dev
 
 - **Four US Census regions** — South (live), Northeast, Midwest, West (coming soon).
 - **Region picker** on Profile with an interactive US map; home state drives default region.
-- **On-demand model bundles** — specialist TFLite weights download per region from Supabase Storage (slim APK ships preview models only).
+- **On-demand model bundles** — specialist TFLite weights download per region from Supabase Storage (`region-models` manifest); see [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md#regional-model-distribution-v1--scale-path) for versioning, CDN, and egress notes.
 
 ### Appearance & settings
 
@@ -42,7 +42,7 @@ A mobile nature-identification app built with **Expo**, **Supabase**, and on-dev
 
 ### Offline-friendly caches
 
-- **SQLite** on device for profile, gallery metadata, scoring snapshot, species catalog, Wikipedia cache, and Explorer Board pages.
+- **SQLite** on device for profile, gallery metadata, scoring snapshot, species catalog, Wikipedia/status caches, Explorer Board pages, and optional `user_detections` mirror — see [cache eviction notes](./docs/ARCHITECTURE.md#local-cache-eviction--retention).
 - **Signed URLs** for private detection images in Supabase Storage.
 
 ---
