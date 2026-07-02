@@ -1,4 +1,3 @@
-import { lookupNativeStatus } from '@/api/inaturalist';
 import { fetchSpeciesWikiData, type SpeciesWikiData } from '@/api/wikipedia';
 import { getSpeciesSubcategoryLabel } from '@/constants/species-subcategories';
 import { classificationToSpeciesCategory } from '@/lib/detections/mapSpeciesCategory';
@@ -6,6 +5,7 @@ import { speciesFromUnenrichedClassification } from '@/lib/identification/specie
 import { devLog } from '@/lib/devLog';
 import { loadWikiCache, saveWikiCache } from '@/lib/db/wikiCacheRepository';
 import { getSpeciesByScientificName } from '@/lib/db/speciesRepository';
+import { lookupCachedNativeStatus } from '@/lib/identification/lookupCachedNativeStatus';
 import { normalizeLatinName } from '@/lib/identification/normalizeLatinName';
 import {
   catalogFloridaStatusToSpeciesStatus,
@@ -21,6 +21,9 @@ const DEFAULT_WIKI_SPECIES_LIMIT = 3;
 
 /** Where wiki-style description text came from for one candidate. */
 export type WikiEnrichmentSource = 'saved' | 'catalog' | 'wiki_cache' | 'wikipedia' | 'none';
+
+/** Where native status came from for one candidate. */
+export type StatusEnrichmentSource = 'saved' | 'catalog' | 'status_cache' | 'inaturalist' | 'unknown';
 
 /** Wikipedia by latin name; missing key = not fetched, null = no article. */
 export type WikiByLatinName = Record<string, SpeciesWikiData | null>;
@@ -79,7 +82,7 @@ async function resolveNativeStatus(
     }
   }
 
-  const nativeResult = await lookupNativeStatus(classification.latinName, userState);
+  const nativeResult = await lookupCachedNativeStatus(classification.latinName, userState);
   const status = nativeResult?.status ?? saved?.status ?? 'unknown';
 
   if (nativeResult && status !== 'unknown') {
@@ -251,9 +254,9 @@ export async function enrichClassificationIndices(
 
 /**
  * After vision returns classifications, enrich each with iNaturalist status and (for the top
- * {@link wikiSpeciesLimit}) Wikipedia data. Local SQLite (saved species, genus catalog, wiki cache)
- * is checked first; network APIs run only on cache miss. Successful API results are written back
- * to SQLite for future identifications of the same genus.
+ * {@link wikiSpeciesLimit}) Wikipedia data. Local SQLite (saved species, genus catalog, status
+ * cache, wiki cache) is checked first; network APIs run only on cache miss. Successful API results
+ * are written back to SQLite for future identifications of the same genus.
  */
 export async function enrichSpeciesFromApis(
   classifications: ClassificationResult[],

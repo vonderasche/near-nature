@@ -26,7 +26,7 @@ For local classifier model folder setup (non-committed binaries), see [`docs/LOC
 | **Postgres** | Users, detections, discoveries, point awards, streaks — mostly via RPCs and RLS |
 | **Storage** | Private `detections` bucket; images shown via **signed URLs** |
 | **Edge** | `identify-species` — Gemini vision fallback (web / unsigned dev; not direct DB) |
-| **External** | iNaturalist (native status), Wikipedia (descriptions) — only when needed |
+| **External** | iNaturalist (native status), Wikipedia (descriptions) — only on cache miss |
 | **Device cache** | Profile, gallery metadata, scoring snapshot, signed URLs, saved-species map, layout prefs |
 
 ---
@@ -86,6 +86,7 @@ flowchart LR
     ScoreC[scoring snapshot]
     BoardC[board page 1]
     WikiC[wiki_cache]
+    StatusC[status_cache]
     CatalogC[species_records]
     SavedC[saved-species map]
   end
@@ -96,6 +97,7 @@ flowchart LR
   Board --> BoardC
   Cam --> SavedC
   Cam --> WikiC
+  Cam --> StatusC
   Cam --> CatalogC
 
   Supa -->|signed URLs| Display[expo-image display]
@@ -307,7 +309,7 @@ flowchart LR
 
 ### Enrichment waterfall (per candidate)
 
-Wiki description resolves in strict order; first hit wins. iNaturalist runs for **candidate 0 only** (unless saved data exists).
+Wiki description and native status each resolve in strict order; first hit wins. iNaturalist runs for **candidate 0 only** when status is not already known from saved data, catalog, or `status_cache`.
 
 ```mermaid
 flowchart TD
@@ -323,7 +325,11 @@ flowchart TD
   WC -->|miss| WikiLive[Fetch Wikipedia<br/>persist to wiki_cache]
 
   Start --> Primary{i equals 0?}
-  Primary -->|yes| INat[iNaturalist native status]
+  Primary -->|yes| StatusChain{status known?}
+  StatusChain -->|catalog hit| CatStatus[catalog floridaStatus]
+  StatusChain -->|miss| SC{status_cache?}
+  SC -->|hit| CacheStatus[cached iNat status]
+  SC -->|miss| INat[iNaturalist live<br/>persist to status_cache]
   Primary -->|no| AltStatus[status unknown unless saved]
 
   CatDesc --> Done([Species row])
@@ -331,6 +337,8 @@ flowchart TD
   WikiLive --> Done
   UseSaved --> Done
   StatusOnly --> Done
+  CatStatus --> Done
+  CacheStatus --> Done
   INat --> Done
   AltStatus --> Done
 ```
@@ -343,8 +351,8 @@ flowchart TD
   Pending --> Camera[UI returns to camera]
 
   Camera --> Read["readLocalFileAsBase64(full photoUri)"]
-  Read --> INat2[iNaturalist at save time]
-  INat2 --> Upload["uploadDetectionsObject<br/>detections/userId/uuid.jpg"]
+  Read --> Status[lookupCachedNativeStatus<br/>status_cache then iNat]
+  Status --> Upload["uploadDetectionsObject<br/>detections/userId/uuid.jpg"]
   Upload --> Row["INSERT detections<br/>image_url · names · category · native_status"]
   Row --> Meta[upsertSpeciesMetadata + alternate names]
   Meta --> Local["SQLite user_detections + gallery cache prepend"]
@@ -361,7 +369,7 @@ flowchart TD
   Upload -->|failure| Err[Modal: Dismiss or Open profile]
 ```
 
-**DB during identify:** read-only from saved-species map, `species_records`, `wiki_cache`. **No write** until save.
+**DB during identify:** read from saved-species map, `species_records`, `status_cache`, `wiki_cache`. On external API miss, successful iNat/Wikipedia lookups are written back to `status_cache` / `wiki_cache` immediately (no detection row until save).
 
 ### Camera tab — key modules
 
@@ -371,7 +379,7 @@ flowchart TD
 | Classify (native) | `lib/camera/mobilenet/identifyPhotoWithTflite.ts`, `lib/camera/tflite/cachedModels.ts` |
 | Live preview (native) | `hooks/useLivePreviewFrameProcessor.ts`, `lib/camera/tflite/preview/previewModelRegistry.ts` — scene gate, kingdom, routing preview |
 | Classify (web) | `hooks/useSpeciesIdentification.ts`, `api/gemini.ts`, Edge `identify-species` |
-| Enrich | `lib/identification/enrichSpeciesFromApis.ts` — iNat for all candidates; wiki capped to top N; saved detection / catalog / wiki_cache tiers |
+| Enrich | `lib/identification/enrichSpeciesFromApis.ts` — cached iNat for candidate 0; wiki capped to top N; saved / catalog / `status_cache` / `wiki_cache` tiers |
 | UI | `components/camera/camera-identification-panel.tsx` |
 | Save | `hooks/useSaveDetection.ts`, `services/detectionService.ts` |
 
@@ -447,7 +455,7 @@ Requires `sql/get_user_scoring_snapshot.sql` (or fallback RPCs) in Supabase.
 | **Explorer Board columns** | AsyncStorage preference | 2/3/4 column grid | Never (UI pref) |
 | **Gallery grid columns** | AsyncStorage preference | Column count | Never |
 | **expo-image** | OS disk | Rendered bitmaps | OS-managed |
-| **SQLite (`near_nature.db`)** | `expo-sqlite` on device | Global: `species_records`, `wiki_cache`, `explorer_board_cache`. User-scoped: profile, gallery list cache, scoring snapshot, saved-species map, signed URLs, **`user_detections`** | Sign out clears user-scoped SQLite rows; global catalog + board cache kept |
+| **SQLite (`near_nature.db`)** | `expo-sqlite` on device | Global: `species_records`, `wiki_cache`, `status_cache`, `explorer_board_cache`. User-scoped: profile, gallery list cache, scoring snapshot, saved-species map, signed URLs, **`user_detections`** | Sign out clears user-scoped SQLite rows; global catalog + board cache kept |
 
 Stale-while-revalidate: show cache immediately, refresh in background when stale, then update cache. Device caches include `cachedAt`; entries younger than **15 minutes** skip background network unless pull-to-refresh or `force` refetch (save/delete still invalidates). Explorer Board and gallery caches are not read while a search query is active.
 

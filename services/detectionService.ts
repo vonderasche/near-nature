@@ -2,7 +2,7 @@ import { decode } from 'base64-arraybuffer';
 import { randomUUID } from 'expo-crypto';
 import { readLocalFileAsBase64 } from '@/lib/fs/legacyFileSystem';
 
-import { fetchTaxonAlternateNames, lookupNativeStatus } from '@/api/inaturalist';
+import { fetchTaxonAlternateNames } from '@/api/inaturalist';
 import { isLocalDetectionsMode } from '@/lib/config/isLocalDetectionsMode';
 import { DETECTIONS_BUCKET } from '@/lib/detections/detectionsBucket';
 import { deleteUserDetection, upsertUserDetection } from '@/lib/db/detectionRepository';
@@ -15,6 +15,7 @@ import {
 import { invalidateCachedGalleryList, prependCachedGalleryRow } from '@/lib/detections/galleryListCache';
 import type { DetectionGalleryRow } from '@/lib/detections/mapDetectionGalleryRow';
 import { upsertSavedSpeciesInSession } from '@/lib/identification/savedSpeciesSessionCache';
+import { lookupCachedNativeStatus } from '@/lib/identification/lookupCachedNativeStatus';
 import { requestProfileRefresh } from '@/lib/profile/profileRefresh';
 import { invalidateCachedScoringSnapshot } from '@/lib/profile/scoringSnapshotCache';
 import { upsertSpeciesMetadata } from '@/services/speciesMetadataService';
@@ -73,7 +74,7 @@ export async function saveDetection(input: SaveDetectionInput): Promise<SaveDete
     return { detectionId, newSpeciesDiscovery: null, galleryRow: row };
   }
 
-  const nat = await lookupNativeStatus(species.latinName, stateCode.trim());
+  const nat = await lookupCachedNativeStatus(species.latinName, stateCode.trim());
   const inaturalistId = nat ? String(nat.taxonId) : null;
 
   const ext = localImageUri.toLowerCase().includes('.png') ? 'png' : 'jpg';

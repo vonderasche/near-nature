@@ -10,6 +10,10 @@ vi.mock('@/api/inaturalist', () => ({
   lookupNativeStatus: vi.fn(),
 }));
 
+vi.mock('@/lib/identification/lookupCachedNativeStatus', () => ({
+  lookupCachedNativeStatus: vi.fn(),
+}));
+
 vi.mock('@/api/wikipedia', () => ({
   fetchSpeciesWikiData: vi.fn(),
 }));
@@ -28,10 +32,10 @@ vi.mock('@/lib/db/wikiCacheRepository', () => ({
   saveWikiCache: vi.fn(),
 }));
 
-import { lookupNativeStatus } from '@/api/inaturalist';
 import { fetchSpeciesWikiData } from '@/api/wikipedia';
 import { getSpeciesByScientificName } from '@/lib/db/speciesRepository';
 import { loadWikiCache, saveWikiCache } from '@/lib/db/wikiCacheRepository';
+import { lookupCachedNativeStatus } from '@/lib/identification/lookupCachedNativeStatus';
 import { resolveSavedSpeciesForLatinNames } from '@/lib/identification/savedSpeciesSessionCache';
 
 import { enrichClassificationIndices, enrichSpeciesFromApis } from './enrichSpeciesFromApis';
@@ -49,7 +53,7 @@ describe('enrichSpeciesFromApis', () => {
     vi.mocked(getSpeciesByScientificName).mockResolvedValue(null);
     vi.mocked(loadWikiCache).mockResolvedValue(null);
     vi.mocked(resolveSavedSpeciesForLatinNames).mockResolvedValue(new Map());
-    vi.mocked(lookupNativeStatus).mockResolvedValue({
+    vi.mocked(lookupCachedNativeStatus).mockResolvedValue({
       status: 'native',
       taxonId: 1,
       establishmentMeans: 'native',
@@ -65,7 +69,7 @@ describe('enrichSpeciesFromApis', () => {
 
   it('runs iNat and wiki together per species; wiki tries Latin then common when Latin misses', async () => {
     const order: string[] = [];
-    vi.mocked(lookupNativeStatus).mockImplementation(async () => {
+    vi.mocked(lookupCachedNativeStatus).mockImplementation(async () => {
       order.push('inat-start');
       await new Promise((r) => setTimeout(r, 10));
       order.push('inat-end');
@@ -78,7 +82,7 @@ describe('enrichSpeciesFromApis', () => {
 
     await enrichSpeciesFromApis([classification], 'VA', { wikiSpeciesLimit: 3 });
 
-    expect(lookupNativeStatus).toHaveBeenCalledWith('Danaus plexippus', 'VA');
+    expect(lookupCachedNativeStatus).toHaveBeenCalledWith('Danaus plexippus', 'VA');
     expect(fetchSpeciesWikiData).toHaveBeenCalledWith('Danaus plexippus');
     expect(fetchSpeciesWikiData).toHaveBeenCalledWith('Monarch butterfly');
     expect(order.indexOf('inat-start')).toBeLessThan(order.indexOf('inat-end'));
@@ -150,7 +154,7 @@ describe('enrichSpeciesFromApis', () => {
       wikiSpeciesLimit: 3,
     });
 
-    expect(lookupNativeStatus).not.toHaveBeenCalled();
+    expect(lookupCachedNativeStatus).not.toHaveBeenCalled();
     expect(fetchSpeciesWikiData).not.toHaveBeenCalled();
     expect(result.species[0].status).toBe('native');
     expect(result.wikiByLatinName['Danaus plexippus']?.description).toBe(
@@ -164,7 +168,7 @@ describe('enrichSpeciesFromApis', () => {
       latinName: 'Apis mellifera',
       commonName: 'Honey bee',
     };
-    vi.mocked(lookupNativeStatus).mockImplementation(async (latinName) => ({
+    vi.mocked(lookupCachedNativeStatus).mockImplementation(async (latinName) => ({
       status: latinName === 'Apis mellifera' ? 'non-native' : 'native',
       taxonId: 1,
       establishmentMeans: 'introduced',
@@ -172,9 +176,9 @@ describe('enrichSpeciesFromApis', () => {
 
     const result = await enrichSpeciesFromApis([classification, second], 'FL');
 
-    expect(lookupNativeStatus).toHaveBeenCalledTimes(2);
-    expect(lookupNativeStatus).toHaveBeenCalledWith('Danaus plexippus', 'FL');
-    expect(lookupNativeStatus).toHaveBeenCalledWith('Apis mellifera', 'FL');
+    expect(lookupCachedNativeStatus).toHaveBeenCalledTimes(2);
+    expect(lookupCachedNativeStatus).toHaveBeenCalledWith('Danaus plexippus', 'FL');
+    expect(lookupCachedNativeStatus).toHaveBeenCalledWith('Apis mellifera', 'FL');
     expect(result.species[0].status).toBe('native');
     expect(result.species[1].status).toBe('non-native');
   });
@@ -204,8 +208,8 @@ describe('enrichSpeciesFromApis', () => {
       userId: 'user-1',
     });
 
-    expect(lookupNativeStatus).toHaveBeenCalledTimes(1);
-    expect(lookupNativeStatus).toHaveBeenCalledWith('Danaus plexippus', 'FL');
+    expect(lookupCachedNativeStatus).toHaveBeenCalledTimes(1);
+    expect(lookupCachedNativeStatus).toHaveBeenCalledWith('Danaus plexippus', 'FL');
     expect(result.species[1].status).toBe('native');
   });
 
@@ -280,7 +284,7 @@ describe('enrichSpeciesFromApis', () => {
       enrichDepthLimit: 1,
     });
 
-    expect(lookupNativeStatus).not.toHaveBeenCalled();
+    expect(lookupCachedNativeStatus).not.toHaveBeenCalled();
     expect(result.species[0].status).toBe('native');
   });
 
@@ -299,7 +303,7 @@ describe('enrichSpeciesFromApis', () => {
       { wikiSpeciesLimit: 3, speciesIdBase: 42 },
     );
 
-    expect(lookupNativeStatus).toHaveBeenCalledTimes(1);
+    expect(lookupCachedNativeStatus).toHaveBeenCalledTimes(1);
     expect(result.speciesByIndex[1]?.latinName).toBe('Basiliscus');
     expect(result.speciesByIndex[0]).toBeUndefined();
     expect(result.speciesByIndex[1]?.id).toBe('42-1');
@@ -323,7 +327,7 @@ describe('enrichSpeciesFromApis', () => {
 
     await enrichSpeciesFromApis([classification], 'VA', { userId: 'user-1' });
 
-    expect(lookupNativeStatus).toHaveBeenCalled();
+    expect(lookupCachedNativeStatus).toHaveBeenCalled();
     expect(fetchSpeciesWikiData).not.toHaveBeenCalled();
   });
 });
