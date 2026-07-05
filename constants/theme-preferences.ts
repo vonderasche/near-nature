@@ -22,6 +22,8 @@ export const THEME_LABELS: Record<ThemeName, string> = {
   dark: 'Dark',
   light: 'Light',
   forestLight: 'Light forest',
+  forestMeadow: 'Forest meadow',
+  forestNight: 'Forest night',
 };
 /** Themes shown in the appearance picker. */
 export const SELECTABLE_THEME_NAMES: ThemeName[] = [...themeNames];

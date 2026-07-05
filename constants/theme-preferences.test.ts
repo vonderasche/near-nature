@@ -5,6 +5,8 @@ import { parseThemeName } from '@/constants/theme-preferences';
 describe('parseThemeName', () => {
   it('returns valid persisted themes', () => {
     expect(parseThemeName('forestLight')).toBe('forestLight');
+    expect(parseThemeName('forestMeadow')).toBe('forestMeadow');
+    expect(parseThemeName('forestNight')).toBe('forestNight');
     expect(parseThemeName('light')).toBe('light');
   });
 
