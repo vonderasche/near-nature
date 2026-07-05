@@ -231,7 +231,7 @@ if ($missing.Count -gt 0) {
 
 if ($PreviewModelsOnly) {
     Set-EnvVar 'EXPO_PUBLIC_SLIM_APK' '1' $EnvFile
-    Write-Host "EXPO_PUBLIC_SLIM_APK=1 (bundle preview_models TFLite only)" -ForegroundColor Yellow
+    Write-Host "EXPO_PUBLIC_SLIM_APK=1 (preview_models + v6 global; regional specialists download)" -ForegroundColor Yellow
 } else {
     Set-EnvVar 'EXPO_PUBLIC_SLIM_APK' '0' $EnvFile
 }
@@ -297,7 +297,7 @@ if ($livePreviewInApk) {
     Write-Host "  Live camera AI: OFF" -ForegroundColor Yellow
 }
 if ($PreviewModelsOnly) {
-    Write-Host "  Bundled TFLite: preview_models only (specialists download per region)" -ForegroundColor Green
+    Write-Host "  Bundled TFLite: preview_models + v6 global (regional specialists download per region)" -ForegroundColor Green
 }
 if ($UsedMirror) {
     Write-Host "  Built from: $BuildRoot" -ForegroundColor DarkGray

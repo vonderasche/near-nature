@@ -6,10 +6,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export function loadProjectEnv() {
   const root = resolve(__dirname, '..');
-  const text = readFileSync(resolve(root, '.env'), 'utf8');
+  const text = readFileSync(resolve(root, '.env'), 'utf8').replace(/^\uFEFF/, '');
   const env = {};
   for (const line of text.split(/\r?\n/)) {
-    const m = line.match(/^([A-Z0-9_]+)=(.*)$/);
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const m = trimmed.match(/^([A-Z0-9_]+)=(.*)$/);
     if (m) env[m[1]] = m[2].replace(/^["']|["']$/g, '').trim();
   }
   return env;

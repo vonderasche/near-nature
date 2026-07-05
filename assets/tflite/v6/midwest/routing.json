@@ -1,0 +1,28 @@
+{
+  "version": "v6",
+  "cascadeRegionId": "midwest",
+  "nationalSpecialists": [
+    "herps",
+    "lepidoptera",
+    "insects",
+    "common_mammals"
+  ],
+  "regionalSpecialists": [
+    "trees_shrubs",
+    "wildflowers_herbs",
+    "ferns_mosses",
+    "birds",
+    "arachnids"
+  ],
+  "plantRouterGroups": [
+    "trees_shrubs",
+    "wildflowers_herbs",
+    "ferns_mosses"
+  ],
+  "animalRouterGroups": [
+    "birds",
+    "insects",
+    "arachnids",
+    "common_mammals"
+  ]
+}

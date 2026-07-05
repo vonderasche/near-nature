@@ -22,10 +22,11 @@ if (!config.resolver.assetExts.includes('csv')) {
   config.resolver.assetExts.push('csv');
 }
 
-// Release slim APK: only `assets/tflite/preview_models/**/*.tflite` in the bundle.
-// Other .tflite requires resolve to scene_gate (capture routing stays buildable; weights load from Supabase at runtime).
+// Release slim APK: bundle preview_models + v6 global capture pack.
+// Regional v6 weights load from Supabase at runtime.
 if (process.env.EXPO_PUBLIC_SLIM_APK === '1') {
-  const previewTfliteRoot = /assets[\\/]tflite[\\/]preview_models[\\/]/;
+  const bundledTfliteRoot =
+    /assets[\\/]tflite[\\/](preview_models|v6[\\/]global)[\\/]/;
   const redirectTflite = path.resolve(
     __dirname,
     'assets/tflite/preview_models/scene_gate/tflite/scene_gate.tflite',
@@ -37,7 +38,7 @@ if (process.env.EXPO_PUBLIC_SLIM_APK === '1') {
     if (
       typeof normalized === 'string' &&
       normalized.endsWith('.tflite') &&
-      !previewTfliteRoot.test(normalized)
+      !bundledTfliteRoot.test(normalized)
     ) {
       return context.resolveRequest(context, redirectTflite, platform);
     }

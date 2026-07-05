@@ -12,10 +12,14 @@ import {
 import { routes } from '@/lib/routing/routes';
 import { RegionComingSoon } from '@/components/shared/region-coming-soon';
 import { useActiveRegion } from '@/context/RegionContext';
+import { useIdentificationPreferences } from '@/hooks/useIdentificationPreferences';
+import { isCaptureReady } from '@/lib/region/regionReadiness';
 
 export default function IdentificationScreen() {
   const router = useRouter();
-  const { isLive } = useActiveRegion();
+  const { isLive, regionId } = useActiveRegion();
+  const { captureMode } = useIdentificationPreferences();
+  const captureReady = isCaptureReady(regionId, captureMode, isLive);
   const { photoUri } = useIdentificationRouteParams();
   const { reportBackgroundSaveError } = useCameraFlowContext();
   const retakeCleanupStartedRef = useRef(false);
@@ -45,7 +49,7 @@ export default function IdentificationScreen() {
     return <Redirect href={routes.cameraTab} />;
   }
 
-  if (!isLive) {
+  if (!captureReady) {
     return (
       <RegionComingSoon feature="camera" showProfileAction />
     );

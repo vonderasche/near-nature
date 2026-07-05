@@ -8,6 +8,7 @@ import { useAuthContext } from '@/context/AuthContext';
 import { routeCameraIdentification, routes } from '@/lib/routing/routes';
 
 import { AuthButton } from '@/components/auth/auth-button';
+import { BackgroundGalleryQueueBanner } from '@/components/camera/background-gallery-queue-banner';
 import { CameraBottomToolbar } from '@/components/camera/camera-bottom-toolbar';
 import { CameraLivePreviewWithClassifier } from '@/components/camera/camera-live-preview-with-classifier';
 import { CameraTopControls } from '@/components/camera/camera-top-controls';
@@ -24,6 +25,8 @@ import { ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { useTheme } from '@/hooks/useTheme';
 import { useCameraScreen } from '@/hooks/useCameraScreen';
 import { usePickPhotoFromGallery } from '@/hooks/usePickPhotoFromGallery';
+import { useUserHomeState } from '@/hooks/useUserHomeState';
+import { enqueueBackgroundGalleryIdentification } from '@/lib/camera/backgroundGalleryIdentificationQueue';
 import { areFrameProcessorsAvailable } from '@/lib/camera/areFrameProcessorsAvailable';
 import { isClassificationDebugEnabled } from '@/lib/classification/debug';
 import { isOnDevicePreviewEnabled } from '@/lib/camera/tflite/isOnDevicePreviewEnabled';
@@ -35,11 +38,16 @@ import {
 import { contentInsetsPadding } from '@/lib/screen/contentInsets';
 import { RegionComingSoon } from '@/components/shared/region-coming-soon';
 import { useActiveRegion } from '@/context/RegionContext';
+import { useIdentificationPreferences } from '@/hooks/useIdentificationPreferences';
+import { isCaptureReady } from '@/lib/region/regionReadiness';
 
 export default function CameraScreen() {
   const { theme } = useTheme();
-  const { isLive } = useActiveRegion();
-  const { isAuthenticated, isLoading } = useAuthContext();
+  const { isLive, regionId } = useActiveRegion();
+  const { captureMode } = useIdentificationPreferences();
+  const captureReady = isCaptureReady(regionId, captureMode, isLive);
+  const { isAuthenticated, isLoading, userId } = useAuthContext();
+  const { stateCode: userState } = useUserHomeState();
   const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
@@ -84,17 +92,48 @@ export default function CameraScreen() {
 
   const handlePickGallery = useCallback(async () => {
     const result = await pickFromGallery();
-    if (result.ok) {
-      navigateToIdentification(result.uri);
+    if (!result.ok) {
+      if (result.reason === 'permission' || result.reason === 'error') {
+        setPickerNotice({
+          title: result.reason === 'permission' ? 'Photos access' : 'Gallery',
+          message: result.message,
+        });
+      }
       return;
     }
-    if (result.reason === 'permission' || result.reason === 'error') {
-      setPickerNotice({
-        title: result.reason === 'permission' ? 'Photos access' : 'Gallery',
-        message: result.message,
-      });
+
+    const { uris } = result;
+    if (uris.length === 1) {
+      navigateToIdentification(uris[0]!);
+      return;
     }
-  }, [navigateToIdentification, pickFromGallery]);
+
+    if (!userId) {
+      setPickerNotice({
+        title: 'Sign in required',
+        message: 'Sign in to identify multiple photos in the background.',
+      });
+      return;
+    }
+
+    enqueueBackgroundGalleryIdentification({
+      photoUris: uris,
+      userId,
+      userState,
+      regionId,
+      onSaveError: (message) => {
+        setPickerNotice({
+          title: 'Background identification',
+          message,
+        });
+      },
+    });
+
+    setPickerNotice({
+      title: 'Identifying photos',
+      message: `Processing ${uris.length} photos in the background. Saved results will appear in your gallery.`,
+    });
+  }, [navigateToIdentification, pickFromGallery, regionId, userId, userState]);
 
   const {
     hdrEnabled,
@@ -170,7 +209,7 @@ export default function CameraScreen() {
     return <Redirect href={routes.login} />;
   }
 
-  if (!isLive) {
+  if (!captureReady) {
     return (
       <View style={[styles.fill, { backgroundColor: theme.colors.background }, contentInsetsPadding(insets)]}>
         <RegionComingSoon feature="camera" />
@@ -321,6 +360,7 @@ export default function CameraScreen() {
           onPickGallery={handlePickGallery}
           pickingGallery={pickingGallery}
         />
+        <BackgroundGalleryQueueBanner bottomInset={insets.bottom} />
       </View>
       {messageModal}
     </>

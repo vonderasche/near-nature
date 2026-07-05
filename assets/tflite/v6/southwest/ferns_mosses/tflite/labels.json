@@ -1,0 +1,14 @@
+{
+  "model": "efficientnet_b1",
+  "classCount": 2,
+  "labels": [
+    {
+      "index": 0,
+      "name": "Polypodiaceae"
+    },
+    {
+      "index": 1,
+      "name": "Pteridaceae"
+    }
+  ]
+}

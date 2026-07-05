@@ -1,0 +1,54 @@
+{
+  "model": "efficientnet_b1",
+  "classCount": 12,
+  "labels": [
+    {
+      "index": 0,
+      "name": "Bos taurus"
+    },
+    {
+      "index": 1,
+      "name": "Canis familiaris"
+    },
+    {
+      "index": 2,
+      "name": "Capra hircus"
+    },
+    {
+      "index": 3,
+      "name": "Equus caballus"
+    },
+    {
+      "index": 4,
+      "name": "Equus quagga"
+    },
+    {
+      "index": 5,
+      "name": "Felis catus"
+    },
+    {
+      "index": 6,
+      "name": "Giraffa camelopardalis"
+    },
+    {
+      "index": 7,
+      "name": "Loxodonta africana"
+    },
+    {
+      "index": 8,
+      "name": "Ovis aries"
+    },
+    {
+      "index": 9,
+      "name": "Sciuridae"
+    },
+    {
+      "index": 10,
+      "name": "Sus scrofa"
+    },
+    {
+      "index": 11,
+      "name": "Ursus americanus"
+    }
+  ]
+}

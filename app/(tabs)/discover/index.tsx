@@ -5,6 +5,7 @@ import { DiscoverBrowseCollapsible } from '@/components/discover/discover-browse
 import { DiscoverParksSection } from '@/components/discover/discover-parks-section';
 import { DiscoverSearchToolbar } from '@/components/discover/discover-search-toolbar';
 import { DiscoverSpeciesSection } from '@/components/discover/discover-species-section';
+import { DiscoverTaxonomyChart } from '@/components/discover/discover-taxonomy-chart';
 import { TabScreenWithLogout } from '@/components/layout/tab-screen-with-logout';
 import { AppGuideButton } from '@/components/shared/app-guide-button';
 import { SEARCH_DEBOUNCE_MS } from '@/constants/search';
@@ -88,6 +89,7 @@ export default function DiscoverScreen() {
         />
       }
       backgroundRefreshing={isRefreshing && !pullRefreshing && parks.length > 0}>
+      <DiscoverTaxonomyChart />
       <DiscoverBrowseCollapsible
         browseMode={browseMode}
         onBrowseModeChange={setBrowseMode}

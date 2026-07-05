@@ -1,0 +1,94 @@
+{
+  "version": "v5",
+  "regionId": "southeast",
+  "label": "Southeast",
+  "appRegionId": "south",
+  "status": "live",
+  "kingdomModel": "global/step01_kingdom/tflite/kingdom.tflite",
+  "specialistsPerBranch": 5,
+  "branches": {
+    "plant": {
+      "router": "step02_plant_router/tflite/plant_router.tflite",
+      "specialists": [
+        {
+          "id": "trees_shrubs",
+          "folder": "trees_shrubs",
+          "routerLabel": "trees_shrubs",
+          "scope": "regional",
+          "status": "live"
+        },
+        {
+          "id": "wildflowers_herbs",
+          "folder": "wildflowers_herbs",
+          "routerLabel": "wildflowers_herbs",
+          "scope": "regional",
+          "status": "live"
+        },
+        {
+          "id": "ferns_mosses",
+          "folder": "ferns_mosses",
+          "routerLabel": "ferns_mosses",
+          "scope": "regional",
+          "status": "live"
+        }
+      ]
+    },
+    "animal": {
+      "router": "step03_animal_router/tflite/animal_router.tflite",
+      "specialists": [
+        {
+          "id": "birds",
+          "folder": "birds",
+          "routerLabel": "birds",
+          "scope": "regional",
+          "status": "live"
+        },
+        {
+          "id": "herps",
+          "folder": "herps",
+          "routerLabel": "herps",
+          "scope": "regional",
+          "status": "live"
+        },
+        {
+          "id": "insects",
+          "folder": "insects",
+          "routerLabel": "insects",
+          "scope": "regional",
+          "status": "live"
+        },
+        {
+          "id": "lepidoptera",
+          "folder": "lepidoptera",
+          "routerLabel": "lepidoptera",
+          "scope": "regional",
+          "status": "live"
+        },
+        {
+          "id": "arachnids",
+          "folder": "arachnids",
+          "routerLabel": "arachnids",
+          "scope": "regional",
+          "status": "live"
+        }
+      ]
+    }
+  },
+  "globalSpecialists": {
+    "common_mammals": {
+      "folder": "common_mammals",
+      "scope": "global"
+    }
+  },
+  "plantRouterGroups": [
+    "trees_shrubs",
+    "wildflowers_herbs",
+    "ferns_mosses"
+  ],
+  "animalRouterGroups": [
+    "birds",
+    "insects",
+    "arachnids",
+    "common_mammals"
+  ]
+}

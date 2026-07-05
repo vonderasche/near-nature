@@ -1,0 +1,94 @@
+{
+  "model": "efficientnet_b1",
+  "classCount": 22,
+  "labels": [
+    {
+      "index": 0,
+      "name": "Acrididae"
+    },
+    {
+      "index": 1,
+      "name": "Aeshnidae"
+    },
+    {
+      "index": 2,
+      "name": "Apidae"
+    },
+    {
+      "index": 3,
+      "name": "Asilidae"
+    },
+    {
+      "index": 4,
+      "name": "Carabidae"
+    },
+    {
+      "index": 5,
+      "name": "Cerambycidae"
+    },
+    {
+      "index": 6,
+      "name": "Chrysomelidae"
+    },
+    {
+      "index": 7,
+      "name": "Cicadellidae"
+    },
+    {
+      "index": 8,
+      "name": "Cicadidae"
+    },
+    {
+      "index": 9,
+      "name": "Coccinellidae"
+    },
+    {
+      "index": 10,
+      "name": "Coenagrionidae"
+    },
+    {
+      "index": 11,
+      "name": "Coreidae"
+    },
+    {
+      "index": 12,
+      "name": "Formicidae"
+    },
+    {
+      "index": 13,
+      "name": "Gomphidae"
+    },
+    {
+      "index": 14,
+      "name": "Gryllidae"
+    },
+    {
+      "index": 15,
+      "name": "Libellulidae"
+    },
+    {
+      "index": 16,
+      "name": "Pentatomidae"
+    },
+    {
+      "index": 17,
+      "name": "Reduviidae"
+    },
+    {
+      "index": 18,
+      "name": "Scarabaeidae"
+    },
+    {
+      "index": 19,
+      "name": "Syrphidae"
+    },
+    {
+      "index": 20,
+      "name": "Tettigoniidae"
+    },
+    {
+      "index": 21,
+      "name": "Vespidae"
+    }
+  ]
+}

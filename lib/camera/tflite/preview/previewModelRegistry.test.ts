@@ -8,10 +8,11 @@ import {
 } from '@/lib/camera/tflite/preview/previewModelSelection';
 
 describe('previewModelSelection', () => {
-  it('defaults to scene_gate for unknown persisted values', () => {
-    expect(parsePreviewModelId(null)).toBe('scene_gate');
-    expect(parsePreviewModelId('unknown')).toBe('scene_gate');
-    expect(parsePreviewModelId('scene_gate')).toBe('scene_gate');
+  it('defaults to kingdom_global for unknown persisted values', () => {
+    expect(parsePreviewModelId(null)).toBe('kingdom_global');
+    expect(parsePreviewModelId('unknown')).toBe('kingdom_global');
+    expect(parsePreviewModelId('kingdom_v5')).toBe('kingdom_global');
+    expect(parsePreviewModelId('kingdom_global')).toBe('kingdom_global');
   });
 
   it('cycles through all registered preview models', () => {
@@ -23,8 +24,7 @@ describe('previewModelSelection', () => {
   });
 
   it('exposes short captions for the camera toggle', () => {
-    expect(previewModelCaption('scene_gate')).toBe('Scene');
-    expect(previewModelCaption('kingdom')).toBe('Kingdom');
-    expect(previewModelCaption('routing_preview_v1')).toBe('Route');
+    expect(previewModelCaption('kingdom_global')).toBe('Kingdom');
+    expect(previewModelCaption('kingdom')).toBe('Kingdom (legacy)');
   });
 });

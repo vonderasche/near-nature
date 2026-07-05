@@ -135,28 +135,27 @@ Near Nature runs **three separate inference paths**. Live preview and capture in
 ```mermaid
 flowchart TB
   subgraph live["Live preview (camera viewfinder)"]
-    Frames[Vision Camera frames] --> FP[Frame processor<br/>sampled · skipped]
+    Frames[Vision Camera frames] --> FP[Frame processor]
     FP --> PrevModel{Preview model}
-    PrevModel -->|scene_gate| SG[Plant/animal scene gate]
-    PrevModel -->|kingdom| KD[Kingdom labels]
-    PrevModel -->|routing_preview_v1| RP[Taxon-group hints]
-    SG --> Overlay[On-screen label overlay]
-    KD --> Overlay
-    RP --> Overlay
+    PrevModel -->|kingdom v4| KD[4-class kingdom]
+    PrevModel -->|kingdom v5| KV[5-class kingdom]
+    KD --> Overlay[On-screen label overlay]
+    KV --> Overlay
   end
 
   subgraph capture["Capture / gallery inference (native)"]
-    Photo[Still image URI] --> Prep[Resize · normalize<br/>224×224 RGB]
-    Prep --> MV[MobileViT routing model]
-    MV --> Route[routing.json + region pack]
-    Route -->|specialist available| Spec[inat2021_specialists_v2 TFLite]
-    Route -->|no model| Notice[Empty result + notice]
-    Spec --> Top3[Top genus candidates<br/>+ confidence]
+    Photo[Still image URI] --> K5[v5 kingdom · global]
+    K5 -->|South live| Branch[Regional plant / animal router]
+    K5 -->|Other regions| Legacy[MobileViT v2 routing]
+    Branch --> Spec5[5 specialist slots per branch]
+    Legacy --> Spec2[inat2021_specialists_v2]
+    Spec5 --> Top3[Top genus candidates]
+    Spec2 --> Top3
   end
 
   subgraph cloud["Cloud inference (web / fallback)"]
     WebPhoto[Still image URI] --> Resize[Max edge 1280 JPEG]
-    Resize --> Gemini[Edge identify-species<br/>Gemini vision]
+    Resize --> Gemini[Edge identify-species]
     Gemini --> Parsed[ClassificationResult list]
   end
 
@@ -169,11 +168,61 @@ flowchart TB
 
 | Mode | When | Model(s) | Output | Persisted |
 |------|------|----------|--------|-----------|
-| **Live preview** | Camera tab, viewfinder on | Bundled `assets/tflite/preview_models/*` (scene gate, kingdom, routing preview) | Top label overlay; optional debug telemetry | No |
-| **Capture TFLite** | After shutter or gallery pick (iOS/Android) | MobileViT routing → regional specialist `.tflite` | Up to 3 genus-level `ClassificationResult`s + routing meta | Yes, after Save |
+| **Live preview** | Camera tab, viewfinder on | `kingdom` (v4) or `kingdom_v5` preview models | Kingdom label overlay | No |
+| **Capture TFLite** | After shutter or gallery pick (iOS/Android) | **South:** v5 kingdom → router → specialist · **Other:** MobileViT → v2 specialist | Top genus + routing meta | Yes, after Save |
 | **Cloud Gemini** | Web platform, or when TFLite unavailable | Supabase Edge `identify-species` | Filtered species list from vision API | Yes, after Save |
 
 ### Capture TFLite cascade (detail)
+
+**v5 layout:** global kingdom → regional branch router → **5 specialist slots** per branch (plant and animal).
+
+| Region | Branch | Specialist |
+|--------|--------|------------|
+| **Southeast** *(live → Census South)* | plant | trees_shrubs |
+| | plant | wildflowers_herbs |
+| | plant | ferns_mosses |
+| | plant | *(slot 4 — planned)* |
+| | plant | *(slot 5 — planned)* |
+| | animal | birds |
+| | animal | herps |
+| | animal | insects |
+| | animal | lepidoptera |
+| | animal | arachnids |
+| **Northeast** | plant | specialist ×5 *(planned)* |
+| | animal | specialist ×5 *(planned)* |
+| **Midwest** | plant | specialist ×5 *(planned)* |
+| | animal | specialist ×5 *(planned)* |
+| **South** | plant | specialist ×5 *(planned)* |
+| | animal | specialist ×5 *(planned)* |
+
+Global adjunct: `common_mammals` (animal router output, not one of the 5 regional animal slots).
+
+Visual report (dark theme): `npm run report:v5-cascade` → `dist/v5-cascade-report.html` · Canvas: [v5-cascade-report](C:/Users/nieba/.cursor/projects/e-PROGRAMMING-Portfolio-NearNature-near-nature/canvases/v5-cascade-report.canvas.tsx)
+
+Canonical manifest: `assets/tflite/v5/cascade.json` · per-pack routing: `assets/tflite/v5/{region}/routing.json` · TypeScript: `lib/camera/tflite/v5/v5CascadeRegions.ts`.
+
+```mermaid
+flowchart TB
+  Photo[photoUri] --> K[step01 kingdom · global]
+  K -->|not_organism| Stop[Stop]
+  K -->|fungi / uncertain| NIG[Not in guide]
+  K -->|plantae| PR[Regional plant router]
+  K -->|animalia| AR[Regional animal router]
+  PR --> PS1[specialist 1]
+  PR --> PS2[specialist 2]
+  PR --> PS3[specialist 3]
+  PR --> PS4[specialist 4]
+  PR --> PS5[specialist 5]
+  AR --> AS1[specialist 1]
+  AR --> AS2[specialist 2]
+  AR --> AS3[specialist 3]
+  AR --> AS4[specialist 4]
+  AR --> AS5[specialist 5]
+  AS1 --> Genus[Genus predictions]
+  PS1 --> Genus
+```
+
+**Legacy v2 (other regions until v5 packs ship):**
 
 ```mermaid
 flowchart LR
@@ -197,7 +246,7 @@ Regional specialist weights load from the **active region pack** (`lib/region/`,
 | Piece | Implementation |
 |-------|----------------|
 | **Storage** | Public Supabase bucket `region-models` (`sql/storage_bucket_region_models.sql`) — **no separate CDN**; clients hit Supabase public object URLs |
-| **Layout** | `{regionId}/manifest.json` + `{regionId}/inat2021_specialists_v2/**` (routing + ~12 specialist `.tflite` + labels) + optional `genus_info/` |
+| **Layout** | `{regionId}/manifest.json` + `{regionId}/v5/**` (cascade + regional routers + 5 plant + 5 animal specialist slots per region) + global kingdom / common_mammals |
 | **Publish** | `node scripts/upload-region-model-bundle.mjs <regionId> <version>` — builds manifest with per-file `sha256` + `sizeBytes`, uploads all objects (service role) |
 | **Manifest** | `version`, `builtAt`, `minAppVersion`, `totalSizeBytes`, `files[]` with `path` / `storagePath` / hashes (`RegionModelManifest` in `services/regionModelDownloadService.ts`) |
 | **Device path** | `documentDirectory/regions/{regionId}/` — written atomically after full download (`lib/region/downloadRegionModelBundle.ts`) |
@@ -253,7 +302,7 @@ Preview is **suspended** during capture inference (`prepareMvpCaptureMemory`) to
 | Path | Modules |
 |------|---------|
 | Live preview | `hooks/useLivePreviewFrameProcessor.ts`, `hooks/useMlFrameProcessor.ts`, `lib/camera/tflite/preview/` |
-| Capture TFLite | `lib/camera/mobilenet/identifyPhotoWithTflite.ts`, `lib/camera/tflite/cachedModels.ts`, `lib/camera/mobilenet/tfliteRouting.ts` |
+| Capture TFLite | `lib/camera/tflite/v5/identifyPhotoWithV5Tflite.ts`, `lib/camera/tflite/v5/v5CascadeRegions.ts`, `lib/camera/mobilenet/identifyPhotoWithTflite.ts` (legacy) |
 | Cloud | `hooks/useSpeciesIdentification.ts`, `api/gemini.ts`, Edge `identify-species` |
 | Debug telemetry | `lib/classification/debug/` — `capture_identify`, `live_preview_sample`, optional TFLite vs Gemini comparison |
 

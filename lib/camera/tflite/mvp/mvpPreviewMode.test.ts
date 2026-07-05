@@ -7,17 +7,17 @@ import {
 } from '@/lib/camera/tflite/mvp/mvpPreviewMode';
 
 describe('mvpPreviewMode (compat re-exports)', () => {
-  it('defaults to scene_gate', () => {
-    expect(parseMvpPreviewMode(null)).toBe('scene_gate');
-    expect(parseMvpPreviewMode('scene_gate')).toBe('scene_gate');
+  it('defaults to kingdom_global', () => {
+    expect(parseMvpPreviewMode(null)).toBe('kingdom_global');
+    expect(parseMvpPreviewMode('kingdom_global')).toBe('kingdom_global');
   });
 
-  it('cycles to kingdom from scene_gate', () => {
-    expect(nextMvpPreviewMode('scene_gate')).toBe('kingdom');
+  it('cycles to legacy kingdom from kingdom_global', () => {
+    expect(nextMvpPreviewMode('kingdom_global')).toBe('kingdom');
   });
 
   it('uses preview captions', () => {
-    expect(mvpPreviewModeCaption('scene_gate')).toBe('Scene');
-    expect(mvpPreviewModeCaption('kingdom')).toBe('Kingdom');
+    expect(mvpPreviewModeCaption('kingdom_global')).toBe('Kingdom');
+    expect(mvpPreviewModeCaption('kingdom')).toBe('Kingdom (legacy)');
   });
 });

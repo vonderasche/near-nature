@@ -2,6 +2,7 @@ import { describe, expect, it, beforeEach } from 'vitest';
 
 import { regionDisplayLabel } from '@/constants/regions';
 import {
+  isCaptureReady,
   isRegionReady,
   regionAvailabilityBadge,
   regionDiscoverSubtitle,
@@ -30,6 +31,21 @@ describe('isRegionReady', () => {
 
   it('is false for west until models are published', () => {
     expect(isRegionReady('west')).toBe(false);
+  });
+});
+
+describe('isCaptureReady', () => {
+  beforeEach(() => {
+    clearRegionalModelBundleReadyCache();
+  });
+
+  it('is always true in global capture mode', () => {
+    expect(isCaptureReady('west', 'global', false)).toBe(true);
+  });
+
+  it('requires regional download in regional capture mode', () => {
+    expect(isCaptureReady('south', 'regional', false)).toBe(false);
+    expect(isCaptureReady('south', 'regional', true)).toBe(true);
   });
 });
 

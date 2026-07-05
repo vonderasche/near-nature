@@ -1,17 +1,8 @@
 import { useCallback } from 'react';
 
 import type { SpeciesWikiData } from '@/api/wikipedia';
-import { classificationToSpeciesCategory } from '@/lib/detections/mapSpeciesCategory';
-import {
-  addPendingGalleryDetection,
-  createPendingGalleryDetectionId,
-  removePendingGalleryDetection,
-} from '@/lib/detections/pendingGalleryDetection';
-import { resolveNaturalistCategoryFromClassification } from '@/lib/points/resolveNaturalistCategory';
-import { getGlobalClassificationDebugSession } from '@/lib/classification/debug';
-import { requestExplorerBoardRefresh } from '@/lib/explorerBoard/explorerBoardRefresh';
+import { saveIdentificationInBackground } from '@/lib/camera/saveIdentificationInBackground';
 import { requestProfileRefresh } from '@/lib/profile/profileRefresh';
-import { useSaveDetection } from '@/hooks/useSaveDetection';
 import type { ClassificationResult, Species } from '@/types';
 
 export type SaveIdentificationInput = {
@@ -39,82 +30,28 @@ export function useOptimisticIdentificationSave({
   onBackgroundSaveError,
   refetchHistory,
 }: UseOptimisticIdentificationSaveOptions) {
-  const { saveInBackground } = useSaveDetection();
-
   const saveIdentification = useCallback(
     ({ species, classifications, wikiByLatinName, primaryIndex = 0 }: SaveIdentificationInput) => {
       if (!userId || classifications.length === 0) return;
 
-      const index = Math.min(Math.max(0, primaryIndex), classifications.length - 1);
-      const primary = species[index];
-      if (!primary) return;
-      const wiki = wikiByLatinName[primary.latinName];
-      const classification = classifications[index] ?? classifications[0];
-      const naturalist = resolveNaturalistCategoryFromClassification(classification);
-      const category = classificationToSpeciesCategory(classification);
-
-      const input = {
-        localImageUri: photoUri,
-        userId,
-        species: primary,
-        classification,
-        stateCode: userState,
-        description: wiki?.description ?? null,
-      };
-
-      const pendingId = createPendingGalleryDetectionId();
-      addPendingGalleryDetection(pendingId, {
-        userId,
-        localImageUri: photoUri,
-        commonName: primary.commonName,
-        latinName: primary.latinName,
-        category,
-        subcategory: naturalist?.subcategory ?? null,
-        mainCategory: naturalist?.mainCategory ?? null,
-        description: wiki?.description ?? null,
-        nativeStatus: primary.status,
-      });
-
       onRetake();
 
-      saveInBackground(input, (result) => {
-        removePendingGalleryDetection(pendingId, userId);
-        if (!result.ok) {
-          onBackgroundSaveError?.(result.message);
-          return;
-        }
-        const debugSession = getGlobalClassificationDebugSession();
-        debugSession?.linkDetection(result.result.detectionId);
-        debugSession?.emit('save_linked', {
-          detectionId: result.result.detectionId,
-          selectedIndex: index,
-          ...(index !== 0
-            ? {
-                userFeedback: {
-                  kind: 'selected_alternate' as const,
-                  selectedIndex: index,
-                  selectedLatin: primary.latinName,
-                  topLatin: classifications[0]?.latinName ?? null,
-                },
-              }
-            : {}),
-        });
-        void refetchHistory();
-        requestProfileRefresh();
-        if (result.result.newSpeciesDiscovery) {
-          requestExplorerBoardRefresh();
-        }
+      saveIdentificationInBackground({
+        userId,
+        photoUri,
+        userState,
+        species,
+        classifications,
+        wikiByLatinName,
+        primaryIndex,
+        onError: onBackgroundSaveError,
+        onComplete: () => {
+          void refetchHistory();
+          requestProfileRefresh();
+        },
       });
     },
-    [
-      onBackgroundSaveError,
-      onRetake,
-      photoUri,
-      refetchHistory,
-      saveInBackground,
-      userId,
-      userState,
-    ],
+    [onBackgroundSaveError, onRetake, photoUri, refetchHistory, userId, userState],
   );
 
   return { saveIdentification };

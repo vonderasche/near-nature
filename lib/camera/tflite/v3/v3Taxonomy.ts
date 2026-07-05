@@ -26,6 +26,7 @@ export function v3KingdomToTaxonGroup(kingdom: string): VisionTaxonGroup {
 }
 
 const KINGDOM_PREVIEW_DISPLAY: Readonly<Record<string, string>> = {
+  not_organism: 'No organism',
   plantae: 'Plant',
   animalia: 'Animal',
   fungi: 'Fungi',

@@ -1,0 +1,22 @@
+{
+  "model": "efficientnet_b1",
+  "classCount": 4,
+  "labels": [
+    {
+      "index": 0,
+      "name": "Osmundaceae"
+    },
+    {
+      "index": 1,
+      "name": "Pteridaceae"
+    },
+    {
+      "index": 2,
+      "name": "Sphagnaceae"
+    },
+    {
+      "index": 3,
+      "name": "Thelypteridaceae"
+    }
+  ]
+}

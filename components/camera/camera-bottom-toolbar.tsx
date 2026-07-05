@@ -123,7 +123,7 @@ export function CameraBottomToolbar({
       </Pressable>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Choose photo from gallery"
+        accessibilityLabel="Choose up to 5 photos from gallery"
         onPress={onPickGallery}
         disabled={galleryBusy}
         android_ripple={{ color: 'rgba(255,255,255,0.2)' }}
@@ -133,7 +133,7 @@ export function CameraBottomToolbar({
         ) : (
           <>
             <HeroIcon name="photo" size={22} color={cameraControlColors.icon} />
-            <Text style={styles.galleryLabel}>Gallery</Text>
+            <Text style={styles.galleryLabel}>Gallery (5)</Text>
           </>
         )}
       </Pressable>

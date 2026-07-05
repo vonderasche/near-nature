@@ -1,0 +1,46 @@
+{
+  "model": "efficientnet_b1",
+  "classCount": 10,
+  "labels": [
+    {
+      "index": 0,
+      "name": "Accipitridae"
+    },
+    {
+      "index": 1,
+      "name": "Anatidae"
+    },
+    {
+      "index": 2,
+      "name": "Ardeidae"
+    },
+    {
+      "index": 3,
+      "name": "Icteridae"
+    },
+    {
+      "index": 4,
+      "name": "Parulidae"
+    },
+    {
+      "index": 5,
+      "name": "Passerellidae"
+    },
+    {
+      "index": 6,
+      "name": "Picidae"
+    },
+    {
+      "index": 7,
+      "name": "Psittacidae"
+    },
+    {
+      "index": 8,
+      "name": "Scolopacidae"
+    },
+    {
+      "index": 9,
+      "name": "Tyrannidae"
+    }
+  ]
+}

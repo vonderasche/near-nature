@@ -1,0 +1,22 @@
+{
+  "model": "efficientnet_b1",
+  "classCount": 4,
+  "labels": [
+    {
+      "index": 0,
+      "name": "Arecaceae"
+    },
+    {
+      "index": 1,
+      "name": "Cupressaceae"
+    },
+    {
+      "index": 2,
+      "name": "Fagaceae"
+    },
+    {
+      "index": 3,
+      "name": "Pinaceae"
+    }
+  ]
+}

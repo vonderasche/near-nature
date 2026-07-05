@@ -50,7 +50,7 @@ describe('pickPhotoFromGallery', () => {
     expect(result).toEqual({
       ok: false,
       reason: 'permission',
-      message: 'Photo library access is needed to choose an existing photo.',
+      message: 'Photo library access is needed to choose existing photos.',
     });
   });
 
@@ -68,5 +68,22 @@ describe('pickPhotoFromGallery', () => {
     const result = await pickPhotoFromGallery();
     expect(result).toEqual({ ok: true, uri: 'file:///picked-square.jpg' });
     expect(cropImageToSquareCenter).toHaveBeenCalledWith('file:///picked.jpg', 4000, 3000, 0.9);
+  });
+
+  it('returns multiple cropped uris when multi-select is used', async () => {
+    const { pickPhotosFromGallery } = await import('./pickPhotoFromGallery');
+    vi.mocked(ImagePicker.launchImageLibraryAsync).mockResolvedValue({
+      canceled: false,
+      assets: [
+        { uri: 'file:///a.jpg', width: 1000, height: 800 },
+        { uri: 'file:///b.jpg', width: 1200, height: 900 },
+      ],
+    });
+    vi.mocked(cropImageToSquareCenter)
+      .mockResolvedValueOnce({ uri: 'file:///a-square.jpg', width: 800, height: 800 })
+      .mockResolvedValueOnce({ uri: 'file:///b-square.jpg', width: 900, height: 900 });
+
+    const result = await pickPhotosFromGallery(5);
+    expect(result).toEqual({ ok: true, uris: ['file:///a-square.jpg', 'file:///b-square.jpg'] });
   });
 });

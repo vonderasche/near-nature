@@ -4,4 +4,6 @@ export type LiveClassifierPrediction = {
   label: string;
   confidence: number;
   classIndex: number;
+  /** Secondary line — confidence %, hints, or "hold steady" guidance. */
+  detail?: string;
 };

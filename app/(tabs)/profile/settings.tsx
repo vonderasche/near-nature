@@ -7,6 +7,7 @@ import { StackScreenHeader } from '@/components/ui/StackScreenHeader';
 import { Button } from '@/components/ui/Button';
 import { ThemePicker } from '@/components/settings/theme-picker';
 import { ClassificationDebugSettings } from '@/components/settings/classification-debug-settings';
+import { CaptureModeSettings } from '@/components/settings/capture-mode-settings';
 import { ThemedConfirmModal, ThemedMessageModal } from '@/components/ui/themed-sheet-dialog';
 import { useTheme } from '@/hooks/useTheme';
 import { useLogout } from '@/hooks/useLogout';
@@ -42,6 +43,10 @@ export default function ProfileSettingsScreen() {
             <ClassificationDebugSettings />
           </Section>
         ) : null}
+
+        <Section title="Identification">
+          <CaptureModeSettings />
+        </Section>
 
         <Section title="Account">
           <View style={{ gap: theme.spacing.sm }}>

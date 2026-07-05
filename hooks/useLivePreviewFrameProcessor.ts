@@ -6,7 +6,7 @@ import { getGlobalClassificationDebugSession } from '@/lib/classification/debug'
 import { shouldSampleEvent } from '@/lib/classification/debug/sampling';
 import type { LiveClassifierModelState, LiveClassifierPrediction } from '@/lib/camera/liveClassifierTypes';
 import { formatMobileNetError } from '@/lib/camera/mobilenet/formatMobileNetError';
-import type { MvpSceneGateDisplayState } from '@/lib/camera/tflite/mvp/mvpSceneGateDisplay';
+import type { KingdomPreviewDisplayState } from '@/lib/camera/tflite/preview/kingdomPreviewFeedback';
 import { isMvpCaptureSessionActive } from '@/lib/camera/tflite/mvp/mvpTfliteMemory';
 import {
   getPreviewModelConfig,
@@ -28,12 +28,12 @@ export type LivePreviewPrediction = LiveClassifierPrediction;
 
 export function useLivePreviewFrameProcessor(
   active: boolean,
-  previewModelId: PreviewModelId = 'scene_gate',
+  previewModelId: PreviewModelId = 'kingdom',
 ): UseLivePreviewFrameProcessorResult {
   const livePreviewSuspended = useMvpLivePreviewSuspended();
   const previewActive = active && !livePreviewSuspended && !isMvpCaptureSessionActive();
   const config = getPreviewModelConfig(previewModelId);
-  const sceneGateStateRef = useRef<MvpSceneGateDisplayState>('searching');
+  const kingdomPreviewStateRef = useRef<KingdomPreviewDisplayState>('searching');
   const lastPreviewTelemetryLabelRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -45,9 +45,7 @@ export function useLivePreviewFrameProcessor(
   }, [previewActive, previewModelId]);
 
   useEffect(() => {
-    if (!previewActive || previewModelId !== 'scene_gate') {
-      sceneGateStateRef.current = 'searching';
-    }
+    kingdomPreviewStateRef.current = 'searching';
     lastPreviewTelemetryLabelRef.current = null;
   }, [previewActive, previewModelId]);
 
@@ -61,7 +59,7 @@ export function useLivePreviewFrameProcessor(
     if (result?.type !== 'classification') {
       return { predictions: [], organismDetected: false };
     }
-    return mapPreviewPredictions(previewModelId, result.predictions, sceneGateStateRef);
+    return mapPreviewPredictions(previewModelId, result.predictions, kingdomPreviewStateRef);
   }, [previewModelId, result]);
 
   useEffect(() => {

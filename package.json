@@ -12,6 +12,7 @@
     "android:apk": "cd android && gradlew.bat assembleRelease",
     "android:friends-apk": "powershell -ExecutionPolicy Bypass -File ./scripts/build-friends-apk.ps1",
     "android:preview-apk": "powershell -ExecutionPolicy Bypass -File ./scripts/build-preview-apk.ps1",
+    "android:preview-apk:wsl": "powershell -ExecutionPolicy Bypass -File ./scripts/build-preview-apk-wsl.ps1",
     "setup:preview-build-root": "powershell -ExecutionPolicy Bypass -File ./scripts/setup-preview-build-root.ps1",
     "android:device-test-apk": "powershell -ExecutionPolicy Bypass -File ./scripts/build-device-test-apk.ps1",
     "ios": "expo run:ios",
@@ -22,11 +23,14 @@
     "test:watch": "vitest",
     "verify:supabase": "node scripts/verify-supabase-signup.mjs && node scripts/verify-supabase-explorer-board.mjs && node scripts/verify-supabase-app-paths.mjs && node scripts/verify-supabase-scoring.mjs && node scripts/verify-supabase-search-profile.mjs && node scripts/verify-supabase-species-catalog.mjs && node scripts/verify-supabase-ml-telemetry.mjs",
     "report:ml-telemetry": "node scripts/report-ml-telemetry.mjs",
+    "report:v5-cascade": "node scripts/render-v5-cascade-report.mjs",
     "setup:ml-telemetry": "powershell -ExecutionPolicy Bypass -File ./scripts/setup-ml-telemetry.ps1",
     "verify:species-catalog": "node scripts/verify-supabase-species-catalog.mjs",
     "seed:species-catalog": "node scripts/seed-species-catalog-to-supabase.mjs",
     "seed:florida-parks": "node scripts/seed-florida-state-parks-to-supabase.mjs",
     "upload:region-models": "node scripts/upload-region-model-bundle.mjs",
+    "sync:v5-models": "node scripts/sync-v5-models.mjs",
+    "sync:v6-models": "node scripts/sync-v6-models.mjs",
     "fetch:preview-models": "node scripts/fetch-preview-model-assets.mjs"
   },
   "dependencies": {

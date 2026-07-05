@@ -5,10 +5,8 @@ import {
 import type { ClassificationModelConfig } from '@/lib/camera/tflite/modelTypes';
 import type { ImageNormalization } from '@/lib/camera/tflite/modelTypes';
 
-import sceneGateLabelsJson from '@/assets/tflite/preview_models/scene_gate/tflite/labels.json';
 import kingdomLabelsJson from '@/assets/tflite/preview_models/kingdom/tflite/labels.json';
-import routingPreviewLabelsJson from '@/assets/tflite/preview_models/routing_preview_v1/tflite/labels.json';
-import imagenetLabelsJson from '@/assets/tflite/preview_models/shared/imagenet1k_labels.json';
+import kingdomGlobalLabelsJson from '@/assets/tflite/preview_models/kingdom_global/tflite/labels.json';
 
 import { labelsFromBundle } from '@/lib/camera/tflite/preview/parseLabelsBundle';
 import {
@@ -97,90 +95,28 @@ function buildClassificationConfig(
   };
 }
 
-const IMAGENET_LABELS = labelsFromBundle(imagenetLabelsJson as { labels: { index: number; name: string }[] });
-
 /** Ordered list — camera preview toggle cycles through this array. */
 export const PREVIEW_MODEL_DEFINITIONS: PreviewModelDefinition[] = [
   buildClassificationConfig({
-    id: 'scene_gate',
-    shortName: 'Scene',
-    description: 'Organism vs not (trained gate)',
-    kind: 'scene_gate',
-    labels: labelsFromBundle(sceneGateLabelsJson as { labels: { index: number; name: string }[] }),
-    modelAsset: require('@/assets/tflite/preview_models/scene_gate/tflite/scene_gate.tflite'),
-    topK: 2,
+    id: 'kingdom_global',
+    shortName: 'Kingdom',
+    description: 'Global plant / animal / fungi (v6 kingdom head)',
+    kind: 'kingdom_global',
+    labels: labelsFromBundle(kingdomGlobalLabelsJson as { labels: { index: number; name: string }[] }),
+    modelAsset: require('@/assets/tflite/preview_models/kingdom_global/tflite/kingdom.tflite'),
+    topK: 5,
     targetFps: 3,
     frameSkipInterval: 8,
     frameSkipTargetFps: 3,
   }),
   buildClassificationConfig({
     id: 'kingdom',
-    shortName: 'Kingdom',
-    description: 'Plant / animal / fungi (trained kingdom head)',
+    shortName: 'Kingdom (legacy)',
+    description: 'Plant / animal / fungi (v4 kingdom head)',
     kind: 'kingdom',
     labels: labelsFromBundle(kingdomLabelsJson as { labels: { index: number; name: string }[] }),
     modelAsset: require('@/assets/tflite/preview_models/kingdom/tflite/kingdom.tflite'),
     topK: 4,
-    targetFps: 3,
-    frameSkipInterval: 8,
-    frameSkipTargetFps: 3,
-  }),
-  buildClassificationConfig({
-    id: 'routing_preview_v1',
-    shortName: 'Route',
-    description: '20-class routing preview (Bird, Tree, …)',
-    kind: 'plain',
-    labels: labelsFromBundle(routingPreviewLabelsJson as { labels: { index: number; name: string }[] }),
-    modelAsset: require('@/assets/tflite/preview_models/routing_preview_v1/tflite/preview_classifier.tflite'),
-    topK: 3,
-    targetFps: 2,
-    frameSkipInterval: 10,
-    frameSkipTargetFps: 2,
-  }),
-  buildClassificationConfig({
-    id: 'efficientnet_b0_imagenet',
-    shortName: 'EN-B0',
-    description: 'EfficientNet B0 ImageNet 1k (Google pretrained)',
-    kind: 'plain',
-    labels: IMAGENET_LABELS,
-    modelAsset: require('@/assets/tflite/preview_models/efficientnet_b0_imagenet/tflite/efficientnet_b0_imagenet1k.tflite'),
-    topK: 3,
-    targetFps: 2,
-    frameSkipInterval: 12,
-    frameSkipTargetFps: 2,
-  }),
-  buildClassificationConfig({
-    id: 'efficientnet_lite0_imagenet',
-    shortName: 'EN-L0',
-    description: 'EfficientNet-Lite0 ImageNet 1k (Google MediaPipe)',
-    kind: 'plain',
-    labels: IMAGENET_LABELS,
-    modelAsset: require('@/assets/tflite/preview_models/efficientnet_lite0_imagenet/tflite/efficientnet_lite0.tflite'),
-    topK: 3,
-    targetFps: 3,
-    frameSkipInterval: 8,
-    frameSkipTargetFps: 3,
-  }),
-  buildClassificationConfig({
-    id: 'efficientnet_lite2_imagenet',
-    shortName: 'EN-L2',
-    description: 'EfficientNet-Lite2 ImageNet 1k (Google MediaPipe)',
-    kind: 'plain',
-    labels: IMAGENET_LABELS,
-    modelAsset: require('@/assets/tflite/preview_models/efficientnet_lite2_imagenet/tflite/efficientnet_lite2.tflite'),
-    topK: 3,
-    targetFps: 2,
-    frameSkipInterval: 10,
-    frameSkipTargetFps: 2,
-  }),
-  buildClassificationConfig({
-    id: 'mobilenet_v2_imagenet',
-    shortName: 'MN-V2',
-    description: 'MobileNet V2 ImageNet 1k (Google TFLite hosted)',
-    kind: 'plain',
-    labels: IMAGENET_LABELS,
-    modelAsset: require('@/assets/tflite/preview_models/mobilenet_v2_imagenet/tflite/mobilenet_v2_1.0_224.tflite'),
-    topK: 3,
     targetFps: 3,
     frameSkipInterval: 8,
     frameSkipTargetFps: 3,

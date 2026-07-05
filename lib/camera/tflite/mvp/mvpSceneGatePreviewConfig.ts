@@ -1,4 +1,4 @@
 import { getPreviewModelConfig } from '@/lib/camera/tflite/preview/previewModelRegistry';
 
-/** @deprecated Use `getPreviewModelConfig('scene_gate')` */
-export const mvpSceneGatePreviewConfig = getPreviewModelConfig('scene_gate');
+/** @deprecated Use `getPreviewModelConfig('kingdom')` */
+export const mvpSceneGatePreviewConfig = getPreviewModelConfig('kingdom');

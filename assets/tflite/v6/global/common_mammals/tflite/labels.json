@@ -1,0 +1,22 @@
+{
+  "model": "efficientnet_b1",
+  "classCount": 4,
+  "labels": [
+    {
+      "index": 0,
+      "name": "Cervidae"
+    },
+    {
+      "index": 1,
+      "name": "Didelphidae"
+    },
+    {
+      "index": 2,
+      "name": "Procyonidae"
+    },
+    {
+      "index": 3,
+      "name": "Sciuridae"
+    }
+  ]
+}

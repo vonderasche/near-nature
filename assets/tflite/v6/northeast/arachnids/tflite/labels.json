@@ -1,0 +1,26 @@
+{
+  "model": "efficientnet_b1",
+  "classCount": 5,
+  "labels": [
+    {
+      "index": 0,
+      "name": "Araneidae"
+    },
+    {
+      "index": 1,
+      "name": "Pisauridae"
+    },
+    {
+      "index": 2,
+      "name": "Salticidae"
+    },
+    {
+      "index": 3,
+      "name": "Tetragnathidae"
+    },
+    {
+      "index": 4,
+      "name": "Theridiidae"
+    }
+  ]
+}

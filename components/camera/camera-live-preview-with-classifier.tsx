@@ -18,7 +18,7 @@ const LIVE_PREVIEW_UNAVAILABLE_HINT =
 
 export function CameraLivePreviewWithClassifier({
   liveClassifierEnabled,
-  previewMode = 'scene_gate',
+  previewMode = 'kingdom',
   bottomInset,
   ...previewProps
 }: Props) {
@@ -53,7 +53,7 @@ export function CameraLivePreviewWithClassifier({
 
 function CameraLivePreviewWithClassifierActive({
   liveClassifierEnabled,
-  previewMode = 'scene_gate',
+  previewMode = 'kingdom',
   bottomInset,
   ...previewProps
 }: Props) {

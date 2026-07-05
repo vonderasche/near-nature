@@ -1,0 +1,22 @@
+{
+  "model": "efficientnet_b1",
+  "classCount": 4,
+  "labels": [
+    {
+      "index": 0,
+      "name": "trees_shrubs"
+    },
+    {
+      "index": 1,
+      "name": "wildflowers_herbs"
+    },
+    {
+      "index": 2,
+      "name": "ferns_mosses"
+    },
+    {
+      "index": 3,
+      "name": "not_plant"
+    }
+  ]
+}

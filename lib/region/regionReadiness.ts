@@ -1,3 +1,4 @@
+import type { CaptureMode } from '@/constants/identification-preferences';
 import {
   isRegionLive,
   regionLabel,
@@ -7,10 +8,22 @@ import { isRegionalModelBundleReady } from '@/lib/region/regionalModelReadyState
 
 export type RegionFeature = 'discover' | 'camera';
 
-/** Region has catalog + on-device models available for the active pack. */
+/** Region has catalog + regional model pack downloaded. */
 export function isRegionReady(regionId: RegionPackId, modelBundleReady?: boolean): boolean {
   const modelsReady = modelBundleReady ?? isRegionalModelBundleReady(regionId);
   return isRegionLive(regionId) && modelsReady;
+}
+
+/** Camera capture ready — global mode uses bundled models; regional requires download. */
+export function isCaptureReady(
+  regionId: RegionPackId,
+  captureMode: CaptureMode,
+  modelBundleReady?: boolean,
+): boolean {
+  if (captureMode === 'global') {
+    return true;
+  }
+  return isRegionReady(regionId, modelBundleReady);
 }
 
 export function regionAvailabilityBadge(regionId: RegionPackId, modelBundleReady?: boolean): 'Available' | 'In progress' {

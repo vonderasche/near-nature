@@ -1,0 +1,22 @@
+{
+  "model": "efficientnet_b1",
+  "classCount": 4,
+  "labels": [
+    {
+      "index": 0,
+      "name": "Asteraceae"
+    },
+    {
+      "index": 1,
+      "name": "Campanulaceae"
+    },
+    {
+      "index": 2,
+      "name": "Fabaceae"
+    },
+    {
+      "index": 3,
+      "name": "Nelumbonaceae"
+    }
+  ]
+}

@@ -17,12 +17,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, '..');
 
 const REGION_ID = process.argv[2] ?? 'southeast';
-const BUNDLE_DIR = resolve(
-  root,
-  'assets/tflite/near_nature_app_bundle/inat2021_specialists_v2',
-);
-const GENUS_INFO_DIR = resolve(root, 'assets/tflite/near_nature_app_bundle/genus_info');
-const VERSION = process.argv[3] ?? '2026.06.1';
+const VERSION = process.argv[3] ?? '2026.07.1';
+const V6_ROOT = resolve(root, 'assets/tflite/v6');
 
 function sha256File(filePath) {
   return new Promise((resolvePromise, reject) => {
@@ -49,30 +45,26 @@ function walkFiles(dir, predicate) {
   return results;
 }
 
-function collectBundleFiles() {
-  const specialistFiles = walkFiles(BUNDLE_DIR, (filePath) => {
-    const rel = relative(BUNDLE_DIR, filePath).replace(/\\/g, '/');
+function collectV6RegionalBundleFiles() {
+  const files = [];
+  const regionalRoot = join(V6_ROOT, REGION_ID);
+  const regionalFiles = walkFiles(regionalRoot, (filePath) => {
+    const rel = relative(regionalRoot, filePath).replace(/\\/g, '/');
     if (rel.includes('/tflite_out/')) return false;
     if (rel === 'routing.json') return true;
-    if (rel.endsWith('_genus.tflite') || rel.endsWith('_species.tflite')) return true;
-    if (rel.includes('/tflite/') && rel.endsWith('labels.json')) return true;
+    if (rel.endsWith('.tflite')) return true;
+    if (rel.endsWith('labels.json') || rel.endsWith('model_info.json')) return true;
     return false;
   });
 
-  const genusFiles = walkFiles(GENUS_INFO_DIR, (filePath) => filePath.endsWith('.json'));
-
-  const files = [];
-  for (const abs of specialistFiles) {
-    const relUnderV2 = relative(BUNDLE_DIR, abs).replace(/\\/g, '/');
+  for (const abs of regionalFiles) {
+    const relUnderRegion = relative(regionalRoot, abs).replace(/\\/g, '/');
     files.push({
       abs,
-      path: `inat2021_specialists_v2/${relUnderV2}`,
+      path: `v6/${REGION_ID}/${relUnderRegion}`,
     });
   }
-  for (const abs of genusFiles) {
-    const rel = relative(resolve(root, 'assets/tflite/near_nature_app_bundle'), abs).replace(/\\/g, '/');
-    files.push({ abs, path: rel });
-  }
+
   return files;
 }
 
@@ -95,7 +87,7 @@ async function buildManifest(files) {
   return {
     regionId: REGION_ID,
     version: VERSION,
-    bundle: 'near_nature_inat2021_v2',
+    bundle: 'near_nature_v6',
     builtAt: new Date().toISOString().slice(0, 10),
     minAppVersion: '1.0.0',
     totalSizeBytes,
@@ -122,13 +114,13 @@ async function main() {
   const { url, serviceKey } = requireSupabaseSeedEnv(env);
   const supabase = createClient(url, serviceKey);
 
-  const files = collectBundleFiles();
+  const files = collectV6RegionalBundleFiles();
   if (files.length === 0) {
-    console.error('No bundle files found. Ensure specialist .tflite files exist under assets.');
+    console.error(`No v6 regional bundle files found under ${V6_ROOT}/${REGION_ID}. Run npm run sync:v6-models first.`);
     process.exit(1);
   }
 
-  console.log(`Building manifest for ${REGION_ID} (${files.length} files)…`);
+  console.log(`Building v6 manifest for ${REGION_ID} (${files.length} files)…`);
   const manifest = await buildManifest(files);
 
   const distDir = resolve(root, `dist/region-models/${REGION_ID}`);

@@ -1,31 +1,28 @@
 /**
- * Prints ML telemetry report summaries from Supabase views.
+ * ML telemetry report from Supabase views (console + dark HTML).
  * Usage: npm run report:ml-telemetry
- *
- * Requires .env with EXPO_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY
- * (service role reads all users' telemetry for admin review).
  */
-import { readFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
 
+import { loadProjectEnv, requireSupabaseSeedEnv } from './loadSupabaseSeedEnv.mjs';
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, '..');
-
-function loadEnv() {
-  const text = readFileSync(resolve(root, '.env'), 'utf8');
-  const env = {};
-  for (const line of text.split(/\r?\n/)) {
-    const m = line.match(/^([A-Z0-9_]+)=(.*)$/);
-    if (m) env[m[1]] = m[2].replace(/^["']|["']$/g, '').trim();
-  }
-  return env;
-}
 
 function isMissingRelation(error) {
   const msg = (error?.message ?? '').toLowerCase();
   return msg.includes('does not exist') || msg.includes('schema cache') || error?.code === 'PGRST205';
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 function printSection(title, rows) {
@@ -40,20 +37,60 @@ function printSection(title, rows) {
   }
 }
 
-const env = loadEnv();
-const url = env.EXPO_PUBLIC_SUPABASE_URL;
-const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY?.trim();
-
-if (!url) {
-  console.error('Missing EXPO_PUBLIC_SUPABASE_URL in .env');
-  process.exit(1);
+function renderTable(title, rows, columns) {
+  if (!rows?.length) {
+    return `<section><h2>${escapeHtml(title)}</h2><p class="empty">No rows</p></section>`;
+  }
+  const head = columns.map((col) => `<th>${escapeHtml(col.label)}</th>`).join('');
+  const body = rows
+    .map((row) => {
+      const cells = columns.map((col) => `<td>${escapeHtml(col.format(row))}</td>`).join('');
+      return `<tr>${cells}</tr>`;
+    })
+    .join('\n');
+  return `<section><h2>${escapeHtml(title)}</h2><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></section>`;
 }
 
-if (!serviceKey) {
-  console.error('Missing SUPABASE_SERVICE_ROLE_KEY in .env (needed to read telemetry views).');
-  process.exit(1);
+function renderHtml(sections, generatedAt) {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Near Nature — ML telemetry report</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 system-ui, sans-serif; padding: 32px 24px 48px; }
+    h1 { font-size: 24px; margin: 0 0 8px; }
+    .meta { color: var(--muted); margin-bottom: 28px; }
+    section { margin-bottom: 32px; max-width: 1100px; }
+    h2 { font-size: 16px; margin: 0 0 12px; color: var(--accent); }
+    table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { background: #21262d; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+    tr:last-child td { border-bottom: none; }
+    td { font-family: ui-monospace, monospace; font-size: 12px; }
+    .empty { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <h1>ML telemetry report</h1>
+  <p class="meta">Last 30 days · Generated ${escapeHtml(generatedAt)}</p>
+  ${sections.join('\n')}
+</body>
+</html>`;
 }
 
+const env = loadProjectEnv();
+const { url, serviceKey } = requireSupabaseSeedEnv(env);
 const supabase = createClient(url, serviceKey, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
@@ -111,4 +148,45 @@ const { data: mismatches, error: mismatchError } = await supabase
 if (mismatchError) throw mismatchError;
 printSection('Recent reclassify mismatches', mismatches);
 
+const generatedAt = new Date().toISOString();
+const html = renderHtml(
+  [
+    renderTable('Top flags (30d)', flags, [
+      { label: 'Flag', format: (r) => r.flag },
+      { label: 'Count', format: (r) => r.event_count },
+      { label: 'Pipeline', format: (r) => r.pipeline },
+      { label: 'Region', format: (r) => r.region_id },
+      { label: 'Event', format: (r) => r.event_name },
+    ]),
+    renderTable('Routing misses', routing, [
+      { label: 'Label', format: (r) => r.routing_label },
+      { label: 'Region', format: (r) => r.region_id },
+      { label: 'Empty', format: (r) => r.empty_count },
+      { label: 'No organism', format: (r) => r.no_organism_count },
+      { label: 'Total', format: (r) => r.total_events },
+      { label: 'Avg conf', format: (r) => r.avg_top_confidence },
+    ]),
+    renderTable('Reclassify rate by region', reclassify, [
+      { label: 'Region', format: (r) => r.region_id },
+      { label: 'Sessions', format: (r) => r.session_count },
+      { label: 'Reclassified', format: (r) => r.reclassified_sessions },
+      { label: 'Rate %', format: (r) => r.reclassify_pct },
+    ]),
+    renderTable('Recent reclassify mismatches', mismatches, [
+      { label: 'When', format: (r) => r.created_at },
+      { label: 'Region', format: (r) => r.region_id },
+      { label: 'Route', format: (r) => r.routing_label },
+      { label: 'TFLite', format: (r) => r.tflite_top_latin },
+      { label: 'Gemini', format: (r) => r.gemini_top_latin },
+    ]),
+  ],
+  generatedAt,
+);
+
+const distDir = resolve(root, 'dist');
+mkdirSync(distDir, { recursive: true });
+const htmlPath = resolve(distDir, 'ml-telemetry-report.html');
+writeFileSync(htmlPath, html);
+
+console.log(`\nDark HTML report: ${htmlPath}`);
 console.log('\nDone.\n');

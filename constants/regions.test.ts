@@ -19,7 +19,7 @@ const LOWER_48_CODES = US_STATES.map((s) => s.code).filter(
 describe('region packs cover lower 48 (US Census)', () => {
   it('maps every lower-48 state to exactly one pack', () => {
     expect(REGION_MAPPED_STATE_CODES).toHaveLength(48);
-    expect(REGION_MAPPED_STATE_CODES.sort()).toEqual([...LOWER_48_CODES].sort());
+    expect([...REGION_MAPPED_STATE_CODES].sort()).toEqual([...LOWER_48_CODES].sort());
   });
 
   it('has no duplicate state assignments across packs', () => {

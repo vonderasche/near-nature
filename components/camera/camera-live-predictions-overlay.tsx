@@ -83,9 +83,16 @@ export function CameraLivePredictionsOverlay({
         <Text style={styles.meta}>Point camera at a subject...</Text>
       ) : null}
       {topPrediction ? (
-        <Text style={styles.label} numberOfLines={2}>
-          {topPrediction.label}
-        </Text>
+        <>
+          <Text style={styles.label} numberOfLines={2}>
+            {topPrediction.label}
+          </Text>
+          {topPrediction.detail ? (
+            <Text style={styles.meta} numberOfLines={2}>
+              {topPrediction.detail}
+            </Text>
+          ) : null}
+        </>
       ) : null}
     </View>
   );
