@@ -1,0 +1,33 @@
+{
+  "architecture": "efficientnet_b1",
+  "checkpoint": "E:\\PROGRAMMING\\Portfolio\\NearNature\\python\\v13\\models\\global\\herps\\best.pt",
+  "inputSize": 240,
+  "numClasses": 6,
+  "tfliteFile": "herps.tflite",
+  "inputLayout": "NHWC",
+  "inputDtype": "float32",
+  "weightDtype": "float32",
+  "normalization": {
+    "mean": [
+      0.485,
+      0.456,
+      0.406
+    ],
+    "std": [
+      0.229,
+      0.224,
+      0.225
+    ]
+  },
+  "outputActivation": "softmax",
+  "val_acc": 0.87,
+  "epoch": 11,
+  "preprocess": {
+    "mode": "resize_short_edge_then_center_crop",
+    "cropSize": 240,
+    "resizeShortEdge": 255,
+    "interpolation": "bilinear",
+    "pixelRange": "[0, 1]",
+    "colorSpace": "RGB"
+  }
+}

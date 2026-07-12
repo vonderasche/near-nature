@@ -60,10 +60,8 @@ function CameraLivePreviewWithClassifierActive({
   const frameProcessingActive =
     previewProps.isActive && !previewProps.isResumingPreview && liveClassifierEnabled;
 
-  const { frameProcessor, modelState, modelError, predictions } = useLivePreviewFrameProcessor(
-    frameProcessingActive,
-    previewMode,
-  );
+  const { frameProcessor, modelState, modelError, predictions, inferenceTimestamp } =
+    useLivePreviewFrameProcessor(frameProcessingActive, previewMode);
 
   return (
     <View style={styles.previewRoot} pointerEvents="box-none">
@@ -78,6 +76,7 @@ function CameraLivePreviewWithClassifierActive({
         modelState={modelState}
         modelError={modelError}
         predictions={predictions}
+        revisionKey={inferenceTimestamp}
       />
     </View>
   );

@@ -1,6 +1,7 @@
 import type { LiveClassifierPrediction } from '@/lib/camera/liveClassifierTypes';
 import {
   buildKingdomPreviewFeedback,
+  dominantOrganismLabel,
   type KingdomPreviewDisplayState,
 } from '@/lib/camera/tflite/preview/kingdomPreviewFeedback';
 
@@ -11,12 +12,19 @@ type ClassificationRow = { label: string; confidence: number };
 export function mapKingdomPreviewPredictions(
   predictions: readonly ClassificationRow[],
   displayStateRef?: { current: KingdomPreviewDisplayState },
+  dominantOrganismRef?: { current: string | null },
 ): { predictions: LiveClassifierPrediction[]; organismDetected: boolean } {
   const previous = displayStateRef?.current ?? 'searching';
-  const feedback = buildKingdomPreviewFeedback(predictions, previous);
+  const previousOrganism = dominantOrganismRef?.current ?? null;
+  const feedback = buildKingdomPreviewFeedback(predictions, previous, previousOrganism);
 
   if (displayStateRef) {
     displayStateRef.current = feedback.tier;
+  }
+
+  if (dominantOrganismRef) {
+    const probs = Object.fromEntries(predictions.map((row) => [row.label, row.confidence]));
+    dominantOrganismRef.current = dominantOrganismLabel(probs);
   }
 
   return {

@@ -14,6 +14,19 @@ describe('formatPreviewConfidencePercent', () => {
 });
 
 describe('buildKingdomPreviewFeedback', () => {
+  it('shows confident plant copy at 65% live preview threshold', () => {
+    const feedback = buildKingdomPreviewFeedback(
+      [
+        { label: 'plantae', confidence: 0.68 },
+        { label: 'animalia', confidence: 0.08 },
+      ],
+      'searching',
+    );
+    expect(feedback.headline).toBe('Looks like a plant');
+    expect(feedback.detail).toBe('68% confident');
+    expect(feedback.tier).toBe('confident');
+  });
+
   it('shows confident plant copy with percent', () => {
     const feedback = buildKingdomPreviewFeedback(
       [
@@ -64,6 +77,28 @@ describe('buildKingdomPreviewFeedback', () => {
     );
     expect(feedback.headline).toBe('No subject found');
     expect(feedback.detail).toContain('Move closer');
+  });
+
+  it('resets hysteresis when the dominant organism class changes', () => {
+    const plant = buildKingdomPreviewFeedback(
+      [
+        { label: 'plantae', confidence: 0.88 },
+        { label: 'animalia', confidence: 0.08 },
+      ],
+      'searching',
+      null,
+    );
+    expect(plant.tier).toBe('confident');
+
+    const animal = buildKingdomPreviewFeedback(
+      [
+        { label: 'animalia', confidence: 0.86 },
+        { label: 'plantae', confidence: 0.07 },
+      ],
+      'confident',
+      'plantae',
+    );
+    expect(animal.headline).toBe('Looks like an animal');
   });
 });
 

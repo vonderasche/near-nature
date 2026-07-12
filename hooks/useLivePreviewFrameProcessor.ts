@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { useMlFrameProcessor } from '@/hooks/useMlFrameProcessor';
 import { useMvpLivePreviewSuspended } from '@/hooks/useMvpLivePreviewSuspended';
@@ -22,6 +22,7 @@ type UseLivePreviewFrameProcessorResult = {
   modelError: string | null;
   predictions: LivePreviewPrediction[];
   organismDetected: boolean;
+  inferenceTimestamp: number;
 };
 
 export type LivePreviewPrediction = LiveClassifierPrediction;
@@ -34,7 +35,9 @@ export function useLivePreviewFrameProcessor(
   const previewActive = active && !livePreviewSuspended && !isMvpCaptureSessionActive();
   const config = getPreviewModelConfig(previewModelId);
   const kingdomPreviewStateRef = useRef<KingdomPreviewDisplayState>('searching');
+  const dominantOrganismRef = useRef<string | null>(null);
   const lastPreviewTelemetryLabelRef = useRef<string | null>(null);
+  const lastPreviewTelemetryDetailRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (previewActive) {
@@ -46,7 +49,9 @@ export function useLivePreviewFrameProcessor(
 
   useEffect(() => {
     kingdomPreviewStateRef.current = 'searching';
+    dominantOrganismRef.current = null;
     lastPreviewTelemetryLabelRef.current = null;
+    lastPreviewTelemetryDetailRef.current = null;
   }, [previewActive, previewModelId]);
 
   const { frameProcessor, result, modelState, modelError } = useMlFrameProcessor({
@@ -55,20 +60,29 @@ export function useLivePreviewFrameProcessor(
     frameSkippingEnabled: true,
   });
 
-  const { predictions, organismDetected } = useMemo(() => {
-    if (result?.type !== 'classification') {
-      return { predictions: [], organismDetected: false };
-    }
-    return mapPreviewPredictions(previewModelId, result.predictions, kingdomPreviewStateRef);
-  }, [previewModelId, result]);
+  const inferenceTimestamp = result?.timestamp ?? 0;
+  const mapped =
+    result?.type === 'classification'
+      ? mapPreviewPredictions(
+          previewModelId,
+          result.predictions,
+          kingdomPreviewStateRef,
+          dominantOrganismRef,
+        )
+      : { predictions: [], organismDetected: false };
+  const { predictions, organismDetected } = mapped;
 
   useEffect(() => {
     if (!previewActive || predictions.length === 0) return;
 
     const topLabel = predictions[0]?.label ?? '';
-    const labelChanged = topLabel !== lastPreviewTelemetryLabelRef.current;
+    const topDetail = predictions[0]?.detail ?? '';
+    const labelChanged =
+      topLabel !== lastPreviewTelemetryLabelRef.current ||
+      topDetail !== lastPreviewTelemetryDetailRef.current;
     if (labelChanged) {
       lastPreviewTelemetryLabelRef.current = topLabel;
+      lastPreviewTelemetryDetailRef.current = topDetail;
     }
 
     const forceSample = labelChanged;
@@ -98,5 +112,6 @@ export function useLivePreviewFrameProcessor(
     modelError: modelError != null ? formatMobileNetError(modelError) : null,
     predictions,
     organismDetected,
+    inferenceTimestamp,
   };
 }

@@ -43,8 +43,8 @@ describe('isCaptureReady', () => {
     expect(isCaptureReady('west', 'global', false)).toBe(true);
   });
 
-  it('requires regional download in regional capture mode', () => {
-    expect(isCaptureReady('south', 'regional', false)).toBe(false);
+  it('is always true in regional capture mode (v13 bundled cascade)', () => {
+    expect(isCaptureReady('south', 'regional', false)).toBe(true);
     expect(isCaptureReady('south', 'regional', true)).toBe(true);
   });
 });

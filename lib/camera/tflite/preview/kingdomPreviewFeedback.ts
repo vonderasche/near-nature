@@ -88,6 +88,22 @@ function confidenceByLabel(
   return Object.fromEntries(predictions.map((row) => [row.label, row.confidence]));
 }
 
+/** Leading plant / animal / fungi class for hysteresis reset when the scene changes. */
+export function dominantOrganismLabel(
+  probs: Readonly<Record<string, number>>,
+): (typeof ORGANISM_LABELS)[number] | null {
+  let bestLabel: (typeof ORGANISM_LABELS)[number] | null = null;
+  let bestScore = 0;
+  for (const label of ORGANISM_LABELS) {
+    const score = probs[label] ?? 0;
+    if (score > bestScore) {
+      bestScore = score;
+      bestLabel = label;
+    }
+  }
+  return bestScore >= 0.2 ? bestLabel : null;
+}
+
 function buildSearchingDetail(probs: Readonly<Record<string, number>>): string {
   const hints: string[] = [];
   if ((probs.plantae ?? 0) >= 0.12) {
@@ -108,6 +124,7 @@ function buildSearchingDetail(probs: Readonly<Record<string, number>>): string {
 export function buildKingdomPreviewFeedback(
   predictions: readonly ClassificationRow[],
   previousState: KingdomPreviewDisplayState,
+  previousOrganism: string | null = null,
 ): KingdomPreviewFeedback {
   const sorted = [...predictions].sort((a, b) => b.confidence - a.confidence);
   const top = sorted[0];
@@ -125,10 +142,15 @@ export function buildKingdomPreviewFeedback(
   const probs = confidenceByLabel(predictions);
   const organismConfidence = maxOrganismConfidence(predictions);
   const confident = isKingdomPreviewConfident(predictions);
+  const dominantOrganism = dominantOrganismLabel(probs);
+  const organismChanged =
+    dominantOrganism != null &&
+    previousOrganism != null &&
+    dominantOrganism !== previousOrganism;
   const tier = resolveKingdomPreviewDisplayState(
     organismConfidence,
     confident,
-    previousState,
+    organismChanged ? 'searching' : previousState,
   );
   const pct = formatPreviewConfidencePercent(top.confidence);
 

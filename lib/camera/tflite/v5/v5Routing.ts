@@ -1,6 +1,6 @@
 /** Near Nature v5 inference routing (mirrors python/v5/inference/router.py). */
 
-export const V5_KINGDOM_THRESHOLD = 0.6;
+export const V5_KINGDOM_THRESHOLD = 0.55;
 export const V5_ROUTER_THRESHOLD = 0.5;
 export const V5_SPECIALIST_THRESHOLD = 0.45;
 export const V5_NOT_IN_GUIDE = 'Not in our guide yet';
@@ -42,6 +42,15 @@ export function routeKingdom(probs: V5ProbabilityMap): 'stop' | typeof V5_NOT_IN
 export function routePlant(probs: V5ProbabilityMap): string {
   const { label, confidence } = argmax(probs);
   if (confidence < V5_ROUTER_THRESHOLD || label === 'not_plant') {
+    return V5_NOT_IN_GUIDE;
+  }
+  return label;
+}
+
+/** Always route to the top plant-router class (v13 capture). Rejects only `not_plant`. */
+export function routePlantTopOutput(probs: V5ProbabilityMap): string {
+  const { label } = argmax(probs);
+  if (label === 'not_plant') {
     return V5_NOT_IN_GUIDE;
   }
   return label;

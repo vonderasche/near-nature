@@ -53,7 +53,7 @@ export function CameraZoomChips({ chips, activeChipId, onSelectChip, bottomInset
           fontWeight: '600',
         },
         chipTextActive: {
-          color: cameraControlColors.label,
+          color: cameraControlColors.textOnLight,
         },
       }),
     [theme],

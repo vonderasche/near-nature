@@ -1,0 +1,10 @@
+{
+  "model": "efficientnet_b1",
+  "classCount": 1,
+  "labels": [
+    {
+      "index": 0,
+      "name": "Zamiaceae"
+    }
+  ]
+}

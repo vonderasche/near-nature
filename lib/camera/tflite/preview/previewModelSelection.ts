@@ -4,10 +4,11 @@ import {
 } from '@/lib/camera/tflite/preview/previewModelIds';
 
 /** Toggle order on the camera screen (must match `PREVIEW_MODEL_DEFINITIONS` in registry). */
-export const PREVIEW_MODEL_IDS: PreviewModelId[] = ['kingdom_global', 'kingdom'];
+export const PREVIEW_MODEL_IDS: PreviewModelId[] = ['kingdom_global', 'n1', 'kingdom'];
 
 const SHORT_NAMES: Record<PreviewModelId, string> = {
   kingdom_global: 'Kingdom',
+  n1: 'N1',
   kingdom: 'Kingdom (legacy)',
 };
 

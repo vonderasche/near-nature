@@ -1,0 +1,66 @@
+{
+  "model": "efficientnet_b1",
+  "classCount": 15,
+  "labels": [
+    {
+      "index": 0,
+      "name": "Crambidae"
+    },
+    {
+      "index": 1,
+      "name": "Erebidae"
+    },
+    {
+      "index": 2,
+      "name": "Geometridae"
+    },
+    {
+      "index": 3,
+      "name": "Hesperiidae"
+    },
+    {
+      "index": 4,
+      "name": "Limacodidae"
+    },
+    {
+      "index": 5,
+      "name": "Lycaenidae"
+    },
+    {
+      "index": 6,
+      "name": "Noctuidae"
+    },
+    {
+      "index": 7,
+      "name": "Notodontidae"
+    },
+    {
+      "index": 8,
+      "name": "Nymphalidae"
+    },
+    {
+      "index": 9,
+      "name": "Papilionidae"
+    },
+    {
+      "index": 10,
+      "name": "Pieridae"
+    },
+    {
+      "index": 11,
+      "name": "Pyralidae"
+    },
+    {
+      "index": 12,
+      "name": "Saturniidae"
+    },
+    {
+      "index": 13,
+      "name": "Sphingidae"
+    },
+    {
+      "index": 14,
+      "name": "Tortricidae"
+    }
+  ]
+}

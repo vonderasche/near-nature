@@ -134,6 +134,41 @@ export function IdentificationSpeciesResultsList({
   const safeIndex = Math.min(Math.max(0, selectedIndex), classifications.length - 1);
   const primary = displaySpecies[safeIndex]!;
   const hasAlternateMatches = classifications.length > 1;
+  const showOnDeviceAlternates = hasAlternateMatches && !showAlternates;
+
+  if (showOnDeviceAlternates) {
+    return (
+      <View style={styles.alternatesWrap}>
+        <Text style={styles.alternatesHeading}>On-device matches</Text>
+        <Text style={styles.alternatesHint}>Tap a species to use it when you save.</Text>
+        {displaySpecies.map((s, index) => {
+          const selected = index === safeIndex;
+          return (
+            <SpeciesResultCard
+              key={s.id}
+              commonName={s.commonName}
+              latinName={s.latinName}
+              description={sectionedLayout ? null : wikiDescription(s.latinName, wikiByLatinName)}
+              meta={speciesMeta(s, index === 0)}
+              surface={sectionedLayout}
+              onPress={() => onSelectIndex(index)}>
+              {selected ? <Text style={styles.selectedMark}>Selected for save</Text> : null}
+            </SpeciesResultCard>
+          );
+        })}
+        {canReclassifyWithCloud ? (
+          <AuthButton
+            variant="outline"
+            title={alternatesEnriching ? 'Identifying with cloud AI…' : 'Not this species? Identify with cloud AI'}
+            onPress={() => void handleReclassifyWithCloud()}
+            disabled={alternatesEnriching}
+            fillParent
+            accessibilityHint="Runs cloud species identification when the on-device match is wrong"
+          />
+        ) : null}
+      </View>
+    );
+  }
 
   if (showAlternates && hasAlternateMatches) {
     return (

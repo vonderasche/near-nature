@@ -7,6 +7,7 @@ import type { ImageNormalization } from '@/lib/camera/tflite/modelTypes';
 
 import kingdomLabelsJson from '@/assets/tflite/preview_models/kingdom/tflite/labels.json';
 import kingdomGlobalLabelsJson from '@/assets/tflite/preview_models/kingdom_global/tflite/labels.json';
+import n1LabelsJson from '@/assets/tflite/preview_models/n1/tflite/labels.json';
 
 import { labelsFromBundle } from '@/lib/camera/tflite/preview/parseLabelsBundle';
 import {
@@ -100,11 +101,23 @@ export const PREVIEW_MODEL_DEFINITIONS: PreviewModelDefinition[] = [
   buildClassificationConfig({
     id: 'kingdom_global',
     shortName: 'Kingdom',
-    description: 'Global plant / animal / fungi (v6 kingdom head)',
+    description: 'Global plant / animal / fungi (v13 kingdom head)',
     kind: 'kingdom_global',
     labels: labelsFromBundle(kingdomGlobalLabelsJson as { labels: { index: number; name: string }[] }),
     modelAsset: require('@/assets/tflite/preview_models/kingdom_global/tflite/kingdom.tflite'),
     topK: 5,
+    targetFps: 3,
+    frameSkipInterval: 8,
+    frameSkipTargetFps: 3,
+  }),
+  buildClassificationConfig({
+    id: 'n1',
+    shortName: 'N1',
+    description: '13-class neighborhood plant classifier',
+    kind: 'plain',
+    labels: labelsFromBundle(n1LabelsJson as { labels: { index: number; name: string }[] }),
+    modelAsset: require('@/assets/tflite/preview_models/n1/tflite/n1.tflite'),
+    topK: 3,
     targetFps: 3,
     frameSkipInterval: 8,
     frameSkipTargetFps: 3,

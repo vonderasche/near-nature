@@ -1,0 +1,91 @@
+{
+  "version": "v13",
+  "description": "Full retrain global cascade (no distill composite)",
+  "plantRouterGroups": [
+    "trees_shrubs",
+    "wildflowers_herbs",
+    "ferns_mosses",
+    "coontie"
+  ],
+  "animalRouterGroups": [
+    "birds",
+    "herps",
+    "lepidoptera",
+    "insects",
+    "arachnids",
+    "wild_mammals",
+    "domestic_mammals"
+  ],
+  "heads": {
+    "step01_kingdom": {
+      "dir": "step01_kingdom",
+      "tflite": "kingdom",
+      "inputSize": 224
+    },
+    "step02_plant_router": {
+      "dir": "step02_plant_router",
+      "tflite": "plant_router",
+      "inputSize": 240
+    },
+    "step03_animal_router": {
+      "dir": "step03_animal_router",
+      "tflite": "animal_router",
+      "inputSize": 240
+    },
+    "trees_shrubs": {
+      "dir": "trees_shrubs",
+      "tflite": "trees_shrubs",
+      "inputSize": 240
+    },
+    "wildflowers_herbs": {
+      "dir": "wildflowers_herbs",
+      "tflite": "wildflowers_herbs",
+      "inputSize": 240
+    },
+    "ferns_mosses": {
+      "dir": "ferns_mosses",
+      "tflite": "ferns_mosses",
+      "inputSize": 240
+    },
+    "coontie": {
+      "dir": "coontie",
+      "tflite": "coontie",
+      "inputSize": 240
+    },
+    "birds": {
+      "dir": "birds",
+      "tflite": "birds",
+      "inputSize": 240
+    },
+    "herps": {
+      "dir": "herps",
+      "tflite": "herps",
+      "inputSize": 240
+    },
+    "lepidoptera": {
+      "dir": "lepidoptera",
+      "tflite": "lepidoptera",
+      "inputSize": 240
+    },
+    "insects": {
+      "dir": "insects",
+      "tflite": "insects",
+      "inputSize": 240
+    },
+    "arachnids": {
+      "dir": "arachnids",
+      "tflite": "arachnids",
+      "inputSize": 240
+    },
+    "wild_mammals": {
+      "dir": "wild_mammals",
+      "tflite": "wild_mammals",
+      "inputSize": 240
+    },
+    "domestic_mammals": {
+      "dir": "domestic_mammals",
+      "tflite": "domestic_mammals",
+      "inputSize": 240
+    }
+  }
+}

@@ -68,6 +68,9 @@ export function CameraControlButton({
           letterSpacing: 0.4,
           textAlign: 'center',
         },
+        captionActive: {
+          color: cameraControlColors.labelActive,
+        },
         captionDisabled: {
           color: cameraControlColors.labelDisabled,
         },
@@ -96,11 +99,19 @@ export function CameraControlButton({
         <HeroIcon
           name={icon}
           size={26}
-          color={disabled ? cameraControlColors.iconDisabled : cameraControlColors.icon}
+          color={
+            disabled
+              ? cameraControlColors.iconDisabled
+              : active
+                ? cameraControlColors.iconActive
+                : cameraControlColors.icon
+          }
         />
       </Pressable>
       {caption ? (
-        <Text style={[styles.caption, disabled && styles.captionDisabled]} numberOfLines={1}>
+        <Text
+          style={[styles.caption, active && styles.captionActive, disabled && styles.captionDisabled]}
+          numberOfLines={1}>
           {caption}
         </Text>
       ) : null}

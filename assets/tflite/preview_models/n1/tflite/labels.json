@@ -1,0 +1,58 @@
+{
+  "model": "efficientnet_b0",
+  "classCount": 13,
+  "labels": [
+    {
+      "index": 0,
+      "name": "coccoloba uvifera"
+    },
+    {
+      "index": 1,
+      "name": "codiaeum crotons"
+    },
+    {
+      "index": 2,
+      "name": "cordia sebestena"
+    },
+    {
+      "index": 3,
+      "name": "cordyline fruticosa"
+    },
+    {
+      "index": 4,
+      "name": "ficus microcarpa"
+    },
+    {
+      "index": 5,
+      "name": "lagerstroemia indica"
+    },
+    {
+      "index": 6,
+      "name": "nephrolepis cordifolia"
+    },
+    {
+      "index": 7,
+      "name": "psychotria nervosa"
+    },
+    {
+      "index": 8,
+      "name": "quercus viginiana"
+    },
+    {
+      "index": 9,
+      "name": "roystonea regia"
+    },
+    {
+      "index": 10,
+      "name": "sabal palmetto"
+    },
+    {
+      "index": 11,
+      "name": "serenoa repens"
+    },
+    {
+      "index": 12,
+      "name": "thaumatophyllum xanadu"
+    }
+  ]
+}

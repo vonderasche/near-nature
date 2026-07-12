@@ -2,10 +2,16 @@ import { authSpacing } from '@/constants/auth-theme';
 
 /** Fixed colors for camera chrome over the live preview (not tied to app theme). */
 export const cameraControlColors = {
-  icon: '#000000',
-  iconDisabled: 'rgba(0,0,0,0.35)',
-  label: '#000000',
-  labelDisabled: 'rgba(0,0,0,0.35)',
+  icon: 'rgba(255,255,255,0.68)',
+  iconActive: '#ffffff',
+  iconDisabled: 'rgba(255,255,255,0.32)',
+  label: 'rgba(255,255,255,0.72)',
+  labelActive: '#ffffff',
+  labelDisabled: 'rgba(255,255,255,0.32)',
+  /** Text on white zoom chip fill. */
+  textOnLight: '#000000',
+  /** Grid / level guides over the live feed. */
+  overlayGuide: 'rgba(255,255,255,0.55)',
   shutterRing: '#ffffff',
   shutterFill: '#ffffff',
 } as const;

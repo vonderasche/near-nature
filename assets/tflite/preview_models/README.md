@@ -9,6 +9,8 @@ preview_models/
   shared/imagenet1k_labels.json     # ImageNet 1k labels (shared by Google pretrained models)
   scene_gate/tflite/                # Organism gate (copied from trained_v4)
   kingdom/tflite/                   # Kingdom head (copied from trained_v4)
+  kingdom_global/tflite/            # Global kingdom head
+  n1/tflite/                        # 13-class neighborhood plant classifier
   routing_preview_v1/tflite/        # 20-class routing preview (Bird, Tree, …)
   efficientnet_b0_imagenet/tflite/  # EfficientNet B0 ImageNet
   efficientnet_lite0_imagenet/      # Google MediaPipe EfficientNet-Lite0
@@ -29,7 +31,7 @@ Downloads EfficientNet-Lite0/Lite2 from Google MediaPipe hosting into this folde
 1. Create `assets/tflite/preview_models/<id>/tflite/<model>.tflite` + `labels.json`
 2. Add `<id>` to `PreviewModelId` in `lib/camera/tflite/preview/previewModelIds.ts`
 3. Append one entry to `PREVIEW_MODEL_DEFINITIONS` in `lib/camera/tflite/preview/previewModelRegistry.ts`
-4. Set `kind`: `plain` (show top labels), `scene_gate`, or `kingdom` (custom overlay mapping)
+4. Set `kind`: `plain` (show top labels), `kingdom_global`, or `kingdom` (custom overlay mapping)
 5. Reload the app — the camera AI toggle cycles through all registered models
 
 ## Code entry points
@@ -44,10 +46,6 @@ Downloads EfficientNet-Lite0/Lite2 from Google MediaPipe hosting into this folde
 
 | Id | Toggle | Kind | Source |
 |----|--------|------|--------|
-| `scene_gate` | Scene | scene_gate | Near Nature trained_v4 |
-| `kingdom` | Kingdom | kingdom | Near Nature trained_v4 |
-| `routing_preview_v1` | Route | plain | 20-class routing preview |
-| `efficientnet_b0_imagenet` | EN-B0 | plain | ImageNet pretrained |
-| `efficientnet_lite0_imagenet` | EN-L0 | plain | Google MediaPipe |
-| `efficientnet_lite2_imagenet` | EN-L2 | plain | Google MediaPipe |
-| `mobilenet_v2_imagenet` | MN-V2 | plain | Google MobileNet V2 (LiteRT mirror) |
+| `kingdom_global` | Kingdom | kingdom_global | Near Nature v12/v6 global kingdom |
+| `n1` | N1 | plain | Near Nature n1 |
+| `kingdom` | Kingdom (legacy) | kingdom | Near Nature trained_v4 |

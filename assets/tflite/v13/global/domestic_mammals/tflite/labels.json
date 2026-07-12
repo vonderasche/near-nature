@@ -1,0 +1,26 @@
+{
+  "model": "efficientnet_b1",
+  "classCount": 5,
+  "labels": [
+    {
+      "index": 0,
+      "name": "Bovidae"
+    },
+    {
+      "index": 1,
+      "name": "Canidae"
+    },
+    {
+      "index": 2,
+      "name": "Equidae"
+    },
+    {
+      "index": 3,
+      "name": "Felidae"
+    },
+    {
+      "index": 4,
+      "name": "Suidae"
+    }
+  ]
+}

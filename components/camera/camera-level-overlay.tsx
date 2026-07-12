@@ -73,14 +73,14 @@ const styles = StyleSheet.create({
     opacity: 0.95,
   },
   horizonTilted: {
-    backgroundColor: cameraControlColors.icon,
+    backgroundColor: cameraControlColors.overlayGuide,
     opacity: 0.55,
   },
   tick: {
     position: 'absolute',
     width: 2,
     height: 14,
-    backgroundColor: cameraControlColors.icon,
+    backgroundColor: cameraControlColors.overlayGuide,
     opacity: 0.4,
   },
   tickLevel: {

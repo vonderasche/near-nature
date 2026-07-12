@@ -1,0 +1,58 @@
+{
+  "model": "efficientnet_b1",
+  "classCount": 13,
+  "labels": [
+    {
+      "index": 0,
+      "name": "Apocynaceae"
+    },
+    {
+      "index": 1,
+      "name": "Asteraceae"
+    },
+    {
+      "index": 2,
+      "name": "Campanulaceae"
+    },
+    {
+      "index": 3,
+      "name": "Commelinaceae"
+    },
+    {
+      "index": 4,
+      "name": "Convolvulaceae"
+    },
+    {
+      "index": 5,
+      "name": "Euphorbiaceae"
+    },
+    {
+      "index": 6,
+      "name": "Fabaceae"
+    },
+    {
+      "index": 7,
+      "name": "Malvaceae"
+    },
+    {
+      "index": 8,
+      "name": "Nelumbonaceae"
+    },
+    {
+      "index": 9,
+      "name": "Poaceae"
+    },
+    {
+      "index": 10,
+      "name": "Polygalaceae"
+    },
+    {
+      "index": 11,
+      "name": "Pontederiaceae"
+    },
+    {
+      "index": 12,
+      "name": "Sarraceniaceae"
+    }
+  ]
+}

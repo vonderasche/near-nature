@@ -5,7 +5,7 @@ import { cameraControlColors } from '@/constants/camera-layout';
 const GRID_FRACTIONS = [1 / 3, 2 / 3] as const;
 
 const lineStyle = {
-  backgroundColor: cameraControlColors.icon,
+  backgroundColor: cameraControlColors.overlayGuide,
 };
 
 /**

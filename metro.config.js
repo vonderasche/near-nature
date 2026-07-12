@@ -22,11 +22,10 @@ if (!config.resolver.assetExts.includes('csv')) {
   config.resolver.assetExts.push('csv');
 }
 
-// Release slim APK: bundle preview_models + v6 global capture pack.
-// Regional v6 weights load from Supabase at runtime.
+// Release slim APK: bundle preview_models + v13 global capture pack.
 if (process.env.EXPO_PUBLIC_SLIM_APK === '1') {
   const bundledTfliteRoot =
-    /assets[\\/]tflite[\\/](preview_models|v6[\\/]global)[\\/]/;
+    /assets[\\/]tflite[\\/](preview_models|v13[\\/]global)[\\/]/;
   const redirectTflite = path.resolve(
     __dirname,
     'assets/tflite/preview_models/scene_gate/tflite/scene_gate.tflite',

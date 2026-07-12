@@ -1,0 +1,66 @@
+{
+  "model": "efficientnet_b1",
+  "classCount": 15,
+  "labels": [
+    {
+      "index": 0,
+      "name": "Acanthaceae"
+    },
+    {
+      "index": 1,
+      "name": "Aquifoliaceae"
+    },
+    {
+      "index": 2,
+      "name": "Arecaceae"
+    },
+    {
+      "index": 3,
+      "name": "Boraginaceae"
+    },
+    {
+      "index": 4,
+      "name": "Casuarinaceae"
+    },
+    {
+      "index": 5,
+      "name": "Combretaceae"
+    },
+    {
+      "index": 6,
+      "name": "Cupressaceae"
+    },
+    {
+      "index": 7,
+      "name": "Ericaceae"
+    },
+    {
+      "index": 8,
+      "name": "Fagaceae"
+    },
+    {
+      "index": 9,
+      "name": "Moraceae"
+    },
+    {
+      "index": 10,
+      "name": "Myrtaceae"
+    },
+    {
+      "index": 11,
+      "name": "Pinaceae"
+    },
+    {
+      "index": 12,
+      "name": "Rhizophoraceae"
+    },
+    {
+      "index": 13,
+      "name": "Rubiaceae"
+    },
+    {
+      "index": 14,
+      "name": "Smilacaceae"
+    }
+  ]
+}

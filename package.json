@@ -31,6 +31,8 @@
     "upload:region-models": "node scripts/upload-region-model-bundle.mjs",
     "sync:v5-models": "node scripts/sync-v5-models.mjs",
     "sync:v6-models": "node scripts/sync-v6-models.mjs",
+    "sync:v12-models": "node scripts/sync-v12-models.mjs",
+    "sync:v13-models": "node scripts/sync-v13-models.mjs",
     "fetch:preview-models": "node scripts/fetch-preview-model-assets.mjs"
   },
   "dependencies": {

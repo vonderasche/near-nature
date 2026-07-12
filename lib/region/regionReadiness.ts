@@ -14,16 +14,13 @@ export function isRegionReady(regionId: RegionPackId, modelBundleReady?: boolean
   return isRegionLive(regionId) && modelsReady;
 }
 
-/** Camera capture ready — global mode uses bundled models; regional requires download. */
+/** Camera capture ready — v13 global cascade is fully bundled (no regional download). */
 export function isCaptureReady(
-  regionId: RegionPackId,
-  captureMode: CaptureMode,
-  modelBundleReady?: boolean,
+  _regionId: RegionPackId,
+  _captureMode: CaptureMode,
+  _modelBundleReady?: boolean,
 ): boolean {
-  if (captureMode === 'global') {
-    return true;
-  }
-  return isRegionReady(regionId, modelBundleReady);
+  return true;
 }
 
 export function regionAvailabilityBadge(regionId: RegionPackId, modelBundleReady?: boolean): 'Available' | 'In progress' {

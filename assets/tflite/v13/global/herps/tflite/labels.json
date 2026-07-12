@@ -1,0 +1,30 @@
+{
+  "model": "efficientnet_b1",
+  "classCount": 6,
+  "labels": [
+    {
+      "index": 0,
+      "name": "Colubridae"
+    },
+    {
+      "index": 1,
+      "name": "Emydidae"
+    },
+    {
+      "index": 2,
+      "name": "Hylidae"
+    },
+    {
+      "index": 3,
+      "name": "Phrynosomatidae"
+    },
+    {
+      "index": 4,
+      "name": "Plethodontidae"
+    },
+    {
+      "index": 5,
+      "name": "Viperidae"
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSharedValue } from 'react-native-reanimated';
 import { Worklets } from 'react-native-worklets-core';
 import { useResizePlugin } from 'vision-camera-resize-plugin';
@@ -62,15 +62,24 @@ export function useMlFrameProcessor({
     nextInferenceAt.value = 0;
   }, [config.id, frameSkippingEnabled, processorFrameCount, nextInferenceAt]);
 
-  const classificationOptions =
-    config.task === 'classification'
-      ? {
-          directLabelIndex: classificationConfig.directLabelIndex,
-          confidenceMode: classificationConfig.confidenceMode,
-          softmaxOutput: classificationConfig.softmaxOutput,
-          topK: classificationConfig.topK,
-        }
-      : undefined;
+  const classificationOptions = useMemo(
+    () =>
+      config.task === 'classification'
+        ? {
+            directLabelIndex: classificationConfig.directLabelIndex,
+            confidenceMode: classificationConfig.confidenceMode,
+            softmaxOutput: classificationConfig.softmaxOutput,
+            topK: classificationConfig.topK,
+          }
+        : undefined,
+    [
+      classificationConfig.confidenceMode,
+      classificationConfig.directLabelIndex,
+      classificationConfig.softmaxOutput,
+      classificationConfig.topK,
+      config.task,
+    ],
+  );
 
   const publishClassification = useCallback(
     (rawPredictions: { index: number; score: number }[]) => {
@@ -90,7 +99,17 @@ export function useMlFrameProcessor({
     [classificationConfig.labels, classificationOptions, config.id, config.task],
   );
 
-  const publishClassificationOnJS = Worklets.createRunOnJS(publishClassification);
+  // Keep a stable runOnJS wrapper — recreating it every render can stall updates on device.
+  const publishClassificationRef = useRef(publishClassification);
+  publishClassificationRef.current = publishClassification;
+
+  const publishClassificationOnJS = useMemo(
+    () =>
+      Worklets.createRunOnJS((rawPredictions: { index: number; score: number }[]) => {
+        publishClassificationRef.current(rawPredictions);
+      }),
+    [],
+  );
 
   const logInferenceTimingOnJS = Worklets.createRunOnJS((modelId: string, inferenceMs: number) => {
     devLog(`[v3] ${modelId} inference ${inferenceMs.toFixed(1)}ms`);

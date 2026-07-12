@@ -14,6 +14,8 @@ type Props = {
   modelState: LiveClassifierModelState;
   modelError: string | null;
   predictions: readonly LiveClassifierPrediction[];
+  /** Bumps when a new inference result arrives — keeps overlay text in sync on device. */
+  revisionKey?: number;
 };
 
 export function CameraLivePredictionsOverlay({
@@ -22,6 +24,7 @@ export function CameraLivePredictionsOverlay({
   modelState,
   modelError,
   predictions,
+  revisionKey = 0,
 }: Props) {
   const { theme } = useTheme();
   const styles = useMemo(
@@ -84,12 +87,16 @@ export function CameraLivePredictionsOverlay({
       ) : null}
       {topPrediction ? (
         <>
-          <Text style={styles.label} numberOfLines={2}>
+          <Text key={`headline-${revisionKey}`} style={styles.label} numberOfLines={2}>
             {topPrediction.label}
           </Text>
           {topPrediction.detail ? (
-            <Text style={styles.meta} numberOfLines={2}>
+            <Text key={`detail-${revisionKey}`} style={styles.meta} numberOfLines={2}>
               {topPrediction.detail}
+            </Text>
+          ) : topPrediction.confidence > 0 ? (
+            <Text key={`detail-${revisionKey}`} style={styles.meta} numberOfLines={1}>
+              {Math.round(Math.min(1, Math.max(0, topPrediction.confidence)) * 100)}%
             </Text>
           ) : null}
         </>
