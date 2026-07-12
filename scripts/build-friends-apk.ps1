@@ -198,8 +198,16 @@ function Invoke-FriendsApkGradle([string]$ProjectRoot, [bool]$FrameProcessorsEna
         Write-Host "Rebundling JS (EXPO_PUBLIC_SLIM_APK=1, preview_models only)..." -ForegroundColor Cyan
         Push-Location $androidDir
         try {
-            & $gradlew :app:createBundleReleaseJsAndAssets --rerun-tasks --no-daemon
-            if ($LASTEXITCODE -ne 0) { return $LASTEXITCODE }
+            $prevEap = $ErrorActionPreference
+            $ErrorActionPreference = 'Continue'
+            try {
+                & $gradlew :app:createBundleReleaseJsAndAssets --rerun-tasks --no-daemon 2>&1 | Out-Host
+            } finally {
+                $ErrorActionPreference = $prevEap
+            }
+            $jsExit = $LASTEXITCODE
+            if ($null -eq $jsExit) { $jsExit = 0 }
+            if ($jsExit -ne 0) { return $jsExit }
         } finally {
             Pop-Location
         }
@@ -208,9 +216,27 @@ function Invoke-FriendsApkGradle([string]$ProjectRoot, [bool]$FrameProcessorsEna
     Push-Location $androidDir
     try {
         # Physical phones: arm64 only on Windows (dual-arch often fails after .cxx clean).
-        & $gradlew assembleRelease -x lint --no-daemon --no-parallel '-PreactNativeArchitectures=arm64-v8a'
-        if ($null -eq $LASTEXITCODE) { return 0 }
-        return $LASTEXITCODE
+        $assembleArgs = @(
+            'assembleRelease',
+            '-x', 'lint',
+            '--no-daemon',
+            '--no-parallel',
+            '-PreactNativeArchitectures=arm64-v8a'
+        )
+        if ($ForceJsRebundle) {
+            # JS/assets changed; force APK repackage (otherwise packageRelease stays UP-TO-DATE).
+            $assembleArgs += '--rerun-tasks'
+        }
+        $prevEap = $ErrorActionPreference
+        $ErrorActionPreference = 'Continue'
+        try {
+            & $gradlew @assembleArgs 2>&1 | Out-Host
+        } finally {
+            $ErrorActionPreference = $prevEap
+        }
+        $asmExit = $LASTEXITCODE
+        if ($null -eq $asmExit) { $asmExit = 0 }
+        return $asmExit
     } finally {
         Pop-Location
     }
@@ -249,14 +275,15 @@ Copy-Item -Force $EnvFile (Join-Path $BuildRoot '.env')
 
 if (-not $wantPreview) {
     Write-Host "Building release APK (arm phones, live preview OFF)..." -ForegroundColor Yellow
-    $exitCode = Invoke-FriendsApkGradle $BuildRoot $false $PreviewModelsOnly
+    $exitCode = Invoke-FriendsApkGradle -ProjectRoot $BuildRoot -FrameProcessorsEnabled $false -ForceJsRebundle:$PreviewModelsOnly
     $livePreviewInApk = $false
 } else {
     Write-Host "Building release APK (arm phones, live preview ON)..." -ForegroundColor Cyan
-    $exitCode = Invoke-FriendsApkGradle $BuildRoot $true $PreviewModelsOnly
+    $exitCode = Invoke-FriendsApkGradle -ProjectRoot $BuildRoot -FrameProcessorsEnabled $true -ForceJsRebundle:$PreviewModelsOnly
     $livePreviewInApk = ($exitCode -eq 0)
 }
 
+if ($null -eq $exitCode) { $exitCode = 0 }
 if ($exitCode -ne 0) {
     Write-Host ""
     Write-Host "Build failed." -ForegroundColor Red

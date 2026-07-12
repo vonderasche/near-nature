@@ -1,5 +1,5 @@
 /** Live camera preview model ids — add entries in `previewModelRegistry.ts`. */
-export type PreviewModelId = 'kingdom_global' | 'n1' | 'kingdom';
+export type PreviewModelId = 'kingdom_global' | 'n1' | 'v14' | 'kingdom';
 
 export const DEFAULT_PREVIEW_MODEL_ID: PreviewModelId = 'kingdom_global';
 

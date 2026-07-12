@@ -11,6 +11,7 @@ preview_models/
   kingdom/tflite/                   # Kingdom head (copied from trained_v4)
   kingdom_global/tflite/            # Global kingdom head
   n1/tflite/                        # 13-class neighborhood plant classifier
+  v14/tflite/                       # 114-class family classifier + negative class
   routing_preview_v1/tflite/        # 20-class routing preview (Bird, Tree, …)
   efficientnet_b0_imagenet/tflite/  # EfficientNet B0 ImageNet
   efficientnet_lite0_imagenet/      # Google MediaPipe EfficientNet-Lite0
@@ -48,4 +49,5 @@ Downloads EfficientNet-Lite0/Lite2 from Google MediaPipe hosting into this folde
 |----|--------|------|--------|
 | `kingdom_global` | Kingdom | kingdom_global | Near Nature v12/v6 global kingdom |
 | `n1` | N1 | plain | Near Nature n1 |
+| `v14` | V14 | plain | Near Nature v14 family classifier |
 | `kingdom` | Kingdom (legacy) | kingdom | Near Nature trained_v4 |

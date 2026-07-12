@@ -1,0 +1,462 @@
+{
+  "model": "efficientnet_b0",
+  "classCount": 114,
+  "labels": [
+    {
+      "index": 0,
+      "name": "Acanthaceae"
+    },
+    {
+      "index": 1,
+      "name": "Accipitridae"
+    },
+    {
+      "index": 2,
+      "name": "Acrididae"
+    },
+    {
+      "index": 3,
+      "name": "Aeshnidae"
+    },
+    {
+      "index": 4,
+      "name": "Anatidae"
+    },
+    {
+      "index": 5,
+      "name": "Apidae"
+    },
+    {
+      "index": 6,
+      "name": "Apocynaceae"
+    },
+    {
+      "index": 7,
+      "name": "Aquifoliaceae"
+    },
+    {
+      "index": 8,
+      "name": "Araceae"
+    },
+    {
+      "index": 9,
+      "name": "Araneidae"
+    },
+    {
+      "index": 10,
+      "name": "Ardeidae"
+    },
+    {
+      "index": 11,
+      "name": "Arecaceae"
+    },
+    {
+      "index": 12,
+      "name": "Asilidae"
+    },
+    {
+      "index": 13,
+      "name": "Asparagaceae"
+    },
+    {
+      "index": 14,
+      "name": "Asteraceae"
+    },
+    {
+      "index": 15,
+      "name": "Boraginaceae"
+    },
+    {
+      "index": 16,
+      "name": "Bovidae"
+    },
+    {
+      "index": 17,
+      "name": "Bromeliaceae"
+    },
+    {
+      "index": 18,
+      "name": "Campanulaceae"
+    },
+    {
+      "index": 19,
+      "name": "Canidae"
+    },
+    {
+      "index": 20,
+      "name": "Carabidae"
+    },
+    {
+      "index": 21,
+      "name": "Casuarinaceae"
+    },
+    {
+      "index": 22,
+      "name": "Cerambycidae"
+    },
+    {
+      "index": 23,
+      "name": "Cervidae"
+    },
+    {
+      "index": 24,
+      "name": "Chrysomelidae"
+    },
+    {
+      "index": 25,
+      "name": "Cicadellidae"
+    },
+    {
+      "index": 26,
+      "name": "Cicadidae"
+    },
+    {
+      "index": 27,
+      "name": "Coccinellidae"
+    },
+    {
+      "index": 28,
+      "name": "Coenagrionidae"
+    },
+    {
+      "index": 29,
+      "name": "Colubridae"
+    },
+    {
+      "index": 30,
+      "name": "Combretaceae"
+    },
+    {
+      "index": 31,
+      "name": "Commelinaceae"
+    },
+    {
+      "index": 32,
+      "name": "Convolvulaceae"
+    },
+    {
+      "index": 33,
+      "name": "Coreidae"
+    },
+    {
+      "index": 34,
+      "name": "Corvidae"
+    },
+    {
+      "index": 35,
+      "name": "Crambidae"
+    },
+    {
+      "index": 36,
+      "name": "Cupressaceae"
+    },
+    {
+      "index": 37,
+      "name": "Didelphidae"
+    },
+    {
+      "index": 38,
+      "name": "Elephantidae"
+    },
+    {
+      "index": 39,
+      "name": "Emydidae"
+    },
+    {
+      "index": 40,
+      "name": "Equidae"
+    },
+    {
+      "index": 41,
+      "name": "Erebidae"
+    },
+    {
+      "index": 42,
+      "name": "Ericaceae"
+    },
+    {
+      "index": 43,
+      "name": "Euphorbiaceae"
+    },
+    {
+      "index": 44,
+      "name": "Fabaceae"
+    },
+    {
+      "index": 45,
+      "name": "Fagaceae"
+    },
+    {
+      "index": 46,
+      "name": "Felidae"
+    },
+    {
+      "index": 47,
+      "name": "Formicidae"
+    },
+    {
+      "index": 48,
+      "name": "Geometridae"
+    },
+    {
+      "index": 49,
+      "name": "Giraffidae"
+    },
+    {
+      "index": 50,
+      "name": "Gomphidae"
+    },
+    {
+      "index": 51,
+      "name": "Gryllidae"
+    },
+    {
+      "index": 52,
+      "name": "Hesperiidae"
+    },
+    {
+      "index": 53,
+      "name": "Hylidae"
+    },
+    {
+      "index": 54,
+      "name": "Icteridae"
+    },
+    {
+      "index": 55,
+      "name": "Laridae"
+    },
+    {
+      "index": 56,
+      "name": "Libellulidae"
+    },
+    {
+      "index": 57,
+      "name": "Limacodidae"
+    },
+    {
+      "index": 58,
+      "name": "Lycaenidae"
+    },
+    {
+      "index": 59,
+      "name": "Lythraceae"
+    },
+    {
+      "index": 60,
+      "name": "Malvaceae"
+    },
+    {
+      "index": 61,
+      "name": "Moraceae"
+    },
+    {
+      "index": 62,
+      "name": "Myrtaceae"
+    },
+    {
+      "index": 63,
+      "name": "Nelumbonaceae"
+    },
+    {
+      "index": 64,
+      "name": "Nephrolepidaceae"
+    },
+    {
+      "index": 65,
+      "name": "Noctuidae"
+    },
+    {
+      "index": 66,
+      "name": "Notodontidae"
+    },
+    {
+      "index": 67,
+      "name": "Nymphalidae"
+    },
+    {
+      "index": 68,
+      "name": "Osmundaceae"
+    },
+    {
+      "index": 69,
+      "name": "Papilionidae"
+    },
+    {
+      "index": 70,
+      "name": "Parulidae"
+    },
+    {
+      "index": 71,
+      "name": "Passerellidae"
+    },
+    {
+      "index": 72,
+      "name": "Pentatomidae"
+    },
+    {
+      "index": 73,
+      "name": "Phrynosomatidae"
+    },
+    {
+      "index": 74,
+      "name": "Picidae"
+    },
+    {
+      "index": 75,
+      "name": "Pieridae"
+    },
+    {
+      "index": 76,
+      "name": "Pinaceae"
+    },
+    {
+      "index": 77,
+      "name": "Pisauridae"
+    },
+    {
+      "index": 78,
+      "name": "Plethodontidae"
+    },
+    {
+      "index": 79,
+      "name": "Poaceae"
+    },
+    {
+      "index": 80,
+      "name": "Polygalaceae"
+    },
+    {
+      "index": 81,
+      "name": "Polygonaceae"
+    },
+    {
+      "index": 82,
+      "name": "Polypodiaceae"
+    },
+    {
+      "index": 83,
+      "name": "Pontederiaceae"
+    },
+    {
+      "index": 84,
+      "name": "Procyonidae"
+    },
+    {
+      "index": 85,
+      "name": "Psittacidae"
+    },
+    {
+      "index": 86,
+      "name": "Pteridaceae"
+    },
+    {
+      "index": 87,
+      "name": "Pyralidae"
+    },
+    {
+      "index": 88,
+      "name": "Reduviidae"
+    },
+    {
+      "index": 89,
+      "name": "Rhizophoraceae"
+    },
+    {
+      "index": 90,
+      "name": "Rubiaceae"
+    },
+    {
+      "index": 91,
+      "name": "Salticidae"
+    },
+    {
+      "index": 92,
+      "name": "Sarraceniaceae"
+    },
+    {
+      "index": 93,
+      "name": "Saturniidae"
+    },
+    {
+      "index": 94,
+      "name": "Scarabaeidae"
+    },
+    {
+      "index": 95,
+      "name": "Sciuridae"
+    },
+    {
+      "index": 96,
+      "name": "Scolopacidae"
+    },
+    {
+      "index": 97,
+      "name": "Sicariidae"
+    },
+    {
+      "index": 98,
+      "name": "Smilacaceae"
+    },
+    {
+      "index": 99,
+      "name": "Sphagnaceae"
+    },
+    {
+      "index": 100,
+      "name": "Sphingidae"
+    },
+    {
+      "index": 101,
+      "name": "Suidae"
+    },
+    {
+      "index": 102,
+      "name": "Syrphidae"
+    },
+    {
+      "index": 103,
+      "name": "Tetragnathidae"
+    },
+    {
+      "index": 104,
+      "name": "Tettigoniidae"
+    },
+    {
+      "index": 105,
+      "name": "Thelypteridaceae"
+    },
+    {
+      "index": 106,
+      "name": "Theridiidae"
+    },
+    {
+      "index": 107,
+      "name": "Tortricidae"
+    },
+    {
+      "index": 108,
+      "name": "Tyrannidae"
+    },
+    {
+      "index": 109,
+      "name": "Ursidae"
+    },
+    {
+      "index": 110,
+      "name": "Vespidae"
+    },
+    {
+      "index": 111,
+      "name": "Viperidae"
+    },
+    {
+      "index": 112,
+      "name": "Zamiaceae"
+    },
+    {
+      "index": 113,
+      "name": "negative"
+    }
+  ]
+}

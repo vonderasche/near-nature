@@ -27,6 +27,7 @@ describe('previewModelSelection', () => {
   it('exposes short captions for the camera toggle', () => {
     expect(previewModelCaption('kingdom_global')).toBe('Kingdom');
     expect(previewModelCaption('n1')).toBe('N1');
+    expect(previewModelCaption('v14')).toBe('V14');
     expect(previewModelCaption('kingdom')).toBe('Kingdom (legacy)');
   });
 });

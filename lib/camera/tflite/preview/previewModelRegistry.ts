@@ -8,6 +8,7 @@ import type { ImageNormalization } from '@/lib/camera/tflite/modelTypes';
 import kingdomLabelsJson from '@/assets/tflite/preview_models/kingdom/tflite/labels.json';
 import kingdomGlobalLabelsJson from '@/assets/tflite/preview_models/kingdom_global/tflite/labels.json';
 import n1LabelsJson from '@/assets/tflite/preview_models/n1/tflite/labels.json';
+import v14LabelsJson from '@/assets/tflite/preview_models/v14/tflite/labels.json';
 
 import { labelsFromBundle } from '@/lib/camera/tflite/preview/parseLabelsBundle';
 import {
@@ -117,6 +118,18 @@ export const PREVIEW_MODEL_DEFINITIONS: PreviewModelDefinition[] = [
     kind: 'plain',
     labels: labelsFromBundle(n1LabelsJson as { labels: { index: number; name: string }[] }),
     modelAsset: require('@/assets/tflite/preview_models/n1/tflite/n1.tflite'),
+    topK: 3,
+    targetFps: 3,
+    frameSkipInterval: 8,
+    frameSkipTargetFps: 3,
+  }),
+  buildClassificationConfig({
+    id: 'v14',
+    shortName: 'V14',
+    description: '114-class family classifier with negatives',
+    kind: 'plain',
+    labels: labelsFromBundle(v14LabelsJson as { labels: { index: number; name: string }[] }),
+    modelAsset: require('@/assets/tflite/preview_models/v14/tflite/v14.tflite'),
     topK: 3,
     targetFps: 3,
     frameSkipInterval: 8,
