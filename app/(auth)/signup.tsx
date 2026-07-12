@@ -32,6 +32,9 @@ import { sanitizeUsernameInput, validateUsername } from '@/lib/auth/validateUser
 import { routes } from '@/lib/routing/routes';
 import { signInWithGoogle } from '@/services/authService';
 
+/** Set true to show Google OAuth on sign-up (login screen always offers it). */
+const SHOW_GOOGLE_SIGNUP = false;
+
 type InfoDialog = { title: string; message: string; goToLoginOnDismiss?: boolean } | null;
 
 export default function SignUpScreen() {
@@ -343,13 +346,15 @@ export default function SignUpScreen() {
         title={buttonTitle}
         onPress={onSubmit}
         loading={signingIn}
-        disabled={signingIn || googleBusy || formBlocked}
+        disabled={signingIn || (SHOW_GOOGLE_SIGNUP && googleBusy) || formBlocked}
       />
-      <GoogleSignInButton
-        onPress={onGoogleSignIn}
-        loading={googleBusy || completingSignIn}
-        disabled={signingIn || googleBusy}
-      />
+      {SHOW_GOOGLE_SIGNUP ? (
+        <GoogleSignInButton
+          onPress={onGoogleSignIn}
+          loading={googleBusy || completingSignIn}
+          disabled={signingIn || googleBusy}
+        />
+      ) : null}
 
       <AuthLinkRow prompt="Already have an account?" href={routes.login} linkText="Log in" />
 

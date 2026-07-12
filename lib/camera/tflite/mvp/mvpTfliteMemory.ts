@@ -5,6 +5,17 @@ import {
   yieldForTfliteMemory,
 } from '@/lib/camera/tflite/mvp/mvpCachedModels';
 
+/** Brief native yield after evicting TFLite weights (see previewCachedModels). */
+const TFLITE_MEMORY_YIELD_MS = 50;
+/** Wait after preview eviction before loading capture cascade models. */
+const CAPTURE_PREPARE_RELEASE_MS = 450;
+/** Background gallery batch — slightly shorter than shutter capture. */
+const GALLERY_CAPTURE_PREPARE_RELEASE_MS = 350;
+/** Minimum time live preview stays off after identification completes. */
+const PREVIEW_RESUME_COOLDOWN_MS = 600;
+/** Native RAM settle after capture models are evicted (independent of preview cooldown). */
+const CAPTURE_TEARDOWN_RELEASE_MS = 350;
+
 let livePreviewSuspended = false;
 let captureSessionActive = false;
 let captureMemoryPrepared = false;
@@ -80,8 +91,8 @@ async function waitForReactCommit(): Promise<void> {
   });
 }
 
-async function waitForNativeMemoryRelease(extraMs = 250): Promise<void> {
-  await yieldForTfliteMemory();
+async function waitForNativeMemoryRelease(extraMs = 200): Promise<void> {
+  await yieldForTfliteMemory(TFLITE_MEMORY_YIELD_MS);
   await new Promise((resolve) => {
     setTimeout(resolve, extraMs);
   });
@@ -110,7 +121,7 @@ export async function suspendMvpPreviewBeforeCapture(): Promise<void> {
   beginMvpCaptureSession();
   await waitForReactCommit();
   await waitForTfliteLoadChainIdle();
-  await waitForNativeMemoryRelease(1200);
+  await waitForNativeMemoryRelease(GALLERY_CAPTURE_PREPARE_RELEASE_MS);
   captureMemoryPrepared = true;
 }
 /** Immediately pause live preview and drop cached models (sync). */
@@ -127,7 +138,9 @@ export function beginMvpCaptureSession(): void {
  * Tear down live-preview TFLite and wait for native RAM to settle before capture inference.
  * Keeps preview paused until {@link finishMvpCaptureSession}.
  */
-export async function prepareMvpCaptureMemory(extraReleaseMs = 1400): Promise<void> {
+export async function prepareMvpCaptureMemory(
+  extraReleaseMs = CAPTURE_PREPARE_RELEASE_MS,
+): Promise<void> {
   if (finishSessionPromise) {
     await finishSessionPromise;
   }
@@ -150,7 +163,7 @@ export async function prepareMvpCaptureMemory(extraReleaseMs = 1400): Promise<vo
 }
 
 /** End capture/identification — allows live preview to start again after cooldown. */
-export function finishMvpCaptureSession(cooldownMs = 2000): void {
+export function finishMvpCaptureSession(cooldownMs = PREVIEW_RESUME_COOLDOWN_MS): void {
   if (finishSessionPromise) return;
   if (!captureSessionActive && !livePreviewSuspended && !isMvpPreviewResumeBlocked()) {
     return;
@@ -163,7 +176,7 @@ export function finishMvpCaptureSession(cooldownMs = 2000): void {
     captureMemoryPrepared = false;
     releaseAllTfliteModelCaches();
     await waitForTfliteLoadChainIdle();
-    await waitForNativeMemoryRelease(cooldownMs);
+    await waitForNativeMemoryRelease(CAPTURE_TEARDOWN_RELEASE_MS);
     if (Date.now() >= previewResumeBlockedUntil) {
       livePreviewSuspended = false;
       notifySuspendedChange();
@@ -184,7 +197,9 @@ export function awaitFinishMvpCaptureSession(): Promise<void> {
  * Tear down capture models and wait for native RAM to settle before returning to camera.
  * Call from Retake so preview does not reload while capture routing memory is still resident.
  */
-export async function completeMvpCaptureSessionAndWait(cooldownMs = 2000): Promise<void> {
+export async function completeMvpCaptureSessionAndWait(
+  cooldownMs = PREVIEW_RESUME_COOLDOWN_MS,
+): Promise<void> {
   if (!captureSessionActive && !livePreviewSuspended) {
     return;
   }

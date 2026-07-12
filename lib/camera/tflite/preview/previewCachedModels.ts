@@ -53,7 +53,7 @@ export function evictPreviewModelAsset(
 }
 
 /** Brief pause so native TFLite can reclaim memory after preview eviction. */
-export function yieldForTfliteMemory(ms = 120): Promise<void> {
+export function yieldForTfliteMemory(ms = 50): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });

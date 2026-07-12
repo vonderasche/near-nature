@@ -9,6 +9,8 @@ drop policy if exists "Users can view their own detection images"  on storage.ob
 drop policy if exists "Users can delete their own detection images" on storage.objects;
 drop policy if exists "Authenticated can read non-sensitive owners detection images" on storage.objects;
 drop policy if exists "Authenticated can read profile avatars" on storage.objects;
+drop policy if exists "Anon can read non-sensitive owners detection images" on storage.objects;
+drop policy if exists "Anon can read profile avatars" on storage.objects;
 
 -- Allow users to upload their own images
 create policy "Users can upload their own detection images"
@@ -42,6 +44,30 @@ create policy "Authenticated can read profile avatars"
 create policy "Authenticated can read non-sensitive owners detection images"
   on storage.objects for select
   to authenticated
+  using (
+    bucket_id = 'detections'
+    and exists (
+      select 1
+      from public.detections d
+      where d.is_sensitive = false
+        and d.user_id = ((storage.foldername(name))[1])::uuid
+        and position(name in d.image_url) > 0
+    )
+  );
+
+-- Rankings / public explore: guests may create signed URLs for the same public gallery objects.
+create policy "Anon can read profile avatars"
+  on storage.objects for select
+  to anon
+  using (
+    bucket_id = 'detections'
+    and (storage.foldername(name))[1] is not null
+    and right(name, length('profile-avatar.jpg')) = 'profile-avatar.jpg'
+  );
+
+create policy "Anon can read non-sensitive owners detection images"
+  on storage.objects for select
+  to anon
   using (
     bucket_id = 'detections'
     and exists (
