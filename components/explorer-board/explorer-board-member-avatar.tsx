@@ -51,7 +51,8 @@ export function ExplorerBoardMemberAvatar({
     <View style={[styles.ring, ringStyle]} accessibilityLabel="Member avatar">
       {showImage ? (
         <Image
-          key={displayUri}
+          key={storedUrl ?? displayUri}
+          cacheKey={storedUrl ?? displayUri ?? undefined}
           source={{ uri: displayUri! }}
           style={styles.image}
           contentFit="cover"

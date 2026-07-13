@@ -2,23 +2,9 @@
  * Probes search RPCs and profile update paths on linked Supabase project.
  * Usage: node scripts/verify-supabase-search-profile.mjs
  */
-import { readFileSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const root = resolve(__dirname, '..');
-
-function loadEnv() {
-  const text = readFileSync(resolve(root, '.env'), 'utf8');
-  const env = {};
-  for (const line of text.split(/\r?\n/)) {
-    const m = line.match(/^([A-Z0-9_]+)=(.*)$/);
-    if (m) env[m[1]] = m[2].replace(/^["']|["']$/g, '').trim();
-  }
-  return env;
-}
+import { loadProjectEnv } from './loadSupabaseSeedEnv.mjs';
 
 function isRpcMissing(error) {
   const msg = (error?.message ?? '').toLowerCase();
@@ -36,7 +22,7 @@ function isAuthRequired(error) {
   return msg.includes('not authenticated') || msg.includes('jwt');
 }
 
-const env = loadEnv();
+const env = loadProjectEnv();
 const url = env.EXPO_PUBLIC_SUPABASE_URL;
 const anonKey = env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY?.trim();
@@ -144,7 +130,10 @@ if (profilePatchErr) {
   if (isRpcMissing(profilePatchErr)) {
     console.error('  FAIL update_own_user_profile — run sql/update_own_user_profile.sql');
     failed = true;
-  } else if (isAuthRequired(profilePatchErr)) {
+  } else if (
+    isAuthRequired(profilePatchErr) ||
+    (profilePatchErr.message ?? '').toLowerCase().includes('permission denied')
+  ) {
     console.log('  OK   update_own_user_profile (exists; requires auth)');
   } else {
     console.error('  ERR  update_own_user_profile:', profilePatchErr.message);
@@ -182,7 +171,7 @@ if (serviceKey) {
       console.log('  SKIP authenticated tests — could not create probe user:', createErr.message);
     } else {
       const probeId = created.user.id;
-      await admin.rpc('ensure_public_user_profile', {}, { count: 'exact' }).catch(() => {});
+      await admin.rpc('ensure_public_user_profile');
       await admin.from('users').upsert({
         id: probeId,
         email: created.user.email,

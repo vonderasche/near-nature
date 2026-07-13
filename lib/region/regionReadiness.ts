@@ -4,23 +4,23 @@ import {
   regionLabel,
   type RegionPackId,
 } from '@/constants/regions';
-import { isRegionalModelBundleReady } from '@/lib/region/regionalModelReadyState';
+import { isGlobalCaptureModelBundleReady } from '@/lib/region/globalCaptureModelReadyState';
 
 export type RegionFeature = 'discover' | 'camera';
 
-/** Region has catalog + regional model pack downloaded. */
+/** Region is live and the global capture model is on-device. */
 export function isRegionReady(regionId: RegionPackId, modelBundleReady?: boolean): boolean {
-  const modelsReady = modelBundleReady ?? isRegionalModelBundleReady(regionId);
+  const modelsReady = modelBundleReady ?? isGlobalCaptureModelBundleReady();
   return isRegionLive(regionId) && modelsReady;
 }
 
-/** Camera capture ready — v13 global cascade is fully bundled (no regional download). */
+/** Camera capture ready — requires the global v18 model downloaded to device storage. */
 export function isCaptureReady(
   _regionId: RegionPackId,
   _captureMode: CaptureMode,
-  _modelBundleReady?: boolean,
+  captureModelsReady?: boolean,
 ): boolean {
-  return true;
+  return captureModelsReady ?? isGlobalCaptureModelBundleReady();
 }
 
 export function regionAvailabilityBadge(regionId: RegionPackId, modelBundleReady?: boolean): 'Available' | 'In progress' {
@@ -37,14 +37,14 @@ export function regionDiscoverSubtitle(regionId: RegionPackId, modelBundleReady?
 
 export function regionUnavailableTitle(
   _regionId: RegionPackId,
-  _feature: RegionFeature,
+  feature: RegionFeature,
   downloadState?: 'idle' | 'downloading' | 'ready' | 'error',
 ): string {
   if (downloadState === 'downloading') {
-    return 'Preparing your region';
+    return feature === 'camera' ? 'Downloading identification models' : 'Preparing your region';
   }
   if (downloadState === 'error') {
-    return 'Connect to download your region';
+    return 'Connect to download identification models';
   }
   return 'Still setting up';
 }
@@ -57,10 +57,10 @@ export function regionUnavailableMessage(
   const label = regionLabel(regionId);
   if (downloadState === 'downloading') {
     const pct = Math.round((downloadProgress ?? 0) * 100);
-    return `Downloading identification models for ${label}… ${pct}%`;
+    return `Downloading identification models… ${pct}%`;
   }
   if (downloadState === 'error') {
-    return `Identification models for ${label} need an internet connection. Retry from Profile or switch to another region.`;
+    return `Identification models need an internet connection. Retry from Profile or switch to another region.`;
   }
   return `We're bringing parks, species, and identification for ${label} to Near Nature. Choose another region in Profile to keep exploring.`;
 }

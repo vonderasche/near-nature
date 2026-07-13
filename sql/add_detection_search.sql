@@ -565,6 +565,7 @@ create or replace function public.detection_matches_search_query(
 returns boolean
 language plpgsql
 immutable
+set search_path = public, extensions, pg_catalog
 as $$
 declare
   v_query text := lower(trim(coalesce(p_query, '')));

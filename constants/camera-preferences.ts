@@ -11,5 +11,5 @@ export const DEFAULT_CAMERA_STABILIZATION = true;
 export const DEFAULT_CAMERA_SHUTTER_SOUND = true;
 export const DEFAULT_CAMERA_LEVEL = true;
 export const DEFAULT_CAMERA_LIVE_CLASSIFIER = false;
-/** Live preview AI: global v6 kingdom (default) vs legacy v4 kingdom. */
-export const DEFAULT_CAMERA_PREVIEW_MODE = 'kingdom_global' as const;
+/** Live preview AI: v14 family classifier. */
+export const DEFAULT_CAMERA_PREVIEW_MODE = 'v14' as const;

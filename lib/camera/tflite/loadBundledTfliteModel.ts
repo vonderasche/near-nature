@@ -1,5 +1,4 @@
 import { Asset } from 'expo-asset';
-import * as FileSystem from 'expo-file-system/legacy';
 import { Image } from 'react-native';
 import {
   loadTensorflowModel,
@@ -17,34 +16,6 @@ export function waitForTfliteLoadChainIdle(): Promise<void> {
 
 function hasUrlProtocol(uri: string): boolean {
   return /^https?:\/\//i.test(uri) || /^file:\/\//i.test(uri);
-}
-
-/** Float32 re-exports are ~2× larger than float16 sidecars baked into older dev-client APKs. */
-const MVP_FLOAT32_MIN_BYTES: Record<string, number> = {
-  scene_gate: 10_000_000,
-  kingdom: 14_000_000,
-};
-
-async function assertMvpModelNotStaleFloat16(localUri: string): Promise<void> {
-  if (!__DEV__) {
-    return;
-  }
-
-  const basename = localUri.split('/').pop()?.split('?')[0] ?? '';
-  const minBytes = Object.entries(MVP_FLOAT32_MIN_BYTES).find(([name]) => basename.includes(name))?.[1];
-  if (minBytes == null) {
-    return;
-  }
-
-  const info = await FileSystem.getInfoAsync(localUri);
-  if (!info.exists || typeof info.size !== 'number' || info.size >= minBytes) {
-    return;
-  }
-
-  throw new Error(
-    `${basename} is ${info.size} bytes (expected float32 ≥ ${minBytes}). ` +
-      'The dev client APK still has old float16 weights — run npm run android:install to rebuild, or clear app storage.',
-  );
 }
 
 async function ensureBundledAssetReady(modelAsset: number): Promise<string> {
@@ -65,7 +36,6 @@ async function ensureBundledAssetReady(modelAsset: number): Promise<string> {
   }
 
   if (asset.downloaded && asset.localUri?.startsWith('file://')) {
-    await assertMvpModelNotStaleFloat16(asset.localUri);
     return asset.localUri;
   }
 
@@ -86,7 +56,6 @@ async function ensureBundledAssetReady(modelAsset: number): Promise<string> {
     );
   }
 
-  await assertMvpModelNotStaleFloat16(localUri);
   return localUri;
 }
 

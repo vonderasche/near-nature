@@ -3,11 +3,11 @@ import { getInfoAsync, readAsStringAsync } from '@/lib/fs/legacyFileSystem';
 import { getRegionModelFilePathForStorageId } from '@/lib/region/regionModelPaths';
 import { getRegionModelStorageCandidates } from '@/lib/region/regionPackLegacy';
 import { REGIONAL_ROUTING_RELATIVE_PATH } from '@/lib/region/resolveRegionalModelUri';
-import type { TfliteRoutingConfig } from '@/lib/camera/mobilenet/tfliteRouting';
+import type { TfliteRoutingConfig } from '@/lib/region/tfliteRouting';
 import {
   getBundledTfliteRouting,
   setRegionalRoutingConfig,
-} from '@/lib/camera/mobilenet/tfliteRouting';
+} from '@/lib/region/tfliteRouting';
 
 export async function loadRegionalRoutingConfig(regionId: RegionPackId): Promise<TfliteRoutingConfig> {
   for (const storageId of getRegionModelStorageCandidates(regionId)) {
@@ -25,4 +25,4 @@ export async function loadRegionalRoutingConfig(regionId: RegionPackId): Promise
   return getBundledTfliteRouting();
 }
 
-export { clearRegionalRoutingCache } from '@/lib/camera/mobilenet/tfliteRouting';
+export { clearRegionalRoutingCache } from '@/lib/region/tfliteRouting';

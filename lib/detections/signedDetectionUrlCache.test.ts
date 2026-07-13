@@ -9,6 +9,7 @@ vi.mock('@/lib/detections/signedDetectionUrlPersistentCache', () => ({
 
 import {
   clearSignedDetectionUrlCache,
+  invalidateSignedDetectionUrlCacheForPath,
   resolveSignedDetectionDisplayUrl,
 } from '@/lib/detections/signedDetectionUrlCache';
 
@@ -70,6 +71,20 @@ describe('resolveSignedDetectionDisplayUrl', () => {
 
     expect(first).toBe(FALLBACK);
     expect(second).toBe('https://signed.example/retry.jpg');
+    expect(sign).toHaveBeenCalledTimes(2);
+  });
+
+  it('invalidates a path so the next resolve re-signs', async () => {
+    const sign = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true as const, signedUrl: 'https://signed.example/v1.jpg' })
+      .mockResolvedValueOnce({ ok: true as const, signedUrl: 'https://signed.example/v2.jpg' });
+
+    await resolveSignedDetectionDisplayUrl(PATH, EXPIRES_SEC, sign, FALLBACK);
+    invalidateSignedDetectionUrlCacheForPath(PATH);
+    const second = await resolveSignedDetectionDisplayUrl(PATH, EXPIRES_SEC, sign, FALLBACK);
+
+    expect(second).toBe('https://signed.example/v2.jpg');
     expect(sign).toHaveBeenCalledTimes(2);
   });
 

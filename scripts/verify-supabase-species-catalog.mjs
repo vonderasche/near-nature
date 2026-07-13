@@ -2,23 +2,9 @@
  * Probes species catalog + Florida parks cloud paths used by Gemini sharing and Discover.
  * Usage: node scripts/verify-supabase-species-catalog.mjs
  */
-import { readFileSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const root = resolve(__dirname, '..');
-
-function loadEnv() {
-  const text = readFileSync(resolve(root, '.env'), 'utf8');
-  const env = {};
-  for (const line of text.split(/\r?\n/)) {
-    const m = line.match(/^([A-Z0-9_]+)=(.*)$/);
-    if (m) env[m[1]] = m[2].replace(/^["']|["']$/g, '').trim();
-  }
-  return env;
-}
+import { loadProjectEnv } from './loadSupabaseSeedEnv.mjs';
 
 function isRpcMissing(error) {
   const msg = (error?.message ?? '').toLowerCase();
@@ -49,7 +35,7 @@ function isMissingDependency(error) {
   );
 }
 
-const env = loadEnv();
+const env = loadProjectEnv();
 const url = env.EXPO_PUBLIC_SUPABASE_URL;
 const anonKey = env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY?.trim();

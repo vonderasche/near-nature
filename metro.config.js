@@ -22,13 +22,12 @@ if (!config.resolver.assetExts.includes('csv')) {
   config.resolver.assetExts.push('csv');
 }
 
-// Release slim APK: bundle preview_models + v13 global capture pack.
+// Release slim APK: bundle v14 live preview only; v16 capture downloads from Supabase.
 if (process.env.EXPO_PUBLIC_SLIM_APK === '1') {
-  const bundledTfliteRoot =
-    /assets[\\/]tflite[\\/](preview_models|v13[\\/]global)[\\/]/;
+  const bundledTfliteRoot = /assets[\\/]tflite[\\/]preview_models[\\/]v14[\\/]/;
   const redirectTflite = path.resolve(
     __dirname,
-    'assets/tflite/preview_models/scene_gate/tflite/scene_gate.tflite',
+    'assets/tflite/preview_models/v14/tflite/v14.tflite',
   );
   const previousResolveRequest = config.resolver.resolveRequest;
   config.resolver.resolveRequest = (context, moduleName, platform) => {

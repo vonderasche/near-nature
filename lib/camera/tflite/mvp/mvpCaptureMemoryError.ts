@@ -17,8 +17,8 @@ export function formatMvpCaptureLoadError(error: unknown, label: string): string
 
   if (isTflitePrepareCompatibilityError(message)) {
     return (
-      `TFLite ${label} failed to load (float16 ops not supported on this runtime). ` +
-      'Re-export the model as full float32, then reload the app.'
+      `TFLite ${label} failed to load (float16 ops / tensors not supported on this runtime). ` +
+      'The app will retry with the float32 model on next capture, or re-download models from Settings.'
     );
   }
 

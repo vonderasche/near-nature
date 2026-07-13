@@ -5,13 +5,13 @@ import { parseThemeName } from '@/constants/theme-preferences';
 describe('parseThemeName', () => {
   it('returns valid persisted themes', () => {
     expect(parseThemeName('forestLight')).toBe('forestLight');
-    expect(parseThemeName('forestMeadow')).toBe('forestMeadow');
-    expect(parseThemeName('forestNight')).toBe('forestNight');
     expect(parseThemeName('light')).toBe('light');
   });
 
-  it('migrates removed themes to dark', () => {
+  it('migrates removed themes to the closest remaining theme', () => {
     expect(parseThemeName('forestDark')).toBe('dark');
+    expect(parseThemeName('forestMeadow')).toBe('forestLight');
+    expect(parseThemeName('forestNight')).toBe('dark');
     expect(parseThemeName('neutralGray')).toBe('dark');
   });
 

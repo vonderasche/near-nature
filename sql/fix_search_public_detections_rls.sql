@@ -27,7 +27,7 @@ returns table (
 language plpgsql
 stable
 security definer
-set search_path = public
+set search_path = public, extensions, pg_catalog
 as $$
 declare
   v_query text := trim(coalesce(p_query, ''));

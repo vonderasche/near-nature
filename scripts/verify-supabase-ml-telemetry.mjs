@@ -2,26 +2,12 @@
  * Verifies ML telemetry RPCs exist (requires signed-in user for insert test).
  * Usage: node scripts/verify-supabase-ml-telemetry.mjs
  */
-import { readFileSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'node:crypto';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const root = resolve(__dirname, '..');
+import { loadProjectEnv } from './loadSupabaseSeedEnv.mjs';
 
-function loadEnv() {
-  const text = readFileSync(resolve(root, '.env'), 'utf8');
-  const env = {};
-  for (const line of text.split(/\r?\n/)) {
-    const m = line.match(/^([A-Z0-9_]+)=(.*)$/);
-    if (m) env[m[1]] = m[2].replace(/^["']|["']$/g, '').trim();
-  }
-  return env;
-}
-
-const env = loadEnv();
+const env = loadProjectEnv();
 const supabase = createClient(env.EXPO_PUBLIC_SUPABASE_URL, env.EXPO_PUBLIC_SUPABASE_ANON_KEY);
 
 console.log('\nML telemetry verify\n');

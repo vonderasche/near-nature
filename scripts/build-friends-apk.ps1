@@ -82,6 +82,39 @@ function Set-ReleasePackagingForDevices([string]$GradlePropsPath) {
     Write-Host "expo.useLegacyPackaging=true (16 KB page / sideload compatibility)" -ForegroundColor Cyan
 }
 
+function Get-AppVersionFromJson([string]$ProjectRoot) {
+    $appJsonPath = Join-Path $ProjectRoot 'app.json'
+    if (-not (Test-Path $appJsonPath)) {
+        return @{ VersionName = '1.0.0'; VersionCode = 1 }
+    }
+    $app = Get-Content $appJsonPath -Raw | ConvertFrom-Json
+    $versionName = [string]$app.expo.version
+    $versionCode = [int]$app.expo.android.versionCode
+    if ([string]::IsNullOrWhiteSpace($versionName)) {
+        $versionName = '1.0.0'
+    }
+    if ($versionCode -lt 1) {
+        $versionCode = 1
+    }
+    return @{
+        VersionName = $versionName
+        VersionCode = $versionCode
+    }
+}
+
+function Sync-AppVersionToAndroidGradle([string]$ProjectRoot) {
+    $gradlePath = Join-Path $ProjectRoot 'android\app\build.gradle'
+    if (-not (Test-Path $gradlePath)) {
+        return
+    }
+    $version = Get-AppVersionFromJson $ProjectRoot
+    $props = Get-Content $gradlePath -Raw
+    $props = $props -replace 'versionCode\s+\d+', "versionCode $($version.VersionCode)"
+    $props = $props -replace 'versionName\s+"[^"]*"', "versionName `"$($version.VersionName)`""
+    Set-Content -Path $gradlePath -Value $props -NoNewline
+    Write-Host "Android version: $($version.VersionName) ($($version.VersionCode))" -ForegroundColor Cyan
+}
+
 function Test-ReleaseBundleHasSupabase([string]$ApkPath) {
     $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("nn_apk_" + [guid]::NewGuid().ToString("n"))
     New-Item -ItemType Directory -Force -Path $tmp | Out-Null
@@ -192,6 +225,7 @@ function Invoke-FriendsApkGradle([string]$ProjectRoot, [bool]$FrameProcessorsEna
     }
 
     Ensure-AndroidLocalProperties $ProjectRoot
+    Sync-AppVersionToAndroidGradle $ProjectRoot
 
     if ($ForceJsRebundle) {
         $env:EXPO_PUBLIC_SLIM_APK = '1'
@@ -257,7 +291,7 @@ if ($missing.Count -gt 0) {
 
 if ($PreviewModelsOnly) {
     Set-EnvVar 'EXPO_PUBLIC_SLIM_APK' '1' $EnvFile
-    Write-Host "EXPO_PUBLIC_SLIM_APK=1 (preview_models + v6 global; regional specialists download)" -ForegroundColor Yellow
+    Write-Host "EXPO_PUBLIC_SLIM_APK=1 (v14 preview only; v16 capture downloads from Supabase)" -ForegroundColor Yellow
 } else {
     Set-EnvVar 'EXPO_PUBLIC_SLIM_APK' '0' $EnvFile
 }
@@ -314,9 +348,12 @@ $dest = Join-Path $outDir $apkName
 Copy-Item -Force $apk $dest
 Test-ReleaseBundleHasSupabase $dest
 
+$appVersion = Get-AppVersionFromJson $Root
+
 Write-Host ""
 Write-Host "Done." -ForegroundColor Green
 Write-Host "  APK: $dest"
+Write-Host "  Version: $($appVersion.VersionName) (versionCode $($appVersion.VersionCode))"
 Write-Host "  Size: $([math]::Round((Get-Item $dest).Length / 1MB, 1)) MB"
 if ($livePreviewInApk) {
     Write-Host "  Live camera AI: ON" -ForegroundColor Green
@@ -324,7 +361,7 @@ if ($livePreviewInApk) {
     Write-Host "  Live camera AI: OFF" -ForegroundColor Yellow
 }
 if ($PreviewModelsOnly) {
-    Write-Host "  Bundled TFLite: preview_models + v6 global (regional specialists download per region)" -ForegroundColor Green
+    Write-Host "  Bundled TFLite: v14 live preview only (v16 capture downloads on install)" -ForegroundColor Green
 }
 if ($UsedMirror) {
     Write-Host "  Built from: $BuildRoot" -ForegroundColor DarkGray
@@ -336,3 +373,4 @@ Write-Host "  2. .\scripts\deploy-identify-species.ps1"
 Write-Host "  3. Do not put EXPO_PUBLIC_GEMINI_API_KEY in .env for friends builds"
 Write-Host ""
 Write-Host "Friends: copy APK to a physical Android phone (ARM). It will not run on x86 PC emulators." -ForegroundColor Cyan
+Write-Host "Play Store: use npm run eas:build:production (AAB) then npm run eas:submit:android" -ForegroundColor Cyan

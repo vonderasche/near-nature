@@ -26,6 +26,14 @@ export function clearSignedDetectionUrlCache(): void {
   inFlight.clear();
 }
 
+/** Clears one object path from memory (call before re-signing after storage overwrite). */
+export function invalidateSignedDetectionUrlCacheForPath(objectPath: string): void {
+  const trimmed = objectPath.trim();
+  if (!trimmed) return;
+  cache.delete(trimmed);
+  inFlight.delete(trimmed);
+}
+
 /** Clears memory + persisted signed URLs (e.g. sign-out). */
 export async function clearAllSignedDetectionUrlCaches(): Promise<void> {
   clearSignedDetectionUrlCache();

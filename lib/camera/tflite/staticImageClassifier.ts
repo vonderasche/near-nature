@@ -55,14 +55,46 @@ function buildModelInputBuffer(
 
 async function loadRgbaFromUri(
   imageUri: string,
-  width: number,
-  height: number,
+  config: ClassificationModelConfig,
 ): Promise<{ data: Uint8Array; width: number; height: number }> {
-  const resized = await ImageManipulator.manipulateAsync(
-    imageUri,
-    [{ resize: { width, height } }],
-    { compress: 1, format: ImageManipulator.SaveFormat.JPEG, base64: true },
-  );
+  const { width: targetWidth, height: targetHeight } = config.input;
+  const actions: ImageManipulator.Action[] = [];
+
+  if (config.input.preprocessMode === 'resize_short_edge_then_center_crop') {
+    const resizeShortEdge = config.input.resizeShortEdge ?? targetWidth + 28;
+    const probe = await ImageManipulator.manipulateAsync(imageUri, [], {
+      compress: 1,
+      format: ImageManipulator.SaveFormat.JPEG,
+    });
+    const sourceWidth = probe.width ?? targetWidth;
+    const sourceHeight = probe.height ?? targetHeight;
+    let resizedWidth: number;
+    let resizedHeight: number;
+    if (sourceWidth < sourceHeight) {
+      resizedWidth = resizeShortEdge;
+      resizedHeight = Math.max(1, Math.round((sourceHeight * resizeShortEdge) / sourceWidth));
+    } else {
+      resizedHeight = resizeShortEdge;
+      resizedWidth = Math.max(1, Math.round((sourceWidth * resizeShortEdge) / sourceHeight));
+    }
+    actions.push({ resize: { width: resizedWidth, height: resizedHeight } });
+    actions.push({
+      crop: {
+        originX: Math.max(0, Math.floor((resizedWidth - targetWidth) / 2)),
+        originY: Math.max(0, Math.floor((resizedHeight - targetHeight) / 2)),
+        width: targetWidth,
+        height: targetHeight,
+      },
+    });
+  } else {
+    actions.push({ resize: { width: targetWidth, height: targetHeight } });
+  }
+
+  const resized = await ImageManipulator.manipulateAsync(imageUri, actions, {
+    compress: 1,
+    format: ImageManipulator.SaveFormat.JPEG,
+    base64: true,
+  });
 
   if (!resized.base64) {
     throw new Error('Could not read resized image data.');
@@ -92,11 +124,7 @@ export async function classifyStillImage(
   const localUri = await ensureLocalImageUri(imageUri);
 
   const preprocessStart = performance.now();
-  const { data, width, height } = await loadRgbaFromUri(
-    localUri,
-    config.input.width,
-    config.input.height,
-  );
+  const { data, width, height } = await loadRgbaFromUri(localUri, config);
   const inputBuffer = buildModelInputBuffer(data, width, height, config);
   const preprocessMs = performance.now() - preprocessStart;
 

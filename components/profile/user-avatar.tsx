@@ -75,7 +75,7 @@ export function UserAvatar({ storedUrl, onPress, busy = false }: UserAvatarProps
       <View style={styles.inner}>
         {showImage ? (
           <Image
-            key={displayUri}
+            key={storedUrl ?? displayUri}
             source={{ uri: displayUri! }}
             style={styles.image}
             accessibilityLabel="Profile photo"

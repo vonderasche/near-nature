@@ -9,19 +9,19 @@ import {
   regionUnavailableMessage,
 } from '@/lib/region/regionReadiness';
 import {
-  clearRegionalModelBundleReadyCache,
-  isRegionalModelBundleReady,
-  setRegionalModelBundleReadyCache,
-} from '@/lib/region/regionalModelReadyState';
+  clearGlobalCaptureModelBundleReadyCache,
+  setGlobalCaptureModelBundleReadyCache,
+} from '@/lib/region/globalCaptureModelReadyState';
+import { modelBundleNeedsUpdate } from '@/lib/region/modelBundleVersionCheck';
+import type { RegionModelManifest } from '@/services/regionModelDownloadService';
 
 describe('isRegionReady', () => {
   beforeEach(() => {
-    clearRegionalModelBundleReadyCache();
+    clearGlobalCaptureModelBundleReadyCache();
   });
 
-  it('is true for south when regional models are on-device', () => {
-    setRegionalModelBundleReadyCache('south', true);
-    expect(isRegionalModelBundleReady('south')).toBe(true);
+  it('is true for south when global capture models are on-device', () => {
+    setGlobalCaptureModelBundleReadyCache(true);
     expect(isRegionReady('south', true)).toBe(true);
   });
 
@@ -36,16 +36,58 @@ describe('isRegionReady', () => {
 
 describe('isCaptureReady', () => {
   beforeEach(() => {
-    clearRegionalModelBundleReadyCache();
+    clearGlobalCaptureModelBundleReadyCache();
   });
 
-  it('is always true in global capture mode', () => {
-    expect(isCaptureReady('west', 'global', false)).toBe(true);
+  it('is false until global capture models are ready', () => {
+    expect(isCaptureReady('west', 'global', false)).toBe(false);
   });
 
-  it('is always true in regional capture mode (v13 bundled cascade)', () => {
-    expect(isCaptureReady('south', 'regional', false)).toBe(true);
+  it('is true when global capture models are ready', () => {
+    setGlobalCaptureModelBundleReadyCache(true);
     expect(isCaptureReady('south', 'regional', true)).toBe(true);
+  });
+});
+
+describe('modelBundleNeedsUpdate', () => {
+  const baseManifest: RegionModelManifest = {
+    regionId: 'global',
+    version: '1.0.0',
+    bundle: 'near_nature_v18',
+    files: [
+      {
+        path: 'v18/tflite/v18.tflite',
+        storagePath: 'global/v18/tflite/v18.tflite',
+        sizeBytes: 100,
+        sha256: 'abc',
+      },
+    ],
+  };
+
+  it('returns true when nothing is installed', () => {
+    expect(modelBundleNeedsUpdate(null, baseManifest)).toBe(true);
+  });
+
+  it('returns false when local matches remote', () => {
+    expect(modelBundleNeedsUpdate(baseManifest, baseManifest)).toBe(false);
+  });
+
+  it('returns true when version changes', () => {
+    expect(
+      modelBundleNeedsUpdate(baseManifest, {
+        ...baseManifest,
+        version: '1.0.1',
+      }),
+    ).toBe(true);
+  });
+
+  it('returns true when bundle name changes', () => {
+    expect(
+      modelBundleNeedsUpdate(baseManifest, {
+        ...baseManifest,
+        bundle: 'near_nature_v13',
+      }),
+    ).toBe(true);
   });
 });
 

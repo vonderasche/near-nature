@@ -9,7 +9,7 @@ export function loadProjectEnv() {
   const text = readFileSync(resolve(root, '.env'), 'utf8').replace(/^\uFEFF/, '');
   const env = {};
   for (const line of text.split(/\r?\n/)) {
-    const trimmed = line.trim();
+    const trimmed = line.trim().replace(/^\uFEFF+/, '');
     if (!trimmed || trimmed.startsWith('#')) continue;
     const m = trimmed.match(/^([A-Z0-9_]+)=(.*)$/);
     if (m) env[m[1]] = m[2].replace(/^["']|["']$/g, '').trim();

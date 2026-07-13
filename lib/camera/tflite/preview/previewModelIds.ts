@@ -1,7 +1,7 @@
 /** Live camera preview model ids — add entries in `previewModelRegistry.ts`. */
-export type PreviewModelId = 'kingdom_global' | 'n1' | 'v14' | 'kingdom';
+export type PreviewModelId = 'v14';
 
-export const DEFAULT_PREVIEW_MODEL_ID: PreviewModelId = 'kingdom_global';
+export const DEFAULT_PREVIEW_MODEL_ID: PreviewModelId = 'v14';
 
 /** How raw logits are interpreted in the overlay mapper. */
-export type PreviewModelKind = 'kingdom_global' | 'kingdom' | 'plain';
+export type PreviewModelKind = 'plain';

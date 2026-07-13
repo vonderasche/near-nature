@@ -27,7 +27,6 @@ import { useCameraScreen } from '@/hooks/useCameraScreen';
 import { usePickPhotoFromGallery } from '@/hooks/usePickPhotoFromGallery';
 import { useUserHomeState } from '@/hooks/useUserHomeState';
 import { enqueueBackgroundGalleryIdentification } from '@/lib/camera/backgroundGalleryIdentificationQueue';
-import { areFrameProcessorsAvailable } from '@/lib/camera/areFrameProcessorsAvailable';
 import { isClassificationDebugEnabled } from '@/lib/classification/debug';
 import { isOnDevicePreviewEnabled } from '@/lib/camera/tflite/isOnDevicePreviewEnabled';
 import {
@@ -37,15 +36,13 @@ import {
 } from '@/lib/camera/tflite/mvp/mvpTfliteMemory';
 import { contentInsetsPadding } from '@/lib/screen/contentInsets';
 import { RegionComingSoon } from '@/components/shared/region-coming-soon';
-import { useActiveRegion } from '@/context/RegionContext';
+import { useActiveRegion, useCaptureModelsReady } from '@/context/RegionContext';
 import { useIdentificationPreferences } from '@/hooks/useIdentificationPreferences';
-import { isCaptureReady } from '@/lib/region/regionReadiness';
-
 export default function CameraScreen() {
   const { theme } = useTheme();
-  const { isLive, regionId } = useActiveRegion();
+  const { regionId } = useActiveRegion();
   const { captureMode } = useIdentificationPreferences();
-  const captureReady = isCaptureReady(regionId, captureMode, isLive);
+  const captureReady = useCaptureModelsReady();
   const { isAuthenticated, isLoading, userId } = useAuthContext();
   const { stateCode: userState } = useUserHomeState();
   const router = useRouter();
@@ -179,12 +176,6 @@ export default function CameraScreen() {
 
   const livePreviewSuspended = useMvpLivePreviewSuspended();
   const captureSessionActive = useMvpCaptureSessionActive();
-  const livePreviewPipelineActive =
-    isFocused &&
-    liveClassifierEnabled &&
-    !livePreviewSuspended &&
-    !captureSessionActive &&
-    areFrameProcessorsAvailable();
   const effectiveLiveClassifierEnabled =
     isFocused && liveClassifierEnabled && !livePreviewSuspended && !captureSessionActive;
 
@@ -194,10 +185,11 @@ export default function CameraScreen() {
     hdrSupported,
     stabilizationSupported,
     stabilizationEnabled: stabilizationActiveForCamera,
+    livePreviewVideoReady,
   } = useCameraCaptureFormat(device ?? undefined, {
     hdrEnabled,
     stabilizationEnabled,
-    livePreviewEnabled: livePreviewPipelineActive,
+    livePreviewEnabled: liveClassifierEnabled && isFocused,
   });
   const { zoom, setZoom, chips, activeChipId, selectChip } = useCameraZoom(device ?? undefined);
 
@@ -305,6 +297,7 @@ export default function CameraScreen() {
               stabilizationEnabled={stabilizationActiveForCamera}
               stabilizationSupported={stabilizationSupported}
               liveClassifierEnabled={effectiveLiveClassifierEnabled}
+              livePreviewVideoReady={livePreviewVideoReady}
               previewMode={previewMode}
               onFocusPoint={focusAt}
               controlMenusOpen={controlMenusOpen}

@@ -1,8 +1,6 @@
 import { buildTheme } from './shared';
 import { darkThemePreset } from './dark';
 import { forestLightThemePreset } from './forestLight';
-import { forestMeadowThemePreset } from './forestMeadow';
-import { forestNightThemePreset } from './forestNight';
 import { lightThemePreset } from './light';
 
 export type {
@@ -28,8 +26,6 @@ export const themeRegistry = {
   dark: buildTheme(darkThemePreset),
   light: buildTheme(lightThemePreset),
   forestLight: buildTheme(forestLightThemePreset),
-  forestMeadow: buildTheme(forestMeadowThemePreset),
-  forestNight: buildTheme(forestNightThemePreset),
 } as const;
 
 export type ThemeName = keyof typeof themeRegistry;

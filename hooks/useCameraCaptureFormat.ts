@@ -9,6 +9,10 @@ type Options = {
   livePreviewEnabled?: boolean;
 };
 
+function isVideoCapableFormat(format: CameraDeviceFormat | undefined): boolean {
+  return Boolean(format && format.videoWidth > 0 && format.videoHeight > 0);
+}
+
 /**
  * Picks a capture format with optional HDR and stabilization filters.
  * Live preview uses a video-capable format and skips HDR/stabilization (they conflict with YUV video on many devices).
@@ -22,14 +26,22 @@ export function useCameraCaptureFormat(
   hdrSupported: boolean;
   stabilizationSupported: boolean;
   stabilizationEnabled: boolean;
+  /** True when the selected format can bind photo + YUV video for frame processors. */
+  livePreviewVideoReady: boolean;
 } {
-  const baselineFormat = useCameraFormat(device, [{ photoResolution: 'max' }]);
+  const maxPhotoFormat = useCameraFormat(device, [{ photoResolution: 'max' }]);
+  const livePreviewBaseFormat = useCameraFormat(device, [
+    { videoResolution: { width: 1280, height: 720 } },
+    { photoResolution: 'max' },
+    { fps: 30 },
+  ]);
 
   const formatFilters = useMemo(() => {
     if (livePreviewEnabled) {
       return [
         { videoResolution: { width: 1280, height: 720 } },
         { photoResolution: 'max' },
+        { fps: 30 },
       ];
     }
 
@@ -40,30 +52,36 @@ export function useCameraCaptureFormat(
     return filters;
   }, [hdrEnabled, livePreviewEnabled, stabilizationEnabled]);
 
-  const format = useCameraFormat(device, formatFilters);
+  const preferredFormat = useCameraFormat(device, formatFilters);
 
-  const hdrSupported = Boolean(baselineFormat?.supportsPhotoHdr);
+  const format = livePreviewEnabled
+    ? (preferredFormat ?? livePreviewBaseFormat)
+    : (preferredFormat ?? maxPhotoFormat);
+
+  const hdrSupported = Boolean(maxPhotoFormat?.supportsPhotoHdr);
   const stabilizationSupported = Boolean(
-    baselineFormat?.videoStabilizationModes?.some((mode) => mode !== 'off'),
+    maxPhotoFormat?.videoStabilizationModes?.some((mode) => mode !== 'off'),
   );
 
+  const livePreviewVideoReady = !livePreviewEnabled || isVideoCapableFormat(format);
   const photoHdr =
     !livePreviewEnabled && hdrEnabled && hdrSupported && Boolean(format?.supportsPhotoHdr);
   const effectiveStabilizationEnabled = !livePreviewEnabled && stabilizationEnabled;
 
   return useMemo(
     () => ({
-      format: format ?? baselineFormat,
+      format,
       photoHdr,
       hdrSupported,
       stabilizationSupported,
       stabilizationEnabled: effectiveStabilizationEnabled,
+      livePreviewVideoReady,
     }),
     [
-      baselineFormat,
       effectiveStabilizationEnabled,
       format,
       hdrSupported,
+      livePreviewVideoReady,
       photoHdr,
       stabilizationSupported,
     ],

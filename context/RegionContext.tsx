@@ -21,14 +21,11 @@ import {
 import { normalizeRegionPackId } from '@/lib/region/regionPackLegacy';
 import { useUserHomeState } from '@/hooks/useUserHomeState';
 import {
-  ensureRegionalModels,
-  onActiveRegionChanged,
-  type EnsureRegionalModelsProgress,
-} from '@/lib/region/regionalModelBundle';
+  ensureGlobalCaptureModels,
+  refreshGlobalCaptureModelBundleReadyCache,
+  type EnsureGlobalCaptureModelsProgress,
+} from '@/lib/region/globalCaptureModelBundle';
 import { isRegionReady } from '@/lib/region/regionReadiness';
-import {
-  refreshRegionalModelBundleReadyCache,
-} from '@/services/regionModelDownloadService';
 
 export type RegionSource = 'auto' | 'manual';
 
@@ -45,6 +42,7 @@ export type ActiveRegion = {
 type RegionContextValue = {
   activeRegion: ActiveRegion;
   ready: boolean;
+  captureModelsReady: boolean;
   downloadState: RegionDownloadState;
   downloadProgress: number;
   retryDownload: () => void;
@@ -57,18 +55,18 @@ const RegionContext = createContext<RegionContextValue | null>(null);
 function buildActiveRegion(
   regionId: RegionPackId,
   source: RegionSource,
-  modelBundleReady: boolean,
+  captureModelsReady: boolean,
 ): ActiveRegion {
   return {
     regionId,
     source,
-    isLive: isRegionReady(regionId, modelBundleReady),
+    isLive: isRegionReady(regionId, captureModelsReady),
     label: regionLabel(regionId),
     displayLabel: regionDisplayLabel(regionId),
   };
 }
 
-function progressRatio(progress: EnsureRegionalModelsProgress): number {
+function progressRatio(progress: EnsureGlobalCaptureModelsProgress): number {
   if (progress.totalBytes > 0) {
     return Math.min(1, progress.bytesDownloaded / progress.totalBytes);
   }
@@ -82,7 +80,7 @@ export function RegionProvider({ children }: { children: ReactNode }) {
   const { stateCode, loading: homeStateLoading } = useUserHomeState();
   const [manualOverride, setManualOverride] = useState<RegionPackId | null>(null);
   const [storageReady, setStorageReady] = useState(false);
-  const [modelBundleReady, setModelBundleReady] = useState(false);
+  const [captureModelsReady, setCaptureModelsReady] = useState(false);
   const [downloadState, setDownloadState] = useState<RegionDownloadState>('idle');
   const [downloadProgress, setDownloadProgress] = useState(0);
   const downloadGenerationRef = useRef(0);
@@ -110,27 +108,27 @@ export function RegionProvider({ children }: { children: ReactNode }) {
 
   const activeRegionId = manualOverride ?? autoRegionId;
 
-  const runRegionalDownload = useCallback(async (regionId: RegionPackId) => {
+  const runGlobalCaptureDownload = useCallback(async () => {
     const generation = downloadGenerationRef.current + 1;
     downloadGenerationRef.current = generation;
 
     setDownloadState('idle');
     setDownloadProgress(0);
 
-    const cachedReady = await refreshRegionalModelBundleReadyCache(regionId);
+    const cachedReady = await refreshGlobalCaptureModelBundleReadyCache();
     if (downloadGenerationRef.current !== generation) return;
 
     if (cachedReady) {
-      setModelBundleReady(true);
+      setCaptureModelsReady(true);
       setDownloadState('ready');
       setDownloadProgress(1);
       return;
     }
 
     setDownloadState('downloading');
-    setModelBundleReady(false);
+    setCaptureModelsReady(false);
 
-    const ok = await ensureRegionalModels(regionId, {
+    const ok = await ensureGlobalCaptureModels({
       onProgress: (progress) => {
         if (downloadGenerationRef.current !== generation) return;
         setDownloadProgress(progressRatio(progress));
@@ -139,25 +137,18 @@ export function RegionProvider({ children }: { children: ReactNode }) {
 
     if (downloadGenerationRef.current !== generation) return;
 
-    setModelBundleReady(ok);
+    setCaptureModelsReady(ok);
     setDownloadState(ok ? 'ready' : 'error');
     setDownloadProgress(ok ? 1 : 0);
   }, []);
 
-  const previousRegionIdRef = useRef<RegionPackId | null>(null);
   useEffect(() => {
-    const previous = previousRegionIdRef.current;
-    const next = activeRegionId;
-    if (previous !== null && previous !== next) {
-      onActiveRegionChanged(previous, next);
-    }
-    previousRegionIdRef.current = next;
-    void runRegionalDownload(next);
-  }, [activeRegionId, runRegionalDownload]);
+    void runGlobalCaptureDownload();
+  }, [runGlobalCaptureDownload]);
 
   const activeRegion = useMemo(
-    () => buildActiveRegion(activeRegionId, manualOverride ? 'manual' : 'auto', modelBundleReady),
-    [activeRegionId, manualOverride, modelBundleReady],
+    () => buildActiveRegion(activeRegionId, manualOverride ? 'manual' : 'auto', captureModelsReady),
+    [activeRegionId, manualOverride, captureModelsReady],
   );
 
   const setRegionManual = useCallback((regionId: RegionPackId) => {
@@ -171,8 +162,8 @@ export function RegionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const retryDownload = useCallback(() => {
-    void runRegionalDownload(activeRegionId);
-  }, [activeRegionId, runRegionalDownload]);
+    void runGlobalCaptureDownload();
+  }, [runGlobalCaptureDownload]);
 
   const ready = storageReady && !homeStateLoading;
 
@@ -180,13 +171,23 @@ export function RegionProvider({ children }: { children: ReactNode }) {
     () => ({
       activeRegion,
       ready,
+      captureModelsReady,
       downloadState,
       downloadProgress,
       retryDownload,
       setRegionManual,
       clearManualOverride,
     }),
-    [activeRegion, ready, downloadState, downloadProgress, retryDownload, setRegionManual, clearManualOverride],
+    [
+      activeRegion,
+      ready,
+      captureModelsReady,
+      downloadState,
+      downloadProgress,
+      retryDownload,
+      setRegionManual,
+      clearManualOverride,
+    ],
   );
 
   return <RegionContext.Provider value={value}>{children}</RegionContext.Provider>;
@@ -213,6 +214,11 @@ export function useRegionDownloadState(): Pick<
     downloadProgress: ctx.downloadProgress,
     retryDownload: ctx.retryDownload,
   };
+}
+
+export function useCaptureModelsReady(): boolean {
+  const ctx = useContext(RegionContext);
+  return ctx?.captureModelsReady ?? false;
 }
 
 export function useRegionContext(): RegionContextValue {

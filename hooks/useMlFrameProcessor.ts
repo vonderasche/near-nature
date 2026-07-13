@@ -5,9 +5,7 @@ import { useResizePlugin } from 'vision-camera-resize-plugin';
 import { useFrameProcessor } from 'react-native-vision-camera';
 
 import { useRegisteredTfliteModel } from '@/hooks/useRegisteredTfliteModel';
-import {
-  modelSupportsFrameSkipping,
-} from '@/lib/camera/tflite/modelConfigs';
+import { modelSupportsFrameSkipping } from '@/lib/camera/tflite/modelFrameSkipping';
 import type { ClassificationModelConfig, TfliteModelConfig } from '@/lib/camera/tflite/modelTypes';
 import { mapRawPredictions } from '@/lib/camera/tflite/tfliteClassification';
 import { devLog } from '@/lib/devLog';

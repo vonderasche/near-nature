@@ -25,9 +25,9 @@ export type RegionModelManifestFile = {
   url?: string;
 };
 
-/** Manifest for a regional model bundle uploaded to Supabase Storage. */
+/** Manifest for a model bundle uploaded to Supabase Storage. */
 export type RegionModelManifest = {
-  regionId: RegionPackId;
+  regionId: string;
   version: string;
   bundle?: string;
   builtAt?: string;

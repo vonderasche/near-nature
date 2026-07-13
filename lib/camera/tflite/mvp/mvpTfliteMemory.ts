@@ -111,7 +111,7 @@ function suspendPreviewAndEvictModels(): void {
 
 /**
  * Pause live AI and evict preview models before shutter — avoids peak RAM when
- * routing/specialist models load while scene_gate/kingdom are still resident.
+ * routing/specialist models load while preview models are still resident.
  */
 export async function suspendMvpPreviewBeforeCapture(): Promise<void> {
   if (finishSessionPromise) {

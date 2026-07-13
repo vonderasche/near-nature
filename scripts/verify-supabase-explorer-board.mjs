@@ -2,24 +2,9 @@
  * Probes the linked Supabase project (from .env) for Explorer Board RPC.
  * Usage: node scripts/verify-supabase-explorer-board.mjs
  */
-import { readFileSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const root = resolve(__dirname, '..');
-
-function loadEnv() {
-  const path = resolve(root, '.env');
-  const text = readFileSync(path, 'utf8');
-  const env = {};
-  for (const line of text.split(/\r?\n/)) {
-    const m = line.match(/^([A-Z0-9_]+)=(.*)$/);
-    if (m) env[m[1]] = m[2].replace(/^["']|["']$/g, '').trim();
-  }
-  return env;
-}
+import { loadProjectEnv } from './loadSupabaseSeedEnv.mjs';
 
 function ok(label, detail = '') {
   console.log(`  OK   ${label}${detail ? `: ${detail}` : ''}`);
@@ -38,7 +23,7 @@ function isRpcMissing(error) {
   );
 }
 
-const env = loadEnv();
+const env = loadProjectEnv();
 const url = env.EXPO_PUBLIC_SUPABASE_URL;
 const anonKey = env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 if (!url || !anonKey) {

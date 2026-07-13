@@ -29,7 +29,7 @@ stable
 -- Bypass users RLS (harden_security_linter revokes anon SELECT on public.users).
 -- Only non-sensitive detections + username are exposed (same pattern as leaderboard RPC).
 security definer
-set search_path = public
+set search_path = public, extensions, pg_catalog
 as $$
 declare
   v_query text := trim(coalesce(p_query, ''));

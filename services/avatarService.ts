@@ -6,6 +6,8 @@ import {
   removeDetectionsObjects,
   uploadDetectionsObject,
 } from '@/lib/detections/detectionsStorage';
+import { invalidateSignedDetectionUrlCacheForPath } from '@/lib/detections/signedDetectionUrlCache';
+import { invalidatePersistedSignedUrl } from '@/lib/detections/signedDetectionUrlPersistentCache';
 import { devLog } from '@/lib/devLog';
 import { readLocalFileAsBase64 } from '@/lib/fs/legacyFileSystem';
 
@@ -36,6 +38,10 @@ export async function uploadProfileAvatarFromLibrary(userId: string, localUri: s
     devLog('[uploadProfileAvatarFromLibrary] upload failed', msg);
     throw e instanceof Error ? e : new Error(msg);
   }
+
+  // Same object key on every upload — bust signed-URL + image caches before returning.
+  invalidateSignedDetectionUrlCacheForPath(objectPath);
+  await invalidatePersistedSignedUrl(objectPath);
 
   const publicUrl = getDetectionsObjectPublicUrl(objectPath);
   // Same object path on re-upload — bust image caches in clients and React state.

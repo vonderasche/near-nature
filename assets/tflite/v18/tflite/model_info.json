@@ -1,0 +1,34 @@
+{
+  "architecture": "efficientnet_b1",
+  "checkpoint": "E:\\PROGRAMMING\\Portfolio\\NearNature\\python\\v18\\models\\best.pt",
+  "inputSize": 240,
+  "resizeShortEdge": 255,
+  "numClasses": 111,
+  "tfliteFile": "v18.tflite",
+  "inputLayout": "NHWC",
+  "inputDtype": "float32",
+  "weightDtype": "float32",
+  "normalization": {
+    "mean": [
+      0.485,
+      0.456,
+      0.406
+    ],
+    "std": [
+      0.229,
+      0.224,
+      0.225
+    ]
+  },
+  "outputActivation": "softmax",
+  "val_acc": 0.8257073000349284,
+  "epoch": 13,
+  "preprocess": {
+    "mode": "resize_short_edge_then_center_crop",
+    "cropSize": 240,
+    "resizeShortEdge": 255,
+    "interpolation": "bilinear",
+    "pixelRange": "[0, 1]",
+    "colorSpace": "RGB"
+  }
+}

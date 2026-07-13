@@ -159,3 +159,13 @@ export async function persistSignedUrl(
 export async function clearPersistedSignedUrls(): Promise<void> {
   await clearAllDualStorageByPrefix(SIGNED_URL_CACHE_KEY_PREFIX, clearAllSignedUrlCaches);
 }
+
+/** Drop cached signed URL for one object (e.g. after profile-avatar re-upload). */
+export async function invalidatePersistedSignedUrl(objectPath: string): Promise<void> {
+  const trimmed = objectPath.trim();
+  if (!trimmed) return;
+  if (isSqliteUserCacheAvailable()) {
+    await deleteSignedUrlsFromCache([trimmed]);
+  }
+  await removeAsyncStorageKey(storageKey(trimmed));
+}

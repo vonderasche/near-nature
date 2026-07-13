@@ -61,6 +61,7 @@ function hapticToggle() {
 }
 
 const PREVIEW_MODELS = listPreviewModelsForPicker();
+const SINGLE_PREVIEW_MODEL = PREVIEW_MODELS.length === 1 ? PREVIEW_MODELS[0]! : null;
 
 export function CameraTopControls({
   insets,
@@ -163,6 +164,16 @@ export function CameraTopControls({
     collapseAll();
   }, [collapseAll, onDisableLivePreview]);
 
+  const toggleSinglePreviewModel = useCallback(() => {
+    if (!SINGLE_PREVIEW_MODEL) return;
+    hapticToggle();
+    if (liveClassifierEnabled) {
+      onDisableLivePreview();
+    } else {
+      onSelectPreviewModel(SINGLE_PREVIEW_MODEL.id);
+    }
+  }, [liveClassifierEnabled, onDisableLivePreview, onSelectPreviewModel]);
+
   return (
     <View style={[styles.bar, { paddingTop: insets.top + authSpacing.sm }]} pointerEvents="box-none">
       <View style={styles.controlsRow}>
@@ -250,6 +261,22 @@ export function CameraTopControls({
           />
         </CameraControlGroup>
 
+        {SINGLE_PREVIEW_MODEL ? (
+          <CameraControlButton
+            icon="sparkles"
+            accessibilityLabel={
+              frameProcessorsAvailable
+                ? liveClassifierEnabled
+                  ? `Live preview: ${previewModelCaption(previewMode)}. Tap to turn off.`
+                  : 'Live preview off. Tap to turn on.'
+                : 'Live preview not available in this build'
+            }
+            onPress={toggleSinglePreviewModel}
+            active={liveClassifierEnabled}
+            disabled={!frameProcessorsAvailable}
+            caption={aiCaption}
+          />
+        ) : (
         <CameraControlGroup
           expanded={aiExpanded}
           onToggleExpanded={toggleAiExpanded}
@@ -296,6 +323,7 @@ export function CameraTopControls({
             </ScrollView>
           </View>
         </CameraControlGroup>
+        )}
 
         <CameraControlButton
           icon="arrow-path"

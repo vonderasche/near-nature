@@ -18,7 +18,7 @@ export function formatMobileNetError(error: unknown): string {
   if (isTflitePrepareCompatibilityError(message)) {
     return (
       'Live AI preview model failed to load (float16 TFLite ops not supported on this runtime). ' +
-      'Re-export scene_gate.tflite and kingdom.tflite as full float32, then rebuild the dev client (npm run android:install).'
+      'Re-export the preview model as full float32, then rebuild the dev client (npm run android:install).'
     );
   }
 

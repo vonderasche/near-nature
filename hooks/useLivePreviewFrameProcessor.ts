@@ -6,7 +6,6 @@ import { getGlobalClassificationDebugSession } from '@/lib/classification/debug'
 import { shouldSampleEvent } from '@/lib/classification/debug/sampling';
 import type { LiveClassifierModelState, LiveClassifierPrediction } from '@/lib/camera/liveClassifierTypes';
 import { formatMobileNetError } from '@/lib/camera/mobilenet/formatMobileNetError';
-import type { KingdomPreviewDisplayState } from '@/lib/camera/tflite/preview/kingdomPreviewFeedback';
 import { isMvpCaptureSessionActive } from '@/lib/camera/tflite/mvp/mvpTfliteMemory';
 import {
   getPreviewModelConfig,
@@ -29,13 +28,11 @@ export type LivePreviewPrediction = LiveClassifierPrediction;
 
 export function useLivePreviewFrameProcessor(
   active: boolean,
-  previewModelId: PreviewModelId = 'kingdom',
+  previewModelId: PreviewModelId = 'v14',
 ): UseLivePreviewFrameProcessorResult {
   const livePreviewSuspended = useMvpLivePreviewSuspended();
   const previewActive = active && !livePreviewSuspended && !isMvpCaptureSessionActive();
   const config = getPreviewModelConfig(previewModelId);
-  const kingdomPreviewStateRef = useRef<KingdomPreviewDisplayState>('searching');
-  const dominantOrganismRef = useRef<string | null>(null);
   const lastPreviewTelemetryLabelRef = useRef<string | null>(null);
   const lastPreviewTelemetryDetailRef = useRef<string | null>(null);
 
@@ -48,8 +45,6 @@ export function useLivePreviewFrameProcessor(
   }, [previewActive, previewModelId]);
 
   useEffect(() => {
-    kingdomPreviewStateRef.current = 'searching';
-    dominantOrganismRef.current = null;
     lastPreviewTelemetryLabelRef.current = null;
     lastPreviewTelemetryDetailRef.current = null;
   }, [previewActive, previewModelId]);
@@ -63,12 +58,7 @@ export function useLivePreviewFrameProcessor(
   const inferenceTimestamp = result?.timestamp ?? 0;
   const mapped =
     result?.type === 'classification'
-      ? mapPreviewPredictions(
-          previewModelId,
-          result.predictions,
-          kingdomPreviewStateRef,
-          dominantOrganismRef,
-        )
+      ? mapPreviewPredictions(previewModelId, result.predictions)
       : { predictions: [], organismDetected: false };
   const { predictions, organismDetected } = mapped;
 
@@ -106,8 +96,7 @@ export function useLivePreviewFrameProcessor(
     modelState === 'loaded' ? 'loaded' : modelState === 'loading' ? 'loading' : 'error';
 
   return {
-    frameProcessor:
-      previewActive && modelState === 'loaded' && modelError == null ? frameProcessor : undefined,
+    frameProcessor: previewActive ? frameProcessor : undefined,
     modelState: resolvedModelState,
     modelError: modelError != null ? formatMobileNetError(modelError) : null,
     predictions,

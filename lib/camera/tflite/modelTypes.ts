@@ -3,12 +3,16 @@ export type ImageNormalization = {
   std: [number, number, number];
 };
 
+export type ImagePreprocessMode = 'square_resize' | 'resize_short_edge_then_center_crop';
+
 export type ModelInputConfig = {
   width: number;
   height: number;
   pixelFormat: 'rgb';
   dataType: 'uint8' | 'float32';
   normalization?: ImageNormalization;
+  preprocessMode?: ImagePreprocessMode;
+  resizeShortEdge?: number;
 };
 
 type BaseModelConfig = {

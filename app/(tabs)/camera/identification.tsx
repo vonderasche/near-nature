@@ -11,15 +11,12 @@ import {
 } from '@/lib/camera/tflite/mvp/mvpTfliteMemory';
 import { routes } from '@/lib/routing/routes';
 import { RegionComingSoon } from '@/components/shared/region-coming-soon';
-import { useActiveRegion } from '@/context/RegionContext';
-import { useIdentificationPreferences } from '@/hooks/useIdentificationPreferences';
-import { isCaptureReady } from '@/lib/region/regionReadiness';
+import { useActiveRegion, useCaptureModelsReady } from '@/context/RegionContext';
 
 export default function IdentificationScreen() {
   const router = useRouter();
-  const { isLive, regionId } = useActiveRegion();
-  const { captureMode } = useIdentificationPreferences();
-  const captureReady = isCaptureReady(regionId, captureMode, isLive);
+  const { regionId } = useActiveRegion();
+  const captureReady = useCaptureModelsReady();
   const { photoUri } = useIdentificationRouteParams();
   const { reportBackgroundSaveError } = useCameraFlowContext();
   const retakeCleanupStartedRef = useRef(false);

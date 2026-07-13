@@ -2,25 +2,11 @@
  * Exercises Supabase calls used by the Explorer Board.
  * Usage: node scripts/verify-supabase-app-paths.mjs
  */
-import { readFileSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const root = resolve(__dirname, '..');
+import { loadProjectEnv } from './loadSupabaseSeedEnv.mjs';
 
-function loadEnv() {
-  const text = readFileSync(resolve(root, '.env'), 'utf8');
-  const env = {};
-  for (const line of text.split(/\r?\n/)) {
-    const m = line.match(/^([A-Z0-9_]+)=(.*)$/);
-    if (m) env[m[1]] = m[2].replace(/^["']|["']$/g, '').trim();
-  }
-  return env;
-}
-
-const env = loadEnv();
+const env = loadProjectEnv();
 const supabase = createClient(env.EXPO_PUBLIC_SUPABASE_URL, env.EXPO_PUBLIC_SUPABASE_ANON_KEY);
 
 console.log('\nApp-path verify (Explorer Board)\n');
